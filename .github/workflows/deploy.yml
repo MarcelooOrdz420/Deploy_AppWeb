@@ -22,14 +22,16 @@ jobs:
         run: composer install --no-dev --optimize-autoloader
 
       - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
           protocol: ftps
           port: 21
+          security: loose
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          log-level: standard
           exclude: |
             **/.git*
             **/.git*/**
