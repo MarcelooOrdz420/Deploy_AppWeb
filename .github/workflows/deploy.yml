@@ -45,4 +45,4 @@ jobs:
             **/public/error_log
 
       - name: Clear Laravel caches
-        run: curl --fail --silent --show-error https://pollos.saborcentral.com/artisan-run.php
+        run: curl --fail --silent --show-error http://pollos.saborcentral.com/artisan-run.php
