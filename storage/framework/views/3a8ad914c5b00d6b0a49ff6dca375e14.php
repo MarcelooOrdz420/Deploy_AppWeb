@@ -1,15 +1,13 @@
-@extends('store.layout')
+<?php $__env->startSection('title', 'Pollos y Parrillas "El Dorado"'); ?>
 
-@section('title', 'Pollos y Parrillas "El Dorado"')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <section class="catalog-shell">
         <section class="catalog-hero surface">
             <div class="hero-copy-stack">
                 <p class="eyebrow">Menu del Cliente</p>
                 <h2 class="title">Compra en una ruta mas clara, mas visual y mas rapida.</h2>
                 <p class="muted-main hero-text">
-                    Explora el platillo de tu preferencia, agregalo a tu carrito y finaliza tu pedido en pocos pasos.
+                    Explora el menu como una vitrina: descubre destacados, filtra con precision y agrega al carrito sin perder el contexto de lo que mas te provoca hoy.
                 </p>
                 <div class="hero-badges">
                     <span>Pollos</span>
@@ -115,8 +113,8 @@
             </div>
             <div id="floatCartBody" class="float-cart-body"></div>
             <div class="float-cart-actions">
-                <a class="btn-main" href="{{ route('store.cart') }}" style="text-decoration:none; justify-content:center;">Ir al pago</a>
-                <a class="btn-soft" href="{{ route('store.cart') }}" style="text-decoration:none; justify-content:center;">Ver carrito</a>
+                <a class="btn-main" href="<?php echo e(route('store.cart')); ?>" style="text-decoration:none; justify-content:center;">Ir al pago</a>
+                <a class="btn-soft" href="<?php echo e(route('store.cart')); ?>" style="text-decoration:none; justify-content:center;">Ver carrito</a>
             </div>
         </div>
     </div>
@@ -340,7 +338,7 @@
             border-radius: 999px;
             padding: 12px 14px;
             background: linear-gradient(120deg, rgba(255, 111, 31, .92), rgba(255, 157, 90, .92));
-            color: var(--accent-ink);
+            color: #2d1406;
             font-weight: 900;
             box-shadow: 0 18px 44px rgba(52, 17, 0, .18);
             cursor: pointer;
@@ -422,12 +420,12 @@
 
         .float-cart-name {
             font-weight: 900;
-            color: var(--panel-ink);
+            color: #2b1608;
             line-height: 1.15;
         }
 
         .float-cart-meta {
-            color: var(--muted-ink);
+            color: #7b4b2b;
             font-size: 12px;
             margin-top: 4px;
         }
@@ -464,7 +462,7 @@
             border-radius: 16px;
             border: 1px solid rgba(234, 182, 138, .85);
             background: rgba(255, 247, 240, .96);
-            color: var(--accent-ink);
+            color: #2b1608;
             box-shadow: 0 10px 28px rgba(25, 12, 6, .18);
             transform: translateY(10px);
             opacity: 0;
@@ -692,7 +690,7 @@
         .product-modal-card {
             background: linear-gradient(180deg, #181818 0%, #101010 100%) !important;
             border-color: rgba(255,122,26,.22) !important;
-            color: var(--muted-ink) !important;
+            color: #fff !important;
         }
         .tools-info,
         .hero-badges span,
@@ -700,7 +698,7 @@
         .status-chip,
         .stock-alert {
             background: rgba(25,25,25,.94) !important;
-            color: var(--muted-ink) !important;
+            color: #fff !important;
             border-color: rgba(255,122,26,.22) !important;
         }
         .product-name,
@@ -708,16 +706,12 @@
         .hero-note,
         .float-cart-name,
         .float-cart-title {
-            color: var(--panel-ink) !important;
+            color: #fff !important;
         }
         .product-price,
         .product-modal-price,
         .eyebrow {
-            color: #ffb15c !important;
-        }
-        .muted-main,
-        .float-cart-meta {
-            color: var(--muted-ink) !important;
+            color: #ff9a3d !important;
         }
         .product-image-wrap,
         .hero-feature,
@@ -728,9 +722,9 @@
             border-color: rgba(255,122,26,.18) !important;
         }
     </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script>
 const HERO_FALLBACKS = [
     ['/images/hero/slide-1.jpg', '/images/hero/slide-2.jpg'],
@@ -1126,4 +1120,6 @@ try {
 
 loadProducts();
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('store.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos\WEB_POLLERIA\laravel-app\resources\views\store\products.blade.php ENDPATH**/ ?>

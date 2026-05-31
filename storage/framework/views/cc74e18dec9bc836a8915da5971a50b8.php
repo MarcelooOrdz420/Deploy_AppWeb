@@ -1,15 +1,13 @@
-@extends('store.layout')
+<?php $__env->startSection('title', 'Pollos y Parrillas "El Dorado"'); ?>
 
-@section('title', 'Pollos y Parrillas "El Dorado"')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <section class="catalog-shell">
         <section class="catalog-hero surface">
             <div class="hero-copy-stack">
                 <p class="eyebrow">Menu del Cliente</p>
                 <h2 class="title">Compra en una ruta mas clara, mas visual y mas rapida.</h2>
                 <p class="muted-main hero-text">
-                    Explora el platillo de tu preferencia, agregalo a tu carrito y finaliza tu pedido en pocos pasos.
+                    Explora el menu como una vitrina: descubre destacados, filtra con precision y agrega al carrito sin perder el contexto de lo que mas te provoca hoy.
                 </p>
                 <div class="hero-badges">
                     <span>Pollos</span>
@@ -115,8 +113,8 @@
             </div>
             <div id="floatCartBody" class="float-cart-body"></div>
             <div class="float-cart-actions">
-                <a class="btn-main" href="{{ route('store.cart') }}" style="text-decoration:none; justify-content:center;">Ir al pago</a>
-                <a class="btn-soft" href="{{ route('store.cart') }}" style="text-decoration:none; justify-content:center;">Ver carrito</a>
+                <a class="btn-main" href="<?php echo e(route('store.cart')); ?>" style="text-decoration:none; justify-content:center;">Ir al pago</a>
+                <a class="btn-soft" href="<?php echo e(route('store.cart')); ?>" style="text-decoration:none; justify-content:center;">Ver carrito</a>
             </div>
         </div>
     </div>
@@ -728,9 +726,9 @@
             border-color: rgba(255,122,26,.18) !important;
         }
     </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script>
 const HERO_FALLBACKS = [
     ['/images/hero/slide-1.jpg', '/images/hero/slide-2.jpg'],
@@ -1126,4 +1124,6 @@ try {
 
 loadProducts();
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('store.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /home/bcdroovr/public_html/pollos.saborcentral.com/resources/views/store/products.blade.php ENDPATH**/ ?>
