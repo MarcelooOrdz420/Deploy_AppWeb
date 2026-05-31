@@ -9,7 +9,7 @@
                 <p class="eyebrow">Menu del Cliente</p>
                 <h2 class="title">Compra en una ruta mas clara, mas visual y mas rapida.</h2>
                 <p class="muted-main hero-text">
-                    Explora el platillo de tu preferencia, agregalo a tu carrito y finaliza tu pedido en pocos pasos.
+                    Explora el platillo de tu eleccion, agregalo a tu carrito y finaliza tu pedido en pocos pasos.
                 </p>
                 <div class="hero-badges">
                     <span>Pollos</span>
