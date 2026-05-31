@@ -6,10 +6,10 @@
     <section class="catalog-shell">
         <section class="catalog-hero surface">
             <div class="hero-copy-stack">
-                <p class="eyebrow">Menú</p>
+                <p class="eyebrow"> Menú </p>
                 <h2 class="title">Compra en una ruta mas clara, mas visual y mas rapida.</h2>
                 <p class="muted-main hero-text">
-                    Explora el platillo de tu eleccion, agregalo a tu carrito y finaliza tu pedido en pocos pasos.
+                    Explora los platillos con los que contamos , agregalo a tu carrito y finaliza tu pedido en pocos pasos.
                 </p>
                 <div class="hero-badges">
                     <span>Pollos</span>
