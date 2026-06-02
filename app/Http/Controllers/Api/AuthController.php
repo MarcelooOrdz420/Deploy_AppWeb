@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\LoginHistory;
+use App\Services\Auth\OtpService;
 use App\Services\JwtService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    public function register(Request $request, OtpService $otpService): JsonResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
@@ -30,9 +31,12 @@ class AuthController extends Controller
             'password' => Hash::make($data['password']),
         ]);
 
+        $otpService->sendForUser($user);
+
         $token = JwtService::encode($user);
 
         return response()->json([
+            'message' => 'Cuenta creada. Revisa tu correo para el codigo de verificacion.',
             'token' => $token,
             'user' => $user,
         ], 201);
