@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AuthOtpController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AdminNotificationController;
 use App\Http\Controllers\Api\EInvoiceController;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function (): void {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/verify-otp', [AuthOtpController::class, 'verify']);
+    Route::post('/auth/resend-otp', [AuthOtpController::class, 'resend']);
 
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
