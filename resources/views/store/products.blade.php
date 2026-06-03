@@ -690,17 +690,17 @@
         .product-card,
         .float-cart-panel,
         .product-modal-card {
-            background: linear-gradient(180deg, #181818 0%, #101010 100%) !important;
+            background: linear-gradient(180deg, #ffffff 0%, #fff6eb 100%) !important;
             border-color: rgba(255,122,26,.22) !important;
-            color: var(--muted-ink) !important;
+            color: var(--ink) !important;
         }
         .tools-info,
         .hero-badges span,
         .product-category,
         .status-chip,
         .stock-alert {
-            background: rgba(25,25,25,.94) !important;
-            color: var(--muted-ink) !important;
+            background: rgba(255,247,240,.95) !important;
+            color: var(--ink) !important;
             border-color: rgba(255,122,26,.22) !important;
         }
         .product-name,
@@ -708,12 +708,12 @@
         .hero-note,
         .float-cart-name,
         .float-cart-title {
-            color: var(--panel-ink) !important;
+            color: var(--ink) !important;
         }
         .product-price,
         .product-modal-price,
         .eyebrow {
-            color: #ffb15c !important;
+            color: var(--orange-deep) !important;
         }
         .muted-main,
         .float-cart-meta {
@@ -724,7 +724,7 @@
         .search-state-panel,
         .search-state-art,
         .float-cart-row {
-            background: #0d0d0d !important;
+            background: #fffaf4 !important;
             border-color: rgba(255,122,26,.18) !important;
         }
     </style>

@@ -10,10 +10,10 @@
             padding: 18px;
             border-radius: 22px;
             border: 1px solid rgba(255,122,26,.22);
-            background: linear-gradient(180deg, #1a1a1a 0%, #121212 100%);
+            background: linear-gradient(180deg, #ffffff 0%, #fff6eb 100%);
         }
         .location-list { display:grid; gap:10px; }
-        .location-list strong { color: #ff9a3d; }
+        .location-list strong { color: #16110c; }
         @media (max-width: 900px) {
             .location-grid { grid-template-columns: 1fr; }
         }

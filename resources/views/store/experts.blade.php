@@ -10,7 +10,7 @@
             border-radius: 22px;
             padding: 18px;
             border: 1px solid rgba(255,122,26,.22);
-            background: linear-gradient(180deg, #1a1a1a 0%, #121212 100%);
+            background: linear-gradient(180deg, #ffffff 0%, #fff6eb 100%);
             position: relative;
             overflow: hidden;
         }

@@ -12,7 +12,7 @@
             padding: 18px;
             border-radius: 22px;
             border: 1px solid rgba(255,122,26,.22);
-            background: linear-gradient(180deg, #1a1a1a 0%, #121212 100%);
+            background: linear-gradient(180deg, #ffffff 0%, #fff6eb 100%);
         }
         .about-accent {
             background: linear-gradient(135deg, #ff7a1a 0%, #ff9a3d 100%);
