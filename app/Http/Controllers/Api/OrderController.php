@@ -39,35 +39,66 @@ class OrderController extends Controller
             ->get();
 
         $header = [
-            'tracking_code',
-            'created_at',
-            'customer_name',
-            'customer_phone',
-            'status',
-            'payment_method',
-            'payment_status',
-            'payment_reference',
-            'total_amount',
+            'Codigo',
+            'Fecha registro',
+            'Cliente',
+            'Telefono',
+            'Correo',
+            'Entrega',
+            'Direccion',
+            'Referencia',
+            'Reserva programada',
+            'Ventana entrega',
+            'Estado pedido',
+            'Metodo de pago',
+            'Estado de pago',
+            'Operacion / Referencia',
+            'Total',
+            'Items',
         ];
 
-        $rows = [implode(',', $header)];
+        $stream = fopen('php://temp', 'r+');
 
-        foreach ($orders as $order) {
-            $row = [
-                $order->tracking_code,
-                optional($order->created_at)->toDateTimeString(),
-                $this->csvSafe($order->customer_name),
-                $this->csvSafe($order->customer_phone),
-                $order->status,
-                $order->payment_method,
-                $order->payment_status,
-                $this->csvSafe($order->payment_reference ?: ''),
-                number_format((float) $order->total_amount, 2, '.', ''),
-            ];
-            $rows[] = implode(',', $row);
+        if ($stream === false) {
+            abort(500, 'No se pudo generar la exportacion.');
         }
 
-        $content = implode(PHP_EOL, $rows).PHP_EOL;
+        // BOM UTF-8 para que Excel detecte acentos correctamente.
+        fwrite($stream, "\xEF\xBB\xBF");
+        fputcsv($stream, $header, ';');
+
+        foreach ($orders as $order) {
+            $items = $order->items
+                ->map(function (OrderItem $item): string {
+                    return "{$item->product_name} x{$item->quantity}";
+                })
+                ->implode(' | ');
+
+            $row = [
+                $order->tracking_code,
+                optional($order->created_at)?->format('Y-m-d H:i:s'),
+                $order->customer_name,
+                $order->customer_phone,
+                $order->customer_email ?: '',
+                $this->deliveryTypeLabel((string) $order->delivery_type),
+                $order->address ?: '',
+                $order->reference ?: '',
+                optional($order->scheduled_for)?->format('Y-m-d H:i:s') ?: 'No',
+                $order->delivery_window_label ?: '',
+                $this->orderStatusLabel((string) $order->status),
+                $this->paymentMethodLabel((string) $order->payment_method),
+                $this->paymentStatusLabel((string) $order->payment_status),
+                $order->payment_reference ?: '',
+                number_format((float) $order->total_amount, 2, '.', ''),
+                $items,
+            ];
+
+            fputcsv($stream, $row, ';');
+        }
+
+        rewind($stream);
+        $content = stream_get_contents($stream) ?: '';
+        fclose($stream);
 
         return response($content, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -613,11 +644,49 @@ class OrderController extends Controller
         return $query;
     }
 
-    private function csvSafe(string $value): string
+    private function deliveryTypeLabel(string $deliveryType): string
     {
-        $escaped = str_replace('"', '""', $value);
+        return match ($deliveryType) {
+            'pickup' => 'Recojo en tienda',
+            'delivery' => 'Delivery',
+            default => $deliveryType,
+        };
+    }
 
-        return '"'.$escaped.'"';
+    private function orderStatusLabel(string $status): string
+    {
+        return match ($status) {
+            Order::STATUS_PENDING => 'Pendiente',
+            Order::STATUS_CONFIRMED => 'Confirmado',
+            Order::STATUS_PREPARING => 'En preparacion',
+            Order::STATUS_ON_THE_WAY => 'En camino',
+            Order::STATUS_DELIVERED => 'Entregado',
+            Order::STATUS_CANCELLED => 'Cancelado',
+            default => $status,
+        };
+    }
+
+    private function paymentMethodLabel(string $paymentMethod): string
+    {
+        return match ($paymentMethod) {
+            'yape' => 'Yape',
+            'plin' => 'Plin',
+            'transfer' => 'Transferencia',
+            'cod' => 'Contraentrega',
+            'culqi' => 'Culqi',
+            default => $paymentMethod,
+        };
+    }
+
+    private function paymentStatusLabel(string $paymentStatus): string
+    {
+        return match ($paymentStatus) {
+            'pending' => 'Pendiente',
+            'reported' => 'Reportado',
+            'verified' => 'Verificado',
+            'rejected' => 'Rechazado',
+            default => $paymentStatus,
+        };
     }
 
     private function isDigitalPaymentMethod(string $paymentMethod): bool
