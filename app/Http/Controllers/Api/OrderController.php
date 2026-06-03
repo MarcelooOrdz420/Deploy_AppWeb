@@ -57,15 +57,7 @@ class OrderController extends Controller
             'Items',
         ];
 
-        $stream = fopen('php://temp', 'r+');
-
-        if ($stream === false) {
-            abort(500, 'No se pudo generar la exportacion.');
-        }
-
-        // BOM UTF-8 para que Excel detecte acentos correctamente.
-        fwrite($stream, "\xEF\xBB\xBF");
-        fputcsv($stream, $header, ';');
+        $rows = [];
 
         foreach ($orders as $order) {
             $items = $order->items
@@ -74,7 +66,7 @@ class OrderController extends Controller
                 })
                 ->implode(' | ');
 
-            $row = [
+            $rows[] = [
                 $order->tracking_code,
                 optional($order->created_at)?->format('Y-m-d H:i:s'),
                 $order->customer_name,
@@ -92,17 +84,18 @@ class OrderController extends Controller
                 number_format((float) $order->total_amount, 2, '.', ''),
                 $items,
             ];
-
-            fputcsv($stream, $row, ';');
         }
 
-        rewind($stream);
-        $content = stream_get_contents($stream) ?: '';
-        fclose($stream);
+        $content = $this->buildOrdersExcelHtml(
+            request: $request,
+            header: $header,
+            rows: $rows,
+            ordersCount: $orders->count(),
+        );
 
         return response($content, 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="pedidos-admin.csv"',
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="reporte-pedidos-admin.xls"',
         ]);
     }
 
@@ -642,6 +635,79 @@ class OrderController extends Controller
         }
 
         return $query;
+    }
+
+    private function buildOrdersExcelHtml(Request $request, array $header, array $rows, int $ordersCount): string
+    {
+        $title = 'REPORTE DE PEDIDOS ADMINISTRATIVOS';
+        $generatedAt = now()->format('Y-m-d H:i:s');
+        $filters = array_filter([
+            $request->filled('status') ? 'Estado: '.$this->orderStatusLabel($request->string('status')->toString()) : null,
+            $request->filled('payment_status') ? 'Pago: '.$this->paymentStatusLabel($request->string('payment_status')->toString()) : null,
+            $request->filled('payment_method') ? 'Metodo: '.$this->paymentMethodLabel($request->string('payment_method')->toString()) : null,
+            $request->filled('date_from') ? 'Desde: '.$request->string('date_from')->toString() : null,
+            $request->filled('date_to') ? 'Hasta: '.$request->string('date_to')->toString() : null,
+        ]);
+
+        $filtersLine = $filters ? implode(' | ', $filters) : 'Sin filtros aplicados';
+        $colspan = count($header);
+
+        $headHtml = implode('', array_map(
+            fn (string $cell): string => '<th>'.$this->excelCell($cell).'</th>',
+            $header
+        ));
+
+        $rowsHtml = implode('', array_map(function (array $row): string {
+            $cells = implode('', array_map(
+                fn (string $cell): string => '<td>'.$this->excelCell($cell).'</td>',
+                $row
+            ));
+
+            return '<tr>'.$cells.'</tr>';
+        }, $rows));
+
+        if ($rowsHtml === '') {
+            $rowsHtml = '<tr><td colspan="'.$colspan.'" class="empty-row">No hay pedidos para exportar con los filtros actuales.</td></tr>';
+        }
+
+        return <<<HTML
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Calibri, Arial, sans-serif; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #d7b08a; padding: 8px 10px; font-size: 12px; vertical-align: top; }
+        .report-title { background: #f28c18; color: #111111; font-weight: 700; font-size: 16px; text-align: left; }
+        .report-meta { background: #fff3e4; color: #3d2a1e; font-weight: 700; }
+        .report-filters { background: #fff9f2; color: #5a4639; }
+        thead th { background: #f28c18; color: #111111; font-weight: 700; text-align: left; }
+        tbody tr:nth-child(even) td { background: #fff7ef; }
+        tbody tr:nth-child(odd) td { background: #ffffff; }
+        .empty-row { text-align: center; font-weight: 700; color: #7b5c45; }
+    </style>
+</head>
+<body>
+    <table>
+        <tr><td colspan="{$colspan}" class="report-title">{$this->excelCell($title)}</td></tr>
+        <tr><td colspan="{$colspan}" class="report-meta">Generado: {$this->excelCell($generatedAt)} | Registros: {$ordersCount}</td></tr>
+        <tr><td colspan="{$colspan}" class="report-filters">{$this->excelCell($filtersLine)}</td></tr>
+        <thead>
+            <tr>{$headHtml}</tr>
+        </thead>
+        <tbody>
+            {$rowsHtml}
+        </tbody>
+    </table>
+</body>
+</html>
+HTML;
+    }
+
+    private function excelCell(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
 
     private function deliveryTypeLabel(string $deliveryType): string

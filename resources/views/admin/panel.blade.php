@@ -826,7 +826,7 @@
             <div style="display:flex; gap:8px; margin-bottom:8px;">
                 <button id="applyFiltersBtn">Aplicar filtros</button>
                 <button id="clearFiltersBtn">Limpiar</button>
-                <button id="exportCsvBtn" class="btn-main">Exportar CSV</button>
+                <button id="exportCsvBtn" class="btn-main">Exportar Excel</button>
             </div>
             <div id="ordersList" class="list"></div>
 
@@ -1567,14 +1567,14 @@ async function exportCsv() {
         headers: { 'Authorization': `Bearer ${token}` },
     });
     if (!res.ok) {
-        statusMsg.textContent = 'No se pudo exportar CSV';
+        statusMsg.textContent = 'No se pudo exportar Excel';
         return;
     }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'pedidos-admin.csv';
+    a.download = 'reporte-pedidos-admin.xls';
     document.body.appendChild(a);
     a.click();
     a.remove();
