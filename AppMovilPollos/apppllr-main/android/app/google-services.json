@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "776869465080",
+    "project_id": "polloapp-66a21",
+    "storage_bucket": "polloapp-66a21.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:776869465080:android:0fed30525923dc0a17240d",
+        "android_client_info": {
+          "package_name": "com.systemarauco.appdorado"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADmF7vlt2E7UE6FLrpOn9Yqgz1gqQWA0M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

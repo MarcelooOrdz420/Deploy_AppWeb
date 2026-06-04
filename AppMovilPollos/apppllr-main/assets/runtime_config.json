@@ -1,0 +1,9 @@
+{
+  "api_origin": "https://pollos.saborcentral.com",
+  "pusher": {
+    "app_key": "8c80725adade23c572e4",
+    "cluster": "mt1",
+    "use_tls": true,
+    "notifications_channel": "mi-canal"
+  }
+}

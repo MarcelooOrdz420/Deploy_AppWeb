@@ -934,6 +934,20 @@
     </div>
 </div>
 
+<div id="adminOrderToast" style="display:none; position:fixed; right:18px; bottom:18px; z-index:9998; width:min(400px, calc(100vw - 36px));">
+    <div style="background:rgba(18,18,18,.98); border:1px solid rgba(255, 122, 26, .24); border-radius:22px; box-shadow: 0 26px 60px rgba(0, 0, 0, .32); overflow:hidden;">
+        <div style="padding:12px 14px; border-bottom:1px solid rgba(255, 122, 26, .18); display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <strong id="adminOrderToastTitle" style="font-size:13px; line-height:1.2;">Nuevo pedido</strong>
+            <button id="adminOrderToastCloseBtn" type="button" class="pill-btn" style="padding:8px 10px;">X</button>
+        </div>
+        <div style="padding:12px 14px;">
+            <div id="adminOrderToastMessage" style="color:var(--text); line-height:1.45; font-weight:800;"></div>
+            <div id="adminOrderToastBody" class="muted" style="margin-top:8px;"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script>
 (() => {
     const apiBase = @json(config('app.api_base_url'));
@@ -1019,6 +1033,11 @@ const proofModalTitle = document.getElementById('proofModalTitle');
 const proofModalMeta = document.getElementById('proofModalMeta');
 const proofModalContent = document.getElementById('proofModalContent');
 const proofModalCloseBtn = document.getElementById('proofModalCloseBtn');
+const adminOrderToast = document.getElementById('adminOrderToast');
+const adminOrderToastTitle = document.getElementById('adminOrderToastTitle');
+const adminOrderToastMessage = document.getElementById('adminOrderToastMessage');
+const adminOrderToastBody = document.getElementById('adminOrderToastBody');
+const adminOrderToastCloseBtn = document.getElementById('adminOrderToastCloseBtn');
 
 const BASE_CATEGORIES = ['pollos', 'parrillas', 'bebidas'];
 const ADMIN_TIMEOUT_MS = 30 * 60 * 1000;
@@ -1159,6 +1178,18 @@ function closeProofModal() {
     proofModal.style.display = 'none';
     proofModalMeta.textContent = '';
     proofModalContent.innerHTML = '';
+}
+
+function hideAdminOrderToast() {
+    if (adminOrderToast) adminOrderToast.style.display = 'none';
+}
+
+function showAdminOrderToast(payload) {
+    if (!adminOrderToast) return;
+    adminOrderToastTitle.textContent = payload?.title || 'Nuevo pedido';
+    adminOrderToastMessage.textContent = payload?.message || 'Se registro un nuevo pedido.';
+    adminOrderToastBody.textContent = payload?.body || '';
+    adminOrderToast.style.display = 'block';
 }
 
 function openProofModal(order) {
@@ -1733,6 +1764,31 @@ async function saveCashClosure(event) {
     await fetchCashClosureHistory();
 }
 
+function bootRealtimeOrders() {
+    const key = @json(config('broadcasting.connections.pusher.key'));
+    const cluster = @json(config('broadcasting.connections.pusher.options.cluster'));
+    const channelName = 'mi-canal';
+    const eventName = 'mi-evento';
+
+    if (!key || !cluster || typeof Pusher === 'undefined') return;
+
+    const pusher = new Pusher(key, { cluster, forceTLS: true });
+    const channel = pusher.subscribe(channelName);
+
+    channel.bind(eventName, async (data) => {
+        const payload = data && data.data ? data.data : data;
+        if ((payload?.type || '') !== 'order_created') return;
+        if ((payload?.target || '').toString().toLowerCase() !== 'admin') return;
+
+        showAdminOrderToast(payload || {});
+
+        try {
+            await fetchOrders();
+            await fetchCashClosureSummary();
+        } catch {}
+    });
+}
+
 async function fetchUsers() {
     const token = getToken();
     const res = await fetch('/api/v1/admin/users', {
@@ -1987,6 +2043,9 @@ if (cashClosureDate) {
     cashClosureDate.addEventListener('change', fetchCashClosureSummary);
 }
 proofModalCloseBtn.addEventListener('click', closeProofModal);
+if (adminOrderToastCloseBtn) {
+    adminOrderToastCloseBtn.addEventListener('click', hideAdminOrderToast);
+}
 proofModal.addEventListener('click', (event) => {
     if (event.target === proofModal) closeProofModal();
 });
@@ -2001,6 +2060,7 @@ adminMenuTabs.forEach(tab => {
     window.addEventListener(evt, touchAdminSession, { passive: true });
 });
 
+bootRealtimeOrders();
 boot();
 syncProductAvailabilityLabel();
 bindImagePreview(productImageInput, productImagePreview);

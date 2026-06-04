@@ -8,11 +8,16 @@ use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 class AdminCashClosureController extends Controller
 {
     public function index(): JsonResponse
     {
+        if (! Schema::hasTable('cash_closures')) {
+            return response()->json([]);
+        }
+
         $closures = CashClosure::query()
             ->with('closer:id,name,email')
             ->latest('business_date')
@@ -32,6 +37,13 @@ class AdminCashClosureController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if (! Schema::hasTable('cash_closures')) {
+            return response()->json([
+                'message' => 'La tabla cash_closures aun no existe en la base de datos. Ejecuta las migraciones antes de guardar cierres.',
+                'requires_migration' => true,
+            ], 409);
+        }
+
         $data = $request->validate([
             'business_date' => ['nullable', 'date_format:Y-m-d'],
             'declared_cash' => ['required', 'numeric', 'min:0'],

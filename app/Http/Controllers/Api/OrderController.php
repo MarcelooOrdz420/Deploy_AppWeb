@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\OrderCreatedAlertSent;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -377,6 +378,12 @@ class OrderController extends Controller
 
             return $order->load(['items', 'statusHistory']);
         });
+
+        try {
+            event(new OrderCreatedAlertSent($order));
+        } catch (\Throwable) {
+            // Silencioso: el pedido no debe fallar si Pusher no esta configurado o falla.
+        }
 
         return response()->json($order, 201);
     }
