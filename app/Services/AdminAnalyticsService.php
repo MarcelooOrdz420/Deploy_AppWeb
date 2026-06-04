@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AdminAnalyticsService
 {
@@ -106,6 +107,10 @@ class AdminAnalyticsService
 
     public function inventoryRotation(int $limit = 10): Collection
     {
+        if (! Schema::hasTable('inventory_movements')) {
+            return collect();
+        }
+
         return InventoryMovement::query()
             ->selectRaw("
                 product_id,
@@ -124,6 +129,10 @@ class AdminAnalyticsService
 
     public function topInventoryUsers(int $limit = 10): Collection
     {
+        if (! Schema::hasTable('inventory_movements')) {
+            return collect();
+        }
+
         return InventoryMovement::query()
             ->leftJoin('users', 'users.id', '=', 'inventory_movements.performed_by')
             ->selectRaw("
@@ -142,6 +151,10 @@ class AdminAnalyticsService
 
     public function topInventoryRoles(int $limit = 10): Collection
     {
+        if (! Schema::hasTable('inventory_movements')) {
+            return collect();
+        }
+
         return InventoryMovement::query()
             ->selectRaw("
                 COALESCE(NULLIF(role_snapshot, ''), 'sin rol') as role_name,

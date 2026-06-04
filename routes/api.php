@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AuthOtpController;
+use App\Http\Controllers\Api\AdminCashClosureController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AdminNotificationController;
 use App\Http\Controllers\Api\EInvoiceController;
@@ -57,6 +58,9 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/admin/orders', [OrderController::class, 'index']);
             Route::get('/admin/orders/stats', [OrderController::class, 'stats']);
             Route::get('/admin/orders/export', [OrderController::class, 'export']);
+            Route::get('/admin/cash-closures', [AdminCashClosureController::class, 'index']);
+            Route::get('/admin/cash-closures/summary', [AdminCashClosureController::class, 'summary']);
+            Route::post('/admin/cash-closures', [AdminCashClosureController::class, 'store']);
             Route::get('/admin/orders/{order}/einvoice/preview', [EInvoiceController::class, 'preview']);
             Route::post('/admin/orders/{order}/einvoice/send', [EInvoiceController::class, 'send']);
             Route::patch('/admin/orders/{order}/status', [OrderController::class, 'updateStatus']);

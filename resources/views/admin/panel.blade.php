@@ -631,6 +631,7 @@
             <button class="menu-tab" type="button" data-target="sec-offers">Promociones</button>
             <button class="menu-tab" type="button" data-target="sec-products">Productos</button>
             <button class="menu-tab" type="button" data-target="sec-orders">Pedidos</button>
+            <button class="menu-tab" type="button" data-target="sec-cash-closure">Cierre de caja</button>
             <button class="menu-tab" type="button" data-target="sec-users">Cuentas</button>
         </div>
         <div class="helper-text" style="margin:0;">Panel ordenado por pestañas.</div>
@@ -876,6 +877,42 @@
             </div>
         </section>
 
+        <section id="sec-cash-closure" class="panel" style="grid-column: 1 / -1;">
+            <h2>Cierre de caja</h2>
+            <p class="section-subtitle">Resume ventas del dia, separa efectivo contra pagos digitales y guarda el cierre operativo para auditoria.</p>
+            <div class="row" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                <section class="panel" style="padding:16px;">
+                    <h3>Registrar cierre</h3>
+                    <form id="cashClosureForm">
+                        <label>Fecha operativa</label>
+                        <input name="business_date" id="cashClosureDate" type="date" required>
+                        <label>Efectivo contado en caja (S/)</label>
+                        <input name="declared_cash" type="number" min="0" step="0.01" required>
+                        <label>Observaciones (opcional)</label>
+                        <textarea name="notes" rows="3" maxlength="500" placeholder="Ej: faltante por vuelto, caja inicial, observaciones del turno"></textarea>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="button" id="refreshCashSummaryBtn">Actualizar resumen</button>
+                            <button type="submit" class="btn-main">Guardar cierre</button>
+                        </div>
+                        <div id="cashClosureMsg" class="msg"></div>
+                    </form>
+                </section>
+
+                <section class="panel" style="padding:16px;">
+                    <h3>Resumen del dia</h3>
+                    <div id="cashClosureSummary" class="list">
+                        <div class="card">Selecciona una fecha para ver el resumen de caja.</div>
+                    </div>
+                </section>
+            </div>
+
+            <hr style="border-color:#ffd7bd; margin:18px 0;">
+            <h3>Ultimos cierres guardados</h3>
+            <div id="cashClosureHistory" class="list">
+                <div class="card">Aun no hay cierres registrados.</div>
+            </div>
+        </section>
+
         <section id="sec-users" class="panel" style="grid-column: 1 / -1;">
             <h2>Gestion de cuentas</h2>
             <p class="muted">Controla cuentas registradas, tiempo de creación y estado activo.</p>
@@ -925,6 +962,7 @@ const adminSections = [
     document.getElementById('sec-offers'),
     document.getElementById('sec-products'),
     document.getElementById('sec-orders'),
+    document.getElementById('sec-cash-closure'),
     document.getElementById('sec-users'),
 ].filter(Boolean);
 
@@ -968,6 +1006,12 @@ const filterDateTo = document.getElementById('filterDateTo');
 const applyFiltersBtn = document.getElementById('applyFiltersBtn');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 const exportCsvBtn = document.getElementById('exportCsvBtn');
+const cashClosureForm = document.getElementById('cashClosureForm');
+const cashClosureDate = document.getElementById('cashClosureDate');
+const cashClosureMsg = document.getElementById('cashClosureMsg');
+const cashClosureSummary = document.getElementById('cashClosureSummary');
+const cashClosureHistory = document.getElementById('cashClosureHistory');
+const refreshCashSummaryBtn = document.getElementById('refreshCashSummaryBtn');
 const usersList = document.getElementById('usersList');
 const salesDashboard = document.getElementById('salesDashboard');
 const proofModal = document.getElementById('proofModal');
@@ -1145,6 +1189,12 @@ function openProofModal(order) {
 
 function money(value) {
     return `S/ ${Number(value || 0).toFixed(2)}`;
+}
+
+function todayDateValue() {
+    const now = new Date();
+    const local = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
+    return local.toISOString().slice(0, 10);
 }
 
 function canUseAdmin() {
@@ -1581,6 +1631,108 @@ async function exportCsv() {
     URL.revokeObjectURL(url);
 }
 
+function renderCashSummary(data) {
+    if (!cashClosureSummary) return;
+    const totals = data?.totals || {};
+    const payments = data?.payments || [];
+    cashClosureSummary.innerHTML = `
+        <article class="card">
+            <div class="card-top">
+                <strong>Fecha ${data?.business_date || '-'}</strong>
+                <span class="tag">${totals.orders_count || 0} pedidos</span>
+            </div>
+            <div class="muted">Venta bruta: <strong>${money(totals.gross_sales || 0)}</strong></div>
+            <div class="muted">Ventas verificadas: <strong>${money(totals.verified_sales || 0)}</strong></div>
+            <div class="muted">Efectivo esperado: <strong>${money(totals.cash_sales || 0)}</strong></div>
+            <div class="muted">Pagos digitales: <strong>${money(totals.digital_sales || 0)}</strong></div>
+            <div class="muted" style="margin-top:8px;">Desglose:</div>
+            ${payments.length ? payments.map(payment => `
+                <div class="muted"><strong>${payment.method}</strong>: ${money(payment.total || 0)} en ${payment.orders_count || 0} pedidos</div>
+            `).join('') : '<div class="muted">Sin movimientos para esa fecha.</div>'}
+        </article>
+    `;
+}
+
+function renderCashClosureHistory(rows) {
+    if (!cashClosureHistory) return;
+    if (!rows.length) {
+        cashClosureHistory.innerHTML = '<div class="card">Aun no hay cierres registrados.</div>';
+        return;
+    }
+
+    cashClosureHistory.innerHTML = rows.map(row => `
+        <article class="card">
+            <div class="card-top">
+                <strong>${row.business_date}</strong>
+                <span class="tag ${Number(row.difference_amount || 0) === 0 ? 'payment-verified' : 'payment-reported'}">
+                    Dif. ${money(row.difference_amount || 0)}
+                </span>
+            </div>
+            <div class="muted">Pedidos: ${row.orders_count} | Bruto: ${money(row.gross_sales || 0)}</div>
+            <div class="muted">Esperado en caja: ${money(row.expected_cash || 0)} | Declarado: ${money(row.declared_cash || 0)}</div>
+            <div class="muted">Registrado por: ${row.closer?.name || 'Sistema'} | Cierre: ${row.closed_at ? new Date(row.closed_at).toLocaleString() : '-'}</div>
+            <div class="muted">${row.notes || 'Sin observaciones.'}</div>
+        </article>
+    `).join('');
+}
+
+async function fetchCashClosureSummary() {
+    const token = getToken();
+    const selectedDate = cashClosureDate?.value || todayDateValue();
+    const res = await fetch(`/api/v1/admin/cash-closures/summary?date=${encodeURIComponent(selectedDate)}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        cashClosureSummary.innerHTML = `<div class="card">${data.message || 'No se pudo cargar el resumen de caja.'}</div>`;
+        return;
+    }
+    renderCashSummary(data);
+}
+
+async function fetchCashClosureHistory() {
+    const token = getToken();
+    const res = await fetch('/api/v1/admin/cash-closures', {
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        cashClosureHistory.innerHTML = '<div class="card">No se pudieron cargar los cierres registrados.</div>';
+        return;
+    }
+    renderCashClosureHistory(Array.isArray(data) ? data : []);
+}
+
+async function saveCashClosure(event) {
+    event.preventDefault();
+    const token = getToken();
+    const payload = {
+        business_date: cashClosureForm.business_date.value,
+        declared_cash: Number(cashClosureForm.declared_cash.value || 0),
+        notes: cashClosureForm.notes.value.trim() || null,
+    };
+
+    cashClosureMsg.textContent = 'Guardando cierre...';
+    const res = await fetch('/api/v1/admin/cash-closures', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        const validationErrors = data.errors ? Object.values(data.errors).flat().join(' | ') : '';
+        cashClosureMsg.textContent = validationErrors || data.message || 'No se pudo guardar el cierre de caja.';
+        return;
+    }
+
+    cashClosureMsg.textContent = `Cierre guardado para ${data.business_date}. Diferencia: ${money(data.difference_amount || 0)}`;
+    await fetchCashClosureSummary();
+    await fetchCashClosureHistory();
+}
+
 async function fetchUsers() {
     const token = getToken();
     const res = await fetch('/api/v1/admin/users', {
@@ -1775,8 +1927,11 @@ async function boot() {
     showAdminTab('sec-dashboard');
 
     upsertCategoryOptions();
+    if (cashClosureDate && !cashClosureDate.value) cashClosureDate.value = todayDateValue();
     await fetchProducts();
     await fetchOrders();
+    await fetchCashClosureSummary();
+    await fetchCashClosureHistory();
     await fetchUsers();
 
     refreshTimer = setInterval(async () => {
@@ -1787,6 +1942,8 @@ async function boot() {
         }
         await fetchProducts();
         await fetchOrders();
+        await fetchCashClosureSummary();
+        await fetchCashClosureHistory();
         await fetchUsers();
     }, 20000);
 }
@@ -1820,6 +1977,15 @@ clearFiltersBtn.addEventListener('click', () => {
     fetchOrders();
 });
 exportCsvBtn.addEventListener('click', exportCsv);
+if (cashClosureForm) {
+    cashClosureForm.addEventListener('submit', saveCashClosure);
+}
+if (refreshCashSummaryBtn) {
+    refreshCashSummaryBtn.addEventListener('click', fetchCashClosureSummary);
+}
+if (cashClosureDate) {
+    cashClosureDate.addEventListener('change', fetchCashClosureSummary);
+}
 proofModalCloseBtn.addEventListener('click', closeProofModal);
 proofModal.addEventListener('click', (event) => {
     if (event.target === proofModal) closeProofModal();

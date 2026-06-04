@@ -6,6 +6,7 @@ use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 class InventoryMovementService
 {
@@ -98,6 +99,10 @@ class InventoryMovementService
         ?string $referenceCode = null,
         ?string $note = null,
     ): void {
+        if (! Schema::hasTable('inventory_movements')) {
+            return;
+        }
+
         InventoryMovement::query()->create([
             'product_id' => $product->id,
             'product_name_snapshot' => $product->name,
