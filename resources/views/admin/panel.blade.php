@@ -890,8 +890,10 @@
                         <input name="declared_cash" type="number" min="0" step="0.01" required>
                         <label>Observaciones (opcional)</label>
                         <textarea name="notes" rows="3" maxlength="500" placeholder="Ej: faltante por vuelto, caja inicial, observaciones del turno"></textarea>
+                        <div class="muted">Politica: solo 1 cierre por dia y se habilita desde las 11:00 PM hora Peru Lima.</div>
                         <div style="display:flex; gap:8px; flex-wrap:wrap;">
                             <button type="button" id="refreshCashSummaryBtn">Actualizar resumen</button>
+                            <button type="button" id="exportCashClosuresBtn">Exportar Excel</button>
                             <button type="submit" class="btn-main">Guardar cierre</button>
                         </div>
                         <div id="cashClosureMsg" class="msg"></div>
@@ -1026,6 +1028,7 @@ const cashClosureMsg = document.getElementById('cashClosureMsg');
 const cashClosureSummary = document.getElementById('cashClosureSummary');
 const cashClosureHistory = document.getElementById('cashClosureHistory');
 const refreshCashSummaryBtn = document.getElementById('refreshCashSummaryBtn');
+const exportCashClosuresBtn = document.getElementById('exportCashClosuresBtn');
 const usersList = document.getElementById('usersList');
 const salesDashboard = document.getElementById('salesDashboard');
 const proofModal = document.getElementById('proofModal');
@@ -1666,12 +1669,15 @@ function renderCashSummary(data) {
     if (!cashClosureSummary) return;
     const totals = data?.totals || {};
     const payments = data?.payments || [];
+    const policy = data?.policy || {};
     cashClosureSummary.innerHTML = `
         <article class="card">
             <div class="card-top">
                 <strong>Fecha ${data?.business_date || '-'}</strong>
                 <span class="tag">${totals.orders_count || 0} pedidos</span>
             </div>
+            <div class="muted">Politica: ${policy.message || 'Sin politica disponible.'}</div>
+            <div class="muted">Horario habilitado: desde ${policy.cutoff_hour || '23:00'} (${policy.timezone || 'America/Lima'})</div>
             <div class="muted">Venta bruta: <strong>${money(totals.gross_sales || 0)}</strong></div>
             <div class="muted">Ventas verificadas: <strong>${money(totals.verified_sales || 0)}</strong></div>
             <div class="muted">Efectivo esperado: <strong>${money(totals.cash_sales || 0)}</strong></div>
@@ -1732,6 +1738,26 @@ async function fetchCashClosureHistory() {
         return;
     }
     renderCashClosureHistory(Array.isArray(data) ? data : []);
+}
+
+async function exportCashClosures() {
+    const token = getToken();
+    const res = await fetch('/api/v1/admin/cash-closures/export', {
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!res.ok) {
+        cashClosureMsg.textContent = 'No se pudo exportar el Excel de cierres de caja.';
+        return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cierres-caja-admin.xls';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
 }
 
 async function saveCashClosure(event) {
@@ -2033,6 +2059,9 @@ clearFiltersBtn.addEventListener('click', () => {
     fetchOrders();
 });
 exportCsvBtn.addEventListener('click', exportCsv);
+if (exportCashClosuresBtn) {
+    exportCashClosuresBtn.addEventListener('click', exportCashClosures);
+}
 if (cashClosureForm) {
     cashClosureForm.addEventListener('submit', saveCashClosure);
 }
