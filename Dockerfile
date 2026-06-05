@@ -2,7 +2,9 @@ FROM unit:1.34.1-php8.3
 
 WORKDIR /var/www/html
 
-RUN apt-get update && apt-get install -y \
+RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources; fi \
+    && if [ -f /etc/apt/sources.list ]; then sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list; fi \
+    && apt-get update && apt-get install -y \
     git \
     unzip \
     libicu-dev \
