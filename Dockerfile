@@ -44,6 +44,6 @@ RUN chmod +x /docker-entrypoint.d/00-app-setup.sh \
     && php artisan package:discover --ansi \
     && chown -R unit:unit /var/www/html/storage /var/www/html/bootstrap/cache
 
-EXPOSE 8000
+EXPOSE 7000
 
 CMD ["unitd", "--no-daemon"]

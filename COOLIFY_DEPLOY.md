@@ -6,7 +6,7 @@ Este proyecto ya incluye `Dockerfile`, `unit.json` y el script `docker/00-app-se
 
 1. Crea un nuevo recurso desde tu repositorio de GitHub.
 2. Selecciona `Dockerfile` como `Build Pack`.
-3. Define `8000` en `Ports Exposes`.
+3. Define `7000` en `Ports Exposes`.
 4. Configura las variables de entorno tomando como base [`.env.production.example`](/c:/Users/LABF/Downloads/Deploy_AppWeb/.env.production.example).
 
 ## Variables minimas recomendadas
