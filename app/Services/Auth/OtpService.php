@@ -107,11 +107,11 @@ class OtpService
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;padding:32px;border:1px solid #e5e7eb;">
     <p style="margin:0 0 12px;font-size:14px;color:#6b7280;">{$brand}</p>
     <h1 style="margin:0 0 16px;font-size:24px;">Verificacion de correo</h1>
-    <p style="margin:0 0 20px;font-size:16px;">Hola {$name},</p>
-    <p style="margin:0 0 20px;font-size:16px;">Tu codigo OTP de verificacion es:</p>
+    <p style="margin:0 0 20px;font-size:16px;">Un gusto de ver tu preferencia hacia nosotros {$name},</p>
+    <p style="margin:0 0 20px;font-size:16px;">Tu codigo para confirmar tu cuenta es:</p>
     <div style="margin:0 0 20px;padding:16px 20px;background:#111827;color:#ffffff;border-radius:12px;font-size:32px;font-weight:700;letter-spacing:8px;text-align:center;">{$safeCode}</div>
     <p style="margin:0 0 8px;font-size:15px;">Este codigo vence en 10 minutos.</p>
-    <p style="margin:0;font-size:14px;color:#6b7280;">Si no solicitaste este codigo, ignora este correo.</p>
+    <p style="margin:0;font-size:14px;color:#6b7280;">Si no solicitaste este codigo, ignoralo.</p>
   </div>
 </div>
 HTML;
