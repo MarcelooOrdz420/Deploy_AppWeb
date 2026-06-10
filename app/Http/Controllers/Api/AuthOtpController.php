@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Auth\OtpService;
+use App\Services\JwtService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -28,6 +29,7 @@ class AuthOtpController extends Controller
         }
 
         $user->forceFill([
+            'is_active' => true,
             'is_verified' => true,
             'email_verified_at' => now(),
         ])->save();
@@ -37,6 +39,7 @@ class AuthOtpController extends Controller
         return response()->json([
             'message' => 'Correo verificado correctamente.',
             'user' => $user->fresh(),
+            'token' => JwtService::encode($user->fresh()),
         ]);
     }
 

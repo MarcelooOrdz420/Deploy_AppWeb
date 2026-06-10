@@ -9,6 +9,7 @@ use App\Services\Auth\OtpService;
 use App\Services\JwtService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -18,27 +19,54 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:120', 'unique:users,email'],
+            'email' => ['required', 'email', 'max:120'],
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'string', 'min:6'],
         ]);
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'] ?? null,
-            'role' => 'customer',
-            'password' => Hash::make($data['password']),
-        ]);
+        $existingUser = User::query()
+            ->where('email', $data['email'])
+            ->first();
+
+        if ($existingUser && $existingUser->is_verified) {
+            throw ValidationException::withMessages([
+                'email' => ['Este correo ya esta registrado.'],
+            ]);
+        }
+
+        $user = DB::transaction(function () use ($data, $existingUser): User {
+            if ($existingUser) {
+                $existingUser->forceFill([
+                    'name' => $data['name'],
+                    'phone' => $data['phone'] ?? null,
+                    'role' => 'customer',
+                    'is_active' => false,
+                    'is_verified' => false,
+                    'email_verified_at' => null,
+                    'password' => Hash::make($data['password']),
+                ])->save();
+
+                return $existingUser->fresh();
+            }
+
+            return User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'] ?? null,
+                'role' => 'customer',
+                'is_active' => false,
+                'is_verified' => false,
+                'email_verified_at' => null,
+                'password' => Hash::make($data['password']),
+            ]);
+        });
 
         $otpService->sendForUser($user);
 
-        $token = JwtService::encode($user);
-
         return response()->json([
-            'message' => 'Cuenta creada. Revisa tu correo para el codigo de verificacion.',
-            'token' => $token,
+            'message' => 'Te enviamos un codigo de verificacion a tu correo. Ingresa el codigo para activar tu cuenta.',
             'user' => $user,
+            'requires_verification' => true,
         ], 201);
     }
 
@@ -64,6 +92,13 @@ class AuthController extends Controller
             LoginHistory::create($historyData);
             throw ValidationException::withMessages([
                 'email' => ['Credenciales incorrectas.'],
+            ]);
+        }
+
+        if (! $user->is_verified) {
+            LoginHistory::create(array_merge($historyData, ['user_id' => $user->id]));
+            throw ValidationException::withMessages([
+                'email' => ['Debes verificar tu correo con el codigo OTP antes de iniciar sesion.'],
             ]);
         }
 

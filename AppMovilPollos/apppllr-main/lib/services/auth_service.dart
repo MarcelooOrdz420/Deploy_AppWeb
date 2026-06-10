@@ -3,6 +3,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
 import 'push_notifications_service.dart';
 
+class RegisterResponse {
+  RegisterResponse({
+    required this.email,
+    required this.message,
+    required this.requiresVerification,
+  });
+
+  final String email;
+  final String message;
+  final bool requiresVerification;
+}
+
 class AuthService {
   String _messageFromDio(DioException e, {String fallback = 'Error de servidor'}) {
     final data = e.response?.data;
@@ -48,20 +60,20 @@ class AuthService {
       final status = e.response?.statusCode;
       final msg = _messageFromDio(e, fallback: 'No se pudo iniciar sesion');
 
-      if (status == 401) throw Exception('Credenciales incorrectas');
+      if (status == 401) throw Exception(msg);
       if (status == 422) throw Exception(msg);
       throw Exception(status != null ? '($status) $msg' : msg);
     }
   }
 
-  Future<void> register({
+  Future<RegisterResponse> register({
     required String email,
     required String password,
     String? name,
     String? phone,
   }) async {
     try {
-      await ApiClient.post(
+      final res = await ApiClient.post(
         '/auth/register',
         data: {
           'email': email,
@@ -70,9 +82,72 @@ class AuthService {
           'phone': (phone ?? '').trim().isEmpty ? null : phone!.trim(),
         },
       );
+
+      final data = (res.data as Map).cast<String, dynamic>();
+
+      return RegisterResponse(
+        email: email,
+        message: data['message']?.toString() ?? 'Codigo OTP enviado.',
+        requiresVerification: data['requires_verification'] == true,
+      );
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final msg = _messageFromDio(e, fallback: 'No se pudo registrar');
+      throw Exception(status != null ? '($status) $msg' : msg);
+    }
+  }
+
+  Future<void> verifyOtp({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      final res = await ApiClient.post(
+        '/auth/verify-otp',
+        data: {
+          'email': email,
+          'code': code,
+        },
+      );
+
+      final data = (res.data as Map).cast<String, dynamic>();
+      final token = data['token']?.toString();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Token no recibido');
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', token);
+
+      final user = (data['user'] is Map) ? (data['user'] as Map).cast<String, dynamic>() : null;
+      await prefs.setInt('user_id', (user?['id'] as num?)?.toInt() ?? 0);
+      await prefs.setString('user_name', user?['name']?.toString() ?? '');
+      await prefs.setString('user_email', user?['email']?.toString() ?? email);
+      await prefs.setString('user_phone', user?['phone']?.toString() ?? '');
+      await prefs.setString('user_role', user?['role']?.toString() ?? 'customer');
+
+      await PushNotificationsService.instance.syncOrderTopics();
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final msg = _messageFromDio(e, fallback: 'No se pudo verificar el codigo');
+      throw Exception(status != null ? '($status) $msg' : msg);
+    }
+  }
+
+  Future<void> resendOtp({
+    required String email,
+  }) async {
+    try {
+      await ApiClient.post(
+        '/auth/resend-otp',
+        data: {
+          'email': email,
+        },
+      );
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final msg = _messageFromDio(e, fallback: 'No se pudo reenviar el codigo');
       throw Exception(status != null ? '($status) $msg' : msg);
     }
   }

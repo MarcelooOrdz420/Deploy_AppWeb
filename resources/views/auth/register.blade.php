@@ -178,6 +178,65 @@
             font-weight: 700;
         }
 
+        .otp-panel {
+            margin-top: 22px;
+            padding: 20px;
+            border: 1px solid #f0ccb0;
+            border-radius: 18px;
+            background: #fff4eb;
+        }
+
+        .otp-panel[hidden] {
+            display: none;
+        }
+
+        .otp-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .otp-grid input {
+            margin-bottom: 0;
+            padding: 12px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .otp-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .otp-link-btn {
+            width: auto;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+            color: #8a3f0a;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .otp-link-btn:hover {
+            transform: none;
+            box-shadow: none;
+            color: var(--orange-deep);
+        }
+
+        .otp-note {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
         .footer-links {
             margin-top: 18px;
             display: flex;
@@ -313,6 +372,31 @@
 
         <div id="msg" class="msg"></div>
 
+        <section id="otpPanel" class="otp-panel" hidden>
+            <h3 style="margin:0 0 8px;color:#24160f;">Verifica tu correo</h3>
+            <p class="otp-note">Te enviamos un codigo de 6 digitos a <strong id="otpEmailLabel"></strong>. La cuenta se activara cuando el codigo sea correcto.</p>
+
+            <form id="otpForm">
+                <div class="otp-grid">
+                    <input type="text" inputmode="numeric" maxlength="1" data-otp-input required>
+                    <input type="text" inputmode="numeric" maxlength="1" data-otp-input required>
+                    <input type="text" inputmode="numeric" maxlength="1" data-otp-input required>
+                    <input type="text" inputmode="numeric" maxlength="1" data-otp-input required>
+                    <input type="text" inputmode="numeric" maxlength="1" data-otp-input required>
+                    <input type="text" inputmode="numeric" maxlength="1" data-otp-input required>
+                </div>
+
+                <button type="submit">Verificar Codigo</button>
+            </form>
+
+            <div class="otp-actions">
+                <button type="button" id="resendOtpBtn" class="otp-link-btn">Reenviar codigo</button>
+                <span id="otpCooldown" class="otp-note"></span>
+            </div>
+
+            <div id="otpMsg" class="msg" style="margin-top:12px;"></div>
+        </section>
+
         <div class="footer-links">
             <a href="/productos">Ir a la tienda</a>
             <a href="/login">Ya tengo cuenta</a>
@@ -339,16 +423,84 @@
 
 const form = document.getElementById('registerForm');
 const msg = document.getElementById('msg');
+const otpPanel = document.getElementById('otpPanel');
+const otpForm = document.getElementById('otpForm');
+const otpMsg = document.getElementById('otpMsg');
+const otpEmailLabel = document.getElementById('otpEmailLabel');
+const resendOtpBtn = document.getElementById('resendOtpBtn');
+const otpCooldown = document.getElementById('otpCooldown');
+const otpInputs = Array.from(document.querySelectorAll('[data-otp-input]'));
+let pendingEmail = '';
+let cooldownTimer = null;
+let cooldown = 0;
 
 function extractRegisterError(data) {
     const firstError = Object.values(data?.errors || {})[0]?.[0];
-
-    if (firstError === 'validation.unique') {
-        return 'Este correo ya esta registrado.';
-    }
-
     return firstError || data?.message || 'No se pudo registrar.';
 }
+
+function setSessionFromAuth(data) {
+    localStorage.setItem('ed_token', data.token);
+    localStorage.setItem('ed_user', JSON.stringify(data.user));
+    localStorage.setItem('ed_session', JSON.stringify({
+        role: data.user.role || 'customer',
+        lastActivity: Date.now(),
+        expiresAt: Date.now() + (60 * 60 * 1000),
+    }));
+}
+
+function setOtpMessage(text, ok = false) {
+    otpMsg.textContent = text;
+    otpMsg.style.color = ok ? '#166534' : '#9d460d';
+}
+
+function startOtpCooldown(seconds = 60) {
+    cooldown = seconds;
+    resendOtpBtn.disabled = true;
+    clearInterval(cooldownTimer);
+
+    const render = () => {
+        otpCooldown.textContent = cooldown > 0 ? `Reenviar en ${cooldown}s` : '';
+        resendOtpBtn.disabled = cooldown > 0;
+    };
+
+    render();
+    cooldownTimer = setInterval(() => {
+        cooldown -= 1;
+        if (cooldown <= 0) {
+            clearInterval(cooldownTimer);
+            cooldown = 0;
+        }
+        render();
+    }, 1000);
+}
+
+function revealOtpPanel(email) {
+    pendingEmail = email;
+    otpEmailLabel.textContent = email;
+    otpPanel.hidden = false;
+    form.querySelector('button[type="submit"]').disabled = true;
+    otpInputs.forEach((input) => {
+        input.value = '';
+    });
+    otpInputs[0]?.focus();
+    startOtpCooldown(60);
+}
+
+otpInputs.forEach((input, index) => {
+    input.addEventListener('input', () => {
+        input.value = input.value.replace(/\D/g, '').slice(0, 1);
+        if (input.value && index < otpInputs.length - 1) {
+            otpInputs[index + 1].focus();
+        }
+    });
+
+    input.addEventListener('keydown', (event) => {
+        if (event.key === 'Backspace' && !input.value && index > 0) {
+            otpInputs[index - 1].focus();
+        }
+    });
+});
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -375,16 +527,72 @@ form.addEventListener('submit', async (e) => {
             return;
         }
 
-        localStorage.setItem('ed_token', data.token);
-        localStorage.setItem('ed_user', JSON.stringify(data.user));
-        localStorage.setItem('ed_session', JSON.stringify({
-            role: data.user.role || 'customer',
-            lastActivity: Date.now(),
-            expiresAt: Date.now() + (60 * 60 * 1000),
-        }));
-        window.location.href = '/productos';
+        msg.textContent = data.message || 'Revisa tu correo y completa el codigo OTP.';
+        revealOtpPanel(payload.email);
     } catch {
         msg.textContent = 'No se pudo conectar con el servidor.';
+    }
+});
+
+otpForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const code = otpInputs.map((input) => input.value).join('');
+
+    if (code.length !== 6 || !pendingEmail) {
+        setOtpMessage('Completa los 6 digitos del codigo.');
+        return;
+    }
+
+    setOtpMessage('Verificando codigo...');
+
+    try {
+        const res = await fetch('/api/v1/auth/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: pendingEmail, code }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            setOtpMessage(data.message || 'No se pudo verificar el codigo.');
+            return;
+        }
+
+        setSessionFromAuth(data);
+        setOtpMessage(data.message || 'Correo verificado correctamente.', true);
+        window.location.href = '/productos';
+    } catch {
+        setOtpMessage('No se pudo conectar con el servidor.');
+    }
+});
+
+resendOtpBtn.addEventListener('click', async () => {
+    if (!pendingEmail) {
+        setOtpMessage('Primero registra la cuenta.');
+        return;
+    }
+
+    setOtpMessage('Reenviando codigo...');
+
+    try {
+        const res = await fetch('/api/v1/auth/resend-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: pendingEmail }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            setOtpMessage(data.message || 'No se pudo reenviar el codigo.');
+            return;
+        }
+
+        setOtpMessage(data.message || 'Codigo reenviado correctamente.', true);
+        startOtpCooldown(60);
+    } catch {
+        setOtpMessage('No se pudo conectar con el servidor.');
     }
 });
 </script>

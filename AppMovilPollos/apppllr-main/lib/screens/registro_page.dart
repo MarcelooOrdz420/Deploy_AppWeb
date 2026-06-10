@@ -16,9 +16,13 @@ class _RegistroPageState extends State<RegistroPage> {
   final _phoneController = TextEditingController();
   final _correoController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _otpController = TextEditingController();
 
   bool _loading = false;
   bool _obscure = true;
+  bool _awaitingOtp = false;
+  String _pendingEmail = '';
+  String _otpHint = '';
 
   bool _isEmailValid(String email) {
     final r = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -59,17 +63,22 @@ class _RegistroPageState extends State<RegistroPage> {
 
     setState(() => _loading = true);
     try {
-      await AuthService().register(
+      final result = await AuthService().register(
         email: email,
         password: pass,
         name: name,
         phone: _phoneController.text.trim(),
       );
 
-      await AuthService().login(email: email, password: pass);
-
       if (!mounted) return;
-      context.go('/app');
+      setState(() {
+        _awaitingOtp = result.requiresVerification;
+        _pendingEmail = email;
+        _otpHint = result.message;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -86,12 +95,60 @@ class _RegistroPageState extends State<RegistroPage> {
     }
   }
 
+  Future<void> _doVerifyOtp() async {
+    final code = _otpController.text.trim();
+
+    if (_pendingEmail.isEmpty || code.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresa el codigo OTP de 6 digitos')),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      await AuthService().verifyOtp(email: _pendingEmail, code: code);
+      if (!mounted) return;
+      context.go('/app');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_cleanError(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _doResendOtp() async {
+    if (_pendingEmail.isEmpty) {
+      return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      await AuthService().resendOtp(email: _pendingEmail);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Codigo reenviado correctamente')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_cleanError(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
     _correoController.dispose();
     _passwordController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
@@ -157,71 +214,138 @@ class _RegistroPageState extends State<RegistroPage> {
                         ],
                       ),
                       const SizedBox(height: 18),
-                      TextField(
-                        controller: _nameController,
-                        enabled: !_loading,
-                        decoration: const InputDecoration(
-                          labelText: 'Nombre',
-                          prefixIcon: Icon(Icons.person_outline),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _phoneController,
-                        enabled: !_loading,
-                        decoration: const InputDecoration(
-                          labelText: 'Telefono',
-                          prefixIcon: Icon(Icons.phone_outlined),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _correoController,
-                        enabled: !_loading,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Correo',
-                          prefixIcon: Icon(Icons.mail_outline),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _passwordController,
-                        enabled: !_loading,
-                        obscureText: _obscure,
-                        decoration: InputDecoration(
-                          labelText: 'Contrasena',
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          suffixIcon: IconButton(
-                            onPressed: _loading ? null : () => setState(() => _obscure = !_obscure),
-                            icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                      if (!_awaitingOtp) ...[
+                        TextField(
+                          controller: _nameController,
+                          enabled: !_loading,
+                          decoration: const InputDecoration(
+                            labelText: 'Nombre',
+                            prefixIcon: Icon(Icons.person_outline),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 18),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: StoreTheme.orange,
-                            foregroundColor: StoreTheme.ink,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _phoneController,
+                          enabled: !_loading,
+                          decoration: const InputDecoration(
+                            labelText: 'Telefono',
+                            prefixIcon: Icon(Icons.phone_outlined),
                           ),
-                          onPressed: _loading ? null : _doRegister,
-                          child: _loading
-                              ? const SizedBox(
-                                  height: 18,
-                                  width: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Text('Crear cuenta'),
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _correoController,
+                          enabled: !_loading,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: const InputDecoration(
+                            labelText: 'Correo',
+                            prefixIcon: Icon(Icons.mail_outline),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _passwordController,
+                          enabled: !_loading,
+                          obscureText: _obscure,
+                          decoration: InputDecoration(
+                            labelText: 'Contrasena',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              onPressed: _loading ? null : () => setState(() => _obscure = !_obscure),
+                              icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: StoreTheme.orange,
+                              foregroundColor: StoreTheme.ink,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            onPressed: _loading ? null : _doRegister,
+                            child: _loading
+                                ? const SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text('Crear cuenta'),
+                          ),
+                        ),
+                      ] else ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF4E8),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: StoreTheme.lineStrong.withOpacity(.7)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Verifica tu correo',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _otpHint.isEmpty
+                                    ? 'Ingresa el codigo de 6 digitos enviado a $_pendingEmail.'
+                                    : _otpHint,
+                                style: const TextStyle(color: StoreTheme.inkSoft, height: 1.5),
+                              ),
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _otpController,
+                                enabled: !_loading,
+                                keyboardType: TextInputType.number,
+                                maxLength: 6,
+                                decoration: const InputDecoration(
+                                  labelText: 'Codigo OTP',
+                                  prefixIcon: Icon(Icons.verified_outlined),
+                                  counterText: '',
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: StoreTheme.orange,
+                                    foregroundColor: StoreTheme.ink,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                  ),
+                                  onPressed: _loading ? null : _doVerifyOtp,
+                                  child: _loading
+                                      ? const SizedBox(
+                                          height: 18,
+                                          width: 18,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                      : const Text('Verificar codigo'),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.center,
+                                child: TextButton(
+                                  onPressed: _loading ? null : _doResendOtp,
+                                  child: const Text('Reenviar codigo'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 10),
                       Center(
                         child: TextButton(
                           onPressed: _loading ? null : () => context.go('/correo'),
-                          child: const Text('Ya tengo cuenta'),
+                          child: Text(_awaitingOtp ? 'Ya verifique, ir a iniciar sesion' : 'Ya tengo cuenta'),
                         ),
                       ),
                     ],

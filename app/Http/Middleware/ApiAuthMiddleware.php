@@ -30,6 +30,10 @@ class ApiAuthMiddleware
             return response()->json(['message' => 'Usuario no encontrado.'], 401);
         }
 
+        if (! $user->is_verified) {
+            return response()->json(['message' => 'Debes verificar tu correo antes de continuar.'], 401);
+        }
+
         if (! $user->is_active) {
             return response()->json(['message' => 'Cuenta desactivada.'], 401);
         }
