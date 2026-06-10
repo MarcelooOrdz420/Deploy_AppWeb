@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\LoginHistory;
+use App\Services\Auth\GoogleIdentityService;
 use App\Services\Auth\OtpService;
 use App\Services\JwtService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -115,6 +117,85 @@ class AuthController extends Controller
         return response()->json([
             'token' => JwtService::encode($user),
             'user' => $user,
+        ]);
+    }
+
+    public function google(Request $request, GoogleIdentityService $googleIdentityService): JsonResponse
+    {
+        $data = $request->validate([
+            'id_token' => ['required', 'string'],
+        ]);
+
+        $googleUser = $googleIdentityService->verifyIdToken($data['id_token']);
+
+        if (! $googleUser['email_verified']) {
+            throw ValidationException::withMessages([
+                'google' => ['La cuenta de Google no tiene el correo verificado.'],
+            ]);
+        }
+
+        $user = DB::transaction(function () use ($googleUser): User {
+            $user = User::query()
+                ->where('google_id', $googleUser['sub'])
+                ->orWhere('email', $googleUser['email'])
+                ->first();
+
+            if ($user) {
+                $wasVerified = (bool) $user->is_verified;
+                $user->forceFill([
+                    'google_id' => $googleUser['sub'],
+                    'name' => $googleUser['name'],
+                    'avatar_url' => $googleUser['picture'],
+                    'email_verified_at' => now(),
+                    'is_verified' => true,
+                    'is_active' => $user->is_active || ! $wasVerified,
+                    'otp_code' => null,
+                    'otp_expires_at' => null,
+                ])->save();
+
+                return $user->fresh();
+            }
+
+            return User::create([
+                'name' => $googleUser['name'],
+                'email' => $googleUser['email'],
+                'google_id' => $googleUser['sub'],
+                'avatar_url' => $googleUser['picture'],
+                'phone' => null,
+                'role' => 'customer',
+                'is_active' => true,
+                'is_verified' => true,
+                'email_verified_at' => now(),
+                'password' => Hash::make(Str::random(40)),
+            ]);
+        });
+
+        if (! $user->is_active) {
+            LoginHistory::create([
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->header('User-Agent'),
+                'successful' => false,
+            ]);
+
+            throw ValidationException::withMessages([
+                'google' => ['Cuenta desactivada. Contacta con soporte de Pollos y Parrillas El Dorado.'],
+            ]);
+        }
+
+        LoginHistory::create([
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->header('User-Agent'),
+            'successful' => true,
+        ]);
+
+        return response()->json([
+            'token' => JwtService::encode($user),
+            'user' => $user,
+            'message' => 'Sesion iniciada con Google.',
         ]);
     }
 

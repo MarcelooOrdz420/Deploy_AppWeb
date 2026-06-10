@@ -170,6 +170,48 @@
             box-shadow: 0 16px 30px rgba(255, 111, 31, 0.32);
         }
 
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 16px 0 6px;
+            color: #9a6f57;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #efd2bd;
+        }
+
+        .google-btn {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+            padding: 14px 18px;
+            border-radius: 999px;
+            border: 1px solid #ead0bc;
+            background: #fff;
+            color: #24160f;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 900;
+            box-shadow: 0 12px 24px rgba(36, 22, 15, 0.08);
+        }
+
+        .google-btn:hover {
+            transform: translateY(-1px);
+        }
+
         .msg {
             min-height: 22px;
             margin-top: 14px;
@@ -370,6 +412,11 @@
             <button type="submit">Crear Cuenta</button>
         </form>
 
+        @if (config('services.google_auth.web_client_id'))
+            <div class="divider">o continua con</div>
+            <div id="googleRegisterBtn"></div>
+        @endif
+
         <div id="msg" class="msg"></div>
 
         <section id="otpPanel" class="otp-panel" hidden>
@@ -404,6 +451,9 @@
     </section>
 </main>
 
+@if (config('services.google_auth.web_client_id'))
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+@endif
 <script>
 (() => {
     const apiBase = @json(config('app.api_base_url'));
@@ -430,6 +480,7 @@ const otpEmailLabel = document.getElementById('otpEmailLabel');
 const resendOtpBtn = document.getElementById('resendOtpBtn');
 const otpCooldown = document.getElementById('otpCooldown');
 const otpInputs = Array.from(document.querySelectorAll('[data-otp-input]'));
+const googleRegisterBtn = document.getElementById('googleRegisterBtn');
 let pendingEmail = '';
 let cooldownTimer = null;
 let cooldown = 0;
@@ -595,6 +646,51 @@ resendOtpBtn.addEventListener('click', async () => {
         setOtpMessage('No se pudo conectar con el servidor.');
     }
 });
+
+@if (config('services.google_auth.web_client_id'))
+window.handleGoogleRegister = async (response) => {
+    msg.textContent = 'Validando cuenta de Google...';
+
+    try {
+        const res = await fetch('/api/v1/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_token: response.credential }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            msg.textContent = data.message || 'No se pudo registrar con Google.';
+            return;
+        }
+
+        setSessionFromAuth(data);
+        window.location.href = '/productos';
+    } catch {
+        msg.textContent = 'No se pudo conectar con el servidor.';
+    }
+};
+
+window.addEventListener('load', () => {
+    if (!window.google || !googleRegisterBtn) return;
+
+    google.accounts.id.initialize({
+        client_id: @json(config('services.google_auth.web_client_id')),
+        callback: window.handleGoogleRegister,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+    });
+
+    google.accounts.id.renderButton(googleRegisterBtn, {
+        theme: 'outline',
+        size: 'large',
+        shape: 'pill',
+        text: 'signup_with',
+        width: googleRegisterBtn.offsetWidth || 320,
+    });
+});
+@endif
 </script>
 </body>
 </html>

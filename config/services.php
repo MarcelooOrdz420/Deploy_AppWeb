@@ -25,6 +25,20 @@ return [
         'timeout' => env('RESEND_TIMEOUT', 15),
     ],
 
+    'google_auth' => [
+        'client_ids' => array_values(array_filter(array_map(
+            static fn (?string $value): string => trim((string) $value),
+            explode(',', (string) env(
+                'GOOGLE_AUTH_CLIENT_IDS',
+                '979612097533-vmule768o9q9gfe18trr2ha7kkif8r7h.apps.googleusercontent.com,979612097533-h80d392m1b9789dkd22fldogjqsaitja.apps.googleusercontent.com'
+            ))
+        ))),
+        'web_client_id' => env(
+            'GOOGLE_AUTH_WEB_CLIENT_ID',
+            '979612097533-vmule768o9q9gfe18trr2ha7kkif8r7h.apps.googleusercontent.com'
+        ),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

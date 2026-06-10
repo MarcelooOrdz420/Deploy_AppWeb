@@ -42,6 +42,7 @@ class RuntimeConfig {
   }
 
   static String get apiOrigin => _string(_data['api_origin']);
+  static String get googleServerClientId => _string(_map(_data['google'])['server_client_id']);
 
   static Future<void> setApiOrigin(String origin) async {
     final value = origin.trim();

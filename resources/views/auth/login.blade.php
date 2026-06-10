@@ -170,6 +170,48 @@
             box-shadow: 0 16px 30px rgba(255, 111, 31, 0.32);
         }
 
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 16px 0 6px;
+            color: #9a6f57;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #efd2bd;
+        }
+
+        .google-btn {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+            padding: 14px 18px;
+            border-radius: 999px;
+            border: 1px solid #ead0bc;
+            background: #fff;
+            color: #24160f;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 900;
+            box-shadow: 0 12px 24px rgba(36, 22, 15, 0.08);
+        }
+
+        .google-btn:hover {
+            transform: translateY(-1px);
+        }
+
         .msg {
             min-height: 22px;
             margin-top: 14px;
@@ -298,6 +340,11 @@
             <button type="submit">Iniciar Sesión</button>
         </form>
 
+        @if (config('services.google_auth.web_client_id'))
+            <div class="divider">o continua con</div>
+            <div id="googleLoginBtn"></div>
+        @endif
+
         <div id="msg" class="msg"></div>
 
         <div class="footer-links">
@@ -317,6 +364,9 @@
     </aside>
 </main>
 
+@if (config('services.google_auth.web_client_id'))
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+@endif
 <script>
 (() => {
     const apiBase = @json(config('app.api_base_url'));
@@ -336,6 +386,17 @@
 
 const form = document.getElementById('loginForm');
 const msg = document.getElementById('msg');
+const googleBtn = document.getElementById('googleLoginBtn');
+
+function setSessionFromAuth(data) {
+    localStorage.setItem('ed_token', data.token);
+    localStorage.setItem('ed_user', JSON.stringify(data.user));
+    localStorage.setItem('ed_session', JSON.stringify({
+        role: data.user.role || 'customer',
+        lastActivity: Date.now(),
+        expiresAt: Date.now() + (60 * 60 * 1000),
+    }));
+}
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -357,18 +418,57 @@ form.addEventListener('submit', async (e) => {
             return;
         }
 
-        localStorage.setItem('ed_token', data.token);
-        localStorage.setItem('ed_user', JSON.stringify(data.user));
-        localStorage.setItem('ed_session', JSON.stringify({
-            role: data.user.role || 'customer',
-            lastActivity: Date.now(),
-            expiresAt: Date.now() + (60 * 60 * 1000),
-        }));
+        setSessionFromAuth(data);
         window.location.href = data.user && data.user.role === 'admin' ? '/admin/panel' : '/productos';
     } catch {
         msg.textContent = 'No se pudo conectar con el servidor.';
     }
 });
+
+@if (config('services.google_auth.web_client_id'))
+window.handleGoogleCredential = async (response) => {
+    msg.textContent = 'Validando cuenta de Google...';
+
+    try {
+        const res = await fetch('/api/v1/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_token: response.credential }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            msg.textContent = data.message || 'No se pudo iniciar sesion con Google.';
+            return;
+        }
+
+        setSessionFromAuth(data);
+        window.location.href = '/productos';
+    } catch {
+        msg.textContent = 'No se pudo conectar con el servidor.';
+    }
+};
+
+window.addEventListener('load', () => {
+    if (!window.google || !googleBtn) return;
+
+    google.accounts.id.initialize({
+        client_id: @json(config('services.google_auth.web_client_id')),
+        callback: window.handleGoogleCredential,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+    });
+
+    google.accounts.id.renderButton(googleBtn, {
+        theme: 'outline',
+        size: 'large',
+        shape: 'pill',
+        text: 'continue_with',
+        width: googleBtn.offsetWidth || 320,
+    });
+});
+@endif
 </script>
 </body>
 </html>

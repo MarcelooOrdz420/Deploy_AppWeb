@@ -1,5 +1,8 @@
 {
   "api_origin": "https://pollos.saborcentral.com",
+  "google": {
+    "server_client_id": "979612097533-vmule768o9q9gfe18trr2ha7kkif8r7h.apps.googleusercontent.com"
+  },
   "pusher": {
     "app_key": "8c80725adade23c572e4",
     "cluster": "mt1",

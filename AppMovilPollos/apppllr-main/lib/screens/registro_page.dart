@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../config/runtime_config.dart';
 import '../services/auth_service.dart';
 import '../theme/store_theme.dart';
 
@@ -23,6 +24,7 @@ class _RegistroPageState extends State<RegistroPage> {
   bool _awaitingOtp = false;
   String _pendingEmail = '';
   String _otpHint = '';
+  bool get _googleEnabled => RuntimeConfig.googleServerClientId.trim().isNotEmpty;
 
   bool _isEmailValid(String email) {
     final r = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -93,6 +95,43 @@ class _RegistroPageState extends State<RegistroPage> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _doGoogleRegister() async {
+    setState(() => _loading = true);
+    try {
+      await AuthService().loginWithGoogle();
+      if (!mounted) return;
+      context.go('/app');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_cleanError(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Widget _googleBadge() {
+    return Container(
+      width: 22,
+      height: 22,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: StoreTheme.lineStrong.withOpacity(.85)),
+      ),
+      child: const Text(
+        'G',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF4285F4),
+        ),
+      ),
+    );
   }
 
   Future<void> _doVerifyOtp() async {
@@ -275,6 +314,17 @@ class _RegistroPageState extends State<RegistroPage> {
                                 : const Text('Crear cuenta'),
                           ),
                         ),
+                        if (_googleEnabled) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _loading ? null : _doGoogleRegister,
+                              icon: _googleBadge(),
+                              label: const Text('Continuar con Google'),
+                            ),
+                          ),
+                        ],
                       ] else ...[
                         Container(
                           width: double.infinity,

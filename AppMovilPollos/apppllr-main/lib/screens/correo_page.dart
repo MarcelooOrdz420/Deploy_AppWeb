@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../config/runtime_config.dart';
 import '../services/auth_service.dart';
 import '../theme/store_theme.dart';
 
@@ -15,6 +16,7 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool _loading = false;
+  bool get _googleEnabled => RuntimeConfig.googleServerClientId.trim().isNotEmpty;
 
   String _cleanError(Object e) => e.toString().replaceFirst('Exception: ', '').trim();
 
@@ -48,6 +50,43 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _doGoogleLogin() async {
+    setState(() => _loading = true);
+    try {
+      await AuthService().loginWithGoogle();
+      if (!mounted) return;
+      context.go('/app');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_cleanError(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Widget _googleBadge() {
+    return Container(
+      width: 22,
+      height: 22,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: StoreTheme.lineStrong.withOpacity(.85)),
+      ),
+      child: const Text(
+        'G',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF4285F4),
+        ),
+      ),
+    );
   }
 
   @override
@@ -163,6 +202,17 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
                               : const Text('Iniciar sesion'),
                         ),
                       ),
+                      if (_googleEnabled) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _loading ? null : _doGoogleLogin,
+                            icon: _googleBadge(),
+                            label: const Text('Continuar con Google'),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 10),
                       Center(
                         child: TextButton(
