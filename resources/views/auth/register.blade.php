@@ -340,6 +340,16 @@
 const form = document.getElementById('registerForm');
 const msg = document.getElementById('msg');
 
+function extractRegisterError(data) {
+    const firstError = Object.values(data?.errors || {})[0]?.[0];
+
+    if (firstError === 'validation.unique') {
+        return 'Este correo ya esta registrado.';
+    }
+
+    return firstError || data?.message || 'No se pudo registrar.';
+}
+
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     msg.textContent = 'Creando cuenta...';
@@ -361,7 +371,7 @@ form.addEventListener('submit', async (e) => {
         const data = await res.json();
 
         if (!res.ok) {
-            msg.textContent = data.message || 'No se pudo registrar.';
+            msg.textContent = extractRegisterError(data);
             return;
         }
 
