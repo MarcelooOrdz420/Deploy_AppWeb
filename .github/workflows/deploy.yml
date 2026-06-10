@@ -19,7 +19,7 @@ jobs:
           php-version: "8.2"
 
       - name: Install Composer dependencies
-        run: composer install --no-dev --optimize-autoloader
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -43,6 +43,3 @@ jobs:
             **/storage/framework/views/**
             **/storage/logs/**
             **/public/error_log
-
-      - name: Clear Laravel caches
-        run: 'curl --fail --silent --show-error -H "Host: pollos.saborcentral.com" http://216.246.112.85/artisan-run.php'
