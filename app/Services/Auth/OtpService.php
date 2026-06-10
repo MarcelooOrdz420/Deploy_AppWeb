@@ -32,7 +32,7 @@ class OtpService
             try {
                 $this->resendEmailService->send([
                     'to' => [$user->email],
-                    'subject' => 'Tu codigo de verificacion',
+                    'subject' => 'Tu codigo de verificación',
                     'html' => $html,
                     'text' => $text,
                 ]);
@@ -89,10 +89,10 @@ class OtpService
         $name = trim((string) $user->name) !== '' ? $user->name : 'usuario';
 
         return implode("\n\n", [
-            "Hola {$name},",
-            "Tu codigo OTP de verificacion es: {$code}",
+            "Un gusto de ver tu preferencia hacia nosotros {$name},",
+            "Tu codigo para confirmar tu cuenta es: {$code}",
             'Este codigo vence en 10 minutos.',
-            'Si no solicitaste este codigo, ignora este correo.',
+            'Si no solicitaste este codigo, ignoralo.',
         ]);
     }
 
