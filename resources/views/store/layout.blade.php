@@ -578,6 +578,42 @@ function saveSession(session) {
     localStorage.setItem('ed_session', JSON.stringify(session));
 }
 
+let cartSyncTimer = null;
+
+window.edSyncCartDraft = function (forceCart = null) {
+    const token = localStorage.getItem('ed_token');
+    const user = parseUser();
+    if (!token || !user) return;
+
+    const cart = Array.isArray(forceCart)
+        ? forceCart
+        : JSON.parse(localStorage.getItem('ed_cart') || '[]');
+
+    clearTimeout(cartSyncTimer);
+    cartSyncTimer = setTimeout(async () => {
+        try {
+            await fetch('/api/v1/cart-recovery', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    source: 'web',
+                    items: cart.map((item) => ({
+                        id: Number(item.id || 0),
+                        name: String(item.name || ''),
+                        category: String(item.category || ''),
+                        price: Number(item.price || 0),
+                        qty: Number(item.qty || 0),
+                        image_url: String(item.image_url || ''),
+                    })),
+                }),
+            });
+        } catch {}
+    }, 350);
+}
+
 function clearClientSession() {
     localStorage.removeItem('ed_token');
     localStorage.removeItem('ed_user');
@@ -654,9 +690,13 @@ async function initClientSession() {
 
     touchSessionActivity();
     updateTopBar();
+    window.edSyncCartDraft();
 }
 
-window.addEventListener('storage', updateTopBar);
+window.addEventListener('storage', () => {
+    updateTopBar();
+    window.edSyncCartDraft();
+});
 clientLogoutBtn.addEventListener('click', () => {
     clearClientSession();
     updateTopBar();

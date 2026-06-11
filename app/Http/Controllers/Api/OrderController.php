@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Services\Fcm\FcmClient;
 use App\Services\InventoryMovementService;
 use App\Services\SimplePdfReceiptService;
+use App\Services\CartRecoveryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -384,6 +385,8 @@ class OrderController extends Controller
         } catch (\Throwable) {
             // Silencioso: el pedido no debe fallar si Pusher no esta configurado o falla.
         }
+
+        app(CartRecoveryService::class)->clearForUser($request->user());
 
         return response()->json($order, 201);
     }

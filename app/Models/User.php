@@ -21,6 +21,7 @@ class User extends Authenticatable
         'is_verified',
         'otp_code',
         'otp_expires_at',
+        'last_reengagement_email_sent_at',
         'email_verified_at',
         'password',
     ];
@@ -35,6 +36,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'otp_expires_at' => 'datetime',
+            'last_reengagement_email_sent_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
             'is_verified' => 'boolean',
@@ -62,5 +64,10 @@ class User extends Authenticatable
     public function inventoryMovements()
     {
         return $this->hasMany(InventoryMovement::class, 'performed_by');
+    }
+
+    public function cartRecovery()
+    {
+        return $this->hasOne(CartRecovery::class);
     }
 }

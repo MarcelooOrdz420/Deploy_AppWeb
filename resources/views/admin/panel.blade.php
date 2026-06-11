@@ -691,6 +691,18 @@
                     </label>
                     <span class="toggle-status-text">Requiere configurar Firebase.</span>
                 </div>
+                <div class="toggle-row">
+                    <label class="toggle-main">
+                        <input type="checkbox" name="send_email"> Enviar tambien por correo a clientes activos
+                    </label>
+                    <span class="toggle-status-text">Usa Resend si esta configurado.</span>
+                </div>
+                <div class="row">
+                    <div>
+                        <label>Asunto del correo (opcional)</label>
+                        <input name="email_subject" placeholder="Ej: Promo de hoy en El Dorado">
+                    </div>
+                </div>
                 <div class="row">
                     <div>
                         <label>Ti­tulo</label>
@@ -1121,7 +1133,8 @@ async function sendOffer(formData, targetValue) {
         ? ` Push: OK (${data.push.topic})`
         : (data?.push?.ok === false ? ` Push: ${data.push.message || 'ERROR'}` : '');
 
-    offerMsg.textContent = `OK. Enviada a canal ${data.channel} (${targetValue || 'all'}).${pushStatus}`;
+    const emailStatus = data?.email ? ` Email: ${data.email.sent || 0} enviados, ${data.email.failed || 0} fallidos.` : '';
+    offerMsg.textContent = `OK. Enviada a canal ${data.channel} (${targetValue || 'all'}).${pushStatus}${emailStatus}`;
     offerMsg.classList.add('success');
     offerForm.reset();
     setUploadPreview(offerImagePreview, '');
@@ -2039,6 +2052,8 @@ if (offerForm) {
         const formData = new FormData();
         formData.append('target', offerForm.target.value);
         formData.append('send_push', offerForm.send_push?.checked ? '1' : '0');
+        formData.append('send_email', offerForm.send_email?.checked ? '1' : '0');
+        formData.append('email_subject', offerForm.email_subject.value.trim() || '');
         formData.append('title', offerForm.title.value.trim());
         formData.append('message', offerForm.message.value.trim());
         formData.append('body', offerForm.body.value.trim() || '');

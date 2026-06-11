@@ -13,6 +13,7 @@ Route::view('/carrito', 'store.cart')->name('store.cart');
 Route::view('/mis-pedidos', 'store.orders')->name('store.orders');
 Route::view('/login', 'auth.login')->name('login');
 Route::view('/register', 'auth.register')->name('register');
+Route::view('/reset-password', 'auth.reset-password')->name('password.reset');
 
 Route::get('/admin/dashboard', [DashboardController::class, 'index']);
 Route::redirect('/admin', '/admin/login');

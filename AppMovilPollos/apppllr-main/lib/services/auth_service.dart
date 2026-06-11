@@ -141,6 +141,46 @@ class AuthService {
     }
   }
 
+  Future<void> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      await ApiClient.post(
+        '/auth/forgot-password',
+        data: {
+          'email': email,
+        },
+      );
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final msg = _messageFromDio(e, fallback: 'No se pudo enviar el correo de recuperacion');
+      throw Exception(status != null ? '($status) $msg' : msg);
+    }
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      await ApiClient.post(
+        '/auth/reset-password',
+        data: {
+          'email': email,
+          'token': token,
+          'password': password,
+          'password_confirmation': passwordConfirmation,
+        },
+      );
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final msg = _messageFromDio(e, fallback: 'No se pudo restablecer la contrasena');
+      throw Exception(status != null ? '($status) $msg' : msg);
+    }
+  }
+
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');

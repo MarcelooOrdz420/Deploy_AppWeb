@@ -228,6 +228,22 @@
             font-size: 14px;
         }
 
+        .forgot-panel {
+            margin-top: 14px;
+            padding: 16px;
+            border-radius: 18px;
+            background: #fff6ee;
+            border: 1px solid #f6d7c2;
+        }
+
+        .forgot-panel[hidden] {
+            display: none;
+        }
+
+        .forgot-panel button {
+            margin-top: 4px;
+        }
+
         .footer-links a,
         .switch-link {
             color: #8a3f0a;
@@ -347,6 +363,17 @@
 
         <div id="msg" class="msg"></div>
 
+        <button type="button" id="toggleForgotBtn" class="google-btn" style="margin-top:6px;">
+            Olvide mi contrasena
+        </button>
+
+        <form id="forgotForm" class="forgot-panel" hidden>
+            <label for="forgotEmail">Recupera tu acceso</label>
+            <input id="forgotEmail" name="forgot_email" type="email" placeholder="Tu correo registrado" required>
+            <button type="submit">Enviar enlace de recuperacion</button>
+            <div id="forgotMsg" class="msg" style="margin-top:10px;"></div>
+        </form>
+
         <div class="footer-links">
             <a href="/productos">Ir a la tienda</a>
             <a href="/register">Crear cuenta</a>
@@ -387,6 +414,9 @@
 const form = document.getElementById('loginForm');
 const msg = document.getElementById('msg');
 const googleBtn = document.getElementById('googleLoginBtn');
+const toggleForgotBtn = document.getElementById('toggleForgotBtn');
+const forgotForm = document.getElementById('forgotForm');
+const forgotMsg = document.getElementById('forgotMsg');
 
 function setSessionFromAuth(data) {
     localStorage.setItem('ed_token', data.token);
@@ -397,6 +427,14 @@ function setSessionFromAuth(data) {
         expiresAt: Date.now() + (60 * 60 * 1000),
     }));
 }
+
+toggleForgotBtn?.addEventListener('click', () => {
+    forgotForm.hidden = !forgotForm.hidden;
+    if (!forgotForm.hidden) {
+        forgotForm.forgot_email.value = form.email.value.trim();
+        forgotForm.forgot_email.focus();
+    }
+});
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -422,6 +460,26 @@ form.addEventListener('submit', async (e) => {
         window.location.href = data.user && data.user.role === 'admin' ? '/admin/panel' : '/productos';
     } catch {
         msg.textContent = 'No se pudo conectar con el servidor.';
+    }
+});
+
+forgotForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    forgotMsg.style.color = '#9d460d';
+    forgotMsg.textContent = 'Enviando enlace...';
+
+    try {
+        const res = await fetch('/api/v1/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: forgotForm.forgot_email.value.trim() }),
+        });
+
+        const data = await res.json();
+        forgotMsg.style.color = res.ok ? '#166534' : '#9d460d';
+        forgotMsg.textContent = data.message || 'No se pudo procesar la solicitud.';
+    } catch {
+        forgotMsg.textContent = 'No se pudo conectar con el servidor.';
     }
 });
 

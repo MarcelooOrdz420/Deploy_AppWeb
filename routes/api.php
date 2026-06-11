@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AuthOtpController;
+use App\Http\Controllers\Api\AuthPasswordController;
 use App\Http\Controllers\Api\AdminCashClosureController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AdminNotificationController;
+use App\Http\Controllers\Api\CartRecoveryController;
 use App\Http\Controllers\Api\EInvoiceController;
 use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\PusherAuthController;
@@ -24,24 +26,27 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/auth/google', [AuthController::class, 'google']);
     Route::post('/auth/verify-otp', [AuthOtpController::class, 'verify']);
     Route::post('/auth/resend-otp', [AuthOtpController::class, 'resend']);
+    Route::post('/auth/forgot-password', [AuthPasswordController::class, 'forgot']);
+    Route::post('/auth/reset-password', [AuthPasswordController::class, 'reset']);
 
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
-        Route::get('/settings/public', PublicSettingsController::class);
+    Route::get('/settings/public', PublicSettingsController::class);
 
-        Route::get('/orders/track/{trackingCode}', [OrderController::class, 'track']);
+    Route::get('/orders/track/{trackingCode}', [OrderController::class, 'track']);
 
-        Route::post('/chatbot/message', [ChatbotController::class, 'message']);
-        Route::post('/pusher/auth', PusherAuthController::class);
+    Route::post('/chatbot/message', [ChatbotController::class, 'message']);
+    Route::post('/pusher/auth', PusherAuthController::class);
 
-        Route::middleware('auth.api')->group(function (): void {
-            Route::get('/auth/me', [AuthController::class, 'me']);
-            Route::post('/lookups/dni', [PeruLookupController::class, 'lookupDni']);
-            Route::get('/profile/addresses', [ProfileAddressController::class, 'index']);
-            Route::post('/profile/addresses', [ProfileAddressController::class, 'store']);
-            Route::delete('/profile/addresses/{address}', [ProfileAddressController::class, 'destroy']);
+    Route::middleware('auth.api')->group(function (): void {
+        Route::get('/auth/me', [AuthController::class, 'me']);
+        Route::post('/lookups/dni', [PeruLookupController::class, 'lookupDni']);
+        Route::get('/profile/addresses', [ProfileAddressController::class, 'index']);
+        Route::post('/profile/addresses', [ProfileAddressController::class, 'store']);
+        Route::delete('/profile/addresses/{address}', [ProfileAddressController::class, 'destroy']);
+        Route::put('/cart-recovery', [CartRecoveryController::class, 'sync']);
 
-            Route::post('/orders', [OrderController::class, 'store']);
+        Route::post('/orders', [OrderController::class, 'store']);
         Route::get('/orders/my', [OrderController::class, 'myOrders']);
         Route::get('/orders/{order}', [OrderController::class, 'show']);
         Route::get('/orders/{order}/payments/culqi-checkout', [PaymentController::class, 'culqiCheckout']);
@@ -49,7 +54,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/orders/{order}/receipt-view', [OrderController::class, 'receiptView']);
         Route::get('/orders/{order}/receipt', [OrderController::class, 'downloadReceipt']);
 
-            Route::middleware('admin')->group(function (): void {
+        Route::middleware('admin')->group(function (): void {
             Route::post('/admin/notifications/offers', [AdminNotificationController::class, 'sendOffer']);
             Route::get('/admin/products', [ProductController::class, 'adminIndex']);
             Route::post('/products', [ProductController::class, 'store']);
