@@ -24,6 +24,7 @@ class AuthController extends Controller
             'email' => ['required', 'email', 'max:120'],
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'string', 'min:6'],
+            'marketing_emails_enabled' => ['nullable', 'boolean'],
         ]);
 
         $existingUser = User::query()
@@ -45,6 +46,7 @@ class AuthController extends Controller
                     'is_active' => false,
                     'is_verified' => false,
                     'email_verified_at' => null,
+                    'marketing_emails_enabled' => (bool) ($data['marketing_emails_enabled'] ?? true),
                     'password' => Hash::make($data['password']),
                 ])->save();
 
@@ -59,6 +61,7 @@ class AuthController extends Controller
                 'is_active' => false,
                 'is_verified' => false,
                 'email_verified_at' => null,
+                'marketing_emails_enabled' => (bool) ($data['marketing_emails_enabled'] ?? true),
                 'password' => Hash::make($data['password']),
             ]);
         });
@@ -165,6 +168,7 @@ class AuthController extends Controller
                 'role' => 'customer',
                 'is_active' => true,
                 'is_verified' => true,
+                'marketing_emails_enabled' => true,
                 'email_verified_at' => now(),
                 'password' => Hash::make(Str::random(40)),
             ]);

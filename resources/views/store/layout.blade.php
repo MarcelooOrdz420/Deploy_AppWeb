@@ -758,10 +758,13 @@ initClientSession();
 (() => {
     const key = @json(config('broadcasting.connections.pusher.key'));
     const cluster = @json(config('broadcasting.connections.pusher.options.cluster'));
+    const host = @json(config('broadcasting.connections.pusher.options.host'));
+    const port = @json(config('broadcasting.connections.pusher.options.port'));
+    const scheme = @json(config('broadcasting.connections.pusher.options.scheme'));
     const channelName = 'mi-canal';
     const eventName = 'mi-evento';
 
-    if (!key || !cluster || typeof Pusher === 'undefined') return;
+    if (!key || typeof Pusher === 'undefined') return;
 
     const overlay = document.getElementById('promoOverlay');
     const titleEl = document.getElementById('promoTitle');
@@ -799,10 +802,20 @@ initClientSession();
     toastCloseBtn.addEventListener('click', hideToast);
     toastRejectBtn.addEventListener('click', hideToast);
 
-    const pusher = new Pusher(key, { cluster, forceTLS: true });
+    const pusherOptions = {
+        forceTLS: scheme === 'https',
+    };
+    if (cluster) pusherOptions.cluster = cluster;
+    if (host) pusherOptions.wsHost = host;
+    if (port) {
+        pusherOptions.wsPort = Number(port);
+        pusherOptions.wssPort = Number(port);
+    }
+
+    const pusher = new Pusher(key, pusherOptions);
     const channel = pusher.subscribe(channelName);
 
-    channel.bind(eventName, (data) => {
+    const handlePromoEvent = (data) => {
         const payload = data && data.data ? data.data : data;
         const target = (payload?.target || '').toString().trim().toLowerCase();
         if (target && target !== 'web' && target !== 'all') return;
@@ -840,6 +853,10 @@ initClientSession();
         };
 
         showToast();
+    };
+
+    [eventName, `.${eventName}`, 'App\\Events\\OfferNotificationSent'].forEach((name) => {
+        channel.bind(name, handlePromoEvent);
     });
 })();
 </script>

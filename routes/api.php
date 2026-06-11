@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\PusherAuthController;
 use App\Http\Controllers\Api\PeruLookupController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ProfilePreferencesController;
 use App\Http\Controllers\Api\PublicSettingsController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileAddressController;
@@ -44,6 +45,8 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/profile/addresses', [ProfileAddressController::class, 'index']);
         Route::post('/profile/addresses', [ProfileAddressController::class, 'store']);
         Route::delete('/profile/addresses/{address}', [ProfileAddressController::class, 'destroy']);
+        Route::get('/profile/preferences', [ProfilePreferencesController::class, 'show']);
+        Route::patch('/profile/preferences', [ProfilePreferencesController::class, 'update']);
         Route::put('/cart-recovery', [CartRecoveryController::class, 'sync']);
 
         Route::post('/orders', [OrderController::class, 'store']);

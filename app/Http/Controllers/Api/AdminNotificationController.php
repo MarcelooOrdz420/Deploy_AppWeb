@@ -132,6 +132,7 @@ class AdminNotificationController extends Controller
         User::query()
             ->where('is_active', true)
             ->where('is_verified', true)
+            ->where('marketing_emails_enabled', true)
             ->whereNotNull('email')
             ->where('email', '!=', '')
             ->orderBy('id')

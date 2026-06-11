@@ -34,6 +34,8 @@
         .timeline-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
         .timeline-list li { border: 1px solid #f0d7c3; border-radius: 10px; padding: 9px; background: #fff8f2; opacity: .55; }
         @media (max-width: 720px) { .tracker-grid { grid-template-columns: 1fr; } }
+        .pref-card { display:grid; gap:8px; margin-bottom:14px; }
+        .pref-toggle { display:flex; align-items:flex-start; gap:10px; font-weight:700; color:#6a3a1a; }
         .toast {
             position: fixed;
             right: 16px;
@@ -60,6 +62,13 @@
         <p style="margin-top:0; font-size:14px; color:#6a3a1a;">
             Aqui siempre veras tus pedidos y codigos de seguimiento, incluso si sales del carrito.
         </p>
+        <div class="pref-card">
+            <label class="pref-toggle">
+                <input id="marketingEmailsEnabled" type="checkbox" style="width:auto; margin-top:3px;">
+                <span>Quiero recibir promociones y recordatorios por correo.</span>
+            </label>
+            <div id="prefMsg" style="font-size:13px; color:#6a3a1a;"></div>
+        </div>
         <div id="ordersList" class="orders-grid">Cargando pedidos...</div>
     </section>
 
@@ -111,6 +120,8 @@ const trackBtn = document.getElementById('trackBtn');
 const trackMsg = document.getElementById('trackMsg');
 const timeline = document.getElementById('timeline');
 const toastEl = document.getElementById('toast');
+const marketingEmailsEnabled = document.getElementById('marketingEmailsEnabled');
+const prefMsg = document.getElementById('prefMsg');
 let toastTimer = null;
 function showToast(message) {
     if (!toastEl) return;
@@ -130,6 +141,64 @@ function getToken() { return localStorage.getItem('ed_token'); }
 function statusEs(code) { return STATUS_ES[code] || code || 'n/a'; }
 function paymentStatusEs(code) { return PAYMENT_STATUS_ES[code] || code || 'n/a'; }
 function needsDigitalProof(method) { return ['yape', 'plin', 'transfer'].includes(String(method || '').toLowerCase()); }
+
+async function loadPreferences() {
+    const token = getToken();
+    if (!token) {
+        marketingEmailsEnabled.disabled = true;
+        prefMsg.textContent = 'Inicia sesion para gestionar tus correos.';
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/v1/profile/preferences', {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            prefMsg.textContent = 'No se pudo cargar tu preferencia de correo.';
+            return;
+        }
+
+        marketingEmailsEnabled.checked = !!data.marketing_emails_enabled;
+        prefMsg.textContent = data.marketing_emails_enabled
+            ? 'Recibiras promociones y recordatorios por correo.'
+            : 'No recibiras promociones por correo.';
+    } catch {
+        prefMsg.textContent = 'No se pudo conectar para cargar tus preferencias.';
+    }
+}
+
+async function savePreferences() {
+    const token = getToken();
+    if (!token) return;
+
+    prefMsg.textContent = 'Guardando preferencia...';
+
+    try {
+        const res = await fetch('/api/v1/profile/preferences', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                marketing_emails_enabled: marketingEmailsEnabled.checked,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            prefMsg.textContent = data.message || 'No se pudo guardar la preferencia.';
+            return;
+        }
+
+        prefMsg.textContent = marketingEmailsEnabled.checked
+            ? 'Listo. Te llegaran promociones y recordatorios por correo.'
+            : 'Listo. Dejaste de recibir promociones por correo.';
+    } catch {
+        prefMsg.textContent = 'No se pudo conectar para guardar la preferencia.';
+    }
+}
 
 function paintTimeline(status) {
     const normalized = String(status || '').toLowerCase();
@@ -357,8 +426,10 @@ function viewReceipt(orderId) {
 }
 
 trackBtn.addEventListener('click', searchTracking);
+marketingEmailsEnabled?.addEventListener('change', savePreferences);
 paintTimeline('');
 fetchMyOrders();
+loadPreferences();
 setInterval(fetchMyOrders, 15000);
 </script>
 @endsection

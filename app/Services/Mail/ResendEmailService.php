@@ -35,6 +35,7 @@ class ResendEmailService
                 'subject' => (string) ($message['subject'] ?? ''),
                 'html' => $message['html'] ?? null,
                 'text' => $message['text'] ?? null,
+                'attachments' => $message['attachments'] ?? null,
             ])
             ->throw();
     }

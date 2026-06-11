@@ -25,6 +25,7 @@ class CustomerRecoveryCampaignService
         User::query()
             ->where('is_active', true)
             ->where('is_verified', true)
+            ->where('marketing_emails_enabled', true)
             ->whereNotNull('email')
             ->where('email', '!=', '')
             ->where(function ($query) use ($threshold): void {
@@ -80,6 +81,7 @@ class CustomerRecoveryCampaignService
             ->where('email', '!=', '')
             ->whereNull('converted_at')
             ->where('last_synced_at', '<=', $threshold)
+            ->whereHas('user', fn ($query) => $query->where('marketing_emails_enabled', true))
             ->where(function ($query) use ($cooldown): void {
                 $query->whereNull('abandoned_email_sent_at')
                     ->orWhere('abandoned_email_sent_at', '<=', $cooldown);

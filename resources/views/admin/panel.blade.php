@@ -1806,15 +1806,28 @@ async function saveCashClosure(event) {
 function bootRealtimeOrders() {
     const key = @json(config('broadcasting.connections.pusher.key'));
     const cluster = @json(config('broadcasting.connections.pusher.options.cluster'));
+    const host = @json(config('broadcasting.connections.pusher.options.host'));
+    const port = @json(config('broadcasting.connections.pusher.options.port'));
+    const scheme = @json(config('broadcasting.connections.pusher.options.scheme'));
     const channelName = 'mi-canal';
     const eventName = 'mi-evento';
 
-    if (!key || !cluster || typeof Pusher === 'undefined') return;
+    if (!key || typeof Pusher === 'undefined') return;
 
-    const pusher = new Pusher(key, { cluster, forceTLS: true });
+    const pusherOptions = {
+        forceTLS: scheme === 'https',
+    };
+    if (cluster) pusherOptions.cluster = cluster;
+    if (host) pusherOptions.wsHost = host;
+    if (port) {
+        pusherOptions.wsPort = Number(port);
+        pusherOptions.wssPort = Number(port);
+    }
+
+    const pusher = new Pusher(key, pusherOptions);
     const channel = pusher.subscribe(channelName);
 
-    channel.bind(eventName, async (data) => {
+    const handleRealtimeEvent = async (data) => {
         const payload = data && data.data ? data.data : data;
         if ((payload?.type || '') !== 'order_created') return;
         if ((payload?.target || '').toString().toLowerCase() !== 'admin') return;
@@ -1825,6 +1838,10 @@ function bootRealtimeOrders() {
             await fetchOrders();
             await fetchCashClosureSummary();
         } catch {}
+    };
+
+    [eventName, `.${eventName}`, 'App\\Events\\OrderCreatedAlertSent'].forEach((name) => {
+        channel.bind(name, handleRealtimeEvent);
     });
 }
 

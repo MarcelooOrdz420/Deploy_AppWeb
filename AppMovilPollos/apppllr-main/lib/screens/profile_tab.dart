@@ -19,6 +19,7 @@ class _ProfileTabState extends State<ProfileTab> {
   bool _logged = false;
   String _name = 'Invitado';
   String _email = '';
+  bool _marketingEmailsEnabled = true;
   List<SavedAddress> _addresses = const [];
 
   @override
@@ -39,6 +40,10 @@ class _ProfileTabState extends State<ProfileTab> {
       } catch (_) {
         addresses = const [];
       }
+
+      try {
+        _marketingEmailsEnabled = (await _profileData.getPreferences()).marketingEmailsEnabled;
+      } catch (_) {}
     }
 
     if (!mounted) return;
@@ -62,6 +67,14 @@ class _ProfileTabState extends State<ProfileTab> {
     if (value == null || value.isEmpty) return;
     await _profileData.addAddress(value);
     await _load();
+  }
+
+  Future<void> _toggleMarketingEmails(bool value) async {
+    await _profileData.updatePreferences(marketingEmailsEnabled: value);
+    if (!mounted) return;
+    setState(() {
+      _marketingEmailsEnabled = value;
+    });
   }
 
   Future<String?> _promptValue(String title, String hint, TextEditingController controller) {
@@ -165,6 +178,24 @@ class _ProfileTabState extends State<ProfileTab> {
           ),
           const SizedBox(height: 14),
           StoreSurface(
+            child: SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: _marketingEmailsEnabled,
+              onChanged: _logged ? _toggleMarketingEmails : null,
+              title: const Text(
+                'Correos de promociones y recordatorios',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+              subtitle: Text(
+                _logged
+                    ? 'Decide si deseas recibir promociones y recordatorios por correo.'
+                    : 'Inicia sesion para gestionar esta preferencia.',
+              ),
+              activeColor: StoreTheme.orangeDeep,
+            ),
+          ),
+          const SizedBox(height: 14),
+          StoreSurface(
             child: Column(
               children: [
                 ListTile(
@@ -223,4 +254,3 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 }
-

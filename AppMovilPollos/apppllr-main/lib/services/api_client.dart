@@ -69,6 +69,22 @@ class ApiClient {
     );
   }
 
+  static Future<Response<T>> patch<T>(
+    String path, {
+    dynamic data,
+    Options? options,
+    Map<String, dynamic>? queryParameters,
+  }) {
+    return _withFallback(
+      (client) => client.patch<T>(
+        path,
+        data: data,
+        options: options,
+        queryParameters: queryParameters,
+      ),
+    );
+  }
+
   static Future<Response<T>> _withFallback<T>(
     Future<Response<T>> Function(Dio client) request,
   ) async {

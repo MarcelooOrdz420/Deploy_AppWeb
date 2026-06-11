@@ -409,6 +409,11 @@
             <label for="password">Contraseña</label>
             <input id="password" name="password" type="password" placeholder="Minimo 6 caracteres" required minlength="6">
 
+            <label style="display:flex; align-items:flex-start; gap:10px; margin:0 0 16px; font-weight:700; color:#6a3a1a;">
+                <input id="marketingEmailsEnabled" name="marketing_emails_enabled" type="checkbox" checked style="width:auto; margin:2px 0 0;">
+                <span>Deseo recibir promociones y recordatorios por correo.</span>
+            </label>
+
             <button type="submit">Crear Cuenta</button>
         </form>
 
@@ -562,6 +567,7 @@ form.addEventListener('submit', async (e) => {
         email: form.email.value.trim(),
         phone: form.phone.value.trim() || null,
         password: form.password.value,
+        marketing_emails_enabled: form.marketing_emails_enabled.checked,
     };
 
     try {

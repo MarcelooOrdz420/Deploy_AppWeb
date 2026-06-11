@@ -76,8 +76,11 @@ HTML;
             "Ver promocion: {$ctaUrl}",
         ]));
 
-        $imageBlock = $imageUrl !== ''
-            ? '<p style="margin:0 0 18px;"><img src="'.$safeImageUrl.'" alt="'.$title.'" style="width:100%;max-width:496px;border-radius:16px;display:block;"></p>'
+        $inlineImage = $this->resolveInlinePromotionImage($imageUrl);
+        $imageSrc = $inlineImage['src'] ?? $safeImageUrl;
+
+        $imageBlock = $imageSrc !== ''
+            ? '<p style="margin:0 0 18px;"><img src="'.$imageSrc.'" alt="'.$title.'" style="width:100%;max-width:496px;border-radius:16px;display:block;"></p>'
             : '';
 
         $html = <<<HTML
@@ -102,6 +105,7 @@ HTML;
             subject: $subject !== '' ? $subject : 'Nueva promocion',
             html: $html,
             text: $text,
+            attachments: $inlineImage['attachments'] ?? [],
         );
     }
 
@@ -193,7 +197,7 @@ HTML;
         );
     }
 
-    private function deliver(string $to, ?string $name, string $subject, string $html, string $text): void
+    private function deliver(string $to, ?string $name, string $subject, string $html, string $text, array $attachments = []): void
     {
         if (trim($to) === '') {
             return;
@@ -205,6 +209,7 @@ HTML;
                 'subject' => $subject,
                 'html' => $html,
                 'text' => $text,
+                'attachments' => $attachments,
             ]);
 
             return;
@@ -221,5 +226,58 @@ HTML;
                     ->subject($subject);
             });
         }
+    }
+
+    private function resolveInlinePromotionImage(string $imageUrl): array
+    {
+        $imageUrl = trim($imageUrl);
+        if ($imageUrl === '') {
+            return ['src' => '', 'attachments' => []];
+        }
+
+        $path = parse_url($imageUrl, PHP_URL_PATH);
+        if (! is_string($path) || trim($path) === '') {
+            return ['src' => e($imageUrl), 'attachments' => []];
+        }
+
+        $normalizedPath = '/'.ltrim($path, '/');
+        $absolutePath = null;
+
+        if (str_starts_with($normalizedPath, '/storage/')) {
+            $relative = ltrim(substr($normalizedPath, strlen('/storage/')), '/');
+            $candidate = storage_path('app/public/'.$relative);
+            if (is_file($candidate)) {
+                $absolutePath = $candidate;
+            }
+        } else {
+            $candidate = public_path(ltrim($normalizedPath, '/'));
+            if (is_file($candidate)) {
+                $absolutePath = $candidate;
+            }
+        }
+
+        if (! $absolutePath || ! is_file($absolutePath)) {
+            return ['src' => e($imageUrl), 'attachments' => []];
+        }
+
+        $content = @file_get_contents($absolutePath);
+        if (! is_string($content) || $content === '') {
+            return ['src' => e($imageUrl), 'attachments' => []];
+        }
+
+        $mime = mime_content_type($absolutePath) ?: 'application/octet-stream';
+        $filename = basename($absolutePath);
+        $contentId = 'promo-image-'.md5($absolutePath);
+
+        return [
+            'src' => 'cid:'.$contentId,
+            'attachments' => [[
+                'filename' => $filename,
+                'content' => base64_encode($content),
+                'content_type' => $mime,
+                'content_id' => $contentId,
+                'disposition' => 'inline',
+            ]],
+        ];
     }
 }

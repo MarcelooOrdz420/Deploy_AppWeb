@@ -22,6 +22,7 @@ class User extends Authenticatable
         'otp_code',
         'otp_expires_at',
         'last_reengagement_email_sent_at',
+        'marketing_emails_enabled',
         'email_verified_at',
         'password',
     ];
@@ -40,6 +41,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'is_verified' => 'boolean',
+            'marketing_emails_enabled' => 'boolean',
         ];
     }
 

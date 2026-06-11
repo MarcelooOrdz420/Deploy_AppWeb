@@ -25,6 +25,20 @@ class SavedAddress {
   }
 }
 
+class ProfilePreferences {
+  const ProfilePreferences({
+    required this.marketingEmailsEnabled,
+  });
+
+  final bool marketingEmailsEnabled;
+
+  factory ProfilePreferences.fromJson(Map<String, dynamic> json) {
+    return ProfilePreferences(
+      marketingEmailsEnabled: json['marketing_emails_enabled'] == true,
+    );
+  }
+}
+
 class ProfileDataService {
   final SessionService _session = SessionService();
 
@@ -71,6 +85,39 @@ class ProfileDataService {
 
     await ApiClient.delete<Map<String, dynamic>>(
       '/profile/addresses/$addressId',
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+    );
+  }
+
+  Future<ProfilePreferences> getPreferences() async {
+    final token = await _session.getToken();
+    if (token.isEmpty) {
+      throw Exception('Debes iniciar sesion para ver tus preferencias.');
+    }
+
+    final res = await ApiClient.get<Map<String, dynamic>>(
+      '/profile/preferences',
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+    );
+
+    return ProfilePreferences.fromJson((res.data ?? <String, dynamic>{}).cast<String, dynamic>());
+  }
+
+  Future<void> updatePreferences({required bool marketingEmailsEnabled}) async {
+    final token = await _session.getToken();
+    if (token.isEmpty) {
+      throw Exception('Debes iniciar sesion para cambiar tus preferencias.');
+    }
+
+    await ApiClient.patch<Map<String, dynamic>>(
+      '/profile/preferences',
+      data: {
+        'marketing_emails_enabled': marketingEmailsEnabled,
+      },
       options: Options(
         headers: {'Authorization': 'Bearer $token'},
       ),
