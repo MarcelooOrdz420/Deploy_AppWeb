@@ -11,7 +11,7 @@ import '../services/peru_lookup_service.dart';
 import '../services/session_service.dart';
 import '../state/cart_controller.dart';
 
-enum PayMethod { yape, plin, transferencia, efectivo }
+enum PayMethod { yape, plin, mercadoPago, efectivo }
 enum DeliveryType { delivery, pickup }
 enum ReceiptType { none, boleta }
 
@@ -80,7 +80,8 @@ class _PaymentPageState extends State<PaymentPage> {
     super.dispose();
   }
 
-  bool get _needsOperationCode => _method != PayMethod.efectivo;
+  bool get _needsOperationCode =>
+      _method == PayMethod.yape || _method == PayMethod.plin;
 
   Future<void> _loadSettings() async {
     final settings = await _companySettingsService.fetch();
@@ -138,8 +139,8 @@ class _PaymentPageState extends State<PaymentPage> {
         return 'yape';
       case PayMethod.plin:
         return 'plin';
-      case PayMethod.transferencia:
-        return 'transfer';
+      case PayMethod.mercadoPago:
+        return 'mercado_pago';
       case PayMethod.efectivo:
         return 'cod';
     }
@@ -320,7 +321,7 @@ class _PaymentPageState extends State<PaymentPage> {
       return;
     }
 
-    if (_needsOperationCode && operationCode.isEmpty) {
+      if (_needsOperationCode && operationCode.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ingresa el codigo de operacion del pago.')),
@@ -376,10 +377,42 @@ class _PaymentPageState extends State<PaymentPage> {
       );
 
       final trackingCode = (response['tracking_code'] ?? '').toString();
+      final orderId = (response['id'] as num?)?.toInt() ?? 0;
       final totalPaid = double.tryParse((response['total_amount'] ?? '0').toString()) ??
           (cart.subtotal +
               (_deliveryType == DeliveryType.delivery ? cart.deliveryFee() : 0.0));
       final itemsText = cart.items.map((item) => item.producto.name).join(', ');
+
+      if (_method == PayMethod.mercadoPago && orderId > 0) {
+        final checkout = await _orderApiService.mercadoPagoCheckout(
+          token: token,
+          orderId: orderId,
+        );
+        final checkoutUrl =
+            (checkout['checkout_url'] ?? checkout['sandbox_checkout_url'] ?? '')
+                .toString()
+                .trim();
+
+        if (checkoutUrl.isNotEmpty && mounted) {
+          await Clipboard.setData(ClipboardData(text: checkoutUrl));
+          await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Mercado Pago listo'),
+              content: Text(
+                'Copiamos el enlace de pago para tu pedido $trackingCode. '
+                'Abre el navegador del celular y pega el enlace para completar el pago seguro.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Continuar'),
+                ),
+              ],
+            ),
+          );
+        }
+      }
 
       if (!mounted) return;
       context.push(
@@ -556,7 +589,7 @@ class _PaymentPageState extends State<PaymentPage> {
               children: [
                 _payTile('Yape', PayMethod.yape, Icons.qr_code_2),
                 _payTile('Plin', PayMethod.plin, Icons.qr_code),
-                _payTile('Transferencia bancaria', PayMethod.transferencia, Icons.account_balance),
+                _payTile('Mercado Pago', PayMethod.mercadoPago, Icons.credit_card),
                 _payTile('Pago contraentrega', PayMethod.efectivo, Icons.local_shipping),
                 const SizedBox(height: 10),
                 _paymentPanel(),
@@ -783,15 +816,12 @@ class _PaymentPageState extends State<PaymentPage> {
       );
     }
 
-    if (_method == PayMethod.transferencia) {
+    if (_method == PayMethod.mercadoPago) {
       return _paymentInfoCard(
-        title: _settings.transfer.label,
+        title: _settings.mercadoPago.label,
         subtitle:
-            '${_settings.transfer.bankName.isEmpty ? 'Banco pendiente' : _settings.transfer.bankName}'
-            '\nCuenta: ${_settings.transfer.accountNumber.isEmpty ? 'Pendiente' : _settings.transfer.accountNumber}'
-            '\nCCI: ${_settings.transfer.cci.isEmpty ? 'Pendiente' : _settings.transfer.cci}'
-            '\nTitular: ${_settings.transfer.accountHolder.isEmpty ? _settings.brandName : _settings.transfer.accountHolder}',
-        child: const Icon(Icons.account_balance_wallet_outlined, size: 44, color: Colors.orange),
+            'Te daremos un enlace seguro para completar el pago con tarjeta, cuenta Mercado Pago o Yape.',
+        child: const Icon(Icons.credit_score_outlined, size: 44, color: Colors.orange),
       );
     }
 

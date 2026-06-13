@@ -6,6 +6,7 @@ use App\Events\OfferNotificationSent;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Fcm\FcmClient;
+use App\Services\Marketing\CustomerRecoveryCampaignService;
 use App\Services\Mail\CustomerLifecycleEmailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -118,6 +119,31 @@ class AdminNotificationController extends Controller
                 'image_url' => $data['image_url'] ?? null,
                 'cta_label' => $data['cta_label'] ?? null,
             ],
+        ]);
+    }
+
+    public function sendRecoveryCampaigns(Request $request, CustomerRecoveryCampaignService $campaignService): JsonResponse
+    {
+        $data = $request->validate([
+            'inactive_days' => ['nullable', 'integer', 'min:1', 'max:30'],
+            'abandoned_hours' => ['nullable', 'integer', 'min:1', 'max:72'],
+            'send_push' => ['nullable', 'boolean'],
+        ]);
+
+        $sendPush = (bool) ($data['send_push'] ?? true);
+        $inactive = $campaignService->sendInactiveUserEmails(
+            days: (int) ($data['inactive_days'] ?? 5),
+            sendPush: $sendPush,
+        );
+        $abandoned = $campaignService->sendAbandonedCartEmails(
+            hours: (int) ($data['abandoned_hours'] ?? 3),
+            sendPush: $sendPush,
+        );
+
+        return response()->json([
+            'message' => 'Campanas de recuperacion ejecutadas.',
+            'inactive' => $inactive,
+            'abandoned' => $abandoned,
         ]);
     }
 

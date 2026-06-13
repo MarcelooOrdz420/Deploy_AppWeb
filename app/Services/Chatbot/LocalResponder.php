@@ -26,7 +26,7 @@ class LocalResponder
             return $this->contactLine();
         }
 
-        if ($this->matchesAny($normalized, ['pago', 'pagos', 'yape', 'plin', 'transferencia', 'contraentrega', 'qr'])) {
+        if ($this->matchesAny($normalized, ['pago', 'pagos', 'yape', 'plin', 'mercado pago', 'contraentrega', 'qr'])) {
             $text = $this->paymentHelp();
             return $text ?: $this->contactLine();
         }
@@ -84,13 +84,9 @@ class LocalResponder
         if (($payments['plin']['enabled'] ?? false) && ! empty($payments['plin']['phone'])) {
             $lines[] = "Plin: {$payments['plin']['phone']}";
         }
-        if (($payments['transfer']['enabled'] ?? false) && ! empty($payments['transfer']['bank_name'])) {
-            $bank = $payments['transfer']['bank_name'];
-            $acc = $payments['transfer']['account_number'] ?? '';
-            $cci = $payments['transfer']['cci'] ?? '';
-            $detail = trim($acc) !== '' ? "Cuenta: {$acc}" : null;
-            $detail2 = trim($cci) !== '' ? "CCI: {$cci}" : null;
-            $lines[] = trim('Transferencia ('.$bank.'): '.implode(' · ', array_filter([$detail, $detail2])));
+        if (($payments['mercado_pago']['enabled'] ?? false)) {
+            $label = trim((string) ($payments['mercado_pago']['label'] ?? 'Mercado Pago'));
+            $lines[] = "{$label}: checkout seguro para tarjetas, cuenta Mercado Pago y Yape.";
         }
         if (($payments['cod']['enabled'] ?? false)) {
             $msg = trim((string) ($payments['cod']['message'] ?? 'Pagas cuando recibes tu pedido.'));
@@ -285,4 +281,3 @@ class LocalResponder
         return false;
     }
 }
-

@@ -100,17 +100,9 @@ class ChatbotService
         if (($payments['plin']['enabled'] ?? false) && ! empty($payments['plin']['phone'])) {
             $lines[] = "- Plin: ".$payments['plin']['phone'];
         }
-        if (($payments['transfer']['enabled'] ?? false)) {
-            $parts = array_filter([
-                $payments['transfer']['bank_name'] ?? null,
-                ! empty($payments['transfer']['account_number']) ? 'Cuenta '.$payments['transfer']['account_number'] : null,
-                ! empty($payments['transfer']['cci']) ? 'CCI '.$payments['transfer']['cci'] : null,
-                ! empty($payments['transfer']['account_holder']) ? 'Titular '.$payments['transfer']['account_holder'] : null,
-            ]);
-
-            if ($parts) {
-                $lines[] = '- Transferencia: '.implode(' | ', $parts);
-            }
+        if (($payments['mercado_pago']['enabled'] ?? false)) {
+            $label = trim((string) ($payments['mercado_pago']['label'] ?? 'Mercado Pago'));
+            $lines[] = "- {$label}: checkout seguro para tarjetas, cuenta Mercado Pago y Yape.";
         }
         if (($payments['cod']['enabled'] ?? false) && ! empty($payments['cod']['message'])) {
             $lines[] = '- Contraentrega: '.$payments['cod']['message'];

@@ -2,42 +2,127 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\OrderStatusUpdatedForUser;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\Fcm\FcmClient;
+use App\Services\Payments\MercadoPagoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
-    public function culqiCheckout(Request $request, Order $order): JsonResponse
+    public function mercadoPagoCheckout(Request $request, Order $order, MercadoPagoService $mercadoPagoService): JsonResponse
     {
         if ($request->user()->role !== 'admin' && $order->user_id !== $request->user()->id) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
+        if ((string) $order->payment_method !== 'mercado_pago') {
+            return response()->json(['message' => 'Este pedido no usa Mercado Pago.'], 422);
+        }
+
+        $preference = $mercadoPagoService->createPreference($order->loadMissing('items'));
+
         return response()->json([
-            'mode' => config('services.culqi.mode', 'test'),
-            'enabled' => (bool) config('services.culqi.enabled', false),
-            'reference_only' => (bool) config('services.culqi.reference_only', true),
-            'public_key' => config('services.culqi.public_key'),
-            'rsa_id' => config('services.culqi.rsa_id'),
-            'rsa_public_key' => config('services.culqi.rsa_public_key'),
-            'amount' => (int) round((float) $order->total_amount * 100),
+            'enabled' => (bool) config('services.mercadopago.enabled', false),
+            'public_key' => config('services.mercadopago.public_key'),
             'currency_code' => config('company.currency', 'PEN'),
+            'checkout_url' => $preference['init_point'] ?? null,
+            'sandbox_checkout_url' => $preference['sandbox_init_point'] ?? null,
+            'preference_id' => $preference['id'] ?? null,
             'order' => [
                 'id' => $order->id,
                 'tracking_code' => $order->tracking_code,
                 'customer_name' => $order->customer_name,
                 'customer_email' => $order->customer_email,
-                'billing_document_type' => $order->billing_document_type,
-                'billing_document_number' => $order->billing_document_number,
-                'billing_receipt_type' => $order->billing_receipt_type,
-            ],
-            'metadata' => [
-                'integration' => 'culqi_reference',
-                'tracking_code' => $order->tracking_code,
-                'receipt_type' => $order->billing_receipt_type,
             ],
         ]);
+    }
+
+    public function mercadoPagoWebhook(Request $request, MercadoPagoService $mercadoPagoService): JsonResponse
+    {
+        if (! $mercadoPagoService->isConfigured()) {
+            return response()->json(['ok' => false, 'message' => 'Mercado Pago no configurado.'], 503);
+        }
+
+        $type = Str::lower((string) ($request->input('type') ?? $request->input('topic') ?? ''));
+        $paymentId = $request->input('data.id') ?? $request->input('id');
+
+        if (! in_array($type, ['payment'], true) || ! $paymentId) {
+            return response()->json(['ok' => true, 'ignored' => true]);
+        }
+
+        $payment = $mercadoPagoService->fetchPayment((string) $paymentId);
+        $trackingCode = (string) ($payment['external_reference'] ?? '');
+        if ($trackingCode === '') {
+            return response()->json(['ok' => true, 'ignored' => true]);
+        }
+
+        $order = Order::query()
+            ->where('tracking_code', $trackingCode)
+            ->first();
+
+        if (! $order) {
+            return response()->json(['ok' => true, 'ignored' => true]);
+        }
+
+        $status = Str::lower((string) ($payment['status'] ?? 'pending'));
+        $paymentStatus = match ($status) {
+            'approved' => 'verified',
+            'rejected', 'cancelled', 'refunded', 'charged_back' => 'rejected',
+            'in_process', 'pending', 'authorized' => 'pending',
+            default => 'pending',
+        };
+
+        $order->forceFill([
+            'payment_reference' => (string) ($payment['id'] ?? $order->payment_reference),
+            'payment_status' => $paymentStatus,
+            'payment_verified_at' => $paymentStatus === 'verified' ? now() : null,
+        ])->save();
+
+        event(new OrderStatusUpdatedForUser($order->fresh(['items', 'statusHistory']), $paymentStatus));
+        $this->sendOrderPaymentPush($order, $paymentStatus);
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function sendOrderPaymentPush(Order $order, string $paymentStatus): void
+    {
+        try {
+            $userId = (int) $order->user_id;
+            if ($userId <= 0) {
+                return;
+            }
+
+            /** @var FcmClient $client */
+            $client = app(FcmClient::class);
+            if (! $client->isConfigured()) {
+                return;
+            }
+
+            $tracking = (string) ($order->tracking_code ?? '');
+            $status = (string) ($order->status ?? '');
+            $body = $tracking !== ''
+                ? "Pedido {$tracking}: {$status} | Pago: {$paymentStatus}"
+                : "Pago actualizado: {$paymentStatus}";
+
+            $client->sendToTopic(
+                topic: "orders_user_{$userId}",
+                notification: [
+                    'title' => 'Actualizacion de pedido',
+                    'body' => $body,
+                ],
+                data: [
+                    'route' => '/orders',
+                    'tracking_code' => $tracking,
+                    'status' => $status,
+                    'payment_status' => $paymentStatus,
+                ],
+            );
+        } catch (\Throwable) {
+            // No romper webhook por falla de push.
+        }
     }
 }

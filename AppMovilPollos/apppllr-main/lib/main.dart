@@ -156,6 +156,8 @@ class MyApp extends StatelessWidget {
             );
           },
           theme: StoreTheme.theme(),
+          darkTheme: StoreTheme.darkTheme(),
+          themeMode: ThemeMode.system,
         ),
       ),
     );

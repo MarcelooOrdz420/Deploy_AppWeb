@@ -5,6 +5,7 @@ namespace App\Services\Marketing;
 use App\Models\CartRecovery;
 use App\Models\LoginHistory;
 use App\Models\User;
+use App\Services\Fcm\FcmClient;
 use App\Services\Mail\CustomerLifecycleEmailService;
 use Illuminate\Support\Carbon;
 
@@ -15,12 +16,13 @@ class CustomerRecoveryCampaignService
     ) {
     }
 
-    public function sendInactiveUserEmails(int $days = 7): array
+    public function sendInactiveUserEmails(int $days = 5, bool $sendPush = true): array
     {
         $threshold = now()->subDays(max(1, $days));
         $sent = 0;
         $skipped = 0;
         $failed = 0;
+        $pushSent = 0;
 
         User::query()
             ->where('is_active', true)
@@ -41,7 +43,7 @@ class CustomerRecoveryCampaignService
                     ->limit(1),
             ])
             ->orderBy('id')
-            ->chunkById(100, function ($users) use (&$sent, &$skipped, &$failed, $threshold): void {
+            ->chunkById(100, function ($users) use (&$sent, &$skipped, &$failed, &$pushSent, $threshold, $sendPush): void {
                 foreach ($users as $user) {
                     $lastSeenAt = $user->last_successful_login_at
                         ? Carbon::parse($user->last_successful_login_at)
@@ -57,6 +59,13 @@ class CustomerRecoveryCampaignService
                         $user->forceFill([
                             'last_reengagement_email_sent_at' => now(),
                         ])->save();
+                        if ($sendPush && $this->sendPushToUser(
+                            userId: (int) $user->id,
+                            title: 'Te extranan en El Dorado',
+                            body: 'Tenemos promos nuevas y tus favoritos siguen esperandote.',
+                        )) {
+                            $pushSent++;
+                        }
                         $sent++;
                     } catch (\Throwable) {
                         $failed++;
@@ -64,16 +73,17 @@ class CustomerRecoveryCampaignService
                 }
             });
 
-        return compact('sent', 'skipped', 'failed');
+        return compact('sent', 'skipped', 'failed', 'pushSent');
     }
 
-    public function sendAbandonedCartEmails(int $hours = 3): array
+    public function sendAbandonedCartEmails(int $hours = 3, bool $sendPush = true): array
     {
         $threshold = now()->subHours(max(1, $hours));
         $cooldown = now()->subDay();
         $sent = 0;
         $skipped = 0;
         $failed = 0;
+        $pushSent = 0;
 
         CartRecovery::query()
             ->with('user')
@@ -87,7 +97,7 @@ class CustomerRecoveryCampaignService
                     ->orWhere('abandoned_email_sent_at', '<=', $cooldown);
             })
             ->orderBy('id')
-            ->chunkById(100, function ($carts) use (&$sent, &$skipped, &$failed): void {
+            ->chunkById(100, function ($carts) use (&$sent, &$skipped, &$failed, &$pushSent, $sendPush): void {
                 foreach ($carts as $cart) {
                     if ((int) $cart->items_count <= 0) {
                         $skipped++;
@@ -99,6 +109,13 @@ class CustomerRecoveryCampaignService
                         $cart->forceFill([
                             'abandoned_email_sent_at' => now(),
                         ])->save();
+                        if ($sendPush && $this->sendPushToUser(
+                            userId: (int) $cart->user_id,
+                            title: 'Tu carrito te espera',
+                            body: 'Vuelve a tu carrito y termina tu compra antes de que se te antoje otra vez.',
+                        )) {
+                            $pushSent++;
+                        }
                         $sent++;
                     } catch (\Throwable) {
                         $failed++;
@@ -106,6 +123,33 @@ class CustomerRecoveryCampaignService
                 }
             });
 
-        return compact('sent', 'skipped', 'failed');
+        return compact('sent', 'skipped', 'failed', 'pushSent');
+    }
+
+    private function sendPushToUser(int $userId, string $title, string $body): bool
+    {
+        try {
+            /** @var FcmClient $client */
+            $client = app(FcmClient::class);
+            if (! $client->isConfigured() || $userId <= 0) {
+                return false;
+            }
+
+            $client->sendToTopic(
+                topic: "orders_user_{$userId}",
+                notification: [
+                    'title' => $title,
+                    'body' => $body,
+                ],
+                data: [
+                    'route' => '/promo',
+                    'type' => 'marketing_reengagement',
+                ],
+            );
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

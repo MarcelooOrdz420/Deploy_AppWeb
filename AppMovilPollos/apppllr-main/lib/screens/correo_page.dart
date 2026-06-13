@@ -68,6 +68,34 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
     }
   }
 
+  Future<void> _forgotPassword() async {
+    final email = emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresa tu correo primero.')),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      await AuthService().forgotPassword(email: email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Revisa tu correo. Si la cuenta existe, te enviamos el enlace de recuperacion.'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_cleanError(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   Widget _googleBadge() {
     return Container(
       width: 22,
@@ -218,6 +246,12 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
                         child: TextButton(
                           onPressed: _loading ? null : () => context.go('/registro'),
                           child: const Text('No tengo cuenta, registrarme'),
+                        ),
+                      ),
+                      Center(
+                        child: TextButton(
+                          onPressed: _loading ? null : _forgotPassword,
+                          child: const Text('Olvide mi contrasena'),
                         ),
                       ),
                     ],

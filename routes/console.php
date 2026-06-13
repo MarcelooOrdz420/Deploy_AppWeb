@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Artisan::command('customers:send-inactivity-recovery {--days=7}', function () {
+Artisan::command('customers:send-inactivity-recovery {--days=5}', function () {
     $stats = app(CustomerRecoveryCampaignService::class)
         ->sendInactiveUserEmails((int) $this->option('days'));
 
@@ -25,5 +25,5 @@ Artisan::command('customers:send-abandoned-cart-recovery {--hours=3}', function 
     $this->table(['sent', 'skipped', 'failed'], [array_values($stats)]);
 })->purpose('Envia correos a clientes con carrito abandonado.');
 
-Schedule::command('customers:send-inactivity-recovery --days=7')->dailyAt('10:00');
+Schedule::command('customers:send-inactivity-recovery --days=5')->dailyAt('10:00');
 Schedule::command('customers:send-abandoned-cart-recovery --hours=3')->everyTwoHours();

@@ -61,6 +61,17 @@
             box-shadow: 0 12px 24px rgba(255, 111, 31, 0.26);
         }
         .msg { min-height: 22px; margin-top: 14px; color: #9d460d; font-size: 14px; font-weight: 700; }
+        .warn {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: #fff6ee;
+            border: 1px solid #f6d7c2;
+            color: #7b3f15;
+            font-size: 14px;
+            line-height: 1.55;
+            display: none;
+        }
         a { color: #8a3f0a; font-weight: 800; text-decoration: none; }
     </style>
 </head>
@@ -85,6 +96,7 @@
     </form>
 
     <div id="msg" class="msg"></div>
+    <div id="resetWarn" class="warn"></div>
     <p style="margin-top:18px;"><a href="/login">Volver al login</a></p>
 </main>
 
@@ -107,6 +119,60 @@
 
 const form = document.getElementById('resetPasswordForm');
 const msg = document.getElementById('msg');
+const resetWarn = document.getElementById('resetWarn');
+const RESET_PENDING_KEY = 'ed_password_reset_pending_v1';
+const RESET_CHANNEL = 'BroadcastChannel' in window ? new BroadcastChannel('ed-password-reset') : null;
+const token = form.token.value.trim();
+const lockKey = `ed_reset_token_lock_${btoa(token).replace(/=+$/,'')}`;
+const tabId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+let lockHeartbeat = null;
+
+function readLock() {
+    try { return JSON.parse(localStorage.getItem(lockKey) || 'null'); } catch { return null; }
+}
+
+function writeLock() {
+    localStorage.setItem(lockKey, JSON.stringify({ owner: tabId, touchedAt: Date.now() }));
+}
+
+function clearLock() {
+    const current = readLock();
+    if (current?.owner === tabId) {
+        localStorage.removeItem(lockKey);
+    }
+}
+
+function setBlocked(message) {
+    resetWarn.style.display = 'block';
+    resetWarn.textContent = message;
+    Array.from(form.elements).forEach((field) => field.disabled = true);
+}
+
+function startLock() {
+    const current = readLock();
+    if (current && current.owner !== tabId && Date.now() - Number(current.touchedAt || 0) < 90000) {
+        setBlocked('Este cambio de contrasena ya esta abierto en otra pestana. Termina el proceso ahi para evitar errores.');
+        return false;
+    }
+
+    writeLock();
+    lockHeartbeat = setInterval(writeLock, 30000);
+    return true;
+}
+
+function clearResetPending() {
+    localStorage.removeItem(RESET_PENDING_KEY);
+    RESET_CHANNEL?.postMessage({ type: 'cleared' });
+}
+
+window.addEventListener('beforeunload', () => {
+    if (lockHeartbeat) clearInterval(lockHeartbeat);
+    clearLock();
+});
+
+if (!startLock()) {
+    msg.textContent = '';
+}
 
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -129,11 +195,17 @@ form.addEventListener('submit', async (event) => {
 
         if (!res.ok) {
             msg.textContent = data.message || 'No se pudo actualizar la contrasena.';
+            if (String(data.message || '').toLowerCase().includes('no es valido') || String(data.message || '').toLowerCase().includes('vencio')) {
+                clearResetPending();
+                clearLock();
+            }
             return;
         }
 
         msg.style.color = '#166534';
         msg.textContent = data.message || 'Contrasena actualizada correctamente.';
+        clearResetPending();
+        clearLock();
         setTimeout(() => window.location.href = '/login', 1200);
     } catch {
         msg.textContent = 'No se pudo conectar con el servidor.';

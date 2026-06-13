@@ -29,6 +29,26 @@
             --radius-md: 16px;
         }
 
+        body[data-theme="dark"] {
+            --orange: #c75a1b;
+            --orange-soft: #f3b562;
+            --orange-deep: #ef7b31;
+            --cream: #1a130f;
+            --cream-strong: #211913;
+            --paper: #18110d;
+            --paper-soft: #211913;
+            --ink: #fff4e7;
+            --ink-soft: #f0d8be;
+            --accent-ink: #2b160b;
+            --panel-ink: #fff4e7;
+            --muted-ink: #d6bda5;
+            --line: rgba(243, 181, 98, .18);
+            --line-strong: rgba(243, 181, 98, .3);
+            --shadow-soft: 0 18px 40px rgba(0, 0, 0, .3);
+            --shadow-strong: 0 26px 60px rgba(0, 0, 0, .34);
+            color-scheme: dark;
+        }
+
         * { box-sizing: border-box; }
 
         html { scroll-behavior: smooth; }
@@ -41,6 +61,13 @@
                 radial-gradient(circle at top left, rgba(255, 122, 26, .16), transparent 22%),
                 radial-gradient(circle at top right, rgba(255, 171, 77, .14), transparent 24%),
                 linear-gradient(180deg, #fffdf9 0%, #fff7ee 54%, #fff2e4 100%);
+        }
+
+        body[data-theme="dark"] {
+            background:
+                radial-gradient(circle at top left, rgba(199, 90, 27, .2), transparent 24%),
+                radial-gradient(circle at top right, rgba(243, 181, 98, .12), transparent 26%),
+                linear-gradient(180deg, #110c09 0%, #17110d 52%, #1f1813 100%);
         }
 
         a { color: inherit; }
@@ -448,6 +475,54 @@
             filter: saturate(1.05);
         }
 
+        body[data-theme="dark"] .pill-btn,
+        body[data-theme="dark"] .pill-link,
+        body[data-theme="dark"] .store-nav a,
+        body[data-theme="dark"] .user-pill,
+        body[data-theme="dark"] .store-frame,
+        body[data-theme="dark"] .topbar,
+        body[data-theme="dark"] .surface,
+        body[data-theme="dark"] .panel,
+        body[data-theme="dark"] .product-card,
+        body[data-theme="dark"] .product-image-wrap,
+        body[data-theme="dark"] .input-main,
+        body[data-theme="dark"] .select-main,
+        body[data-theme="dark"] .textarea-main {
+            border-color: rgba(243, 181, 98, .18);
+        }
+
+        body[data-theme="dark"] .store-frame,
+        body[data-theme="dark"] .surface,
+        body[data-theme="dark"] .panel,
+        body[data-theme="dark"] .product-card {
+            background: linear-gradient(180deg, rgba(24, 17, 13, .98), rgba(33, 25, 19, .98));
+        }
+
+        body[data-theme="dark"] .topbar,
+        body[data-theme="dark"] .pill-btn,
+        body[data-theme="dark"] .pill-link,
+        body[data-theme="dark"] .store-nav a,
+        body[data-theme="dark"] .user-pill,
+        body[data-theme="dark"] .input-main,
+        body[data-theme="dark"] .select-main,
+        body[data-theme="dark"] .textarea-main,
+        body[data-theme="dark"] .product-image-wrap {
+            background: rgba(28, 20, 15, .96);
+            color: var(--ink);
+        }
+
+        body[data-theme="dark"] .btn-soft {
+            background: rgba(35, 26, 20, .96);
+            color: var(--ink);
+            border-color: rgba(243, 181, 98, .22);
+        }
+
+        body[data-theme="dark"] .brand-kicker,
+        body[data-theme="dark"] .eyebrow,
+        body[data-theme="dark"] .label-main {
+            color: var(--orange-soft);
+        }
+
         @media (max-width: 980px) {
             .topbar-inner {
                 grid-template-columns: 1fr;
@@ -496,6 +571,11 @@
                                 <span class="user-dot"></span>
                                 Invitado
                             </span>
+                            <button id="storeThemeBtn" class="pill-btn" type="button">Modo oscuro</button>
+                            <button id="clientAlertsBtn" class="pill-btn" type="button">
+                                Avisos
+                                <span id="clientAlertCount" class="cart-count" style="position:static; min-width:22px; height:22px;">0</span>
+                            </button>
                             <a id="clientLoginBtn" class="pill-link" href="/login">Login</a>
                             <button id="clientLogoutBtn" class="pill-btn" type="button">Salir</button>
                             <a class="pill-link cart-link primary-link" href="{{ route('store.cart') }}" aria-label="Ir al carrito">
@@ -560,7 +640,12 @@ const userNameEl = document.getElementById('sessionUserName');
 const cartCountEl = document.getElementById('cartCountBadge');
 const clientLoginBtn = document.getElementById('clientLoginBtn');
 const clientLogoutBtn = document.getElementById('clientLogoutBtn');
+const clientAlertsBtn = document.getElementById('clientAlertsBtn');
+const clientAlertCount = document.getElementById('clientAlertCount');
+const storeThemeBtn = document.getElementById('storeThemeBtn');
 const CLIENT_TIMEOUT_MS = 60 * 60 * 1000;
+const CLIENT_ALERTS_KEY = 'ed_order_alert_count';
+const STORE_THEME_KEY = 'ed_store_theme';
 
 function parseUser() {
     const raw = localStorage.getItem('ed_user');
@@ -576,6 +661,30 @@ function parseSession() {
 
 function saveSession(session) {
     localStorage.setItem('ed_session', JSON.stringify(session));
+}
+
+function getClientAlertCount() {
+    return Number(localStorage.getItem(CLIENT_ALERTS_KEY) || '0');
+}
+
+function setClientAlertCount(value) {
+    const next = Math.max(0, Number(value || 0));
+    localStorage.setItem(CLIENT_ALERTS_KEY, String(next));
+    if (clientAlertCount) clientAlertCount.textContent = String(next);
+}
+
+function getStoreTheme() {
+    const saved = localStorage.getItem(STORE_THEME_KEY);
+    if (saved === 'light' || saved === 'dark') return saved;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyStoreTheme(theme) {
+    document.body.dataset.theme = theme;
+    localStorage.setItem(STORE_THEME_KEY, theme);
+    if (storeThemeBtn) {
+        storeThemeBtn.textContent = theme === 'dark' ? 'Modo claro' : 'Modo oscuro';
+    }
 }
 
 let cartSyncTimer = null;
@@ -621,6 +730,7 @@ function clearClientSession() {
     localStorage.removeItem('ed_cart');
     localStorage.removeItem('ed_last_tracking');
     localStorage.removeItem('ed_recent_trackings');
+    localStorage.removeItem(CLIENT_ALERTS_KEY);
 }
 
 async function validateSessionWithServer() {
@@ -656,6 +766,8 @@ function updateTopBar() {
     const cart = JSON.parse(localStorage.getItem('ed_cart') || '[]');
     const count = cart.reduce((acc, item) => acc + Number(item.qty || 0), 0);
     cartCountEl.textContent = count;
+    setClientAlertCount(getClientAlertCount());
+    applyStoreTheme(getStoreTheme());
 }
 
 async function initClientSession() {
@@ -697,6 +809,15 @@ window.addEventListener('storage', () => {
     updateTopBar();
     window.edSyncCartDraft();
 });
+clientAlertsBtn?.addEventListener('click', () => {
+    setClientAlertCount(0);
+    if (!window.location.pathname.startsWith('/mis-pedidos')) {
+        window.location.href = '/mis-pedidos';
+    }
+});
+storeThemeBtn?.addEventListener('click', () => {
+    applyStoreTheme(getStoreTheme() === 'dark' ? 'light' : 'dark');
+});
 clientLogoutBtn.addEventListener('click', () => {
     clearClientSession();
     updateTopBar();
@@ -717,6 +838,7 @@ setInterval(() => {
 }, 15000);
 
 initClientSession();
+applyStoreTheme(getStoreTheme());
 </script>
 
 <div id="promoOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.72); padding:18px;">
@@ -749,6 +871,19 @@ initClientSession();
                 <button id="promoToastRejectBtn" type="button" class="pill-btn">Rechazar</button>
                 <button id="promoToastAcceptBtn" type="button" class="pill-btn primary-link">Ver</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<div id="orderToast" style="display:none; position:fixed; left:18px; bottom:18px; z-index:9998; width:min(380px, calc(100vw - 36px));">
+    <div style="background:rgba(18,18,18,.98); border:1px solid rgba(255, 122, 26, .24); border-radius:22px; box-shadow: 0 26px 60px rgba(0, 0, 0, .32); overflow:hidden;">
+        <div style="padding:12px 14px; border-bottom:1px solid rgba(255, 122, 26, .18); display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <strong id="orderToastTitle" style="font-size:13px; line-height:1.2;">Pedido actualizado</strong>
+            <button id="orderToastCloseBtn" type="button" class="pill-btn" style="padding:8px 10px;">X</button>
+        </div>
+        <div style="padding:12px 14px;">
+            <div id="orderToastMessage" style="color:var(--ink); line-height:1.45; font-weight:800;"></div>
+            <div id="orderToastBody" style="margin-top:8px; color:var(--ink-soft); line-height:1.55;"></div>
         </div>
     </div>
 </div>
@@ -858,6 +993,93 @@ initClientSession();
     [eventName, `.${eventName}`, 'App\\Events\\OfferNotificationSent'].forEach((name) => {
         channel.bind(name, handlePromoEvent);
     });
+})();
+</script>
+<script>
+(() => {
+    const key = @json(config('broadcasting.connections.pusher.key'));
+    const cluster = @json(config('broadcasting.connections.pusher.options.cluster'));
+    const host = @json(config('broadcasting.connections.pusher.options.host'));
+    const port = @json(config('broadcasting.connections.pusher.options.port'));
+    const scheme = @json(config('broadcasting.connections.pusher.options.scheme'));
+    const orderToast = document.getElementById('orderToast');
+    const orderToastTitle = document.getElementById('orderToastTitle');
+    const orderToastMessage = document.getElementById('orderToastMessage');
+    const orderToastBody = document.getElementById('orderToastBody');
+    const orderToastCloseBtn = document.getElementById('orderToastCloseBtn');
+    let booted = false;
+
+    if (!key || typeof Pusher === 'undefined') return;
+
+    function authEndpointFor(token) {
+        const apiBase = @json(config('app.api_base_url'));
+        const base = (apiBase || '').toString().replace(/\/+$/, '');
+        return `${base}/api/v1/pusher/auth?token=${encodeURIComponent(token)}`;
+    }
+
+    function playClientSound() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 880;
+            gain.gain.value = 0.03;
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.18);
+        } catch {}
+    }
+
+    function showOrderUpdate(payload) {
+        if (!orderToast) return;
+        orderToastTitle.textContent = (payload?.title || 'Pedido actualizado').toString();
+        orderToastMessage.textContent = (payload?.message || 'Tu pedido tiene novedades.').toString();
+        orderToastBody.textContent = (payload?.body || '').toString();
+        orderToast.style.display = 'block';
+        if (typeof getClientAlertCount === 'function' && typeof setClientAlertCount === 'function') {
+            setClientAlertCount(getClientAlertCount() + 1);
+        }
+        playClientSound();
+        window.dispatchEvent(new CustomEvent('ed:order-status-updated', { detail: payload || {} }));
+    }
+
+    orderToastCloseBtn?.addEventListener('click', () => {
+        orderToast.style.display = 'none';
+    });
+
+    window.edBootRealtimeClient = function () {
+        if (booted) return;
+        booted = true;
+
+        const token = localStorage.getItem('ed_token') || '';
+        const user = typeof parseUser === 'function' ? parseUser() : null;
+        if (!token || !user?.id) return;
+
+        const pusherOptions = {
+            forceTLS: scheme === 'https',
+            authEndpoint: authEndpointFor(token),
+        };
+        if (cluster) pusherOptions.cluster = cluster;
+        if (host) pusherOptions.wsHost = host;
+        if (port) {
+            pusherOptions.wsPort = Number(port);
+            pusherOptions.wssPort = Number(port);
+        }
+
+        const pusher = new Pusher(key, pusherOptions);
+        const privateChannel = pusher.subscribe(`private-user.${user.id}`);
+
+        ['order.status.updated', '.order.status.updated', 'App\\Events\\OrderStatusUpdatedForUser'].forEach((name) => {
+            privateChannel.bind(name, (data) => {
+                const payload = data && data.data ? data.data : data;
+                showOrderUpdate(payload || {});
+            });
+        });
+    };
+
+    window.edBootRealtimeClient();
 })();
 </script>
 @yield('scripts')

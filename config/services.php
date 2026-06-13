@@ -83,14 +83,10 @@ return [
         'timeout' => env('APISPERU_DNIRUC_TIMEOUT', 15),
     ],
 
-    'culqi' => [
-        'enabled' => (bool) env('CULQI_ENABLED', false),
-        'reference_only' => (bool) env('CULQI_REFERENCE_ONLY', true),
-        'mode' => env('CULQI_MODE', 'test'),
-        'public_key' => env('CULQI_PUBLIC_KEY'),
-        'secret_key' => env('CULQI_SECRET_KEY'),
-        'rsa_id' => env('CULQI_RSA_ID'),
-        'rsa_public_key' => env('CULQI_RSA_PUBLIC_KEY'),
+    'mercadopago' => [
+        'enabled' => (bool) env('MERCADOPAGO_ENABLED', false),
+        'public_key' => env('MERCADOPAGO_PUBLIC_KEY'),
+        'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
     ],
 
     'apisperu_fact' => [

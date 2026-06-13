@@ -59,6 +59,57 @@ class StoreTheme {
     );
   }
 
+  static ThemeData darkTheme() {
+    final base = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: orange,
+        primary: orangeSoft,
+        secondary: const Color(0xFFFFC078),
+        brightness: Brightness.dark,
+      ),
+      scaffoldBackgroundColor: const Color(0xFF120D09),
+      fontFamily: 'Trebuchet MS',
+    );
+
+    return base.copyWith(
+      textTheme: base.textTheme.apply(
+        bodyColor: const Color(0xFFF8EBDD),
+        displayColor: const Color(0xFFF8EBDD),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Color(0xFFFFF1E3),
+        contentTextStyle: TextStyle(color: Color(0xFF25170F)),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1B140F),
+        hintStyle: const TextStyle(color: Color(0xFFD2B59B)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Color(0xFF8C6449)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Color(0xFF8C6449)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Color(0xFFFFB36F), width: 1.4),
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.transparent,
+        selectedItemColor: Color(0xFFFFB36F),
+        unselectedItemColor: Color(0xFFD2B59B),
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+      ),
+    );
+  }
+
   static const LinearGradient appGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AuthOtpController;
 use App\Http\Controllers\Api\AuthPasswordController;
 use App\Http\Controllers\Api\AdminCashClosureController;
+use App\Http\Controllers\Api\AdminCompanyProfileController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AdminNotificationController;
 use App\Http\Controllers\Api\CartRecoveryController;
@@ -33,6 +34,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
     Route::get('/settings/public', PublicSettingsController::class);
+    Route::post('/payments/mercado-pago/webhook', [PaymentController::class, 'mercadoPagoWebhook']);
 
     Route::get('/orders/track/{trackingCode}', [OrderController::class, 'track']);
 
@@ -52,13 +54,14 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/orders', [OrderController::class, 'store']);
         Route::get('/orders/my', [OrderController::class, 'myOrders']);
         Route::get('/orders/{order}', [OrderController::class, 'show']);
-        Route::get('/orders/{order}/payments/culqi-checkout', [PaymentController::class, 'culqiCheckout']);
+        Route::get('/orders/{order}/payments/mercado-pago-checkout', [PaymentController::class, 'mercadoPagoCheckout']);
         Route::post('/orders/{order}/payment-proof', [OrderController::class, 'uploadPaymentProof']);
         Route::get('/orders/{order}/receipt-view', [OrderController::class, 'receiptView']);
         Route::get('/orders/{order}/receipt', [OrderController::class, 'downloadReceipt']);
 
         Route::middleware('admin')->group(function (): void {
             Route::post('/admin/notifications/offers', [AdminNotificationController::class, 'sendOffer']);
+            Route::post('/admin/notifications/recovery-campaigns', [AdminNotificationController::class, 'sendRecoveryCampaigns']);
             Route::get('/admin/products', [ProductController::class, 'adminIndex']);
             Route::post('/products', [ProductController::class, 'store']);
             Route::put('/products/{product}', [ProductController::class, 'update']);
@@ -67,6 +70,8 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/admin/orders', [OrderController::class, 'index']);
             Route::get('/admin/orders/stats', [OrderController::class, 'stats']);
             Route::get('/admin/orders/export', [OrderController::class, 'export']);
+            Route::get('/admin/company-profile', [AdminCompanyProfileController::class, 'show']);
+            Route::patch('/admin/company-profile', [AdminCompanyProfileController::class, 'update']);
             Route::get('/admin/cash-closures', [AdminCashClosureController::class, 'index']);
             Route::get('/admin/cash-closures/summary', [AdminCashClosureController::class, 'summary']);
             Route::get('/admin/cash-closures/export', [AdminCashClosureController::class, 'export']);

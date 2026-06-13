@@ -16,6 +16,11 @@
                     <span>Parrillas</span>
                     <span>Bebidas</span>
                 </div>
+                <div class="hero-badges hero-badges-soft">
+                    <span id="heroProductsMetric">0 productos listos</span>
+                    <span id="heroAvailableMetric">0 disponibles hoy</span>
+                    <span>Pago seguro y seguimiento</span>
+                </div>
             </div>
 
             <div id="heroSlider" class="hero-visual-grid">
@@ -73,6 +78,15 @@
                     <label for="maxPriceInput" class="label-main">Precio maximo</label>
                     <input id="maxPriceInput" type="number" step="0.10" min="0" class="input-main" placeholder="Ej: 40.00">
                 </div>
+            </div>
+
+            <div class="quick-filter-row">
+                <button type="button" class="btn-soft" data-quick-category="">Ver todo</button>
+                <button type="button" class="btn-soft" data-quick-category="pollos">Solo pollos</button>
+                <button type="button" class="btn-soft" data-quick-category="parrillas">Solo parrillas</button>
+                <button type="button" class="btn-soft" data-quick-category="bebidas">Solo bebidas</button>
+                <button type="button" class="btn-soft" data-quick-budget="25">Hasta S/ 25</button>
+                <button type="button" class="btn-soft" data-quick-budget="40">Hasta S/ 40</button>
             </div>
 
             <div id="searchState" class="search-state-panel" style="display:none;">
@@ -182,6 +196,10 @@
             font-weight: 900;
         }
 
+        .hero-badges-soft span {
+            background: rgba(255, 255, 255, .72);
+        }
+
         .hero-visual-grid {
             display: grid;
             grid-template-columns: 1.1fr .9fr;
@@ -274,6 +292,12 @@
             border-radius: 20px;
             border: 1px solid rgba(234, 182, 138, .76);
             background: linear-gradient(180deg, #fffdfa 0%, #fff5ed 100%);
+        }
+
+        .quick-filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .search-state-panel {
@@ -759,6 +783,10 @@ const floatCartCountEl = document.getElementById('floatCartCount');
 const floatCartBodyEl = document.getElementById('floatCartBody');
 const floatCartEl = document.getElementById('floatCart');
 const toastEl = document.getElementById('toast');
+const heroProductsMetric = document.getElementById('heroProductsMetric');
+const heroAvailableMetric = document.getElementById('heroAvailableMetric');
+const quickCategoryButtons = Array.from(document.querySelectorAll('[data-quick-category]'));
+const quickBudgetButtons = Array.from(document.querySelectorAll('[data-quick-budget]'));
 
 if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
 
@@ -933,6 +961,14 @@ function buildHeroPools() {
     });
 }
 
+function syncHeroMetrics() {
+    if (heroProductsMetric) heroProductsMetric.textContent = `${state.products.length} productos listos`;
+    if (heroAvailableMetric) {
+        const available = state.products.filter(product => !product.is_sold_out && product.can_sell !== false).length;
+        heroAvailableMetric.textContent = `${available} disponibles hoy`;
+    }
+}
+
 function nextSlide() {
     slideIndex += 1;
     heroImages.forEach((image, index) => {
@@ -1088,6 +1124,7 @@ async function loadProducts() {
     const data = await res.json();
     state.products = Array.isArray(data) ? data : [];
     buildHeroPools();
+    syncHeroMetrics();
     renderProducts();
     renderFloatCart();
     setSearchState(false);
@@ -1097,6 +1134,18 @@ setInterval(nextSlide, 3500);
 searchInput.addEventListener('input', queueRenderProducts);
 categoryInput.addEventListener('change', queueRenderProducts);
 maxPriceInput.addEventListener('input', queueRenderProducts);
+quickCategoryButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        categoryInput.value = button.getAttribute('data-quick-category') || '';
+        queueRenderProducts();
+    });
+});
+quickBudgetButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        maxPriceInput.value = button.getAttribute('data-quick-budget') || '';
+        queueRenderProducts();
+    });
+});
 document.getElementById('closeModalBtn').addEventListener('click', () => { modal.style.display = 'none'; });
 modal.addEventListener('click', (event) => { if (event.target === modal) modal.style.display = 'none'; });
 window.addEventListener('keydown', (event) => {

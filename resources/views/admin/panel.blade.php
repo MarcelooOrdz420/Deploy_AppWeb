@@ -485,6 +485,37 @@
             flex-wrap: wrap;
         }
         .dashboard-grid { display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .module-shell { display:grid; gap:16px; }
+        .module-hero { display:grid; grid-template-columns: 1.1fr .9fr; gap:14px; margin-bottom:16px; }
+        .module-summary {
+            padding: 18px;
+            border-radius: 22px;
+            border: 1px solid #ffd7bd;
+            background: linear-gradient(180deg, #fffdfb 0%, #fff5ed 100%);
+        }
+        .metric-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px; }
+        .metric-card {
+            padding: 14px;
+            border-radius: 18px;
+            border: 1px solid #ffd7bd;
+            background: linear-gradient(180deg, #fff 0%, #fff8f2 100%);
+        }
+        .metric-card strong {
+            display: block;
+            margin-top: 6px;
+            font-size: 26px;
+            color: #a84800;
+        }
+        .section-grid-2 { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:14px; }
+        .inline-note {
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 1px dashed #ffc18f;
+            background: linear-gradient(180deg, #fffdfb 0%, #fff5ed 100%);
+            color: #7a4520;
+            font-size: 13px;
+            line-height: 1.55;
+        }
         .chart-card {
             position: relative;
             overflow: hidden;
@@ -548,56 +579,58 @@
             }
             .layout { grid-template-columns: 1fr; }
             .dashboard-grid { grid-template-columns: 1fr; }
+            .module-hero,
+            .section-grid-2 { grid-template-columns: 1fr; }
         }
 
-        body, .title, .title-sub, .section-subtitle, .muted, .helper-text, .proof-modal-title, .proof-modal-meta {
+        body[data-theme="dark"], body[data-theme="dark"] .title, body[data-theme="dark"] .title-sub, body[data-theme="dark"] .section-subtitle, body[data-theme="dark"] .muted, body[data-theme="dark"] .helper-text, body[data-theme="dark"] .proof-modal-title, body[data-theme="dark"] .proof-modal-meta {
             color: var(--text);
         }
-        header,
-        .admin-menu,
-        .panel,
-        .card,
-        .chart-card,
-        .proof-modal-card,
-        .toggle-row,
-        .img-shell,
-        .upload-box {
+        body[data-theme="dark"] header,
+        body[data-theme="dark"] .admin-menu,
+        body[data-theme="dark"] .panel,
+        body[data-theme="dark"] .card,
+        body[data-theme="dark"] .chart-card,
+        body[data-theme="dark"] .proof-modal-card,
+        body[data-theme="dark"] .toggle-row,
+        body[data-theme="dark"] .img-shell,
+        body[data-theme="dark"] .upload-box {
             background: linear-gradient(180deg, rgba(24,24,24,.97) 0%, rgba(15,15,15,.98) 100%) !important;
             border-color: rgba(255, 122, 26, .20) !important;
             box-shadow: 0 18px 40px rgba(0,0,0,.26) !important;
         }
-        .menu-tab,
-        .user,
-        .tag,
-        .toggle-status-text,
-        button:not(.btn-main) {
+        body[data-theme="dark"] .menu-tab,
+        body[data-theme="dark"] .user,
+        body[data-theme="dark"] .tag,
+        body[data-theme="dark"] .toggle-status-text,
+        body[data-theme="dark"] button:not(.btn-main) {
             background: rgba(27,27,27,.96) !important;
             color: var(--text) !important;
             border-color: rgba(255,122,26,.26) !important;
         }
-        .menu-tab.active,
-        .btn-main {
+        body[data-theme="dark"] .menu-tab.active,
+        body[data-theme="dark"] .btn-main {
             color: #4a2b18 !important;
         }
-        input, select, textarea {
+        body[data-theme="dark"] input, body[data-theme="dark"] select, body[data-theme="dark"] textarea {
             background: #101010 !important;
             color: var(--text) !important;
             border-color: rgba(255,122,26,.24) !important;
         }
-        .product-card-title,
-        .product-card-price,
-        .label,
-        .head-kicker,
-        .section-subtitle,
-        .helper-text,
-        .muted {
+        body[data-theme="dark"] .product-card-title,
+        body[data-theme="dark"] .product-card-price,
+        body[data-theme="dark"] .label,
+        body[data-theme="dark"] .head-kicker,
+        body[data-theme="dark"] .section-subtitle,
+        body[data-theme="dark"] .helper-text,
+        body[data-theme="dark"] .muted {
             color: var(--panel-ink) !important;
         }
-        .img-thumb,
-        .order-proof-preview,
-        .proof-modal-image,
-        .proof-modal-frame,
-        .upload-preview {
+        body[data-theme="dark"] .img-thumb,
+        body[data-theme="dark"] .order-proof-preview,
+        body[data-theme="dark"] .proof-modal-image,
+        body[data-theme="dark"] .proof-modal-frame,
+        body[data-theme="dark"] .upload-preview {
             background: #0d0d0d !important;
         }
     </style>
@@ -612,6 +645,8 @@
         </div>
         <div class="head-actions">
             <a href="/admin/dashboard" class="menu-tab">Dashboard ejecutivo</a>
+            <button id="adminThemeBtn" class="menu-tab" type="button">Modo claro</button>
+            <button id="adminUnreadBtn" class="menu-tab" type="button">Nuevos <span id="adminUnreadCount">0</span></button>
             <div class="user" id="adminUserLabel">Validando sesion...</div>
             <button id="adminLogoutBtn" class="logout-btn">Cerrar sesion</button>
         </div>
@@ -629,6 +664,7 @@
         <div class="menu-links">
             <button class="menu-tab" type="button" data-target="sec-dashboard">Dashboard</button>
             <button class="menu-tab" type="button" data-target="sec-offers">Promociones</button>
+            <button class="menu-tab" type="button" data-target="sec-company">Negocio</button>
             <button class="menu-tab" type="button" data-target="sec-products">Productos</button>
             <button class="menu-tab" type="button" data-target="sec-orders">Pedidos</button>
             <button class="menu-tab" type="button" data-target="sec-cash-closure">Cierre de caja</button>
@@ -641,6 +677,30 @@
         <section id="sec-dashboard" class="panel" style="grid-column: 1 / -1;">
             <h2>Dashboard de ventas</h2>
             <p class="muted">Resumen visual de ventas por dia, mes y año a partir de los pedidos cargados.</p>
+            <div class="module-hero" style="margin-bottom:14px;">
+                <div class="module-summary">
+                    <p class="head-kicker">Vision Ejecutiva</p>
+                    <div class="section-subtitle" style="margin:0;">Prioriza operacion, cobros pendientes, productos activos y carga de clientes desde un solo bloque superior.</div>
+                </div>
+                <div class="metric-grid">
+                    <article class="metric-card">
+                        <span class="muted">Pedidos en vista</span>
+                        <strong id="dashboardOrdersMetric">0</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span class="muted">Pagos pendientes</span>
+                        <strong id="dashboardPendingPaymentsMetric">0</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span class="muted">Activos hoy</span>
+                        <strong id="dashboardProductsMetric">0</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span class="muted">Clientes registrados</span>
+                        <strong id="dashboardUsersMetric">0</strong>
+                    </article>
+                </div>
+            </div>
             <div id="salesDashboard" class="dashboard-grid">
                 <div class="chart-card">
                     <div class="chart-head">
@@ -727,6 +787,74 @@
                 </div>
                 <div id="offerMsg" class="msg"></div>
             </form>
+            <div class="upload-box" style="margin-top:18px;">
+                <strong>Reactivacion automatica</strong>
+                <div class="helper-text">Lanza manualmente la campana para clientes inactivos y carritos abandonados. El cron diario queda en 5 dias de inactividad.</div>
+                <div class="row">
+                    <div>
+                        <label>Dias sin login</label>
+                        <input id="inactiveDaysInput" type="number" min="1" max="30" value="5">
+                    </div>
+                    <div>
+                        <label>Horas de carrito abandonado</label>
+                        <input id="abandonedHoursInput" type="number" min="1" max="72" value="3">
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" id="runRecoveryCampaignBtn" class="btn-main">Ejecutar campanas</button>
+                </div>
+                <div id="recoveryCampaignMsg" class="msg"></div>
+            </div>
+        </section>
+
+        <section id="sec-company" class="panel">
+            <div class="module-shell">
+                <div class="module-hero">
+                    <div class="module-summary">
+                        <p class="head-kicker">Configuracion del Negocio</p>
+                        <h2>Ubicacion, mapa y atencion</h2>
+                        <p class="section-subtitle">Aqui controlas lo que ve el cliente en la web cuando revisa la polleria, el mapa y las notas de recojo o delivery.</p>
+                    </div>
+                    <div class="inline-note">
+                        Este bloque es seguro para hosting. Si la nueva tabla aun no fue migrada, el sistema sigue usando los valores por defecto y no rompe la web.
+                    </div>
+                </div>
+
+                <form id="companyProfileForm">
+                    <div class="section-grid-2">
+                        <div class="panel" style="padding:16px;">
+                            <h3>Datos visibles al cliente</h3>
+                            <label>Nombre del punto</label>
+                            <input name="location_name" placeholder="Ej: Local principal Huancayo">
+                            <label>Direccion</label>
+                            <input name="address" placeholder="Ej: Jr. Cuzco 123, Huancayo">
+                            <label>Referencia</label>
+                            <input name="reference" placeholder="Ej: Frente a Rock and Pop">
+                            <label>Horario</label>
+                            <input name="business_hours" placeholder="Ej: Atencion continua hasta las 11:00 PM">
+                            <label>Modalidad de atencion</label>
+                            <input name="service_modes" placeholder="Ej: Local, recojo y delivery">
+                        </div>
+
+                        <div class="panel" style="padding:16px;">
+                            <h3>Google Maps y mensajes</h3>
+                            <label>Link externo de Google Maps</label>
+                            <input name="google_maps_url" type="url" placeholder="https://maps.google.com/...">
+                            <label>Link embed de Google Maps</label>
+                            <input name="google_maps_embed_url" type="url" placeholder="https://maps.google.com/maps?...&output=embed">
+                            <label>Nota para delivery</label>
+                            <textarea name="delivery_notes" rows="3" placeholder="Indicaciones para mejorar la entrega"></textarea>
+                            <label>Nota para recojo</label>
+                            <textarea name="pickup_notes" rows="3" placeholder="Indicaciones para recoger sin espera"></textarea>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+                        <button type="button" id="reloadCompanyProfileBtn">Recargar datos</button>
+                        <button type="submit" class="btn-main">Guardar configuracion</button>
+                    </div>
+                    <div id="companyProfileMsg" class="msg"></div>
+                </form>
+            </div>
         </section>
 
         <section id="sec-products" class="panel">
@@ -812,9 +940,8 @@
                         <option value="">Todos</option>
                         <option value="yape">Yape</option>
                         <option value="plin">Plin</option>
-                        <option value="transfer">Transferencia</option>
+                        <option value="mercado_pago">Mercado Pago</option>
                         <option value="cod">Contraentrega</option>
-                        <option value="culqi">Culqi</option>
                     </select>
                 </div>
                 <div>
@@ -867,7 +994,7 @@
                 </section>
 
                 <section class="panel" style="padding:16px;">
-                    <h3>Validar pago QR/transferencia</h3>
+                    <h3>Validar pago digital</h3>
                     <form id="paymentForm">
                         <label>Pedido ID</label>
                         <input name="order_id" required>
@@ -988,6 +1115,7 @@ const adminMenuTabs = Array.from(document.querySelectorAll('#adminMenu .menu-tab
 const adminSections = [
     document.getElementById('sec-dashboard'),
     document.getElementById('sec-offers'),
+    document.getElementById('sec-company'),
     document.getElementById('sec-products'),
     document.getElementById('sec-orders'),
     document.getElementById('sec-cash-closure'),
@@ -1018,8 +1146,15 @@ const removeProductImageBtn = document.getElementById('removeProductImageBtn');
 
 const offerForm = document.getElementById('offerForm');
 const offerMsg = document.getElementById('offerMsg');
+const inactiveDaysInput = document.getElementById('inactiveDaysInput');
+const abandonedHoursInput = document.getElementById('abandonedHoursInput');
+const runRecoveryCampaignBtn = document.getElementById('runRecoveryCampaignBtn');
+const recoveryCampaignMsg = document.getElementById('recoveryCampaignMsg');
 const offerImageInput = document.getElementById('offerImageInput');
 const offerImagePreview = document.getElementById('offerImagePreview');
+const companyProfileForm = document.getElementById('companyProfileForm');
+const companyProfileMsg = document.getElementById('companyProfileMsg');
+const reloadCompanyProfileBtn = document.getElementById('reloadCompanyProfileBtn');
 
 const statusForm = document.getElementById('statusForm');
 const statusMsg = document.getElementById('statusMsg');
@@ -1053,12 +1188,35 @@ const adminOrderToastTitle = document.getElementById('adminOrderToastTitle');
 const adminOrderToastMessage = document.getElementById('adminOrderToastMessage');
 const adminOrderToastBody = document.getElementById('adminOrderToastBody');
 const adminOrderToastCloseBtn = document.getElementById('adminOrderToastCloseBtn');
+const adminUnreadBtn = document.getElementById('adminUnreadBtn');
+const adminUnreadCount = document.getElementById('adminUnreadCount');
+const adminThemeBtn = document.getElementById('adminThemeBtn');
+const dashboardOrdersMetric = document.getElementById('dashboardOrdersMetric');
+const dashboardPendingPaymentsMetric = document.getElementById('dashboardPendingPaymentsMetric');
+const dashboardProductsMetric = document.getElementById('dashboardProductsMetric');
+const dashboardUsersMetric = document.getElementById('dashboardUsersMetric');
 
 const BASE_CATEGORIES = ['pollos', 'parrillas', 'bebidas'];
 const ADMIN_TIMEOUT_MS = 30 * 60 * 1000;
+const ADMIN_THEME_KEY = 'ed_admin_theme';
 let productsCache = [];
 let refreshTimer = null;
 let productImageRemoved = false;
+let adminUnreadOrders = 0;
+
+function getAdminTheme() {
+    const saved = localStorage.getItem(ADMIN_THEME_KEY);
+    if (saved === 'light' || saved === 'dark') return saved;
+    return 'dark';
+}
+
+function applyAdminTheme(theme) {
+    document.body.dataset.theme = theme;
+    localStorage.setItem(ADMIN_THEME_KEY, theme);
+    if (adminThemeBtn) {
+        adminThemeBtn.textContent = theme === 'dark' ? 'Modo claro' : 'Modo oscuro';
+    }
+}
 
 const STATUS_ES = {
     pending: 'Pendiente',
@@ -1140,6 +1298,93 @@ async function sendOffer(formData, targetValue) {
     setUploadPreview(offerImagePreview, '');
 }
 
+async function runRecoveryCampaigns() {
+    const token = getToken();
+    recoveryCampaignMsg.textContent = 'Ejecutando campanas...';
+    const res = await fetch('/api/v1/admin/notifications/recovery-campaigns', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+            inactive_days: Number(inactiveDaysInput?.value || 5),
+            abandoned_hours: Number(abandonedHoursInput?.value || 3),
+            send_push: true,
+        }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        recoveryCampaignMsg.textContent = data?.message || 'No se pudieron ejecutar las campanas.';
+        return;
+    }
+    recoveryCampaignMsg.textContent = `OK. Inactivos: ${data.inactive?.sent || 0} correos, ${data.inactive?.pushSent || 0} push. Carrito: ${data.abandoned?.sent || 0} correos, ${data.abandoned?.pushSent || 0} push.`;
+}
+
+async function fetchCompanyProfile() {
+    if (!companyProfileForm) return;
+    const token = getToken();
+    companyProfileMsg.textContent = 'Cargando configuracion...';
+    const res = await fetch('/api/v1/admin/company-profile', {
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        companyProfileMsg.textContent = data?.message || 'No se pudo cargar la configuracion del negocio.';
+        return;
+    }
+
+    const location = data.location || {};
+    companyProfileForm.location_name.value = location.location_name || '';
+    companyProfileForm.address.value = location.address || '';
+    companyProfileForm.reference.value = location.reference || '';
+    companyProfileForm.google_maps_url.value = location.google_maps_url || '';
+    companyProfileForm.google_maps_embed_url.value = location.google_maps_embed_url || '';
+    companyProfileForm.business_hours.value = location.business_hours || '';
+    companyProfileForm.service_modes.value = location.service_modes || '';
+    companyProfileForm.delivery_notes.value = location.delivery_notes || '';
+    companyProfileForm.pickup_notes.value = location.pickup_notes || '';
+    companyProfileMsg.textContent = 'Configuracion cargada.';
+}
+
+async function saveCompanyProfile(event) {
+    event.preventDefault();
+    if (!companyProfileForm) return;
+    const token = getToken();
+    companyProfileMsg.textContent = 'Guardando configuracion...';
+
+    const payload = {
+        location_name: companyProfileForm.location_name.value.trim() || null,
+        address: companyProfileForm.address.value.trim() || null,
+        reference: companyProfileForm.reference.value.trim() || null,
+        google_maps_url: companyProfileForm.google_maps_url.value.trim() || null,
+        google_maps_embed_url: companyProfileForm.google_maps_embed_url.value.trim() || null,
+        business_hours: companyProfileForm.business_hours.value.trim() || null,
+        service_modes: companyProfileForm.service_modes.value.trim() || null,
+        delivery_notes: companyProfileForm.delivery_notes.value.trim() || null,
+        pickup_notes: companyProfileForm.pickup_notes.value.trim() || null,
+    };
+
+    const res = await fetch('/api/v1/admin/company-profile', {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        const validationErrors = data.errors ? Object.values(data.errors).flat().join(' | ') : '';
+        companyProfileMsg.textContent = validationErrors || data.message || 'No se pudo guardar la configuracion.';
+        return;
+    }
+
+    companyProfileMsg.textContent = data.message || 'Configuracion actualizada.';
+    await fetchCompanyProfile();
+}
+
 function parseSession() {
     const raw = localStorage.getItem('ed_session');
     if (!raw) return null;
@@ -1200,12 +1445,52 @@ function hideAdminOrderToast() {
     if (adminOrderToast) adminOrderToast.style.display = 'none';
 }
 
+function renderAdminUnread() {
+    if (adminUnreadCount) adminUnreadCount.textContent = String(adminUnreadOrders);
+}
+
+function syncDashboardMetrics() {
+    if (dashboardOrdersMetric) {
+        dashboardOrdersMetric.textContent = String(Array.isArray(window.__adminOrdersCache) ? window.__adminOrdersCache.length : 0);
+    }
+    if (dashboardPendingPaymentsMetric) {
+        const pending = Array.isArray(window.__adminOrdersCache)
+            ? window.__adminOrdersCache.filter(order => ['pending', 'reported'].includes(String(order.payment_status || ''))).length
+            : 0;
+        dashboardPendingPaymentsMetric.textContent = String(pending);
+    }
+    if (dashboardProductsMetric) {
+        dashboardProductsMetric.textContent = String(Array.isArray(productsCache) ? productsCache.filter(product => Boolean(product.is_available)).length : 0);
+    }
+    if (dashboardUsersMetric) {
+        dashboardUsersMetric.textContent = String(Number(window.__adminUsersCount || 0));
+    }
+}
+
+function playAdminSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = 740;
+        gain.gain.value = 0.04;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.22);
+    } catch {}
+}
+
 function showAdminOrderToast(payload) {
     if (!adminOrderToast) return;
     adminOrderToastTitle.textContent = payload?.title || 'Nuevo pedido';
     adminOrderToastMessage.textContent = payload?.message || 'Se registro un nuevo pedido.';
     adminOrderToastBody.textContent = payload?.body || '';
     adminOrderToast.style.display = 'block';
+    adminUnreadOrders += 1;
+    renderAdminUnread();
+    playAdminSound();
 }
 
 function openProofModal(order) {
@@ -1466,6 +1751,7 @@ async function fetchProducts() {
     const data = await res.json();
     productsCache = Array.isArray(data) ? data : [];
     upsertCategoryOptions();
+    syncDashboardMetrics();
     renderProducts();
 }
 
@@ -1598,6 +1884,8 @@ async function fetchOrders() {
     }
 
     const orders = data.data || [];
+    window.__adminOrdersCache = orders;
+    syncDashboardMetrics();
     if (!orders.length) {
         ordersList.innerHTML = '<div class="card">Sin pedidos recientes.</div>';
     } else {
@@ -1857,6 +2145,8 @@ async function fetchUsers() {
     }
 
     const users = data.data || [];
+    window.__adminUsersCount = users.length;
+    syncDashboardMetrics();
     if (!users.length) {
         usersList.innerHTML = '<div class="card">Sin cuentas registradas.</div>';
         return;
@@ -2045,6 +2335,7 @@ async function boot() {
     await fetchCashClosureSummary();
     await fetchCashClosureHistory();
     await fetchUsers();
+    await fetchCompanyProfile();
 
     refreshTimer = setInterval(async () => {
         if (Date.now() > Number((parseSession() || {}).expiresAt || 0)) {
@@ -2057,6 +2348,7 @@ async function boot() {
         await fetchCashClosureSummary();
         await fetchCashClosureHistory();
         await fetchUsers();
+        await fetchCompanyProfile();
     }, 20000);
 }
 
@@ -2078,6 +2370,15 @@ if (offerForm) {
         if (offerImageInput?.files?.[0]) formData.append('image', offerImageInput.files[0]);
         sendOffer(formData, offerForm.target.value);
     });
+}
+if (runRecoveryCampaignBtn) {
+    runRecoveryCampaignBtn.addEventListener('click', runRecoveryCampaigns);
+}
+if (companyProfileForm) {
+    companyProfileForm.addEventListener('submit', saveCompanyProfile);
+}
+if (reloadCompanyProfileBtn) {
+    reloadCompanyProfileBtn.addEventListener('click', fetchCompanyProfile);
 }
 statusForm.addEventListener('submit', updateOrderStatus);
 paymentForm.addEventListener('submit', updatePaymentStatus);
@@ -2107,6 +2408,18 @@ proofModalCloseBtn.addEventListener('click', closeProofModal);
 if (adminOrderToastCloseBtn) {
     adminOrderToastCloseBtn.addEventListener('click', hideAdminOrderToast);
 }
+if (adminUnreadBtn) {
+    adminUnreadBtn.addEventListener('click', () => {
+        adminUnreadOrders = 0;
+        renderAdminUnread();
+        showAdminTab('sec-orders');
+    });
+}
+if (adminThemeBtn) {
+    adminThemeBtn.addEventListener('click', () => {
+        applyAdminTheme(getAdminTheme() === 'dark' ? 'light' : 'dark');
+    });
+}
 proofModal.addEventListener('click', (event) => {
     if (event.target === proofModal) closeProofModal();
 });
@@ -2122,6 +2435,8 @@ adminMenuTabs.forEach(tab => {
 });
 
 bootRealtimeOrders();
+renderAdminUnread();
+applyAdminTheme(getAdminTheme());
 boot();
 syncProductAvailabilityLabel();
 bindImagePreview(productImageInput, productImagePreview);

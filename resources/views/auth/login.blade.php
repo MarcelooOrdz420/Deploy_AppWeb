@@ -244,6 +244,18 @@
             margin-top: 4px;
         }
 
+        .reset-lock {
+            margin-top: 14px;
+            padding: 16px;
+            border-radius: 18px;
+            background: #fff6ee;
+            border: 1px solid #f6d7c2;
+            color: #7a3d12;
+            font-size: 14px;
+            line-height: 1.55;
+            display: none;
+        }
+
         .footer-links a,
         .switch-link {
             color: #8a3f0a;
@@ -367,6 +379,8 @@
             Olvide mi contrasena
         </button>
 
+        <div id="resetLockBox" class="reset-lock"></div>
+
         <form id="forgotForm" class="forgot-panel" hidden>
             <label for="forgotEmail">Recupera tu acceso</label>
             <input id="forgotEmail" name="forgot_email" type="email" placeholder="Tu correo registrado" required>
@@ -417,6 +431,53 @@ const googleBtn = document.getElementById('googleLoginBtn');
 const toggleForgotBtn = document.getElementById('toggleForgotBtn');
 const forgotForm = document.getElementById('forgotForm');
 const forgotMsg = document.getElementById('forgotMsg');
+const resetLockBox = document.getElementById('resetLockBox');
+const RESET_PENDING_KEY = 'ed_password_reset_pending_v1';
+const RESET_CHANNEL = 'BroadcastChannel' in window ? new BroadcastChannel('ed-password-reset') : null;
+const RESET_TAB_ID = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+function loadResetPending() {
+    try {
+        const data = JSON.parse(localStorage.getItem(RESET_PENDING_KEY) || 'null');
+        if (!data) return null;
+        if (data.pendingUntil && Date.now() > new Date(data.pendingUntil).getTime()) {
+            localStorage.removeItem(RESET_PENDING_KEY);
+            return null;
+        }
+        return data;
+    } catch {
+        localStorage.removeItem(RESET_PENDING_KEY);
+        return null;
+    }
+}
+
+function saveResetPending(data) {
+    localStorage.setItem(RESET_PENDING_KEY, JSON.stringify(data));
+    RESET_CHANNEL?.postMessage({ type: 'pending', payload: data });
+}
+
+function clearResetPending() {
+    localStorage.removeItem(RESET_PENDING_KEY);
+    RESET_CHANNEL?.postMessage({ type: 'cleared' });
+}
+
+function renderResetPending() {
+    const pending = loadResetPending();
+    if (!pending) {
+        resetLockBox.style.display = 'none';
+        resetLockBox.textContent = '';
+        toggleForgotBtn.disabled = false;
+        return false;
+    }
+
+    const until = pending.pendingUntil ? new Date(pending.pendingUntil) : null;
+    const when = until ? until.toLocaleString() : 'que termine el proceso';
+    resetLockBox.style.display = 'block';
+    resetLockBox.textContent = `Ya hay una recuperacion activa para ${pending.email || 'tu cuenta'}. Revisa tu correo y termina el cambio desde la misma sesion. Si no lo completas, podras pedir otro enlace cuando venza (${when}).`;
+    toggleForgotBtn.disabled = true;
+    forgotForm.hidden = true;
+    return true;
+}
 
 function setSessionFromAuth(data) {
     localStorage.setItem('ed_token', data.token);
@@ -429,6 +490,7 @@ function setSessionFromAuth(data) {
 }
 
 toggleForgotBtn?.addEventListener('click', () => {
+    if (renderResetPending()) return;
     forgotForm.hidden = !forgotForm.hidden;
     if (!forgotForm.hidden) {
         forgotForm.forgot_email.value = form.email.value.trim();
@@ -465,6 +527,7 @@ form.addEventListener('submit', async (e) => {
 
 forgotForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (renderResetPending()) return;
     forgotMsg.style.color = '#9d460d';
     forgotMsg.textContent = 'Enviando enlace...';
 
@@ -478,10 +541,34 @@ forgotForm?.addEventListener('submit', async (event) => {
         const data = await res.json();
         forgotMsg.style.color = res.ok ? '#166534' : '#9d460d';
         forgotMsg.textContent = data.message || 'No se pudo procesar la solicitud.';
+        if (data.pending_until || res.ok) {
+            saveResetPending({
+                email: data.reset_email || forgotForm.forgot_email.value.trim(),
+                pendingUntil: data.pending_until || null,
+                originTabId: RESET_TAB_ID,
+                requestedAt: Date.now(),
+            });
+            renderResetPending();
+        }
     } catch {
         forgotMsg.textContent = 'No se pudo conectar con el servidor.';
     }
 });
+
+window.addEventListener('storage', (event) => {
+    if (event.key === RESET_PENDING_KEY) {
+        renderResetPending();
+    }
+});
+
+RESET_CHANNEL?.addEventListener('message', (event) => {
+    const type = event.data?.type;
+    if (type === 'pending' || type === 'cleared') {
+        renderResetPending();
+    }
+});
+
+renderResetPending();
 
 @if (config('services.google_auth.web_client_id'))
 window.handleGoogleCredential = async (response) => {

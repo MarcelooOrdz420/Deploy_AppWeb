@@ -48,4 +48,26 @@ class OrderApiService {
     final list = (res.data ?? <dynamic>[]);
     return list.map((e) => (e as Map).cast<String, dynamic>()).toList();
   }
+
+  Future<Map<String, dynamic>> mercadoPagoCheckout({
+    required String token,
+    required int orderId,
+  }) async {
+    try {
+      final res = await ApiClient.get<Map<String, dynamic>>(
+        '/orders/$orderId/payments/mercado-pago-checkout',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      return (res.data ?? <String, dynamic>{}).cast<String, dynamic>();
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (data is Map && data['message'] != null) {
+        throw Exception(data['message'].toString());
+      }
+      throw Exception('No se pudo iniciar Mercado Pago');
+    }
+  }
 }

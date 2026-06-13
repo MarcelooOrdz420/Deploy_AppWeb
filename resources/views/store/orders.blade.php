@@ -140,7 +140,7 @@ function saveLastStatuses(map) {
 function getToken() { return localStorage.getItem('ed_token'); }
 function statusEs(code) { return STATUS_ES[code] || code || 'n/a'; }
 function paymentStatusEs(code) { return PAYMENT_STATUS_ES[code] || code || 'n/a'; }
-function needsDigitalProof(method) { return ['yape', 'plin', 'transfer'].includes(String(method || '').toLowerCase()); }
+function needsDigitalProof(method) { return ['yape', 'plin'].includes(String(method || '').toLowerCase()); }
 
 async function loadPreferences() {
     const token = getToken();
@@ -291,6 +291,9 @@ async function fetchMyOrders() {
                 </div>` : ''}
                 <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
                     <button data-track="${order.tracking_code}" class="btn-soft">Ver seguimiento</button>
+                    ${String(order.payment_method || '').toLowerCase() === 'mercado_pago' && String(order.payment_status || '').toLowerCase() === 'pending'
+                        ? `<button data-mp-checkout="${order.id}" class="btn-soft">Pagar ahora</button>`
+                        : ''}
                     <button data-view-receipt="${order.id}" class="btn-soft">Ver boleta</button>
                     <button data-download="${order.id}" class="btn-soft">Descargar boleta</button>
                 </div>
@@ -311,6 +314,9 @@ async function fetchMyOrders() {
         });
         ordersList.querySelectorAll('[data-proof-upload]').forEach(btn => {
             btn.addEventListener('click', () => uploadProof(Number(btn.getAttribute('data-proof-upload'))));
+        });
+        ordersList.querySelectorAll('[data-mp-checkout]').forEach(btn => {
+            btn.addEventListener('click', () => openMercadoPagoCheckout(Number(btn.getAttribute('data-mp-checkout'))));
         });
 
         const last = localStorage.getItem('ed_last_tracking');
@@ -375,6 +381,28 @@ async function uploadProof(orderId) {
     }
 }
 
+async function openMercadoPagoCheckout(orderId) {
+    const token = getToken();
+    try {
+        const res = await fetch(`/api/v1/orders/${orderId}/payments/mercado-pago-checkout`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.message || 'No se pudo iniciar el pago.');
+            return;
+        }
+        const target = data.checkout_url || data.sandbox_checkout_url;
+        if (!target) {
+            alert('Mercado Pago aun no esta configurado en el servidor.');
+            return;
+        }
+        window.open(target, '_blank', 'noopener');
+    } catch {
+        alert('Error de conexion al abrir Mercado Pago.');
+    }
+}
+
 async function downloadReceipt(orderId) {
     const token = getToken();
     try {
@@ -427,9 +455,12 @@ function viewReceipt(orderId) {
 
 trackBtn.addEventListener('click', searchTracking);
 marketingEmailsEnabled?.addEventListener('change', savePreferences);
+window.addEventListener('ed:order-status-updated', () => {
+    fetchMyOrders();
+});
 paintTimeline('');
 fetchMyOrders();
 loadPreferences();
-setInterval(fetchMyOrders, 15000);
+setInterval(fetchMyOrders, 45000);
 </script>
 @endsection

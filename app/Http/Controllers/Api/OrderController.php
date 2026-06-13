@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\OrderCreatedAlertSent;
+use App\Events\OrderStatusUpdatedForUser;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -198,7 +199,7 @@ class OrderController extends Controller
             'delivery_type' => ['required', Rule::in(['pickup', 'delivery'])],
             'scheduled_for' => ['nullable', 'date'],
             'delivery_window_label' => ['nullable', 'string', 'max:120'],
-            'payment_method' => ['required', Rule::in(['yape', 'plin', 'transfer', 'cod', 'culqi'])],
+            'payment_method' => ['required', Rule::in(['yape', 'plin', 'mercado_pago', 'cod'])],
             'payment_reference' => ['nullable', 'string', 'max:120'],
             'billing_document_type' => ['nullable', Rule::in(['dni'])],
             'billing_document_number' => ['nullable', 'string', 'max:20'],
@@ -241,7 +242,7 @@ class OrderController extends Controller
             return response()->json(['message' => 'La cocina ya cerro por hoy. Puedes programar un pedido antes de las 11:00 PM.'], 422);
         }
 
-        if (! in_array($data['payment_method'], ['cod', 'culqi'], true) && empty($data['payment_reference'])) {
+        if (in_array($data['payment_method'], ['yape', 'plin'], true) && empty($data['payment_reference'])) {
             return response()->json(['message' => 'Ingresa codigo/operacion del pago para validar.'], 422);
         }
 
@@ -288,10 +289,10 @@ class OrderController extends Controller
                 'status' => Order::STATUS_PENDING,
                 'total_amount' => 0,
                 'payment_method' => $data['payment_method'],
-                'payment_gateway' => $data['payment_method'] === 'culqi' ? 'culqi' : null,
+                'payment_gateway' => $data['payment_method'] === 'mercado_pago' ? 'mercadopago' : null,
                 'payment_reference' => $data['payment_reference'] ?? null,
                 'payment_proof_path' => null,
-                'payment_status' => in_array($data['payment_method'], ['cod', 'culqi'], true) ? 'pending' : 'pending',
+                'payment_status' => 'pending',
                 'payment_reported_at' => null,
                 'payment_verified_at' => null,
                 'billing_document_type' => $data['billing_document_type'] ?? null,
@@ -471,6 +472,7 @@ class OrderController extends Controller
     private function sendOrderStatusPush(Order $order, ?string $paymentStatus = null): void
     {
         try {
+            event(new OrderStatusUpdatedForUser($order));
             $userId = (int) $order->user_id;
             if ($userId <= 0) return;
 
@@ -736,9 +738,8 @@ HTML;
         return match ($paymentMethod) {
             'yape' => 'Yape',
             'plin' => 'Plin',
-            'transfer' => 'Transferencia',
             'cod' => 'Contraentrega',
-            'culqi' => 'Culqi',
+            'mercado_pago' => 'Mercado Pago',
             default => $paymentMethod,
         };
     }
@@ -756,7 +757,7 @@ HTML;
 
     private function isDigitalPaymentMethod(string $paymentMethod): bool
     {
-        return in_array($paymentMethod, ['yape', 'plin', 'transfer'], true);
+        return in_array($paymentMethod, ['yape', 'plin'], true);
     }
 
     private function groupOrdersByPeriod(Collection $orders, string $period): array

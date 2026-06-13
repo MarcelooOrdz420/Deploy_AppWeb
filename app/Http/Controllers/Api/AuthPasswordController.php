@@ -16,11 +16,13 @@ class AuthPasswordController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        $passwordResetService->sendResetLink($data['email']);
+        $status = $passwordResetService->sendResetLink($data['email']);
 
         return response()->json([
-            'message' => 'Si el correo existe en nuestra base, te enviaremos un enlace para cambiar tu contrasena.',
-        ]);
+            'message' => $status['message'],
+            'pending_until' => $status['pending_until'] ?? null,
+            'reset_email' => $status['reset_email'] ?? null,
+        ], $status['status'] ?? 200);
     }
 
     public function reset(Request $request, PasswordResetService $passwordResetService): JsonResponse

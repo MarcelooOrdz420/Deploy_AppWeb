@@ -24,8 +24,7 @@ class SimplePdfReceiptService
         $paymentMethod = match ($order->payment_method) {
             'yape' => 'Yape',
             'plin' => 'Plin',
-            'transfer' => 'Transferencia',
-            'culqi' => 'Culqi',
+            'mercado_pago' => 'Mercado Pago',
             'cod' => 'Contraentrega',
             default => (string) $order->payment_method,
         };

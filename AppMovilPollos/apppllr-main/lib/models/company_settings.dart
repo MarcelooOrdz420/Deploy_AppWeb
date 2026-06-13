@@ -3,7 +3,7 @@ class CompanySettings {
   final String currency;
   final PaymentChannel yape;
   final PaymentChannel plin;
-  final TransferChannel transfer;
+  final MercadoPagoChannel mercadoPago;
   final CodChannel cod;
 
   CompanySettings({
@@ -11,7 +11,7 @@ class CompanySettings {
     required this.currency,
     required this.yape,
     required this.plin,
-    required this.transfer,
+    required this.mercadoPago,
     required this.cod,
   });
 
@@ -22,7 +22,7 @@ class CompanySettings {
       currency: (json['currency'] ?? 'PEN').toString(),
       yape: PaymentChannel.fromJson((payments['yape'] as Map? ?? <String, dynamic>{}).cast<String, dynamic>()),
       plin: PaymentChannel.fromJson((payments['plin'] as Map? ?? <String, dynamic>{}).cast<String, dynamic>()),
-      transfer: TransferChannel.fromJson((payments['transfer'] as Map? ?? <String, dynamic>{}).cast<String, dynamic>()),
+      mercadoPago: MercadoPagoChannel.fromJson((payments['mercado_pago'] as Map? ?? <String, dynamic>{}).cast<String, dynamic>()),
       cod: CodChannel.fromJson((payments['cod'] as Map? ?? <String, dynamic>{}).cast<String, dynamic>()),
     );
   }
@@ -32,7 +32,7 @@ class CompanySettings {
         currency: 'PEN',
         yape: PaymentChannel(label: 'Yape Empresa', enabled: true),
         plin: PaymentChannel(label: 'Plin Empresa', enabled: true),
-        transfer: TransferChannel(label: 'Transferencia bancaria', enabled: true),
+        mercadoPago: MercadoPagoChannel(label: 'Mercado Pago', enabled: true),
         cod: CodChannel(label: 'Pago contraentrega', message: 'Pagas cuando recibes tu pedido.', enabled: true),
       );
 }
@@ -58,29 +58,20 @@ class PaymentChannel {
       );
 }
 
-class TransferChannel {
+class MercadoPagoChannel {
   final String label;
-  final String bankName;
-  final String accountNumber;
-  final String cci;
-  final String accountHolder;
+  final String publicKey;
   final bool enabled;
 
-  TransferChannel({
+  MercadoPagoChannel({
     required this.label,
-    this.bankName = '',
-    this.accountNumber = '',
-    this.cci = '',
-    this.accountHolder = '',
+    this.publicKey = '',
     required this.enabled,
   });
 
-  factory TransferChannel.fromJson(Map<String, dynamic> json) => TransferChannel(
+  factory MercadoPagoChannel.fromJson(Map<String, dynamic> json) => MercadoPagoChannel(
         label: (json['label'] ?? '').toString(),
-        bankName: (json['bank_name'] ?? '').toString(),
-        accountNumber: (json['account_number'] ?? '').toString(),
-        cci: (json['cci'] ?? '').toString(),
-        accountHolder: (json['account_holder'] ?? '').toString(),
+        publicKey: (json['public_key'] ?? '').toString(),
         enabled: json['enabled'] != false,
       );
 }
