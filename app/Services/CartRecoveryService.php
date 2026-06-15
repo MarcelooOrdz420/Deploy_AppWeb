@@ -4,11 +4,16 @@ namespace App\Services;
 
 use App\Models\CartRecovery;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 class CartRecoveryService
 {
     public function syncForUser(User $user, array $items, string $source = 'web'): void
     {
+        if (! $this->tableExists()) {
+            return;
+        }
+
         $normalizedItems = collect($items)
             ->map(function (array $item): array {
                 $qty = max(0, (int) ($item['qty'] ?? 0));
@@ -53,8 +58,21 @@ class CartRecoveryService
 
     public function clearForUser(User $user): void
     {
+        if (! $this->tableExists()) {
+            return;
+        }
+
         CartRecovery::query()
             ->where('user_id', $user->id)
             ->delete();
+    }
+
+    private function tableExists(): bool
+    {
+        try {
+            return Schema::hasTable('cart_recoveries');
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

@@ -323,7 +323,7 @@ class _HomeTabState extends State<HomeTab> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: StoreTheme.lineStrong.withOpacity(.52)),
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
@@ -349,7 +349,7 @@ class _HomeTabState extends State<HomeTab> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: const BoxDecoration(
               color: Color(0xFF17110D),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
             ),
             child: const Text(
               'Horario de atencion · Lun-Vie 12 pm a 8 pm · Sab 11 am a 9 pm · Dom 11 am a 7 pm',
@@ -369,11 +369,11 @@ class _HomeTabState extends State<HomeTab> {
           Row(
             children: [
               Container(
-                width: 54,
-                height: 54,
+                width: 48,
+                height: 48,
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: StoreTheme.lineStrong.withOpacity(.9)),
                   gradient: LinearGradient(
                     colors: [
@@ -401,7 +401,7 @@ class _HomeTabState extends State<HomeTab> {
                     const SizedBox(height: 4),
                     const Text(
                       'Pollos y Parrillas "El Dorado"',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF2A150D)),
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF2A150D)),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -488,7 +488,7 @@ class _HomeTabState extends State<HomeTab> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(14),
         gradient: const LinearGradient(
           colors: [
             Color(0xFF15110F),
@@ -513,7 +513,7 @@ class _HomeTabState extends State<HomeTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Menu principal',
+            'Menu',
             style: TextStyle(
               fontSize: 11,
               letterSpacing: 2.2,
@@ -525,7 +525,7 @@ class _HomeTabState extends State<HomeTab> {
           const Text(
             'SA\nBRO\nSO!',
             style: TextStyle(
-              fontSize: 64,
+              fontSize: 58,
               height: .82,
               fontWeight: FontWeight.w900,
               color: Colors.white,

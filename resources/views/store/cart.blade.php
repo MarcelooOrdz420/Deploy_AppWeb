@@ -401,7 +401,126 @@ async function uploadPaymentProofForOrder(orderId){const file=paymentProofFile.f
 function showLastOrder(){const tracking=localStorage.getItem('ed_last_tracking');if(!tracking)return;lastOrderBox.style.display='block';lastOrderBox.innerHTML=`<strong>Ultimo pedido: ${tracking}</strong><p>Tu ultimo codigo queda guardado para que puedas volver a seguirlo sin buscarlo otra vez.</p><a href="/mis-pedidos">Ver seguimiento en Mis pedidos</a>`}
 orderForm.querySelectorAll('input[name="payment_method"]').forEach(radio=>radio.addEventListener('change',updatePaymentInfo));orderForm.querySelectorAll('input[name="receipt_delivery"]').forEach(radio=>radio.addEventListener('change',updateReceiptDeliveryUi));
 geoBtn.addEventListener('click',()=>{if(!navigator.geolocation){geoMsg.style.display='block';geoMsg.textContent='Tu navegador no soporta geolocalizacion.';return}geoMsg.style.display='block';geoMsg.textContent='Detectando tu ubicacion exacta...';navigator.geolocation.getCurrentPosition(async position=>{const latitude=position.coords.latitude.toFixed(7),longitude=position.coords.longitude.toFixed(7);if(orderForm.latitude)orderForm.latitude.value=latitude;if(orderForm.longitude)orderForm.longitude.value=longitude;try{const data=await reverseGeocode(latitude,longitude),address=data.address||{},road=address.road||address.pedestrian||address.residential||address.cycleway||'',avenue=address.avenue||'',houseNumber=address.house_number||'',suburb=address.suburb||address.neighbourhood||address.city_district||'',city=address.city||address.town||address.village||address.county||'',state=address.state||'',amenity=address.amenity||address.shop||address.tourism||'',exactPlace=[road||avenue,houseNumber].filter(Boolean).join(' ').trim()||data.name||data.display_name||'Ubicacion detectada',nearbyReference=[amenity?`Cerca de ${amenity}`:'',suburb?`Zona ${suburb}`:'',city?`Distrito/Ciudad ${city}`:'',state&&state!==city?state:''].filter(Boolean).join(' | ');orderForm.address.value=exactPlace;orderForm.reference.value=nearbyReference||'Ubicacion obtenida desde GPS';geoMsg.textContent=`Ubicacion detectada: ${exactPlace}${nearbyReference?` | ${nearbyReference}`:''}`}catch(error){orderForm.address.value='Ubicacion detectada desde GPS';orderForm.reference.value='Completa la calle, avenida o referencia cercana manualmente';geoMsg.textContent=error?.name==='AbortError'?'La traduccion a nombre de calles tardo demasiado. Completa la referencia manualmente.':'Se detecto tu ubicacion, pero no se pudo traducir a nombres de calles. Completa la referencia manualmente.'}},()=>{geoMsg.style.display='block';geoMsg.textContent='No se pudo obtener tu ubicacion.'},{enableHighAccuracy:true,timeout:12000,maximumAge:0})});
-orderForm.addEventListener('submit',async e=>{e.preventDefault();if(!isLoggedIn()){window.location.href='/login';return}const cart=getCart();if(!cart.length){orderMsg.textContent='Tu carrito esta vacio.';return}const limitError=validateCartLimits(cart);if(limitError){orderMsg.textContent=limitError;return}if(needsDigitalProof(paymentMethod())&&!paymentProofFile.files?.[0]){orderMsg.textContent='Sube el comprobante digital para Yape o Plin antes de confirmar.';return}const payload={customer_name:orderForm.customer_name.value.trim(),customer_phone:orderForm.customer_phone.value.trim(),customer_email:null,delivery_type:orderForm.delivery_type.value,payment_method:paymentMethod(),payment_reference:orderForm.payment_reference.value.trim()||null,billing_receipt_type:orderForm.billing_receipt_type.value||null,billing_document_type:orderForm.billing_document_type.value||null,billing_document_number:digits(orderForm.billing_document_number.value)||null,billing_name:orderForm.billing_name.value.trim()||null,billing_email:orderForm.billing_email.value.trim()||null,billing_address:optionalTrim(orderForm.billing_address),salad_type:orderForm.salad_type?(orderForm.salad_type.value||null):null,drink_note:null,address:orderForm.address.value.trim()||null,reference:orderForm.reference.value.trim()||null,latitude:optionalTrim(orderForm.latitude),longitude:optionalTrim(orderForm.longitude),items:cart.map(i=>({product_id:i.id,quantity:i.qty}))};setProcessingState(true);orderMsg.textContent='Procesando pedido...';try{const res=await fetch('/api/v1/orders',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${getToken()}`},body:JSON.stringify(payload)}),data=await res.json();if(!res.ok){setProcessingState(false);orderMsg.textContent=data.message||'No se pudo crear el pedido.';return}if(needsDigitalProof(paymentMethod())){setProcessingState(true,'Pedido creado, subiendo comprobante','Estamos adjuntando tu voucher para validacion.');try{await uploadPaymentProofForOrder(data.id)}catch(error){setProcessingState(false);orderMsg.textContent=`Pedido creado con codigo ${data.tracking_code}, pero el comprobante no se pudo subir: ${error.message}`;return}}if(paymentMethod()==='mercado_pago'){setProcessingState(true,'Pedido creado, redirigiendo a Mercado Pago','Tu pedido ya esta registrado. Ahora completaremos el pago seguro.');try{await openMercadoPagoCheckout(data.id);return}catch(error){setProcessingState(false);orderMsg.textContent=`Pedido creado con codigo ${data.tracking_code}, pero no se pudo abrir Mercado Pago: ${error.message}`;return}}localStorage.setItem('ed_last_tracking',data.tracking_code);const recent=JSON.parse(localStorage.getItem('ed_recent_trackings')||'[]');localStorage.setItem('ed_recent_trackings',JSON.stringify([data.tracking_code,...recent.filter(v=>v!==data.tracking_code)].slice(0,10)));setProcessingState(true,'Pedido enviado a la empresa',`Tu pedido (${data.tracking_code}) fue enviado al sistema. Te avisaremos cuando cambie de estado.`);orderMsg.textContent=`Pedido creado. Codigo: ${data.tracking_code}. Estado: ${data.status||'pending'}`;setCart([]);renderCart();orderForm.reset();paymentProofPreview.textContent='Aun no seleccionaste archivo.';updatePaymentInfo();updateBillingUi();updateDeliveryUi();showLastOrder();setTimeout(()=>{setProcessingState(false);window.location.href='/mis-pedidos'},1600)}catch{setProcessingState(false);orderMsg.textContent='No se pudo conectar al servidor.'}});
+orderForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!isLoggedIn()) {
+        window.location.href = '/login';
+        return;
+    }
+
+    const cart = getCart();
+    if (!cart.length) {
+        orderMsg.textContent = 'Tu carrito esta vacio.';
+        return;
+    }
+
+    const limitError = validateCartLimits(cart);
+    if (limitError) {
+        orderMsg.textContent = limitError;
+        return;
+    }
+
+    if (needsDigitalProof(paymentMethod()) && !paymentProofFile.files?.[0]) {
+        orderMsg.textContent = 'Sube el comprobante digital para Yape o Plin antes de confirmar.';
+        return;
+    }
+
+    const payload = {
+        customer_name: orderForm.customer_name.value.trim(),
+        customer_phone: orderForm.customer_phone.value.trim(),
+        customer_email: null,
+        delivery_type: orderForm.delivery_type.value,
+        payment_method: paymentMethod(),
+        payment_reference: orderForm.payment_reference.value.trim() || null,
+        billing_receipt_type: orderForm.billing_receipt_type.value || null,
+        billing_document_type: orderForm.billing_document_type.value || null,
+        billing_document_number: digits(orderForm.billing_document_number.value) || null,
+        billing_name: orderForm.billing_name.value.trim() || null,
+        billing_email: orderForm.billing_email.value.trim() || null,
+        billing_address: optionalTrim(orderForm.billing_address),
+        salad_type: orderForm.salad_type ? (orderForm.salad_type.value || null) : null,
+        drink_note: null,
+        address: orderForm.address.value.trim() || null,
+        reference: orderForm.reference.value.trim() || null,
+        latitude: optionalTrim(orderForm.latitude),
+        longitude: optionalTrim(orderForm.longitude),
+        items: cart.map(i => ({ product_id: i.id, quantity: i.qty })),
+    };
+
+    setProcessingState(true);
+    orderMsg.textContent = 'Procesando pedido...';
+
+    try {
+        const res = await fetch('/api/v1/orders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const raw = await res.text();
+        let data = {};
+        try {
+            data = raw ? JSON.parse(raw) : {};
+        } catch {
+            data = {};
+        }
+
+        if (!res.ok) {
+            setProcessingState(false);
+            orderMsg.textContent = data.message || (raw && raw.includes('Server Error')
+                ? 'El servidor tuvo un error al registrar el pedido.'
+                : 'No se pudo crear el pedido.');
+            return;
+        }
+
+        if (needsDigitalProof(paymentMethod())) {
+            setProcessingState(true, 'Pedido creado, subiendo comprobante', 'Estamos adjuntando tu voucher para validacion.');
+            try {
+                await uploadPaymentProofForOrder(data.id);
+            } catch (error) {
+                setProcessingState(false);
+                orderMsg.textContent = `Pedido creado con codigo ${data.tracking_code}, pero el comprobante no se pudo subir: ${error.message}`;
+                return;
+            }
+        }
+
+        if (paymentMethod() === 'mercado_pago') {
+            setProcessingState(true, 'Pedido creado, redirigiendo a Mercado Pago', 'Tu pedido ya esta registrado. Ahora completaremos el pago seguro.');
+            try {
+                await openMercadoPagoCheckout(data.id);
+                return;
+            } catch (error) {
+                setProcessingState(false);
+                orderMsg.textContent = `Pedido creado con codigo ${data.tracking_code}, pero no se pudo abrir Mercado Pago: ${error.message}`;
+                return;
+            }
+        }
+
+        localStorage.setItem('ed_last_tracking', data.tracking_code);
+        const recent = JSON.parse(localStorage.getItem('ed_recent_trackings') || '[]');
+        localStorage.setItem('ed_recent_trackings', JSON.stringify([data.tracking_code, ...recent.filter(v => v !== data.tracking_code)].slice(0, 10)));
+        setProcessingState(true, 'Pedido enviado a la empresa', `Tu pedido (${data.tracking_code}) fue enviado al sistema. Te avisaremos cuando cambie de estado.`);
+        orderMsg.textContent = `Pedido creado. Codigo: ${data.tracking_code}. Estado: ${data.status || 'pending'}`;
+        setCart([]);
+        renderCart();
+        orderForm.reset();
+        paymentProofPreview.textContent = 'Aun no seleccionaste archivo.';
+        updatePaymentInfo();
+        updateBillingUi();
+        updateDeliveryUi();
+        showLastOrder();
+        setTimeout(() => {
+            setProcessingState(false);
+            window.location.href = '/mis-pedidos';
+        }, 1600);
+    } catch {
+        setProcessingState(false);
+        orderMsg.textContent = 'No se pudo conectar al servidor.';
+    }
+});
 renderCart();billingReceiptType.addEventListener('change',updateBillingUi);deliveryType.addEventListener('change',updateDeliveryUi);billingDocumentNumber.addEventListener('input',()=>{billingDocumentNumber.value=digits(billingDocumentNumber.value).slice(0,currentDocumentLength());const needed=currentDocumentLength(),current=billingDocumentNumber.value.length;if(currentReceiptType())billingLookupBox.textContent=current<needed?`Faltan ${needed-current} digitos para consultar el ${billingDocumentType.value.toUpperCase()}.`:billingLookupBox.textContent;if(current===needed&&billingDocumentNumber.value!==lastLookupValue)lookupDocument()});lookupDocumentBtn.addEventListener('click',()=>lookupDocument());paymentProofFile.addEventListener('change',()=>{const file=paymentProofFile.files?.[0];paymentProofPreview.textContent=file?`Archivo listo: ${file.name} (${Math.round(file.size/1024)} KB)`:'Aun no seleccionaste archivo.';updateHeroStatus(getCart())});updateBillingUi();updateDeliveryUi();loadCompanySettings().finally(()=>{updatePaymentInfo();updateReceiptDeliveryUi();showLastOrder();updateHeroStatus(getCart())});
 </script>
 @endsection

@@ -8,8 +8,10 @@ use App\Models\User;
 use App\Services\Fcm\FcmClient;
 use App\Services\Marketing\CustomerRecoveryCampaignService;
 use App\Services\Mail\CustomerLifecycleEmailService;
+use App\Services\Realtime\PusherNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use ReflectionClass;
 use Throwable;
@@ -36,28 +38,16 @@ class AdminNotificationController extends Controller
             $data['image_url'] = url(Storage::url($path));
         }
 
-        $ref = new ReflectionClass(OfferNotificationSent::class);
-        $ctor = $ref->getConstructor();
-        $paramNames = $ctor ? array_map(fn ($p) => $p->getName(), $ctor->getParameters()) : [];
+        $broadcastPayload = [
+            'target' => (string) ($data['target'] ?? 'all'),
+            'title' => $data['title'],
+            'message' => $data['message'],
+            'body' => $data['body'] ?? $data['message'],
+            'image_url' => $data['image_url'] ?? null,
+            'cta_label' => $data['cta_label'] ?? null,
+        ];
 
-        if (in_array('target', $paramNames, true)) {
-            event(new OfferNotificationSent(
-                target: (string) ($data['target'] ?? 'all'),
-                title: $data['title'],
-                message: $data['message'],
-                body: $data['body'] ?? null,
-                imageUrl: $data['image_url'] ?? null,
-                ctaLabel: $data['cta_label'] ?? null,
-            ));
-        } else {
-            event(new OfferNotificationSent(
-                title: $data['title'],
-                message: $data['message'],
-                body: $data['body'] ?? null,
-                imageUrl: $data['image_url'] ?? null,
-                ctaLabel: $data['cta_label'] ?? null,
-            ));
-        }
+        $broadcast = $this->broadcastOffer($broadcastPayload);
 
         $push = null;
         $email = null;
@@ -106,18 +96,13 @@ class AdminNotificationController extends Controller
             'message' => 'Notificacion enviada',
             'channel' => 'mi-canal',
             'event' => 'mi-evento',
+            'broadcast' => $broadcast,
             'push' => $push,
             'email' => $email,
-            'payload' => [
-                'target' => (string) ($data['target'] ?? 'all'),
+            'payload' => $broadcastPayload + [
                 'send_push' => $sendPush,
                 'send_email' => $sendEmail,
                 'email_subject' => $data['email_subject'] ?? null,
-                'title' => $data['title'],
-                'message' => $data['message'],
-                'body' => $data['body'] ?? $data['message'],
-                'image_url' => $data['image_url'] ?? null,
-                'cta_label' => $data['cta_label'] ?? null,
             ],
         ]);
     }
@@ -155,28 +140,80 @@ class AdminNotificationController extends Controller
         /** @var CustomerLifecycleEmailService $emailService */
         $emailService = app(CustomerLifecycleEmailService::class);
 
-        User::query()
+        $query = User::query()
             ->where('is_active', true)
             ->where('is_verified', true)
-            ->where('marketing_emails_enabled', true)
             ->whereNotNull('email')
             ->where('email', '!=', '')
-            ->orderBy('id')
-            ->chunkById(100, function ($users) use (&$sent, &$failed, $emailService, $data): void {
-                foreach ($users as $user) {
-                    try {
-                        $emailService->sendPromotion($user, $data);
-                        $sent++;
-                    } catch (Throwable) {
-                        $failed++;
-                    }
+            ->orderBy('id');
+
+        if (Schema::hasColumn('users', 'marketing_emails_enabled')) {
+            $query->where('marketing_emails_enabled', true);
+        }
+
+        $query->chunkById(100, function ($users) use (&$sent, &$failed, $emailService, $data): void {
+            foreach ($users as $user) {
+                try {
+                    $emailService->sendPromotion($user, $data);
+                    $sent++;
+                } catch (Throwable) {
+                    $failed++;
                 }
-            });
+            }
+        });
 
         return [
             'ok' => $failed === 0,
             'sent' => $sent,
             'failed' => $failed,
         ];
+    }
+
+    private function broadcastOffer(array $payload): array
+    {
+        try {
+            /** @var PusherNotifier $notifier */
+            $notifier = app(PusherNotifier::class);
+            if ($notifier->trigger('mi-canal', 'mi-evento', $payload)) {
+                return ['ok' => true, 'driver' => 'pusher'];
+            }
+        } catch (Throwable $e) {
+            return ['ok' => false, 'driver' => 'pusher', 'message' => $e->getMessage()];
+        }
+
+        try {
+            $ref = new ReflectionClass(OfferNotificationSent::class);
+            $ctor = $ref->getConstructor();
+            $paramNames = $ctor ? array_map(fn ($p) => $p->getName(), $ctor->getParameters()) : [];
+
+            if (in_array('target', $paramNames, true)) {
+                event(new OfferNotificationSent(
+                    target: (string) ($payload['target'] ?? 'all'),
+                    title: $payload['title'],
+                    message: $payload['message'],
+                    body: $payload['body'] ?? null,
+                    imageUrl: $payload['image_url'] ?? null,
+                    ctaLabel: $payload['cta_label'] ?? null,
+                ));
+            } else {
+                event(new OfferNotificationSent(
+                    title: $payload['title'],
+                    message: $payload['message'],
+                    body: $payload['body'] ?? null,
+                    imageUrl: $payload['image_url'] ?? null,
+                    ctaLabel: $payload['cta_label'] ?? null,
+                ));
+            }
+
+            return [
+                'ok' => (string) config('broadcasting.default') !== 'log',
+                'driver' => (string) config('broadcasting.default'),
+                'message' => (string) config('broadcasting.default') === 'log'
+                    ? 'La promo fue emitida al driver log. Activa Pusher para verla en la web en tiempo real.'
+                    : 'Broadcast emitido.',
+            ];
+        } catch (Throwable $e) {
+            return ['ok' => false, 'driver' => (string) config('broadcasting.default'), 'message' => $e->getMessage()];
+        }
     }
 }

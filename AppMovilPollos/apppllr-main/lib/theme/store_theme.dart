@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 class StoreTheme {
-  static const Color orange = Color(0xFFFF6F1F);
-  static const Color orangeSoft = Color(0xFFFF9D5A);
-  static const Color orangeDeep = Color(0xFFF25D00);
-  static const Color cream = Color(0xFFFFF8F2);
-  static const Color paper = Color(0xFFFFFDF9);
-  static const Color paperSoft = Color(0xFFFFF6EE);
-  static const Color ink = Color(0xFF25170F);
-  static const Color inkSoft = Color(0xFF68432E);
-  static const Color lineStrong = Color(0xFFEAB68A);
+  static const Color orange = Color(0xFFFF9F22);
+  static const Color orangeSoft = Color(0xFFFFC20E);
+  static const Color orangeDeep = Color(0xFFD87525);
+  static const Color cream = Color(0xFFFFF8ED);
+  static const Color paper = Color(0xFFFFFCF6);
+  static const Color paperSoft = Color(0xFFFFF1DC);
+  static const Color ink = Color(0xFF1B130F);
+  static const Color inkSoft = Color(0xFF594133);
+  static const Color lineStrong = Color(0xFFFFC061);
 
   static ThemeData theme() {
     final base = ThemeData(
@@ -50,9 +50,9 @@ class StoreTheme {
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Color(0xFF17110D),
         selectedItemColor: orangeDeep,
-        unselectedItemColor: inkSoft,
+        unselectedItemColor: Color(0xFFFFE8BF),
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
       ),
@@ -101,7 +101,7 @@ class StoreTheme {
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Color(0xFF0F0B08),
         selectedItemColor: Color(0xFFFFB36F),
         unselectedItemColor: Color(0xFFD2B59B),
         showUnselectedLabels: true,
@@ -115,14 +115,14 @@ class StoreTheme {
     end: Alignment.bottomCenter,
     colors: <Color>[
       Color(0xFFFFFBF6),
-      Color(0xFFFFF1E5),
-      Color(0xFFFFEAD8),
+      Color(0xFFFFF4E1),
+      Color(0xFFFFE8BA),
     ],
   );
 
   static BoxDecoration frameDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: BorderRadius.circular(12),
       border: Border.all(color: lineStrong.withOpacity(.72)),
       gradient: LinearGradient(
         begin: Alignment.topCenter,
@@ -144,7 +144,7 @@ class StoreTheme {
 
   static BoxDecoration surfaceDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(8),
       border: Border.all(color: lineStrong.withOpacity(.74)),
       gradient: const LinearGradient(
         begin: Alignment.topCenter,
@@ -163,7 +163,7 @@ class StoreTheme {
 
   static BoxDecoration panelDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(8),
       border: Border.all(color: lineStrong.withOpacity(.7)),
       gradient: const LinearGradient(
         begin: Alignment.topCenter,

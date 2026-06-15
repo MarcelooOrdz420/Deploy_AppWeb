@@ -6,22 +6,13 @@
     <section class="catalog-shell">
         <section class="hero-showcase surface">
             <div class="hero-hours-bar">Horario de atencion · Lunes a Viernes 12:00 pm a 8:00 pm · Sabado 11:00 am a 9:00 pm · Domingo 11:00 am a 7:00 pm</div>
-            <div class="hero-nav-strip">
+            <div class="catalog-hero">
+                <div class="hero-copy-stack">
                 <div class="hero-logo-lockup">
                     <div class="hero-logo-badge"><img src="/images/ico-pollo.jpg" alt="El Dorado"></div>
                     <div class="hero-logo-copy"><span>Pollos y Parrillas</span><strong>El Dorado</strong></div>
                 </div>
-                <div class="hero-nav-pills">
-                    <span class="hero-nav-pill active">Inicio</span>
-                    <span class="hero-nav-pill">Menu</span>
-                    <span class="hero-nav-pill">Locales</span>
-                    <span class="hero-nav-pill">Nosotros</span>
-                    <span class="hero-nav-pill">Contacto</span>
-                </div>
-            </div>
-            <div class="catalog-hero">
-            <div class="hero-copy-stack">
-                <p class="eyebrow"> Menú </p>
+                <p class="eyebrow">Menu</p>
                 <h2 class="title hero-slogan">SA<br>BRO<br>SO!</h2>
                 <p class="muted-main hero-text">
                     Pollo, parrilla y bebidas en una vitrina mas directa, mas viva y mas facil de comprar.
@@ -36,7 +27,7 @@
                     <span id="heroAvailableMetric">0 disponibles hoy</span>
                 </div>
                 <a href="#productsGrid" class="hero-cta">Ver menu</a>
-            </div>
+                </div>
 
             <div id="heroSlider" class="hero-visual-stage">
                 <div class="hero-stage-left">
@@ -197,14 +188,6 @@
             letter-spacing: .03em;
         }
 
-        .hero-nav-strip {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 18px;
-            padding: 18px 24px 0;
-        }
-
         .hero-logo-lockup {
             display: inline-flex;
             align-items: center;
@@ -245,14 +228,12 @@
             line-height: 1;
         }
 
-        .hero-nav-pills,
         .hero-badges {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
         }
 
-        .hero-nav-pill,
         .hero-badges span,
         .hero-cta {
             display: inline-flex;
@@ -269,7 +250,6 @@
             box-shadow: 0 10px 22px rgba(0,0,0,.16);
         }
 
-        .hero-nav-pill.active,
         .hero-cta {
             background: linear-gradient(135deg, #ffad18, #f28d00);
             border-color: rgba(255,255,255,.55);
@@ -854,11 +834,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .hero-nav-strip,
-            .hero-nav-pills {
-                justify-content: center;
-            }
-
             .hero-visual-stage {
                 grid-template-columns: 1fr;
                 min-height: auto;
@@ -873,11 +848,6 @@
             .tool-grid,
             .product-modal-card {
                 grid-template-columns: 1fr;
-            }
-
-            .hero-nav-strip,
-            .hero-nav-pills {
-                flex-direction: column;
             }
 
             .catalog-hero .title {
@@ -947,6 +917,95 @@
         .float-cart-row {
             background: #fffaf4 !important;
             border-color: rgba(255,122,26,.18) !important;
+        }
+
+        .hero-showcase {
+            border-radius: 8px;
+            background:
+                linear-gradient(120deg, rgba(255, 62, 52, .28), transparent 22%),
+                linear-gradient(135deg, #101512 0%, #18352b 35%, #5b1f18 58%, #ffc20e 58%, #ffc20e 100%);
+            box-shadow: 0 18px 38px rgba(62, 24, 0, .12);
+        }
+
+        .hero-hours-bar {
+            background: #ffc20e;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(50, 20, 0, .22);
+        }
+
+        .catalog-hero {
+            grid-template-columns: minmax(230px, .72fr) minmax(0, 1.28fr);
+            align-items: center;
+            min-height: 520px;
+        }
+
+        .hero-logo-lockup {
+            margin-bottom: 8px;
+        }
+
+        .hero-copy-stack {
+            padding: 10px 0;
+        }
+
+        .hero-copy-stack .eyebrow {
+            color: #ffae3d !important;
+        }
+
+        .catalog-hero .title {
+            font-size: clamp(64px, 7vw, 112px);
+            line-height: .82;
+            letter-spacing: 0;
+        }
+
+        .hero-cta {
+            width: fit-content;
+            background: #ffad18;
+        }
+
+        .hero-visual-stage {
+            min-height: 440px;
+        }
+
+        .hero-stage-left,
+        .hero-feature {
+            border-radius: 8px;
+        }
+
+        .hero-stage-right {
+            padding-top: 0;
+        }
+
+        .hero-stage-right .hero-feature {
+            min-height: 190px;
+        }
+
+        .hero-quality-chip {
+            border-radius: 8px;
+        }
+
+        .catalog-tools {
+            border-radius: 8px;
+        }
+
+        @media (max-width: 1040px) {
+            .catalog-hero {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .catalog-hero {
+                padding: 16px;
+            }
+
+            .catalog-hero .title {
+                font-size: 64px;
+            }
+
+            .hero-visual-stage {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 @endsection

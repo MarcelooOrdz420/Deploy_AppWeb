@@ -8,15 +8,18 @@
     <title>Administración </title>
     <style>
         :root {
-            --orange: #ff7a1a;
-            --orange-soft: #ff9f62;
-            --line: rgba(255, 122, 26, .24);
-            --text: #f7e3cf;
-            --bg: #0d0d0d;
-            --panel: rgba(22, 22, 22, .96);
-            --ink-soft: #dfbf9f;
-            --panel-ink: #ffc98d;
-            --muted-ink: #e7c9aa;
+            --orange: #c96a2d;
+            --orange-soft: #f3bb7a;
+            --orange-deep: #8f4313;
+            --line: rgba(201, 106, 45, .18);
+            --text: #2b160d;
+            --bg: #f6efe6;
+            --panel: rgba(255, 251, 246, .94);
+            --ink-soft: #7a5b48;
+            --panel-ink: #6d4225;
+            --muted-ink: #8d6c56;
+            --shadow-soft: 0 16px 34px rgba(89, 43, 14, .08);
+            --shadow-strong: 0 24px 52px rgba(89, 43, 14, .12);
         }
 
         * { box-sizing: border-box; }
@@ -25,9 +28,9 @@
             margin: 0;
             font-family: "Trebuchet MS", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             background:
-                radial-gradient(circle at top left, rgba(255, 122, 26, .18), transparent 26%),
-                radial-gradient(circle at bottom right, rgba(255, 159, 98, .12), transparent 22%),
-                linear-gradient(180deg, #060606 0%, #101010 48%, #171717 100%);
+                radial-gradient(circle at top left, rgba(201, 106, 45, .16), transparent 24%),
+                radial-gradient(circle at bottom right, rgba(243, 187, 122, .18), transparent 20%),
+                linear-gradient(180deg, #fbf6ef 0%, #f5ede3 48%, #efe2d3 100%);
             color: var(--text);
         }
 
@@ -38,9 +41,9 @@
             top: 0;
             z-index: 30;
             backdrop-filter: blur(12px);
-            background: rgba(255, 252, 248, 0.88);
-            border-bottom: 1px solid rgba(240, 207, 179, .92);
-            box-shadow: 0 12px 30px rgba(52, 17, 0, .06);
+            background: rgba(251, 246, 239, 0.9);
+            border-bottom: 1px solid rgba(214, 183, 156, .9);
+            box-shadow: 0 12px 30px rgba(52, 17, 0, .05);
         }
 
         .head {
@@ -73,7 +76,7 @@
         }
 
         .title-sub {
-            color: var(--ink-soft);
+            color: var(--muted-ink);
             font-size: 13px;
         }
 
@@ -91,10 +94,10 @@
             gap: 8px;
             padding: 10px 14px;
             border-radius: 999px;
-            border: 1px solid rgba(234, 182, 138, .82);
-            background: rgba(255, 247, 240, .88);
+            border: 1px solid rgba(214, 183, 156, .88);
+            background: rgba(255, 251, 246, .95);
             font-size: 13px;
-            color: #8d480f;
+            color: #7c4a28;
             font-weight: 800;
         }
 
@@ -122,10 +125,10 @@
             padding: 12px 14px;
             margin-top: 14px;
             border-radius: 18px;
-            border: 1px solid rgba(240, 207, 179, .92);
-            background: rgba(255, 252, 248, 0.88);
+            border: 1px solid rgba(214, 183, 156, .88);
+            background: rgba(255, 251, 246, 0.92);
             backdrop-filter: blur(12px);
-            box-shadow: 0 12px 30px rgba(52, 17, 0, .06);
+            box-shadow: var(--shadow-soft);
         }
 
         .admin-menu .menu-links {
@@ -141,9 +144,9 @@
             gap: 8px;
             padding: 10px 12px;
             border-radius: 999px;
-            border: 1px solid rgba(234, 182, 138, .82);
-            background: rgba(255, 247, 240, .9);
-            color: #7d451e;
+            border: 1px solid rgba(214, 183, 156, .9);
+            background: rgba(255, 250, 244, .96);
+            color: #6e4428;
             font-weight: 900;
             font-size: 13px;
             text-decoration: none;
@@ -151,16 +154,31 @@
             cursor: pointer;
         }
 
+        .tab-icon,
+        .action-icon {
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(201, 106, 45, .12);
+            color: var(--orange-deep);
+            font-size: 12px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
         .menu-tab:hover {
             transform: translateY(-1px);
-            border-color: rgba(255, 177, 115, .95);
-            box-shadow: 0 12px 24px rgba(255, 111, 31, .12);
+            border-color: rgba(201, 106, 45, .42);
+            box-shadow: 0 10px 22px rgba(201, 106, 45, .10);
         }
 
         .menu-tab.active {
-            border-color: rgba(255, 111, 31, .75);
-            background: linear-gradient(120deg, rgba(255, 111, 31, .26), rgba(255, 159, 98, .20));
-            color: #5a2a08;
+            border-color: rgba(201, 106, 45, .28);
+            background: linear-gradient(120deg, #fff0e0, #f8dcc2);
+            color: #5f371c;
         }
 
         #adminContent.tab-mode { grid-template-columns: 1fr; }
@@ -169,10 +187,10 @@
 
         .panel {
             background: var(--panel);
-            border: 1px solid rgba(240, 207, 179, .92);
+            border: 1px solid rgba(214, 183, 156, .86);
             border-radius: 24px;
             padding: 20px;
-            box-shadow: 0 20px 40px rgba(52, 17, 0, .08);
+            box-shadow: var(--shadow-strong);
             backdrop-filter: blur(8px);
         }
 
@@ -375,8 +393,10 @@
             transition: transform .28s ease, box-shadow .28s ease, filter .28s ease;
         }
 
-        .muted { font-size: 12px; opacity: .78; color: #6e4329; }
+        .muted { font-size: 12px; opacity: .82; color: #6e4329; }
         .msg { font-size: 13px; min-height: 20px; }
+        .msg.success { color: #2d7a48; font-weight: 800; }
+        .msg.error { color: #a24022; font-weight: 800; }
         .product-form-grid {
             display: grid;
             gap: 14px;
@@ -583,8 +603,15 @@
             .section-grid-2 { grid-template-columns: 1fr; }
         }
 
+        body[data-theme="dark"] {
+            background:
+                radial-gradient(circle at top left, rgba(199, 104, 42, .16), transparent 24%),
+                radial-gradient(circle at bottom right, rgba(243, 187, 122, .08), transparent 22%),
+                linear-gradient(180deg, #12100d 0%, #171411 48%, #1e1914 100%);
+            color: #f8ecdf;
+        }
         body[data-theme="dark"], body[data-theme="dark"] .title, body[data-theme="dark"] .title-sub, body[data-theme="dark"] .section-subtitle, body[data-theme="dark"] .muted, body[data-theme="dark"] .helper-text, body[data-theme="dark"] .proof-modal-title, body[data-theme="dark"] .proof-modal-meta {
-            color: var(--text);
+            color: #e8cfb7;
         }
         body[data-theme="dark"] header,
         body[data-theme="dark"] .admin-menu,
@@ -595,27 +622,32 @@
         body[data-theme="dark"] .toggle-row,
         body[data-theme="dark"] .img-shell,
         body[data-theme="dark"] .upload-box {
-            background: linear-gradient(180deg, rgba(24,24,24,.97) 0%, rgba(15,15,15,.98) 100%) !important;
-            border-color: rgba(255, 122, 26, .20) !important;
-            box-shadow: 0 18px 40px rgba(0,0,0,.26) !important;
+            background: linear-gradient(180deg, rgba(27, 22, 18, .98) 0%, rgba(34, 28, 23, .98) 100%) !important;
+            border-color: rgba(243, 187, 122, .16) !important;
+            box-shadow: 0 22px 44px rgba(0,0,0,.22) !important;
         }
         body[data-theme="dark"] .menu-tab,
         body[data-theme="dark"] .user,
         body[data-theme="dark"] .tag,
         body[data-theme="dark"] .toggle-status-text,
         body[data-theme="dark"] button:not(.btn-main) {
-            background: rgba(27,27,27,.96) !important;
-            color: var(--text) !important;
-            border-color: rgba(255,122,26,.26) !important;
+            background: rgba(34, 28, 23, .96) !important;
+            color: #f8ecdf !important;
+            border-color: rgba(243, 187, 122, .18) !important;
         }
         body[data-theme="dark"] .menu-tab.active,
         body[data-theme="dark"] .btn-main {
-            color: #4a2b18 !important;
+            color: #2f180a !important;
+        }
+        body[data-theme="dark"] .tab-icon,
+        body[data-theme="dark"] .action-icon {
+            background: rgba(243, 187, 122, .16);
+            color: #f3bb7a;
         }
         body[data-theme="dark"] input, body[data-theme="dark"] select, body[data-theme="dark"] textarea {
-            background: #101010 !important;
-            color: var(--text) !important;
-            border-color: rgba(255,122,26,.24) !important;
+            background: #181410 !important;
+            color: #f8ecdf !important;
+            border-color: rgba(243, 187, 122, .14) !important;
         }
         body[data-theme="dark"] .product-card-title,
         body[data-theme="dark"] .product-card-price,
@@ -633,6 +665,95 @@
         body[data-theme="dark"] .upload-preview {
             background: #0d0d0d !important;
         }
+
+        body {
+            background:
+                linear-gradient(180deg, #fff7ea 0%, #fffaf5 46%, #fff1dc 100%);
+            color: #21140d;
+        }
+
+        header {
+            background:
+                linear-gradient(90deg, #17110d 0%, #1d1510 58%, #ffc20e 58%, #ffc20e 100%);
+            border-bottom: 1px solid rgba(255, 193, 15, .42);
+            box-shadow: none;
+        }
+
+        .head-kicker,
+        .title,
+        .title-sub {
+            color: #fff8ed;
+        }
+
+        .head-kicker {
+            color: #ffc45d;
+        }
+
+        .menu-tab,
+        .user,
+        button:not(.btn-main) {
+            min-height: 40px;
+            border-radius: 999px;
+            border-color: rgba(255,255,255,.38);
+            background: rgba(255,255,255,.12);
+            color: #fff8ed;
+            box-shadow: 0 10px 18px rgba(32, 12, 0, .10);
+        }
+
+        .menu-tab.active,
+        .btn-main {
+            background: linear-gradient(135deg, #ff9f22, #d87525);
+            color: #21140d;
+            border-color: rgba(255,255,255,.52);
+        }
+
+        .tab-icon,
+        .action-icon {
+            background: rgba(255,255,255,.18);
+            color: #fff8ed;
+        }
+
+        .admin-menu {
+            top: 84px;
+            border-radius: 8px;
+            background: #18120e;
+            border-color: rgba(255, 193, 15, .28);
+            box-shadow: none;
+        }
+
+        .panel,
+        .card,
+        .module-summary,
+        .metric-card,
+        .chart-card,
+        .toggle-row,
+        .upload-box,
+        .inline-note {
+            border-radius: 8px;
+            background: #fffaf4;
+            border-color: rgba(255, 159, 34, .26);
+            box-shadow: 0 14px 28px rgba(62, 24, 0, .08);
+        }
+
+        .panel h2,
+        .panel h3 {
+            letter-spacing: 0;
+        }
+
+        input,
+        select,
+        textarea {
+            border-radius: 8px;
+        }
+
+        body[data-theme="dark"] {
+            background: linear-gradient(180deg, #100c09 0%, #17110d 100%);
+        }
+
+        body[data-theme="dark"] header,
+        body[data-theme="dark"] .admin-menu {
+            background: linear-gradient(90deg, #0f0b08 0%, #17110d 58%, #b26c12 58%, #b26c12 100%) !important;
+        }
     </style>
 </head>
 <body>
@@ -641,14 +762,14 @@
         <div class="head-brand">
             <div class="head-kicker">Centro de Control</div>
             <div class="title">Pollos y Parrillas "El Dorado"</div>
-            <div class="title-sub">Productos, pagos, pedidos y ventas en una sola vista operativa.</div>
+            <div class="title-sub">Operacion, pedidos y cobros en una sola vista.</div>
         </div>
         <div class="head-actions">
-            <a href="/admin/dashboard" class="menu-tab">Dashboard ejecutivo</a>
-            <button id="adminThemeBtn" class="menu-tab" type="button">Modo claro</button>
-            <button id="adminUnreadBtn" class="menu-tab" type="button">Nuevos <span id="adminUnreadCount">0</span></button>
+            <a href="/admin/dashboard" class="menu-tab"><span class="action-icon">&#10022;</span>Dashboard</a>
+            <button id="adminThemeBtn" class="menu-tab" type="button"><span class="action-icon">&#9681;</span>Modo claro</button>
+            <button id="adminUnreadBtn" class="menu-tab" type="button"><span class="action-icon">&#9679;</span>Nuevos <span id="adminUnreadCount">0</span></button>
             <div class="user" id="adminUserLabel">Validando sesion...</div>
-            <button id="adminLogoutBtn" class="logout-btn">Cerrar sesion</button>
+            <button id="adminLogoutBtn" class="logout-btn"><span class="action-icon">&#8617;</span>Cerrar sesion</button>
         </div>
     </div>
 </header>
@@ -662,13 +783,13 @@
 
     <nav id="adminMenu" class="admin-menu" style="display:none;">
         <div class="menu-links">
-            <button class="menu-tab" type="button" data-target="sec-dashboard">Dashboard</button>
-            <button class="menu-tab" type="button" data-target="sec-offers">Promociones</button>
-            <button class="menu-tab" type="button" data-target="sec-company">Negocio</button>
-            <button class="menu-tab" type="button" data-target="sec-products">Productos</button>
-            <button class="menu-tab" type="button" data-target="sec-orders">Pedidos</button>
-            <button class="menu-tab" type="button" data-target="sec-cash-closure">Cierre de caja</button>
-            <button class="menu-tab" type="button" data-target="sec-users">Cuentas</button>
+            <button class="menu-tab" type="button" data-target="sec-dashboard"><span class="tab-icon">&#10022;</span>Dashboard</button>
+            <button class="menu-tab" type="button" data-target="sec-offers"><span class="tab-icon">&#9993;</span>Promos</button>
+            <button class="menu-tab" type="button" data-target="sec-company"><span class="tab-icon">&#8962;</span>Negocio</button>
+            <button class="menu-tab" type="button" data-target="sec-products"><span class="tab-icon">&#9638;</span>Productos</button>
+            <button class="menu-tab" type="button" data-target="sec-orders"><span class="tab-icon">&#8811;</span>Pedidos</button>
+            <button class="menu-tab" type="button" data-target="sec-cash-closure"><span class="tab-icon">&#164;</span>Caja</button>
+            <button class="menu-tab" type="button" data-target="sec-users"><span class="tab-icon">&#9675;</span>Cuentas</button>
         </div>
         <div class="helper-text" style="margin:0;">Panel ordenado por pestañas.</div>
     </nav>
@@ -1214,7 +1335,9 @@ function applyAdminTheme(theme) {
     document.body.dataset.theme = theme;
     localStorage.setItem(ADMIN_THEME_KEY, theme);
     if (adminThemeBtn) {
-        adminThemeBtn.textContent = theme === 'dark' ? 'Modo claro' : 'Modo oscuro';
+        adminThemeBtn.innerHTML = theme === 'dark'
+            ? '<span class="action-icon">&#9728;</span>Modo claro'
+            : '<span class="action-icon">&#9681;</span>Modo oscuro';
     }
 }
 
@@ -1287,12 +1410,14 @@ async function sendOffer(formData, targetValue) {
         return;
     }
 
+    const webStatus = data?.broadcast?.ok === true
+        ? ` Web: OK`
+        : (data?.broadcast?.message ? ` Web: ${data.broadcast.message}` : '');
     const pushStatus = data?.push?.ok === true
-        ? ` Push: OK (${data.push.topic})`
+        ? (data.push.topic ? ` Push: OK (${data.push.topic})` : ` Push: OK`)
         : (data?.push?.ok === false ? ` Push: ${data.push.message || 'ERROR'}` : '');
-
-    const emailStatus = data?.email ? ` Email: ${data.email.sent || 0} enviados, ${data.email.failed || 0} fallidos.` : '';
-    offerMsg.textContent = `OK. Enviada a canal ${data.channel} (${targetValue || 'all'}).${pushStatus}${emailStatus}`;
+    const emailStatus = data?.email ? ` Email: ${data.email.sent || 0}` : '';
+    offerMsg.textContent = `Promo enviada.${webStatus}${pushStatus}${emailStatus}`;
     offerMsg.classList.add('success');
     offerForm.reset();
     setUploadPreview(offerImagePreview, '');

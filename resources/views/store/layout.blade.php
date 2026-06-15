@@ -552,6 +552,118 @@
             color: var(--orange-soft);
         }
 
+        .store-shell {
+            padding: 0;
+            background:
+                linear-gradient(180deg, #fff7ea 0%, #fffaf5 46%, #fff1dc 100%);
+        }
+
+        body[data-theme="dark"] .store-shell {
+            background: linear-gradient(180deg, #100c09 0%, #17110d 100%);
+        }
+
+        .store-frame {
+            border-radius: 0;
+            border-left: 1px solid rgba(251, 180, 54, .34);
+            border-right: 1px solid rgba(251, 180, 54, .34);
+            border-top: 0;
+            background: #fffaf4;
+            box-shadow: none;
+        }
+
+        .store-frame::before {
+            display: none;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            padding: 0;
+            background:
+                linear-gradient(90deg, #17110d 0%, #1d1510 54%, #f5b400 54%, #ffc20e 100%);
+            border-bottom: 1px solid rgba(255, 193, 15, .42);
+        }
+
+        .topbar-inner {
+            grid-template-columns: .88fr 1.12fr;
+            gap: 18px;
+            padding: 16px 20px;
+        }
+
+        .brand-kicker,
+        .brand-title,
+        .brand-subtitle {
+            color: #fff8ed;
+        }
+
+        .brand-kicker {
+            color: #ffc45d;
+        }
+
+        .brand-subtitle {
+            max-width: 520px;
+            color: rgba(255, 248, 237, .78);
+        }
+
+        .brand-mark {
+            width: 54px;
+            height: 54px;
+            border-radius: 10px;
+            border-color: rgba(255,255,255,.24);
+            background: rgba(255,255,255,.12);
+            box-shadow: none;
+        }
+
+        .topbar-actions {
+            gap: 10px;
+        }
+
+        .pill-btn,
+        .pill-link,
+        .store-nav a,
+        .user-pill {
+            min-height: 40px;
+            border-radius: 999px;
+            border-color: rgba(255,255,255,.42);
+            background: rgba(255,255,255,.12);
+            color: #fff8ed;
+            box-shadow: 0 10px 18px rgba(32, 12, 0, .10);
+        }
+
+        .store-nav a.active,
+        .primary-link {
+            background: linear-gradient(135deg, #ff9f22, #d87525);
+            color: #21140d;
+            border-color: rgba(255,255,255,.52);
+        }
+
+        .action-symbol,
+        .nav-index,
+        .user-dot {
+            background: rgba(255,255,255,.18);
+            color: #fff8ed;
+        }
+
+        .cart-count {
+            background: #ff9f22;
+            color: #21140d;
+        }
+
+        main.page {
+            padding: 0 24px 28px;
+        }
+
+        .page-stack {
+            gap: 18px;
+        }
+
+        .surface,
+        .panel,
+        .product-card,
+        .float-cart-panel {
+            border-radius: 8px;
+        }
+
         @media (max-width: 980px) {
             .topbar-inner {
                 grid-template-columns: 1fr;
@@ -569,8 +681,9 @@
 
         @media (max-width: 720px) {
             .store-shell { padding: 10px; }
-            .topbar { padding: 14px; }
-            main.page { padding: 16px; }
+            .topbar { border-radius: 12px 12px 0 0; }
+            .topbar-inner { padding: 14px; }
+            main.page { padding: 0 12px 18px; }
             .panel { padding: 15px; }
             .brand-cluster { align-items: flex-start; }
             .brand-mark { width: 52px; height: 52px; }
@@ -871,6 +984,32 @@ setInterval(() => {
 initClientSession();
 applyStoreTheme(getStoreTheme());
 </script>
+
+<style>
+    @media (max-width: 720px) {
+        #promoOverlay {
+            overflow-y: auto;
+        }
+
+        #promoOverlay > div {
+            margin-top: 3vh !important;
+            border-radius: 22px !important;
+        }
+
+        #promoOverlay > div > div:nth-child(2) {
+            grid-template-columns: 1fr !important;
+        }
+
+        #promoMessage {
+            font-size: 30px !important;
+        }
+
+        #promoImage {
+            height: 220px !important;
+            border-radius: 18px !important;
+        }
+    }
+</style>
 
 <div id="promoOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(14,10,7,.82); padding:18px;">
     <div style="max-width:720px; margin:6vh auto 0; background:linear-gradient(90deg,#1b130f 0%,#2a1d16 55%,#ff7c18 55%,#ff8f1f 100%); border:1px solid rgba(255, 188, 114, .24); border-radius:30px; box-shadow:0 30px 70px rgba(0, 0, 0, .38); overflow:hidden;">

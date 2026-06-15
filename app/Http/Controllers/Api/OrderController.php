@@ -11,6 +11,7 @@ use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Services\Fcm\FcmClient;
 use App\Services\InventoryMovementService;
+use App\Services\Realtime\PusherNotifier;
 use App\Services\SimplePdfReceiptService;
 use App\Services\CartRecoveryService;
 use Illuminate\Http\JsonResponse;
@@ -382,7 +383,11 @@ class OrderController extends Controller
         });
 
         try {
-            event(new OrderCreatedAlertSent($order));
+            $payload = (new OrderCreatedAlertSent($order))->broadcastWith();
+            $notifier = app(PusherNotifier::class);
+            if (! $notifier->trigger('mi-canal', 'mi-evento', $payload)) {
+                event(new OrderCreatedAlertSent($order));
+            }
         } catch (\Throwable) {
             // Silencioso: el pedido no debe fallar si Pusher no esta configurado o falla.
         }
@@ -472,7 +477,11 @@ class OrderController extends Controller
     private function sendOrderStatusPush(Order $order, ?string $paymentStatus = null): void
     {
         try {
-            event(new OrderStatusUpdatedForUser($order));
+            $statusEvent = new OrderStatusUpdatedForUser($order, $paymentStatus);
+            $notifier = app(PusherNotifier::class);
+            if (! $notifier->trigger('private-user.'.$order->user_id, 'order.status.updated', $statusEvent->broadcastWith())) {
+                event($statusEvent);
+            }
             $userId = (int) $order->user_id;
             if ($userId <= 0) return;
 

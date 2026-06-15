@@ -100,18 +100,22 @@ class _AppShellState extends State<AppShell> {
                     maxHeight: dialogMaxHeight,
                   ),
                   child: Container(
-                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(12),
                       gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFFFFFDF9), Color(0xFFFFF3E6)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color(0xFF17110D),
+                          Color(0xFF2A1D16),
+                          Color(0xFFFF8F1F),
+                        ],
+                        stops: [0, .58, .58],
                       ),
-                      border: Border.all(color: StoreTheme.lineStrong.withOpacity(.85)),
+                      border: Border.all(color: const Color(0xFFFFC061).withOpacity(.32)),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color.fromRGBO(52, 17, 0, .2),
+                          color: Color.fromRGBO(0, 0, 0, .32),
                           blurRadius: 32,
                           offset: Offset(0, 16),
                         ),
@@ -120,66 +124,101 @@ class _AppShellState extends State<AppShell> {
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Container(
-                            width: 74,
-                            height: 74,
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(0xFFFFE9D7),
-                              border: Border.all(color: StoreTheme.lineStrong.withOpacity(.8)),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  padding: const EdgeInsets.all(7),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: Colors.white.withOpacity(.12),
+                                    border: Border.all(color: Colors.white.withOpacity(.2)),
+                                  ),
+                                  child: Image.asset('assets/polloia.png', fit: BoxFit.contain),
+                                ),
+                                const SizedBox(width: 10),
+                                const Expanded(
+                                  child: Text(
+                                    'PROMO DEL DIA',
+                                    style: TextStyle(
+                                      color: Color(0xFFFFD18C),
+                                      fontSize: 11,
+                                      letterSpacing: 2,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: Image.asset('assets/polloia.png', fit: BoxFit.contain),
                           ),
                           if (imageUrl.isNotEmpty) ...[
                             const SizedBox(height: 14),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(22),
-                              child: _promoImage(imageUrl, height: promoImageHeight),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 18),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: _promoImage(imageUrl, height: promoImageHeight),
+                              ),
                             ),
                           ],
-                          const SizedBox(height: 14),
-                          Text(
-                            message.title,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              color: StoreTheme.ink,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            message.message,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: StoreTheme.inkSoft,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: StoreTheme.orange,
-                                foregroundColor: StoreTheme.ink,
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+                            child: Text(
+                              message.title,
+                              style: const TextStyle(
+                                fontSize: 32,
+                                height: .95,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFFFF7ED),
                               ),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                                Future.microtask(() {
-                                  if (!mounted) return;
-                                  _openOffer(message);
-                                });
-                              },
-                              child: Text(message.actionLabel ?? 'Ver'),
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Rechazar'),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+                            child: Text(
+                              message.message,
+                              style: const TextStyle(
+                                color: Color(0xFFFFE6C8),
+                                height: 1.45,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(18),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: FilledButton(
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: StoreTheme.orange,
+                                      foregroundColor: StoreTheme.ink,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                      Future.microtask(() {
+                                        if (!mounted) return;
+                                        _openOffer(message);
+                                      });
+                                    },
+                                    child: Text(message.actionLabel ?? 'Ver'),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text(
+                                    'Cerrar',
+                                    style: TextStyle(color: Color(0xFFFFE6C8)),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

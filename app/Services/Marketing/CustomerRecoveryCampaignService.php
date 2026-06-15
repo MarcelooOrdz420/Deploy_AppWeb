@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Fcm\FcmClient;
 use App\Services\Mail\CustomerLifecycleEmailService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 class CustomerRecoveryCampaignService
 {
@@ -23,55 +24,65 @@ class CustomerRecoveryCampaignService
         $skipped = 0;
         $failed = 0;
         $pushSent = 0;
+        $canTrackReengagement = Schema::hasColumn('users', 'last_reengagement_email_sent_at');
 
-        User::query()
+        $query = User::query()
             ->where('is_active', true)
             ->where('is_verified', true)
-            ->where('marketing_emails_enabled', true)
             ->whereNotNull('email')
-            ->where('email', '!=', '')
-            ->where(function ($query) use ($threshold): void {
+            ->where('email', '!=', '');
+
+        if ($canTrackReengagement) {
+            $query->where(function ($query) use ($threshold): void {
                 $query->whereNull('last_reengagement_email_sent_at')
                     ->orWhere('last_reengagement_email_sent_at', '<=', $threshold);
-            })
-            ->addSelect([
-                'last_successful_login_at' => LoginHistory::query()
-                    ->select('created_at')
-                    ->whereColumn('user_id', 'users.id')
-                    ->where('successful', true)
-                    ->latest('created_at')
-                    ->limit(1),
-            ])
-            ->orderBy('id')
-            ->chunkById(100, function ($users) use (&$sent, &$skipped, &$failed, &$pushSent, $threshold, $sendPush): void {
-                foreach ($users as $user) {
-                    $lastSeenAt = $user->last_successful_login_at
-                        ? Carbon::parse($user->last_successful_login_at)
-                        : $user->created_at;
+            });
+        }
 
-                    if (! $lastSeenAt || $lastSeenAt->gt($threshold)) {
-                        $skipped++;
-                        continue;
-                    }
+        $query->addSelect([
+            'last_successful_login_at' => LoginHistory::query()
+                ->select('created_at')
+                ->whereColumn('user_id', 'users.id')
+                ->where('successful', true)
+                ->latest('created_at')
+                ->limit(1),
+        ])->orderBy('id');
 
-                    try {
-                        $this->customerLifecycleEmailService->sendInactiveRecovery($user, $lastSeenAt);
+        if (Schema::hasColumn('users', 'marketing_emails_enabled')) {
+            $query->where('marketing_emails_enabled', true);
+        }
+
+        $query->chunkById(100, function ($users) use (&$sent, &$skipped, &$failed, &$pushSent, $threshold, $sendPush, $canTrackReengagement): void {
+            foreach ($users as $user) {
+                $lastSeenAt = $user->last_successful_login_at
+                    ? Carbon::parse($user->last_successful_login_at)
+                    : $user->created_at;
+
+                if (! $lastSeenAt || $lastSeenAt->gt($threshold)) {
+                    $skipped++;
+                    continue;
+                }
+
+                try {
+                    $this->customerLifecycleEmailService->sendInactiveRecovery($user, $lastSeenAt);
+                    if ($canTrackReengagement) {
                         $user->forceFill([
                             'last_reengagement_email_sent_at' => now(),
                         ])->save();
-                        if ($sendPush && $this->sendPushToUser(
-                            userId: (int) $user->id,
-                            title: 'Te extranan en El Dorado',
-                            body: 'Tenemos promos nuevas y tus favoritos siguen esperandote.',
-                        )) {
-                            $pushSent++;
-                        }
-                        $sent++;
-                    } catch (\Throwable) {
-                        $failed++;
                     }
+                    if ($sendPush && $this->sendPushToUser(
+                        userId: (int) $user->id,
+                        title: 'Te extranan en El Dorado',
+                        body: 'Tenemos promos nuevas y tus favoritos siguen esperandote.',
+                    )) {
+                        $pushSent++;
+                    }
+                    $sent++;
+                } catch (\Throwable) {
+                    $failed++;
                 }
-            });
+            }
+        });
 
         return compact('sent', 'skipped', 'failed', 'pushSent');
     }
@@ -85,43 +96,51 @@ class CustomerRecoveryCampaignService
         $failed = 0;
         $pushSent = 0;
 
-        CartRecovery::query()
+        if (! Schema::hasTable('cart_recoveries')) {
+            return compact('sent', 'skipped', 'failed', 'pushSent');
+        }
+
+        $query = CartRecovery::query()
             ->with('user')
             ->whereNotNull('email')
             ->where('email', '!=', '')
             ->whereNull('converted_at')
             ->where('last_synced_at', '<=', $threshold)
-            ->whereHas('user', fn ($query) => $query->where('marketing_emails_enabled', true))
             ->where(function ($query) use ($cooldown): void {
                 $query->whereNull('abandoned_email_sent_at')
                     ->orWhere('abandoned_email_sent_at', '<=', $cooldown);
             })
-            ->orderBy('id')
-            ->chunkById(100, function ($carts) use (&$sent, &$skipped, &$failed, &$pushSent, $sendPush): void {
-                foreach ($carts as $cart) {
-                    if ((int) $cart->items_count <= 0) {
-                        $skipped++;
-                        continue;
-                    }
+            ->orderBy('id');
 
-                    try {
-                        $this->customerLifecycleEmailService->sendAbandonedCart($cart);
-                        $cart->forceFill([
-                            'abandoned_email_sent_at' => now(),
-                        ])->save();
-                        if ($sendPush && $this->sendPushToUser(
-                            userId: (int) $cart->user_id,
-                            title: 'Tu carrito te espera',
-                            body: 'Vuelve a tu carrito y termina tu compra antes de que se te antoje otra vez.',
-                        )) {
-                            $pushSent++;
-                        }
-                        $sent++;
-                    } catch (\Throwable) {
-                        $failed++;
-                    }
+        if (Schema::hasColumn('users', 'marketing_emails_enabled')) {
+            $query->whereHas('user', fn ($query) => $query->where('marketing_emails_enabled', true));
+        }
+
+        $query->chunkById(100, function ($carts) use (&$sent, &$skipped, &$failed, &$pushSent, $sendPush): void {
+            foreach ($carts as $cart) {
+                if ((int) $cart->items_count <= 0) {
+                    $skipped++;
+                    continue;
                 }
-            });
+
+                try {
+                    $this->customerLifecycleEmailService->sendAbandonedCart($cart);
+                    $cart->forceFill([
+                        'abandoned_email_sent_at' => now(),
+                    ])->save();
+                    if ($sendPush && $this->sendPushToUser(
+                        userId: (int) $cart->user_id,
+                        title: 'Tu carrito te espera',
+                        body: 'Vuelve a tu carrito y termina tu compra antes de que se te antoje otra vez.',
+                    )) {
+                        $pushSent++;
+                    }
+                    $sent++;
+                } catch (\Throwable) {
+                    $failed++;
+                }
+            }
+        });
 
         return compact('sent', 'skipped', 'failed', 'pushSent');
     }
