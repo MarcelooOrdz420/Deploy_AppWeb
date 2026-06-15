@@ -688,6 +688,150 @@
             .brand-cluster { align-items: flex-start; }
             .brand-mark { width: 52px; height: 52px; }
         }
+
+        /* Identidad final: tema brasa/amarillo como la referencia enviada. */
+        body,
+        body[data-theme="dark"] {
+            --orange: #ff8a18;
+            --orange-soft: #ffc20e;
+            --orange-deep: #e87912;
+            --cream: #fff6ea;
+            --paper: #fffaf2;
+            --ink: #20130d;
+            --ink-soft: #5d4030;
+            --line: rgba(255, 138, 24, .34);
+            background:
+                radial-gradient(circle at 12% 0%, rgba(255, 194, 14, .16), transparent 28%),
+                linear-gradient(180deg, #080604 0%, #130d09 45%, #211109 100%);
+            color: var(--ink);
+        }
+
+        .store-shell,
+        body[data-theme="dark"] .store-shell {
+            padding: 0;
+            background: transparent;
+        }
+
+        .store-frame {
+            max-width: 1280px;
+            margin: 0 auto;
+            border-radius: 0;
+            background: #fff6ea;
+            border: 1px solid rgba(255, 194, 14, .18);
+            box-shadow: 0 28px 80px rgba(0, 0, 0, .35);
+            overflow: hidden;
+        }
+
+        .topbar,
+        body[data-theme="dark"] .topbar {
+            position: sticky;
+            top: 0;
+            border-radius: 0;
+            border: 0;
+            background:
+                linear-gradient(90deg, #17110d 0%, #17110d 58%, #ffc20e 58%, #ffc20e 100%) !important;
+            box-shadow: none;
+        }
+
+        .topbar-inner {
+            grid-template-columns: minmax(320px, .95fr) minmax(360px, 1.05fr);
+            padding: 18px 22px;
+        }
+
+        .brand-title,
+        body[data-theme="dark"] .brand-title {
+            color: #fff8ed;
+            line-height: .95;
+        }
+
+        .brand-sub,
+        body[data-theme="dark"] .brand-sub {
+            color: rgba(255, 248, 237, .82);
+            max-width: 520px;
+        }
+
+        .brand-kicker,
+        body[data-theme="dark"] .brand-kicker {
+            color: #ffc20e !important;
+        }
+
+        .brand-mark {
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            border-color: rgba(255, 194, 14, .46);
+            background: #fff8ed;
+        }
+
+        .session-strip,
+        .store-nav {
+            justify-content: flex-end;
+        }
+
+        .pill-btn,
+        .pill-link,
+        .store-nav a,
+        .user-pill,
+        body[data-theme="dark"] .pill-btn,
+        body[data-theme="dark"] .pill-link,
+        body[data-theme="dark"] .store-nav a,
+        body[data-theme="dark"] .user-pill {
+            min-height: 38px;
+            border-radius: 999px;
+            background: rgba(23, 17, 13, .9);
+            color: #fff8ed;
+            border-color: rgba(255, 255, 255, .32);
+            box-shadow: none;
+        }
+
+        .store-nav a.active,
+        .primary-link,
+        body[data-theme="dark"] .store-nav a.active,
+        body[data-theme="dark"] .primary-link {
+            background: linear-gradient(135deg, #ff9d19, #e87912);
+            color: #221006;
+            border-color: rgba(255, 255, 255, .48);
+        }
+
+        .nav-index,
+        .action-symbol,
+        body[data-theme="dark"] .nav-index,
+        body[data-theme="dark"] .action-symbol {
+            background: rgba(255, 194, 14, .22);
+            color: #ffc20e;
+        }
+
+        main.page {
+            padding: 0 20px 28px;
+            background: #fff6ea;
+        }
+
+        .surface,
+        .panel,
+        .product-card,
+        body[data-theme="dark"] .surface,
+        body[data-theme="dark"] .panel,
+        body[data-theme="dark"] .product-card {
+            background: #fffaf2;
+            border-color: rgba(255, 138, 24, .28);
+            color: #20130d;
+        }
+
+        @media (max-width: 860px) {
+            .topbar,
+            body[data-theme="dark"] .topbar {
+                background: linear-gradient(180deg, #17110d 0%, #17110d 58%, #ffc20e 58%, #ffc20e 100%) !important;
+            }
+
+            .topbar-inner {
+                grid-template-columns: 1fr;
+            }
+
+            .session-strip,
+            .store-nav {
+                justify-content: flex-start;
+            }
+        }
     </style>
 </head>
 <body>

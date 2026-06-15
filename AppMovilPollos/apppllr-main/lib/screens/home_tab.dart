@@ -326,12 +326,15 @@ class _HomeTabState extends State<HomeTab> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: StoreTheme.lineStrong.withOpacity(.52)),
         gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
           colors: [
-            Color(0xFFFFC10F),
-            Color(0xFFFFB100),
+            Color(0xFF17110D),
+            Color(0xFF17110D),
+            Color(0xFFFFC20E),
+            Color(0xFFFFC20E),
           ],
+          stops: [0, .58, .58, 1],
         ),
         boxShadow: const [
           BoxShadow(
@@ -348,7 +351,7 @@ class _HomeTabState extends State<HomeTab> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: const BoxDecoration(
-              color: Color(0xFF17110D),
+              color: Color(0xFFFFC20E),
               borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
             ),
             child: const Text(
@@ -394,19 +397,19 @@ class _HomeTabState extends State<HomeTab> {
                       style: TextStyle(
                         fontSize: 11,
                         letterSpacing: 2.2,
-                        color: Color(0xFF6F370E),
+                        color: Color(0xFFFFC20E),
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Pollos y Parrillas "El Dorado"',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF2A150D)),
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFFFFF8ED)),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Hola, $_userName',
-                      style: const TextStyle(color: Color(0xFF6A4A31)),
+                      style: const TextStyle(color: Color(0xFFFFE7B4)),
                     ),
                   ],
                 ),
@@ -450,19 +453,19 @@ class _HomeTabState extends State<HomeTab> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(.22),
+              color: Color(0xFF17110D),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: Colors.white.withOpacity(.35)),
             ),
             child: const Row(
               children: [
-                Icon(Icons.local_fire_department_rounded, color: Color(0xFF7A2F00)),
+                Icon(Icons.local_fire_department_rounded, color: Color(0xFFFFC20E)),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Menu visual, rapido y listo para pedir.',
                     style: TextStyle(
-                      color: Color(0xFF4D2B17),
+                      color: Color(0xFFFFF8ED),
                       fontWeight: FontWeight.w700,
                     ),
                   ),

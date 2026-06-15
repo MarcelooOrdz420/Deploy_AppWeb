@@ -754,6 +754,148 @@
         body[data-theme="dark"] .admin-menu {
             background: linear-gradient(90deg, #0f0b08 0%, #17110d 58%, #b26c12 58%, #b26c12 100%) !important;
         }
+
+        /* Tema final unificado con cliente web y app movil. */
+        body,
+        body[data-theme="dark"] {
+            --orange: #ff8a18;
+            --orange-soft: #ffc20e;
+            --orange-deep: #e87912;
+            --line: rgba(255, 138, 24, .34);
+            --text: #fff8ed;
+            --panel: #fffaf2;
+            --panel-ink: #20130d;
+            --muted-ink: #604232;
+            background:
+                radial-gradient(circle at 12% 0%, rgba(255, 194, 14, .16), transparent 28%),
+                linear-gradient(180deg, #080604 0%, #130d09 45%, #211109 100%);
+            color: #fff8ed;
+        }
+
+        header,
+        body[data-theme="dark"] header {
+            background:
+                linear-gradient(90deg, #17110d 0%, #17110d 58%, #ffc20e 58%, #ffc20e 100%) !important;
+            border-bottom: 1px solid rgba(255, 194, 14, .28);
+            box-shadow: none;
+        }
+
+        .container {
+            max-width: 1280px;
+        }
+
+        .title,
+        .title-sub {
+            color: #fff8ed;
+        }
+
+        .head-kicker {
+            color: #ffc20e !important;
+        }
+
+        .menu-tab,
+        .user,
+        button:not(.btn-main),
+        body[data-theme="dark"] .menu-tab,
+        body[data-theme="dark"] .user,
+        body[data-theme="dark"] button:not(.btn-main) {
+            min-height: 40px;
+            border-radius: 999px;
+            background: rgba(23, 17, 13, .9) !important;
+            color: #fff8ed !important;
+            border-color: rgba(255, 255, 255, .34) !important;
+            box-shadow: none;
+        }
+
+        .menu-tab.active,
+        .btn-main,
+        body[data-theme="dark"] .menu-tab.active,
+        body[data-theme="dark"] .btn-main {
+            background: linear-gradient(135deg, #ff9d19, #e87912) !important;
+            color: #221006 !important;
+            border-color: rgba(255, 255, 255, .48) !important;
+        }
+
+        .tab-icon,
+        .action-icon,
+        body[data-theme="dark"] .tab-icon,
+        body[data-theme="dark"] .action-icon {
+            background: rgba(255, 194, 14, .22);
+            color: #ffc20e;
+        }
+
+        .admin-menu,
+        body[data-theme="dark"] .admin-menu {
+            top: 96px;
+            border-radius: 8px;
+            background: #17110d !important;
+            border-color: rgba(255, 194, 14, .28) !important;
+        }
+
+        .panel,
+        .card,
+        .module-summary,
+        .metric-card,
+        .chart-card,
+        .toggle-row,
+        .upload-box,
+        .inline-note,
+        body[data-theme="dark"] .panel,
+        body[data-theme="dark"] .card,
+        body[data-theme="dark"] .module-summary,
+        body[data-theme="dark"] .metric-card,
+        body[data-theme="dark"] .chart-card,
+        body[data-theme="dark"] .toggle-row,
+        body[data-theme="dark"] .upload-box,
+        body[data-theme="dark"] .inline-note {
+            border-radius: 8px;
+            background: #fffaf2 !important;
+            color: #20130d !important;
+            border-color: rgba(255, 138, 24, .30) !important;
+            box-shadow: none !important;
+        }
+
+        .panel h2,
+        .panel h3,
+        .product-card-title,
+        .product-card-price,
+        .label,
+        .section-subtitle,
+        .helper-text,
+        .muted,
+        body[data-theme="dark"] .panel h2,
+        body[data-theme="dark"] .panel h3,
+        body[data-theme="dark"] .product-card-title,
+        body[data-theme="dark"] .product-card-price,
+        body[data-theme="dark"] .label,
+        body[data-theme="dark"] .section-subtitle,
+        body[data-theme="dark"] .helper-text,
+        body[data-theme="dark"] .muted {
+            color: #20130d !important;
+        }
+
+        input,
+        select,
+        textarea,
+        body[data-theme="dark"] input,
+        body[data-theme="dark"] select,
+        body[data-theme="dark"] textarea {
+            border-radius: 8px;
+            background: #fffdf8 !important;
+            color: #20130d !important;
+            border-color: rgba(255, 138, 24, .34) !important;
+        }
+
+        @media (max-width: 860px) {
+            header,
+            body[data-theme="dark"] header {
+                background: linear-gradient(180deg, #17110d 0%, #17110d 58%, #ffc20e 58%, #ffc20e 100%) !important;
+            }
+
+            .admin-menu {
+                top: 0;
+            }
+        }
     </style>
 </head>
 <body>

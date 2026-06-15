@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 class StoreTheme {
-  static const Color orange = Color(0xFFFF9F22);
+  static const Color orange = Color(0xFFFF8A18);
   static const Color orangeSoft = Color(0xFFFFC20E);
-  static const Color orangeDeep = Color(0xFFD87525);
-  static const Color cream = Color(0xFFFFF8ED);
-  static const Color paper = Color(0xFFFFFCF6);
-  static const Color paperSoft = Color(0xFFFFF1DC);
-  static const Color ink = Color(0xFF1B130F);
-  static const Color inkSoft = Color(0xFF594133);
-  static const Color lineStrong = Color(0xFFFFC061);
+  static const Color orangeDeep = Color(0xFFE87912);
+  static const Color cream = Color(0xFFFFF6EA);
+  static const Color paper = Color(0xFFFFFAF2);
+  static const Color paperSoft = Color(0xFFFFE7B4);
+  static const Color ink = Color(0xFF20130D);
+  static const Color inkSoft = Color(0xFF5D4030);
+  static const Color lineStrong = Color(0xFFFF8A18);
 
   static ThemeData theme() {
     final base = ThemeData(
@@ -51,7 +51,7 @@ class StoreTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF17110D),
-        selectedItemColor: orangeDeep,
+        selectedItemColor: orangeSoft,
         unselectedItemColor: Color(0xFFFFE8BF),
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
@@ -68,7 +68,7 @@ class StoreTheme {
         secondary: const Color(0xFFFFC078),
         brightness: Brightness.dark,
       ),
-      scaffoldBackgroundColor: const Color(0xFF120D09),
+      scaffoldBackgroundColor: const Color(0xFF080604),
       fontFamily: 'Trebuchet MS',
     );
 
@@ -114,9 +114,9 @@ class StoreTheme {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: <Color>[
-      Color(0xFFFFFBF6),
-      Color(0xFFFFF4E1),
-      Color(0xFFFFE8BA),
+      Color(0xFF080604),
+      Color(0xFF130D09),
+      Color(0xFF211109),
     ],
   );
 
@@ -128,8 +128,8 @@ class StoreTheme {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: <Color>[
-          Colors.white.withOpacity(.84),
-          cream.withOpacity(.94),
+          paper,
+          cream,
         ],
       ),
       boxShadow: const <BoxShadow>[

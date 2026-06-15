@@ -1007,6 +1007,174 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Banner final alineado al tema de referencia. */
+        .catalog-shell {
+            gap: 14px;
+        }
+
+        .hero-showcase {
+            border-radius: 0;
+            border: 1px solid rgba(255, 194, 14, .28);
+            background:
+                linear-gradient(90deg, #17110d 0%, #17110d 56%, #ffc20e 56%, #ffc20e 100%) !important;
+            box-shadow: none;
+        }
+
+        .hero-hours-bar {
+            padding: 9px 16px;
+            background: #ffc20e;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .catalog-hero {
+            grid-template-columns: minmax(230px, .62fr) minmax(0, 1.38fr);
+            min-height: 360px;
+            gap: 18px;
+            padding: 18px 22px 22px;
+        }
+
+        .hero-logo-lockup {
+            margin: 0 0 12px;
+        }
+
+        .hero-logo-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+        }
+
+        .hero-logo-copy span {
+            color: rgba(255, 255, 255, .62);
+        }
+
+        .hero-logo-copy strong {
+            color: #fff8ed;
+        }
+
+        .hero-copy-stack {
+            gap: 10px;
+            padding: 0;
+        }
+
+        .hero-copy-stack .eyebrow {
+            color: #ffc20e !important;
+            margin: 0;
+        }
+
+        .catalog-hero .title {
+            max-width: 230px;
+            font-size: clamp(56px, 6vw, 86px);
+            line-height: .82;
+            color: #fff;
+        }
+
+        .hero-text {
+            max-width: 300px;
+            color: rgba(255, 248, 237, .74);
+        }
+
+        .hero-badges {
+            gap: 8px;
+        }
+
+        .hero-badges span,
+        .hero-cta {
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 10px;
+        }
+
+        .hero-badges-soft span {
+            background: #fff8ed;
+            color: #7a3b0d;
+        }
+
+        .hero-cta {
+            background: #ffc20e;
+            color: #271204;
+            box-shadow: none;
+        }
+
+        .hero-visual-stage {
+            grid-template-columns: 1fr 230px;
+            gap: 14px;
+            min-height: 320px;
+        }
+
+        .hero-stage-left {
+            min-height: 320px;
+            border-radius: 8px;
+            padding: 14px;
+            background:
+                repeating-linear-gradient(125deg, rgba(255,255,255,.13) 0 10px, transparent 10px 26px),
+                linear-gradient(135deg, #063929 0%, #143a2f 46%, #72221a 100%);
+        }
+
+        .hero-stage-rays {
+            opacity: .28;
+        }
+
+        .hero-feature {
+            border-radius: 8px;
+            border-color: rgba(255, 255, 255, .32);
+            background: #fffaf2 !important;
+        }
+
+        .hero-feature-main {
+            min-height: 270px;
+            max-width: 360px;
+            justify-self: center;
+            align-self: end;
+        }
+
+        .hero-stage-right {
+            grid-template-rows: 1fr 1fr auto;
+            gap: 12px;
+            padding: 0;
+        }
+
+        .hero-stage-right .hero-feature {
+            min-height: 145px;
+        }
+
+        .hero-note strong,
+        .hero-plate-copy strong {
+            font-size: 17px;
+        }
+
+        .hero-note span,
+        .hero-plate-copy span {
+            font-size: 11px;
+        }
+
+        .hero-quality-chip {
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 10px;
+        }
+
+        .catalog-tools {
+            border-radius: 0;
+            background: #fffaf2 !important;
+        }
+
+        @media (max-width: 980px) {
+            .hero-showcase {
+                background: linear-gradient(180deg, #17110d 0%, #17110d 54%, #ffc20e 54%, #ffc20e 100%) !important;
+            }
+
+            .catalog-hero,
+            .hero-visual-stage {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-feature-main {
+                max-width: none;
+            }
+        }
     </style>
 @endsection
 
