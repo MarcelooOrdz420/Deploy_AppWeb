@@ -321,10 +321,51 @@ class _HomeTabState extends State<HomeTab> {
   Widget _buildTopBar(BuildContext context) {
     final cartCount = CartScope.of(context).items.fold<int>(0, (sum, item) => sum + item.qty);
 
-    return StoreSurface(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: StoreTheme.lineStrong.withOpacity(.52)),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFFFFC10F),
+            Color(0xFFFFB100),
+          ],
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(52, 17, 0, .12),
+            blurRadius: 26,
+            offset: Offset(0, 14),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: const BoxDecoration(
+              color: Color(0xFF17110D),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: const Text(
+              'Horario de atencion · Lun-Vie 12 pm a 8 pm · Sab 11 am a 9 pm · Dom 11 am a 7 pm',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
           Row(
             children: [
               Container(
@@ -353,19 +394,19 @@ class _HomeTabState extends State<HomeTab> {
                       style: TextStyle(
                         fontSize: 11,
                         letterSpacing: 2.2,
-                        color: Color(0xFF9B5A2C),
+                        color: Color(0xFF6F370E),
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Pollos y Parrillas "El Dorado"',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF2A150D)),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Hola, $_userName',
-                      style: const TextStyle(color: StoreTheme.inkSoft),
+                      style: const TextStyle(color: Color(0xFF6A4A31)),
                     ),
                   ],
                 ),
@@ -380,8 +421,8 @@ class _HomeTabState extends State<HomeTab> {
                     },
                     icon: const Icon(Icons.shopping_cart_outlined),
                     style: IconButton.styleFrom(
-                      backgroundColor: StoreTheme.orange,
-                      foregroundColor: StoreTheme.ink,
+                      backgroundColor: const Color(0xFF17110D),
+                      foregroundColor: Colors.white,
                     ),
                   ),
                   if (cartCount > 0)
@@ -409,23 +450,26 @@ class _HomeTabState extends State<HomeTab> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF7F0),
+              color: Colors.white.withOpacity(.22),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: StoreTheme.lineStrong.withOpacity(.82)),
+              border: Border.all(color: Colors.white.withOpacity(.35)),
             ),
             child: const Row(
               children: [
-                Icon(Icons.menu_book_outlined, color: StoreTheme.orangeDeep),
+                Icon(Icons.local_fire_department_rounded, color: Color(0xFF7A2F00)),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Busca tu plato favorito y agregalo al carrito.',
+                    'Menu visual, rapido y listo para pedir.',
                     style: TextStyle(
-                      color: StoreTheme.inkSoft,
+                      color: Color(0xFF4D2B17),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
+              ],
+            ),
+          ),
               ],
             ),
           ),
@@ -442,28 +486,55 @@ class _HomeTabState extends State<HomeTab> {
     final secondary = pollos.length > 1 ? pollos[1] : primary;
     final drinks = bebidas.isNotEmpty ? bebidas.first : secondary;
 
-    return StoreSurface(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF15110F),
+            Color(0xFF241913),
+            Color(0xFFFFB400),
+            Color(0xFFFFC21A),
+          ],
+          stops: [0, .52, .52, 1],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(52, 17, 0, .18),
+            blurRadius: 28,
+            offset: Offset(0, 16),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Menu del Cliente',
+            'Menu principal',
             style: TextStyle(
               fontSize: 11,
               letterSpacing: 2.2,
-              color: Color(0xFF9B5A2C),
+              color: Color(0xFFFFE0B4),
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Compra en una ruta mas clara, mas visual y mas rapida.',
-            style: TextStyle(fontSize: 28, height: 1.02, fontWeight: FontWeight.w900),
+            'SA\nBRO\nSO!',
+            style: TextStyle(
+              fontSize: 64,
+              height: .82,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 10),
           const Text(
-            'Explora el menu como una vitrina: descubre destacados, filtra con precision y agrega al carrito sin perder el contexto.',
-            style: TextStyle(color: StoreTheme.inkSoft, height: 1.5),
+            'Pollo, parrilla y bebidas en una vitrina mas directa, mas viva y mas facil de comprar.',
+            style: TextStyle(color: Color(0xFFFCE8D0), height: 1.5),
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -476,47 +547,96 @@ class _HomeTabState extends State<HomeTab> {
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 360,
-            child: Column(
-              children: [
-                Expanded(
-                  child: _HeroCard(
-                    title: primary?.name ?? 'Brasa protagonista',
-                    subtitle: primary?.description.isNotEmpty == true
-                        ? primary!.description
-                        : 'Porciones personales con textura crocante y sabor de casa.',
-                    product: primary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _HeroCard(
-                          title: secondary?.name ?? 'Combos para compartir',
-                          subtitle: secondary?.description.isNotEmpty == true
-                              ? secondary!.description
-                              : 'Medios y enteros listos para familia o grupo.',
-                          product: secondary,
-                        ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked = constraints.maxWidth < 380;
+              if (stacked) {
+                return Column(
+                  children: [
+                    SizedBox(
+                      height: 260,
+                      child: _HeroCard(
+                        title: primary?.name ?? 'Brasa protagonista',
+                        subtitle: primary?.description.isNotEmpty == true
+                            ? primary!.description
+                            : 'Textura crocante, porcion potente y compra rapida.',
+                        product: primary,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _HeroCard(
-                          title: drinks?.name ?? 'Bebidas frias',
-                          subtitle: drinks?.description.isNotEmpty == true
-                              ? drinks!.description
-                              : 'El cierre exacto para cualquier pedido.',
-                          product: drinks,
-                        ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 170,
+                      child: _HeroCard(
+                        title: secondary?.name ?? 'Combos',
+                        subtitle: secondary?.description.isNotEmpty == true
+                            ? secondary!.description
+                            : 'Listos para compartir.',
+                        product: secondary,
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 170,
+                      child: _HeroCard(
+                        title: drinks?.name ?? 'Bebidas',
+                        subtitle: drinks?.description.isNotEmpty == true
+                            ? drinks!.description
+                            : 'El cierre ideal de tu pedido.',
+                        product: drinks,
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(
+                    flex: 11,
+                    child: SizedBox(
+                      height: 350,
+                      child: _HeroCard(
+                        title: primary?.name ?? 'Brasa protagonista',
+                        subtitle: primary?.description.isNotEmpty == true
+                            ? primary!.description
+                            : 'Textura crocante, porcion potente y compra rapida.',
+                        product: primary,
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 9,
+                    child: SizedBox(
+                      height: 350,
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: _HeroCard(
+                              title: secondary?.name ?? 'Combos',
+                              subtitle: secondary?.description.isNotEmpty == true
+                                  ? secondary!.description
+                                  : 'Listos para compartir.',
+                              product: secondary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: _HeroCard(
+                              title: drinks?.name ?? 'Bebidas',
+                              subtitle: drinks?.description.isNotEmpty == true
+                                  ? drinks!.description
+                                  : 'El cierre ideal de tu pedido.',
+                              product: drinks,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -636,14 +756,14 @@ class _HomeTabState extends State<HomeTab> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7F0),
+        color: Colors.white.withOpacity(.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: StoreTheme.lineStrong.withOpacity(.82)),
+        border: Border.all(color: Colors.white.withOpacity(.28)),
       ),
       child: Text(
         text,
         style: const TextStyle(
-          color: Color(0xFF82471F),
+          color: Color(0xFFFFF4E6),
           fontSize: 12,
           fontWeight: FontWeight.w900,
         ),
@@ -665,58 +785,71 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (product != null)
-            ProductoImage(
-              producto: product!,
-              width: double.infinity,
-              height: double.infinity,
-            )
-          else
-            Container(color: const Color(0xFFFFE5CE)),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withOpacity(.1),
-                  Colors.black.withOpacity(.72),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: Colors.white.withOpacity(.24)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(40, 14, 0, .22),
+            blurRadius: 26,
+            offset: Offset(0, 14),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (product != null)
+              ProductoImage(
+                producto: product!,
+                width: double.infinity,
+                height: double.infinity,
+              )
+            else
+              Container(color: const Color(0xFFFFE5CE)),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(.08),
+                    Colors.black.withOpacity(.74),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFFFFF4EB),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Color(0xFFFFF4EB),
+                      height: 1.4,
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFFFFF4EB),
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFFFFF4EB),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

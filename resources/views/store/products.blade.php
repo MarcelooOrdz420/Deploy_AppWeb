@@ -4,12 +4,27 @@
 
 @section('content')
     <section class="catalog-shell">
-        <section class="catalog-hero surface">
+        <section class="hero-showcase surface">
+            <div class="hero-hours-bar">Horario de atencion · Lunes a Viernes 12:00 pm a 8:00 pm · Sabado 11:00 am a 9:00 pm · Domingo 11:00 am a 7:00 pm</div>
+            <div class="hero-nav-strip">
+                <div class="hero-logo-lockup">
+                    <div class="hero-logo-badge"><img src="/images/ico-pollo.jpg" alt="El Dorado"></div>
+                    <div class="hero-logo-copy"><span>Pollos y Parrillas</span><strong>El Dorado</strong></div>
+                </div>
+                <div class="hero-nav-pills">
+                    <span class="hero-nav-pill active">Inicio</span>
+                    <span class="hero-nav-pill">Menu</span>
+                    <span class="hero-nav-pill">Locales</span>
+                    <span class="hero-nav-pill">Nosotros</span>
+                    <span class="hero-nav-pill">Contacto</span>
+                </div>
+            </div>
+            <div class="catalog-hero">
             <div class="hero-copy-stack">
                 <p class="eyebrow"> Menú </p>
-                <h2 class="title">Compra en una ruta mas clara, mas visual y mas rapida.</h2>
+                <h2 class="title hero-slogan">SA<br>BRO<br>SO!</h2>
                 <p class="muted-main hero-text">
-                    Explora los platillos con los que contamos , agregalo a tu carrito y finaliza tu pedido en pocos pasos.
+                    Pollo, parrilla y bebidas en una vitrina mas directa, mas viva y mas facil de comprar.
                 </p>
                 <div class="hero-badges">
                     <span>Pollos</span>
@@ -19,35 +34,42 @@
                 <div class="hero-badges hero-badges-soft">
                     <span id="heroProductsMetric">0 productos listos</span>
                     <span id="heroAvailableMetric">0 disponibles hoy</span>
-                    <span>Pago seguro y seguimiento</span>
                 </div>
+                <a href="#productsGrid" class="hero-cta">Ver menu</a>
             </div>
 
-            <div id="heroSlider" class="hero-visual-grid">
+            <div id="heroSlider" class="hero-visual-stage">
+                <div class="hero-stage-left">
+                    <div class="hero-stage-rays"></div>
                 <article class="hero-feature hero-feature-main">
                     <img id="heroImageA" src="/images/hero/slide-1.jpg" alt="Promo El Dorado 1" class="hero-poster">
-                    <div class="hero-tint"></div>
-                    <div class="hero-note">
+                    <div class="hero-tint hero-tint-soft"></div>
+                </article>
+                    <div class="hero-plate-copy">
                         <strong>Brasa protagonista</strong>
-                        <span>Porciones personales con textura crocante y sabor de casa.</span>
+                        <span>Textura crocante, porcion potente y compra rapida.</span>
                     </div>
-                </article>
-                <article class="hero-feature">
+                </div>
+                <div class="hero-stage-right">
+                <article class="hero-feature hero-feature-side">
                     <img id="heroImageB" src="/images/hero/slide-2.jpg" alt="Promo El Dorado 2" class="hero-poster">
-                    <div class="hero-tint"></div>
+                    <div class="hero-tint hero-tint-soft"></div>
                     <div class="hero-note">
-                        <strong>Combos para compartir</strong>
-                        <span>Medios y enteros listos para familia o grupo.</span>
+                        <strong>Combos</strong>
+                        <span>Listos para compartir.</span>
                     </div>
                 </article>
-                <article class="hero-feature">
+                <article class="hero-feature hero-feature-side">
                     <img id="heroImageC" src="/images/hero/slide-3.jpg" alt="Promo El Dorado 3" class="hero-poster">
                     <div class="hero-tint"></div>
                     <div class="hero-note">
-                        <strong>Bebidas frias</strong>
+                        <strong>Bebidas</strong>
                         <span>El cierre exacto para acompañar cualquier pedido.</span>
                     </div>
                 </article>
+                    <div class="hero-quality-chip">100% sabor dorado</div>
+                </div>
+            </div>
             </div>
         </section>
 
@@ -158,66 +180,201 @@
             gap: 18px;
         }
 
-        .catalog-hero {
-            display: grid;
-            grid-template-columns: .95fr 1.05fr;
-            gap: 18px;
-            padding: 20px;
+        .hero-showcase {
+            padding: 0;
+            overflow: hidden;
+            background:
+                linear-gradient(90deg, #15110f 0%, #1f1713 54%, #f7b400 54%, #f6be17 100%);
         }
 
-        .hero-copy-stack {
+        .hero-hours-bar {
+            padding: 8px 20px;
+            background: #f7b400;
+            color: #fffdf8;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .03em;
+        }
+
+        .hero-nav-strip {
             display: flex;
-            flex-direction: column;
             justify-content: space-between;
+            align-items: center;
             gap: 18px;
+            padding: 18px 24px 0;
         }
 
-        .hero-text {
-            max-width: 520px;
-            font-size: 15px;
+        .hero-logo-lockup {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff7ed;
         }
 
+        .hero-logo-badge {
+            width: 54px;
+            height: 54px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,.16);
+            background: rgba(255,255,255,.1);
+        }
+
+        .hero-logo-badge img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-logo-copy {
+            display: grid;
+            gap: 2px;
+        }
+
+        .hero-logo-copy span {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.72);
+        }
+
+        .hero-logo-copy strong {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .hero-nav-pills,
         .hero-badges {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
         }
 
-        .hero-badges span {
+        .hero-nav-pill,
+        .hero-badges span,
+        .hero-cta {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 10px 14px;
+            padding: 10px 18px;
             border-radius: 999px;
-            border: 1px solid rgba(234, 182, 138, .84);
-            background: rgba(255, 247, 240, .86);
-            color: #82471f;
+            border: 1px solid rgba(255,255,255,.34);
+            color: #fff8ef;
             font-size: 12px;
             font-weight: 900;
+            text-transform: uppercase;
+            text-decoration: none;
+            box-shadow: 0 10px 22px rgba(0,0,0,.16);
+        }
+
+        .hero-nav-pill.active,
+        .hero-cta {
+            background: linear-gradient(135deg, #ffad18, #f28d00);
+            border-color: rgba(255,255,255,.55);
+        }
+
+        .catalog-hero {
+            display: grid;
+            grid-template-columns: .7fr 1.3fr;
+            gap: 20px;
+            align-items: stretch;
+            padding: 18px 24px 24px;
+        }
+
+        .hero-copy-stack {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .catalog-hero .eyebrow {
+            color: rgba(255,255,255,.72);
+        }
+
+        .catalog-hero .title {
+            margin: 0;
+            max-width: 280px;
+            font-size: clamp(62px, 7vw, 110px);
+            line-height: .82;
+            color: #fffdf8;
+            text-shadow: 0 8px 18px rgba(0, 0, 0, .3);
+            letter-spacing: -.05em;
+        }
+
+        .hero-text {
+            max-width: 320px;
+            font-size: 14px;
+            color: rgba(255,255,255,.82);
+        }
+
+        .hero-badges span {
+            background: rgba(255,255,255,.08);
         }
 
         .hero-badges-soft span {
-            background: rgba(255, 255, 255, .72);
+            background: rgba(255,255,255,.92);
+            color: #8d4a1a;
+            border-color: rgba(255,255,255,.92);
         }
 
-        .hero-visual-grid {
+        .hero-visual-stage {
             display: grid;
-            grid-template-columns: 1.1fr .9fr;
-            grid-template-rows: repeat(2, minmax(0, 1fr));
+            grid-template-columns: 1.08fr .92fr;
+            gap: 16px;
+            min-height: 520px;
+        }
+
+        .hero-stage-left {
+            position: relative;
+            display: grid;
+            align-items: end;
+            padding: 18px;
+            border-radius: 34px;
+            overflow: hidden;
+            background:
+                linear-gradient(135deg, rgba(255, 51, 102, .24), transparent 26%),
+                linear-gradient(120deg, #083d2f 0%, #142b26 36%, #7f1d1d 72%, #f08f00 100%);
+        }
+
+        .hero-stage-rays {
+            position: absolute;
+            inset: 0;
+            background:
+                repeating-linear-gradient(125deg, rgba(255,255,255,.16) 0 10px, transparent 10px 28px),
+                radial-gradient(circle at 20% 80%, rgba(255,255,255,.18), transparent 30%);
+            mix-blend-mode: screen;
+            opacity: .8;
+            pointer-events: none;
+        }
+
+        .hero-stage-right {
+            display: grid;
+            grid-template-rows: 1fr 1fr auto;
             gap: 14px;
+            padding: 20px 10px 10px 0;
         }
 
         .hero-feature {
             position: relative;
             overflow: hidden;
             min-height: 220px;
-            border-radius: 26px;
-            border: 1px solid rgba(234, 182, 138, .76);
-            box-shadow: 0 18px 34px rgba(52, 17, 0, .08);
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,.24);
+            box-shadow: 0 22px 42px rgba(26, 10, 0, .18);
+            background: rgba(255,255,255,.08);
         }
 
         .hero-feature-main {
-            grid-row: 1 / span 2;
+            min-height: 440px;
+            background: radial-gradient(circle at top, rgba(255,255,255,.16), transparent 46%);
+        }
+
+        .hero-feature-side {
+            min-height: 0;
         }
 
         .hero-poster {
@@ -229,32 +386,52 @@
 
         .hero-feature:hover .hero-poster {
             transform: scale(1.06);
-            filter: saturate(1.05);
+            filter: saturate(1.08);
         }
 
         .hero-tint {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(32, 14, 5, .74), rgba(32, 14, 5, .18));
+            background: linear-gradient(to top, rgba(34, 16, 4, .34), rgba(34, 16, 4, .08));
         }
 
-        .hero-note {
+        .hero-tint-soft {
+            background: linear-gradient(to top, rgba(34, 16, 4, .72), rgba(34, 16, 4, .12));
+        }
+
+        .hero-note,
+        .hero-plate-copy {
             position: absolute;
-            left: 16px;
-            right: 16px;
-            bottom: 16px;
+            left: 18px;
+            right: 18px;
+            bottom: 18px;
             display: grid;
             gap: 4px;
             color: #fff4eb;
+            z-index: 2;
         }
 
-        .hero-note strong {
-            font-size: 20px;
+        .hero-note strong,
+        .hero-plate-copy strong {
+            font-size: 22px;
         }
 
-        .hero-note span {
+        .hero-note span,
+        .hero-plate-copy span {
             font-size: 13px;
             line-height: 1.45;
+        }
+
+        .hero-quality-chip {
+            justify-self: end;
+            padding: 11px 16px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.92);
+            color: #954e1a;
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            box-shadow: 0 12px 24px rgba(69, 23, 0, .14);
         }
 
         .catalog-tools {
@@ -269,6 +446,11 @@
             align-items: flex-end;
             gap: 14px;
             flex-wrap: wrap;
+        }
+
+        .tools-head .section-title {
+            font-size: clamp(22px, 3vw, 30px);
+            line-height: 1.04;
         }
 
         .tools-info {
@@ -672,6 +854,16 @@
                 grid-template-columns: 1fr;
             }
 
+            .hero-nav-strip,
+            .hero-nav-pills {
+                justify-content: center;
+            }
+
+            .hero-visual-stage {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
             .product-modal-card {
                 width: min(520px, 100%);
             }
@@ -679,22 +871,31 @@
 
         @media (max-width: 760px) {
             .tool-grid,
-            .hero-visual-grid,
             .product-modal-card {
                 grid-template-columns: 1fr;
             }
 
+            .hero-nav-strip,
+            .hero-nav-pills {
+                flex-direction: column;
+            }
+
+            .catalog-hero .title {
+                font-size: 72px;
+                max-width: none;
+            }
+
+            .hero-stage-left,
+            .hero-stage-right {
+                padding: 14px;
+            }
+
             .hero-feature-main {
-                grid-row: auto;
+                min-height: 300px;
             }
 
-            .hero-feature {
-                min-height: 190px;
-            }
-
-            .product-modal {
-                align-items: flex-start;
-                overflow: auto;
+            .hero-feature-side {
+                min-height: 180px;
             }
 
             .product-modal-card {
@@ -708,18 +909,15 @@
             }
         }
 
-        .catalog-hero,
+        .hero-showcase,
         .catalog-tools,
         .tool-card,
         .product-card,
         .float-cart-panel,
         .product-modal-card {
-            background: linear-gradient(180deg, #ffffff 0%, #fff6eb 100%) !important;
             border-color: rgba(255,122,26,.22) !important;
-            color: var(--ink) !important;
         }
         .tools-info,
-        .hero-badges span,
         .product-category,
         .status-chip,
         .stock-alert {
@@ -729,7 +927,6 @@
         }
         .product-name,
         .section-title,
-        .hero-note,
         .float-cart-name,
         .float-cart-title {
             color: var(--ink) !important;

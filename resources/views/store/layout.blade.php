@@ -8,42 +8,42 @@
     <title>@yield('title', 'Pollos y Parrillas El Dorado')</title>
     <style>
         :root {
-            --orange: #ff7a1a;
-            --orange-soft: #ffab4d;
-            --orange-deep: #ef5a00;
-            --cream: #fffaf4;
-            --cream-strong: #fff2e2;
+            --orange: #c86a2d;
+            --orange-soft: #f1be7d;
+            --orange-deep: #8d4314;
+            --cream: #faf4eb;
+            --cream-strong: #f3e6d6;
             --paper: #ffffff;
-            --paper-soft: #fff8ef;
-            --ink: #16110c;
-            --ink-soft: #443126;
-            --accent-ink: #20140d;
-            --panel-ink: #16110c;
-            --muted-ink: #5c4638;
-            --line: rgba(255, 122, 26, .24);
-            --line-strong: rgba(255, 154, 61, .42);
-            --shadow-soft: 0 18px 40px rgba(108, 56, 18, .10);
-            --shadow-strong: 0 26px 60px rgba(108, 56, 18, .14);
+            --paper-soft: #fdf7ef;
+            --ink: #21140d;
+            --ink-soft: #4a3528;
+            --accent-ink: #25160d;
+            --panel-ink: #21140d;
+            --muted-ink: #6a5242;
+            --line: rgba(200, 106, 45, .18);
+            --line-strong: rgba(200, 106, 45, .28);
+            --shadow-soft: 0 18px 40px rgba(89, 43, 14, .09);
+            --shadow-strong: 0 26px 60px rgba(89, 43, 14, .13);
             --radius-xl: 28px;
             --radius-lg: 22px;
             --radius-md: 16px;
         }
 
         body[data-theme="dark"] {
-            --orange: #c75a1b;
-            --orange-soft: #f3b562;
-            --orange-deep: #ef7b31;
-            --cream: #1a130f;
+            --orange: #c06a32;
+            --orange-soft: #e7bc86;
+            --orange-deep: #f0a868;
+            --cream: #17120e;
             --cream-strong: #211913;
-            --paper: #18110d;
-            --paper-soft: #211913;
+            --paper: #1c1612;
+            --paper-soft: #241d18;
             --ink: #fff4e7;
-            --ink-soft: #f0d8be;
-            --accent-ink: #2b160b;
+            --ink-soft: #ead4bd;
+            --accent-ink: #2b170c;
             --panel-ink: #fff4e7;
-            --muted-ink: #d6bda5;
-            --line: rgba(243, 181, 98, .18);
-            --line-strong: rgba(243, 181, 98, .3);
+            --muted-ink: #d8c0a7;
+            --line: rgba(231, 188, 134, .16);
+            --line-strong: rgba(231, 188, 134, .26);
             --shadow-soft: 0 18px 40px rgba(0, 0, 0, .3);
             --shadow-strong: 0 26px 60px rgba(0, 0, 0, .34);
             color-scheme: dark;
@@ -58,16 +58,16 @@
             font-family: "Trebuchet MS", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             color: var(--ink);
             background:
-                radial-gradient(circle at top left, rgba(255, 122, 26, .16), transparent 22%),
-                radial-gradient(circle at top right, rgba(255, 171, 77, .14), transparent 24%),
-                linear-gradient(180deg, #fffdf9 0%, #fff7ee 54%, #fff2e4 100%);
+                radial-gradient(circle at top left, rgba(200, 106, 45, .14), transparent 22%),
+                radial-gradient(circle at top right, rgba(241, 190, 125, .14), transparent 24%),
+                linear-gradient(180deg, #fdf9f3 0%, #f8efe4 54%, #f1e4d3 100%);
         }
 
         body[data-theme="dark"] {
             background:
-                radial-gradient(circle at top left, rgba(199, 90, 27, .2), transparent 24%),
-                radial-gradient(circle at top right, rgba(243, 181, 98, .12), transparent 26%),
-                linear-gradient(180deg, #110c09 0%, #17110d 52%, #1f1813 100%);
+                radial-gradient(circle at top left, rgba(192, 106, 50, .18), transparent 24%),
+                radial-gradient(circle at top right, rgba(231, 188, 134, .12), transparent 26%),
+                linear-gradient(180deg, #110d0a 0%, #171310 52%, #201913 100%);
         }
 
         a { color: inherit; }
@@ -301,9 +301,32 @@
         }
 
         .nav-index {
-            font-size: 11px;
-            color: inherit;
-            opacity: .72;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(200, 106, 45, .12);
+            color: var(--orange-deep);
+            font-size: 12px;
+            line-height: 1;
+            opacity: 1;
+            flex-shrink: 0;
+        }
+
+        .action-symbol {
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(200, 106, 45, .12);
+            color: var(--orange-deep);
+            font-size: 12px;
+            line-height: 1;
+            flex-shrink: 0;
         }
 
         main.page {
@@ -517,6 +540,12 @@
             border-color: rgba(243, 181, 98, .22);
         }
 
+        body[data-theme="dark"] .nav-index,
+        body[data-theme="dark"] .action-symbol {
+            background: rgba(231, 188, 134, .16);
+            color: var(--orange-soft);
+        }
+
         body[data-theme="dark"] .brand-kicker,
         body[data-theme="dark"] .eyebrow,
         body[data-theme="dark"] .label-main {
@@ -571,13 +600,13 @@
                                 <span class="user-dot"></span>
                                 Invitado
                             </span>
-                            <button id="storeThemeBtn" class="pill-btn" type="button">Modo oscuro</button>
+                            <button id="storeThemeBtn" class="pill-btn" type="button"><span class="action-symbol">&#9681;</span>Modo oscuro</button>
                             <button id="clientAlertsBtn" class="pill-btn" type="button">
-                                Avisos
+                                <span class="action-symbol">&#9679;</span>Avisos
                                 <span id="clientAlertCount" class="cart-count" style="position:static; min-width:22px; height:22px;">0</span>
                             </button>
-                            <a id="clientLoginBtn" class="pill-link" href="/login">Login</a>
-                            <button id="clientLogoutBtn" class="pill-btn" type="button">Salir</button>
+                            <a id="clientLoginBtn" class="pill-link" href="/login"><span class="action-symbol">&#8594;</span>Login</a>
+                            <button id="clientLogoutBtn" class="pill-btn" type="button"><span class="action-symbol">&#8617;</span>Salir</button>
                             <a class="pill-link cart-link primary-link" href="{{ route('store.cart') }}" aria-label="Ir al carrito">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M7 5h14l-1.5 8.5H9L7 5Z" stroke="#2d1406" stroke-width="1.8" stroke-linejoin="round"/>
@@ -591,19 +620,19 @@
 
                         <nav class="store-nav">
                             <a href="{{ route('store.products') }}" class="{{ request()->routeIs('store.products') ? 'active' : '' }}">
-                                <span class="nav-index"></span> Productos
+                                <span class="nav-index">&#9638;</span> Productos
                             </a>
                             <a href="{{ route('store.about') }}" class="{{ request()->routeIs('store.about') ? 'active' : '' }}">
-                                <span class="nav-index"></span> Quienes somos
+                                <span class="nav-index">&#8962;</span> Nosotros
                             </a>
                             <a href="{{ route('store.location') }}" class="{{ request()->routeIs('store.location') ? 'active' : '' }}">
-                                <span class="nav-index"></span> Ubicacion
+                                <span class="nav-index">&#8982;</span> Ubicacion
                             </a>
                             <a href="{{ route('store.experts') }}" class="{{ request()->routeIs('store.experts') ? 'active' : '' }}">
-                                <span class="nav-index"></span> Expertos
+                                <span class="nav-index">&#10022;</span> Expertos
                             </a>
                             <a href="{{ route('store.orders') }}" class="{{ request()->routeIs('store.orders') ? 'active' : '' }}">
-                                <span class="nav-index"></span> Mis pedidos
+                                <span class="nav-index">&#8811;</span> Mis pedidos
                             </a>
                         </nav>
                     </div>
@@ -683,7 +712,9 @@ function applyStoreTheme(theme) {
     document.body.dataset.theme = theme;
     localStorage.setItem(STORE_THEME_KEY, theme);
     if (storeThemeBtn) {
-        storeThemeBtn.textContent = theme === 'dark' ? 'Modo claro' : 'Modo oscuro';
+        storeThemeBtn.innerHTML = theme === 'dark'
+            ? '<span class="action-symbol">&#9728;</span>Modo claro'
+            : '<span class="action-symbol">&#9681;</span>Modo oscuro';
     }
 }
 
@@ -841,34 +872,39 @@ initClientSession();
 applyStoreTheme(getStoreTheme());
 </script>
 
-<div id="promoOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.72); padding:18px;">
-    <div style="max-width:520px; margin:8vh auto 0; background:rgba(18,18,18,.98); border:1px solid rgba(255, 122, 26, .24); border-radius:24px; box-shadow: 0 26px 60px rgba(0, 0, 0, .32); overflow:hidden;">
-        <div style="padding:14px 16px; border-bottom:1px solid rgba(255, 122, 26, .18); display:flex; align-items:center; justify-content:space-between; gap:12px;">
+<div id="promoOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(14,10,7,.82); padding:18px;">
+    <div style="max-width:720px; margin:6vh auto 0; background:linear-gradient(90deg,#1b130f 0%,#2a1d16 55%,#ff7c18 55%,#ff8f1f 100%); border:1px solid rgba(255, 188, 114, .24); border-radius:30px; box-shadow:0 30px 70px rgba(0, 0, 0, .38); overflow:hidden;">
+        <div style="padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; color:#fff7ed; border-bottom:1px solid rgba(255,255,255,.08);">
             <strong id="promoTitle" style="font-size:16px; line-height:1.2;">PromociÃ³n</strong>
-            <button id="promoCloseBtn" type="button" class="pill-btn" style="padding:8px 12px;">Cerrar</button>
+            <button id="promoCloseBtn" type="button" class="pill-btn" style="padding:8px 12px; background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">Cerrar</button>
         </div>
-        <div style="padding:16px;">
-            <img id="promoImage" alt="" style="display:none; width:100%; height:220px; object-fit:cover; border-radius:18px; border:1px solid rgba(255, 122, 26, .22); margin-bottom:12px;">
-            <div id="promoMessage" style="color:var(--ink); line-height:1.55; font-weight:800;"></div>
-            <div id="promoBody" style="margin-top:10px; color:var(--ink-soft); line-height:1.6;"></div>
-            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap;">
-                <button id="promoRejectBtn" type="button" class="pill-btn">Rechazar</button>
-                <button id="promoAcceptBtn" type="button" class="pill-btn primary-link">Ver</button>
+        <div style="display:grid; grid-template-columns:1.05fr .95fr; gap:0;">
+            <div style="padding:26px 24px; color:#fff7ed; background:radial-gradient(circle at top left, rgba(255,255,255,.08), transparent 22%), linear-gradient(135deg,#201712 0%,#160f0c 48%,#2b1a14 100%);">
+                <div style="font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.56); margin-bottom:10px;">Promo del dia</div>
+                <div id="promoMessage" style="font-size:38px; line-height:.92; font-weight:900; text-transform:uppercase; text-shadow:0 8px 18px rgba(0,0,0,.28);">Nueva promo</div>
+                <div id="promoBody" style="margin-top:12px; color:rgba(255,247,237,.82); line-height:1.6; max-width:280px;"></div>
+                <div style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;">
+                    <button id="promoAcceptBtn" type="button" class="pill-btn primary-link" style="padding:12px 18px;">Ver</button>
+                    <button id="promoRejectBtn" type="button" class="pill-btn" style="padding:12px 18px; background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">Cerrar</button>
+                </div>
+            </div>
+            <div style="padding:18px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, rgba(255,255,255,.18), transparent 44%), linear-gradient(135deg,#ff7c18 0%,#ff931f 100%);">
+                <img id="promoImage" alt="" style="display:none; width:100%; height:320px; object-fit:cover; border-radius:28px; border:4px solid rgba(255,255,255,.34); box-shadow:0 22px 38px rgba(84,32,0,.22);">
             </div>
         </div>
     </div>
 </div>
 
 <div id="promoToast" style="display:none; position:fixed; right:18px; bottom:18px; z-index:9998; width:min(380px, calc(100vw - 36px));">
-    <div style="background:rgba(18,18,18,.98); border:1px solid rgba(255, 122, 26, .24); border-radius:22px; box-shadow: 0 26px 60px rgba(0, 0, 0, .32); overflow:hidden;">
-        <div style="padding:12px 14px; border-bottom:1px solid rgba(255, 122, 26, .18); display:flex; align-items:center; justify-content:space-between; gap:10px;">
+    <div style="background:linear-gradient(90deg,#1a120e 0%,#2b1b14 58%,#ff7e1c 58%,#ff8f21 100%); border:1px solid rgba(255, 188, 114, .24); border-radius:24px; box-shadow: 0 26px 60px rgba(0, 0, 0, .32); overflow:hidden;">
+        <div style="padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; gap:10px;">
             <strong id="promoToastTitle" style="font-size:13px; line-height:1.2;">Nueva promociÃ³n</strong>
-            <button id="promoToastCloseBtn" type="button" class="pill-btn" style="padding:8px 10px;">X</button>
+            <button id="promoToastCloseBtn" type="button" class="pill-btn" style="padding:8px 10px; background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">X</button>
         </div>
-        <div style="padding:12px 14px;">
-            <div id="promoToastMessage" style="color:var(--ink); line-height:1.45; font-weight:800;"></div>
+        <div style="padding:14px;">
+            <div id="promoToastMessage" style="color:#fff7ed; line-height:1.24; font-size:22px; font-weight:900; text-transform:uppercase;"></div>
             <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap;">
-                <button id="promoToastRejectBtn" type="button" class="pill-btn">Rechazar</button>
+                <button id="promoToastRejectBtn" type="button" class="pill-btn" style="background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">Cerrar</button>
                 <button id="promoToastAcceptBtn" type="button" class="pill-btn primary-link">Ver</button>
             </div>
         </div>
