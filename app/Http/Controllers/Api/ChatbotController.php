@@ -58,6 +58,13 @@ class ChatbotController
         ]);
     }
 
+    public function status(): JsonResponse
+    {
+        $status = $this->chatbot->status();
+
+        return response()->json($status, ($status['ok'] ?? false) ? 200 : 503);
+    }
+
     private function tryAuthenticate(Request $request): void
     {
         if (auth()->check()) return;

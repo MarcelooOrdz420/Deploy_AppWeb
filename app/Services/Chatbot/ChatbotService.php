@@ -11,8 +11,7 @@ class ChatbotService
         private readonly OpenAIResponsesClient $openai,
         private readonly OllamaClient $ollama,
         private readonly LocalResponder $local,
-    )
-    {
+    ) {
     }
 
     public function reply(string $message, ?string $userName = null, ?string $sessionId = null): string
@@ -25,7 +24,9 @@ class ChatbotService
                 'ollama' => $this->ollama->respond($model, $system, $message),
                 default => $this->openai->respond($model, $system, $message),
             };
+
             $text = preg_replace("/\\s+$/", '', (string) $text);
+
             return trim($text) !== '' ? trim($text) : $this->fallback();
         } catch (\Throwable $e) {
             Log::warning('Chatbot LLM failed', [
@@ -35,9 +36,32 @@ class ChatbotService
                 'session_id' => $sessionId,
                 'user_id' => auth()->id(),
             ]);
+
             $local = $this->local->reply($message);
+
             return $local ?: $this->fallback();
         }
+    }
+
+    public function status(): array
+    {
+        [$provider, $model] = $this->resolveProviderAndModel();
+
+        if ($provider === 'ollama') {
+            return [
+                'provider' => $provider,
+                ...$this->ollama->status($model),
+            ];
+        }
+
+        return [
+            'provider' => $provider,
+            'ok' => trim((string) config('chatbot.openai.api_key')) !== '',
+            'model' => $model,
+            'message' => trim((string) config('chatbot.openai.api_key')) !== ''
+                ? 'OpenAI esta configurado.'
+                : 'OPENAI_API_KEY no esta configurado.',
+        ];
     }
 
     private function buildSystemPrompt(?string $userName, ?string $sessionId): string
@@ -50,15 +74,16 @@ class ChatbotService
         $payments = $this->paymentContext();
         $products = $this->productsContext();
 
-        $userLine = $userName ? "Nombre del cliente: {$userName}." : "Cliente invitado.";
-        $sessionLine = $sessionId ? "Session: {$sessionId}." : '';
+        $userLine = $userName ? "Nombre del cliente: {$userName}." : 'Cliente invitado.';
+        $sessionLine = $sessionId ? "Sesion: {$sessionId}." : '';
 
         return trim(implode("\n", array_filter([
             "Eres POLL-IA, el asistente oficial de {$brand}.",
-            "Responde en español, tono amable y directo.",
-            "Solo responde sobre: productos, pedidos, pagos, delivery, horarios, ubicación, contacto y uso de la app/web.",
-            "Si falta información, pide 1-2 datos concretos (por ejemplo código de tracking o correo).",
-            "Si el usuario pide algo fuera del negocio, responde que no aplica y ofrece el contacto humano.",
+            'Responde en espanol, con tono amable, profesional y directo.',
+            'Solo responde sobre productos, pedidos, pagos, delivery, horarios, ubicacion, contacto y uso de la app/web.',
+            'Si falta informacion, pide 1 o 2 datos concretos, por ejemplo codigo de tracking o correo.',
+            'Si el usuario pide algo fuera del negocio, responde que no aplica y ofrece el contacto humano.',
+            'No inventes precios, stock, horarios ni datos de pago: usa el contexto disponible.',
             "Horario: {$hours}.",
             "Soporte: {$supportPhone} / {$supportEmail}.",
             $payments ? "Medios de pago y datos utiles:\n{$payments}" : null,
@@ -83,9 +108,13 @@ class ChatbotService
     private function readKnowledge(): ?string
     {
         $path = (string) config('chatbot.knowledge_path');
-        if ($path === '' || ! is_file($path)) return null;
+        if ($path === '' || ! is_file($path)) {
+            return null;
+        }
+
         $content = @file_get_contents($path);
         $content = is_string($content) ? trim($content) : '';
+
         return $content !== '' ? $content : null;
     }
 
@@ -95,10 +124,10 @@ class ChatbotService
         $lines = [];
 
         if (($payments['yape']['enabled'] ?? false) && ! empty($payments['yape']['phone'])) {
-            $lines[] = "- Yape: ".$payments['yape']['phone'];
+            $lines[] = '- Yape: '.$payments['yape']['phone'];
         }
         if (($payments['plin']['enabled'] ?? false) && ! empty($payments['plin']['phone'])) {
-            $lines[] = "- Plin: ".$payments['plin']['phone'];
+            $lines[] = '- Plin: '.$payments['plin']['phone'];
         }
         if (($payments['mercado_pago']['enabled'] ?? false)) {
             $label = trim((string) ($payments['mercado_pago']['label'] ?? 'Mercado Pago'));
@@ -133,7 +162,9 @@ class ChatbotService
             $category = trim((string) $product->category);
             $categoryText = $category !== '' ? $category : 'general';
 
-            return "- {$product->name} | Categoria: {$categoryText} | Precio: S/ ".number_format((float) $product->price, 2, '.', '')." | Stock: {$product->stock}";
+            return "- {$product->name} | Categoria: {$categoryText} | Precio: S/ "
+                .number_format((float) $product->price, 2, '.', '')
+                ." | Stock: {$product->stock}";
         })->implode("\n");
     }
 
@@ -143,6 +174,6 @@ class ChatbotService
         $supportPhone = (string) config('chatbot.support_phone');
         $supportEmail = (string) config('chatbot.support_email');
 
-        return "Ahora mismo no puedo responder con el asistente IA. Para ayudarte más rápido, escríbenos a {$supportPhone} o {$supportEmail} ({$brand}).";
+        return "Ahora mismo no puedo responder con el asistente IA. Para ayudarte mas rapido, escribenos a {$supportPhone} o {$supportEmail} ({$brand}).";
     }
 }

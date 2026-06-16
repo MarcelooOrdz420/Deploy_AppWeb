@@ -15,7 +15,7 @@ return [
     ],
 
     'ollama' => [
-        'base_url' => env('OLLAMA_URL', 'http://127.0.0.1:11434'),
+        'base_url' => env('OLLAMA_URL', env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434')),
         'model' => env('OLLAMA_MODEL', 'llama3.1:8b'),
         'timeout' => env('OLLAMA_TIMEOUT', 60),
         'temperature' => env('OLLAMA_TEMPERATURE', 0.4),

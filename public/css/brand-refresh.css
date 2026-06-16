@@ -1,0 +1,283 @@
+/*
+ * Visual refresh 2026: quieter operations palette for customer, auth and admin
+ * surfaces. Loaded after inline view styles so it can unify the app without
+ * touching each screen's behavior.
+ */
+:root {
+    --brand-graphite: #111827;
+    --brand-graphite-2: #1f2937;
+    --brand-slate: #334155;
+    --brand-teal: #0f766e;
+    --brand-teal-soft: #14b8a6;
+    --brand-gold: #f59e0b;
+    --brand-amber: #fbbf24;
+    --brand-paper: #f8fafc;
+    --brand-surface: #ffffff;
+    --brand-surface-2: #eef6f5;
+    --brand-line: rgba(15, 118, 110, .18);
+    --brand-line-strong: rgba(15, 118, 110, .34);
+    --brand-shadow: 0 20px 48px rgba(17, 24, 39, .12);
+}
+
+html {
+    color-scheme: light;
+}
+
+body {
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif !important;
+    color: var(--brand-graphite) !important;
+    background:
+        linear-gradient(180deg, rgba(248, 250, 252, .98) 0%, rgba(237, 246, 245, .98) 52%, rgba(229, 239, 236, .98) 100%) !important;
+    letter-spacing: 0 !important;
+}
+
+body[data-theme="dark"] {
+    color: #f8fafc !important;
+    background:
+        linear-gradient(180deg, #0b1120 0%, #111827 54%, #172033 100%) !important;
+}
+
+.store-shell,
+.container,
+main,
+.login-shell {
+    isolation: isolate;
+}
+
+.topbar,
+header,
+.hero {
+    background:
+        linear-gradient(135deg, var(--brand-graphite) 0%, #142033 58%, var(--brand-teal) 100%) !important;
+    border-color: rgba(255, 255, 255, .12) !important;
+    box-shadow: 0 16px 36px rgba(17, 24, 39, .18) !important;
+}
+
+.brand-title,
+.brand-kicker,
+.brand-subtitle,
+.head-kicker,
+.title,
+.title-sub,
+.hero h1,
+.hero p,
+header .title,
+header .title-sub {
+    color: #f8fafc !important;
+}
+
+.brand-kicker,
+.head-kicker,
+.eyebrow,
+.label,
+.label-main {
+    color: var(--brand-amber) !important;
+    letter-spacing: .14em !important;
+}
+
+.store-frame,
+.surface,
+.panel,
+.card,
+.table-shell,
+.login-shell,
+.login-card,
+.module-summary,
+.metric-card,
+.chart-card,
+.product-card,
+.order-proof-box,
+.proof-modal-card,
+.upload-box,
+.toggle-row {
+    border-color: var(--brand-line) !important;
+    background: linear-gradient(180deg, var(--brand-surface) 0%, var(--brand-surface-2) 100%) !important;
+    box-shadow: var(--brand-shadow) !important;
+}
+
+.login-story {
+    border-color: var(--brand-line) !important;
+    background:
+        linear-gradient(160deg, rgba(17, 24, 39, .96), rgba(15, 118, 110, .92)) !important;
+}
+
+.login-story h1,
+.login-story .lead,
+.login-story .eyebrow {
+    color: #f8fafc !important;
+}
+
+.store-nav a,
+.pill-btn,
+.pill-link,
+.user-pill,
+.menu-tab,
+.pill,
+.mini-label,
+.nav-link,
+button,
+.story-badges span,
+.tag,
+.status-badge {
+    border-color: var(--brand-line-strong) !important;
+    background: rgba(255, 255, 255, .9) !important;
+    color: var(--brand-slate) !important;
+}
+
+.store-nav a.active,
+.primary-link,
+.btn-main,
+button[type="submit"],
+.menu-tab.active,
+.cart-count,
+.value,
+.bar-fill {
+    background: linear-gradient(135deg, var(--brand-teal-soft), var(--brand-teal)) !important;
+    color: #ecfeff !important;
+    border-color: rgba(20, 184, 166, .42) !important;
+    box-shadow: 0 14px 28px rgba(15, 118, 110, .22) !important;
+}
+
+.btn-soft,
+button:not([type="submit"]) {
+    background: #ffffff !important;
+    color: var(--brand-teal) !important;
+}
+
+.action-symbol,
+.nav-index,
+.tab-icon,
+.action-icon,
+.user-dot {
+    background: rgba(20, 184, 166, .14) !important;
+    color: var(--brand-teal) !important;
+}
+
+input,
+select,
+textarea,
+.input-main,
+.select-main,
+.textarea-main {
+    border-color: rgba(15, 118, 110, .25) !important;
+    background: #ffffff !important;
+    color: var(--brand-graphite) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.input-main:focus,
+.select-main:focus,
+.textarea-main:focus {
+    border-color: var(--brand-teal-soft) !important;
+    box-shadow: 0 0 0 4px rgba(20, 184, 166, .16) !important;
+}
+
+h1,
+h2,
+h3,
+.section-title,
+.product-card-title,
+.card-head h2,
+.proof-modal-title {
+    color: var(--brand-graphite) !important;
+}
+
+.muted,
+.muted-main,
+.section-subtitle,
+.section-copy,
+.lead,
+.helper-text,
+.brand-subtitle,
+.title-sub {
+    color: #64748b !important;
+}
+
+th {
+    background: rgba(15, 118, 110, .12) !important;
+    color: var(--brand-graphite) !important;
+}
+
+td,
+tr,
+table {
+    border-color: rgba(15, 118, 110, .14) !important;
+}
+
+.msg.success,
+.tag.payment-verified,
+.status-badge.ok {
+    color: #047857 !important;
+    background: #ecfdf5 !important;
+    border-color: #a7f3d0 !important;
+}
+
+.msg.error,
+.tag.payment-rejected,
+.status-badge.alert {
+    color: #b91c1c !important;
+    background: #fef2f2 !important;
+    border-color: #fecaca !important;
+}
+
+.tag.payment-pending,
+.tag.payment-reported {
+    color: #92400e !important;
+    background: #fffbeb !important;
+    border-color: #fde68a !important;
+}
+
+body[data-theme="dark"] .store-frame,
+body[data-theme="dark"] .surface,
+body[data-theme="dark"] .panel,
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .table-shell,
+body[data-theme="dark"] .product-card {
+    background: linear-gradient(180deg, #111827 0%, #182236 100%) !important;
+    border-color: rgba(45, 212, 191, .18) !important;
+}
+
+body[data-theme="dark"] h1,
+body[data-theme="dark"] h2,
+body[data-theme="dark"] h3,
+body[data-theme="dark"] .section-title,
+body[data-theme="dark"] .product-card-title {
+    color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .muted,
+body[data-theme="dark"] .muted-main,
+body[data-theme="dark"] .section-subtitle,
+body[data-theme="dark"] .section-copy {
+    color: #cbd5e1 !important;
+}
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] .store-nav a,
+body[data-theme="dark"] .pill-btn,
+body[data-theme="dark"] .pill-link,
+body[data-theme="dark"] .user-pill,
+body[data-theme="dark"] .menu-tab {
+    background: rgba(15, 23, 42, .92) !important;
+    color: #f8fafc !important;
+    border-color: rgba(45, 212, 191, .18) !important;
+}
+
+@media (max-width: 760px) {
+    .topbar-inner,
+    .head,
+    .hero,
+    .login-shell {
+        gap: 14px !important;
+    }
+
+    .store-nav,
+    .head-actions,
+    .topbar-actions {
+        justify-content: flex-start !important;
+    }
+}

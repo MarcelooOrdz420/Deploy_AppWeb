@@ -39,6 +39,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/orders/track/{trackingCode}', [OrderController::class, 'track']);
 
     Route::post('/chatbot/message', [ChatbotController::class, 'message']);
+    Route::get('/chatbot/status', [ChatbotController::class, 'status']);
     Route::post('/pusher/auth', PusherAuthController::class);
 
     Route::middleware('auth.api')->group(function (): void {

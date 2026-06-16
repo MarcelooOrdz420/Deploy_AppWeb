@@ -11,15 +11,16 @@ class LocalResponder
     {
         $normalized = $this->normalize($message);
 
-        if ($this->matchesAny($normalized, ['ubicacion', 'ubicacion de la tienda', 'direccion', 'donde', 'mapa', 'como llegar', 'google maps'])) {
-            $section = $this->knowledgeSection('Ubicación');
-            if ($section) return $section;
+        if ($this->matchesAny($normalized, ['ubicacion', 'direccion', 'donde', 'mapa', 'como llegar', 'google maps'])) {
+            return $this->knowledgeSection('Ubicacion')
+                ?: 'Estamos en el local principal configurado para Pollos y Parrillas El Dorado. Puedes revisar la seccion Ubicacion de la app para abrir el mapa.';
         }
 
         if ($this->matchesAny($normalized, ['horario', 'hora', 'atienden', 'abren', 'cierran', 'atencion'])) {
             $hours = (string) config('chatbot.hours');
             $brand = (string) config('chatbot.brand_name');
-            return trim("Horario de atención de {$brand}: {$hours}.");
+
+            return "Horario de atencion de {$brand}: {$hours}.";
         }
 
         if ($this->matchesAny($normalized, ['contacto', 'telefono', 'numero', 'llamar', 'whatsapp', 'correo', 'email', 'soporte'])) {
@@ -27,35 +28,29 @@ class LocalResponder
         }
 
         if ($this->matchesAny($normalized, ['pago', 'pagos', 'yape', 'plin', 'mercado pago', 'contraentrega', 'qr'])) {
-            $text = $this->paymentHelp();
-            return $text ?: $this->contactLine();
+            return $this->paymentHelp() ?: $this->contactLine();
         }
 
         if ($this->matchesAny($normalized, ['delivery', 'envio', 'envios', 'reparto'])) {
-            $section = $this->knowledgeSection('Delivery');
-            if ($section) return $section;
-            return 'Hacemos delivery y también recojo en local. Para delivery, indícanos tu dirección y una referencia.';
+            return $this->knowledgeSection('Delivery')
+                ?: 'Hacemos delivery y tambien recojo en local. Para delivery, indica tu direccion y una referencia visible.';
         }
 
         if ($this->matchesAny($normalized, ['pedido', 'pedidos', 'seguimiento', 'tracking', 'codigo', 'orden', 'ordenes'])) {
-            $section = $this->knowledgeSection('Pedidos');
-            if ($section) return $section;
-            return 'Para revisar tu pedido, entra a “Mis pedidos” y usa tu código de tracking.';
+            return $this->knowledgeSection('Pedidos')
+                ?: 'Para revisar tu pedido, entra a Mis pedidos y usa tu codigo de tracking.';
         }
 
-        if ($this->matchesAny($normalized, ['barato', 'mas barato', 'más barato', 'menor precio', 'precio mas bajo', 'precio más bajo', 'economico', 'económico'])) {
-            $text = $this->cheapestProducts();
-            if ($text) return $text;
+        if ($this->matchesAny($normalized, ['barato', 'mas barato', 'menor precio', 'economico'])) {
+            return $this->cheapestProducts();
         }
 
-        if ($this->matchesAny($normalized, ['combinar', 'acompanar', 'acompañar', 'combo', 'recomienda', 'recomendacion', 'recomendación', 'con que'])) {
-            $text = $this->comboSuggestion($normalized);
-            if ($text) return $text;
+        if ($this->matchesAny($normalized, ['combinar', 'acompanar', 'combo', 'recomienda', 'recomendacion', 'con que'])) {
+            return $this->comboSuggestion($normalized);
         }
 
-        if ($this->matchesAny($normalized, ['pollos', 'parrillas', 'bebidas', 'menu', 'menú', 'carta', 'productos'])) {
-            $text = $this->categoryListing($normalized);
-            if ($text) return $text;
+        if ($this->matchesAny($normalized, ['pollos', 'parrillas', 'bebidas', 'menu', 'carta', 'productos'])) {
+            return $this->categoryListing($normalized);
         }
 
         return null;
@@ -66,11 +61,10 @@ class LocalResponder
         $brand = (string) config('chatbot.brand_name');
         $phone = (string) config('chatbot.support_phone');
         $email = (string) config('chatbot.support_email');
-
         $parts = array_filter([$phone, $email]);
         $contact = $parts ? implode(' o ', $parts) : 'nuestro soporte';
 
-        return "Si necesitas ayuda humana, escríbenos a {$contact} ({$brand}).";
+        return "Si necesitas ayuda humana, escribenos a {$contact} ({$brand}).";
     }
 
     private function paymentHelp(): ?string
@@ -93,8 +87,7 @@ class LocalResponder
             $lines[] = "Contraentrega: {$msg}";
         }
 
-        if (! $lines) return null;
-        return "Medios de pago:\n- ".implode("\n- ", $lines);
+        return $lines ? "Medios de pago:\n- ".implode("\n- ", $lines) : null;
     }
 
     private function cheapestProducts(): ?string
@@ -110,30 +103,41 @@ class LocalResponder
             return null;
         }
 
-        if ($items->isEmpty()) return null;
+        if ($items->isEmpty()) {
+            return null;
+        }
 
-        $lines = $items->map(function (Product $p) {
-            $category = trim((string) $p->category);
+        $lines = $items->map(function (Product $product): string {
+            $category = trim((string) $product->category);
             $suffix = $category !== '' ? " ({$category})" : '';
-            return "{$p->name}{$suffix}: S/ ".number_format((float) $p->price, 2, '.', '');
+
+            return "{$product->name}{$suffix}: S/ ".number_format((float) $product->price, 2, '.', '');
         })->all();
 
-        return "Opciones más económicas ahora:\n- ".implode("\n- ", $lines)."\n¿De qué categoría te provoca (pollos, parrillas o bebidas)?";
+        return "Opciones mas economicas ahora:\n- ".implode("\n- ", $lines)."\nQue categoria te provoca: pollos, parrillas o bebidas?";
     }
 
     private function categoryListing(string $normalized): ?string
     {
         $category = null;
-        if (Str::contains($normalized, 'pollos')) $category = 'pollos';
-        if (Str::contains($normalized, 'parrillas')) $category = 'parrillas';
-        if (Str::contains($normalized, 'bebidas')) $category = 'bebidas';
-
-        if (! $category) return null;
+        if (Str::contains($normalized, 'pollos')) {
+            $category = 'pollos';
+        }
+        if (Str::contains($normalized, 'parrillas')) {
+            $category = 'parrillas';
+        }
+        if (Str::contains($normalized, 'bebidas')) {
+            $category = 'bebidas';
+        }
+        if (! $category) {
+            return null;
+        }
 
         try {
             $items = Product::query()
                 ->where('is_available', true)
                 ->where('category', $category)
+                ->where('stock', '>', 0)
                 ->orderBy('price')
                 ->limit(6)
                 ->get(['name', 'price']);
@@ -141,10 +145,15 @@ class LocalResponder
             return null;
         }
 
-        if ($items->isEmpty()) return null;
+        if ($items->isEmpty()) {
+            return null;
+        }
 
-        $lines = $items->map(fn (Product $p) => "{$p->name}: S/ ".number_format((float) $p->price, 2, '.', ''))->all();
-        return "Algunos {$category}:\n- ".implode("\n- ", $lines)."\n¿Quieres ver el más barato o recomendar un combo?";
+        $lines = $items
+            ->map(fn (Product $product): string => "{$product->name}: S/ ".number_format((float) $product->price, 2, '.', ''))
+            ->all();
+
+        return "Algunos {$category} disponibles:\n- ".implode("\n- ", $lines)."\nQuieres ver el mas barato o una recomendacion?";
     }
 
     private function comboSuggestion(string $normalized): ?string
@@ -159,31 +168,30 @@ class LocalResponder
             return null;
         }
 
-        if ($product) {
-            $category = Str::lower((string) $product->category);
-            $suggestions = [];
-
-            if (in_array($category, ['pollos', 'parrillas'], true)) {
-                $drink = (clone $available)->where('category', 'bebidas')->orderBy('price')->first();
-                if ($drink) $suggestions[] = "{$drink->name} (bebida) · S/ ".number_format((float) $drink->price, 2, '.', '');
-
-                $extra = (clone $available)->whereNotIn('category', ['bebidas', $category])->orderBy('price')->first();
-                if ($extra) $suggestions[] = "{$extra->name} · S/ ".number_format((float) $extra->price, 2, '.', '');
-            } elseif ($category === 'bebidas') {
-                $main = (clone $available)->whereIn('category', ['pollos', 'parrillas'])->orderBy('price')->first();
-                if ($main) $suggestions[] = "{$main->name} ({$main->category}) · S/ ".number_format((float) $main->price, 2, '.', '');
-            }
-
-            if ($suggestions) {
-                return "Para combinar con “{$product->name}”, te recomiendo:\n- ".implode("\n- ", $suggestions)."\n¿Te lo agrego al carrito?";
-            }
-
-            return "Para combinar con “{$product->name}”, una bebida fría siempre va bien. ¿Prefieres chicha, gaseosa o limonada?";
+        if (! $product) {
+            return $this->cheapestProducts();
         }
 
-        $cheap = $this->cheapestProducts();
-        if ($cheap) return $cheap;
-        return null;
+        $suggestions = [];
+        $category = Str::lower((string) $product->category);
+
+        if (in_array($category, ['pollos', 'parrillas'], true)) {
+            $drink = (clone $available)->where('category', 'bebidas')->orderBy('price')->first();
+            if ($drink) {
+                $suggestions[] = "{$drink->name} (bebida) - S/ ".number_format((float) $drink->price, 2, '.', '');
+            }
+        } elseif ($category === 'bebidas') {
+            $main = (clone $available)->whereIn('category', ['pollos', 'parrillas'])->orderBy('price')->first();
+            if ($main) {
+                $suggestions[] = "{$main->name} ({$main->category}) - S/ ".number_format((float) $main->price, 2, '.', '');
+            }
+        }
+
+        if (! $suggestions) {
+            return "Para combinar con {$product->name}, una bebida fria o una guarnicion va muy bien. Prefieres algo personal o familiar?";
+        }
+
+        return "Para combinar con {$product->name}, te recomiendo:\n- ".implode("\n- ", $suggestions);
     }
 
     private function findMentionedProduct(string $normalized): ?Product
@@ -199,29 +207,18 @@ class LocalResponder
 
         $best = null;
         $bestLen = 0;
-        foreach ($candidates as $p) {
-            $name = $this->normalize($p->name);
-            if ($name === '') continue;
+
+        foreach ($candidates as $product) {
+            $name = $this->normalize($product->name);
+            if ($name === '') {
+                continue;
+            }
 
             if (Str::contains($normalized, $name) || Str::contains($name, $normalized)) {
                 $len = strlen($name);
                 if ($len > $bestLen) {
-                    $best = $p;
+                    $best = $product;
                     $bestLen = $len;
-                }
-                continue;
-            }
-
-            $words = array_filter(explode(' ', $name));
-            if (count($words) >= 2) {
-                $hits = 0;
-                foreach ($words as $w) {
-                    if (strlen($w) < 3) continue;
-                    if (Str::contains($normalized, $w)) $hits++;
-                }
-                if ($hits >= 2 && strlen($name) > $bestLen) {
-                    $best = $p;
-                    $bestLen = strlen($name);
                 }
             }
         }
@@ -232,36 +229,49 @@ class LocalResponder
     private function knowledgeSection(string $title): ?string
     {
         $path = (string) config('chatbot.knowledge_path');
-        if ($path === '' || ! is_file($path)) return null;
+        if ($path === '' || ! is_file($path)) {
+            return null;
+        }
+
         $raw = @file_get_contents($path);
         $raw = is_string($raw) ? $raw : '';
-        if (trim($raw) === '') return null;
+        if (trim($raw) === '') {
+            return null;
+        }
 
         $lines = preg_split("/\\r\\n|\\r|\\n/", $raw) ?: [];
         $start = null;
         $pattern = '/^##\\s+'.preg_quote($title, '/').'\\s*$/iu';
+
         foreach ($lines as $idx => $line) {
             if (preg_match($pattern, trim((string) $line))) {
                 $start = $idx + 1;
                 break;
             }
         }
-        if ($start === null) return null;
+
+        if ($start === null) {
+            return null;
+        }
 
         $out = [];
         for ($i = $start; $i < count($lines); $i++) {
-            $line = (string) $lines[$i];
-            $trim = trim($line);
-            if ($trim === '') continue;
-            if (Str::startsWith($trim, '#')) break;
-            $trim = preg_replace('/^[-*]\\s*/', '', $trim);
-            $trim = str_replace('**', '', $trim);
-            $trim = trim((string) $trim);
-            if ($trim !== '') $out[] = $trim;
+            $line = trim((string) $lines[$i]);
+            if ($line === '') {
+                continue;
+            }
+            if (Str::startsWith($line, '#')) {
+                break;
+            }
+
+            $line = preg_replace('/^[-*]\\s*/', '', $line);
+            $line = str_replace('**', '', (string) $line);
+            if (trim($line) !== '') {
+                $out[] = trim($line);
+            }
         }
 
-        if (! $out) return null;
-        return implode("\n", $out);
+        return $out ? implode("\n", $out) : null;
     }
 
     private function normalize(string $text): string
@@ -269,15 +279,19 @@ class LocalResponder
         $text = Str::lower(trim($text));
         $text = Str::of($text)->ascii()->toString();
         $text = preg_replace('/\\s+/', ' ', $text);
+
         return trim((string) $text);
     }
 
     private function matchesAny(string $normalized, array $needles): bool
     {
-        foreach ($needles as $n) {
-            $n = $this->normalize((string) $n);
-            if ($n !== '' && Str::contains($normalized, $n)) return true;
+        foreach ($needles as $needle) {
+            $needle = $this->normalize((string) $needle);
+            if ($needle !== '' && Str::contains($normalized, $needle)) {
+                return true;
+            }
         }
+
         return false;
     }
 }
