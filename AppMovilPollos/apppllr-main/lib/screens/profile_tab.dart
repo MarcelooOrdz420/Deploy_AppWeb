@@ -117,7 +117,7 @@ class _ProfileTabState extends State<ProfileTab> {
               children: [
                 CircleAvatar(
                   radius: 38,
-                  backgroundColor: const Color(0xFFFFF1E3),
+                  backgroundColor: const Color(0xFFFFFFFF),
                   child: Text(
                     _name.isNotEmpty ? _name[0].toUpperCase() : 'U',
                     style: const TextStyle(

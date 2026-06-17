@@ -3,21 +3,21 @@
  * auth surfaces. Loaded after inline styles to unify the existing screens.
  */
 :root {
-    --brand-black: #0f0f10;
-    --brand-graphite: #1b1b1d;
-    --brand-ink: #231407;
-    --brand-orange: #f97316;
-    --brand-orange-deep: #c2410c;
-    --brand-orange-soft: #fb923c;
-    --brand-gold: #f8b11b;
-    --brand-gold-soft: #ffe2a3;
-    --brand-white: #ffffff;
-    --brand-paper: #fffaf2;
-    --brand-cream: #fff4df;
-    --brand-muted: #6f5745;
-    --brand-line: rgba(248, 177, 27, .34);
-    --brand-line-strong: rgba(249, 115, 22, .42);
-    --brand-shadow: 0 20px 48px rgba(45, 22, 4, .14);
+    --brand-black: #000000;
+    --brand-graphite: #000000;
+    --brand-ink: #000000;
+    --brand-orange: #FF8A18;
+    --brand-orange-deep: #E87912;
+    --brand-orange-soft: #FF6F1F;
+    --brand-gold: #FFFFFF;
+    --brand-gold-soft: #FFFFFF;
+    --brand-white: #FFFFFF;
+    --brand-paper: #FFFFFF;
+    --brand-cream: #FF8A18;
+    --brand-muted: #000000;
+    --brand-line: rgba(255, 138, 24, .34);
+    --brand-line-strong: rgba(255, 138, 24, .42);
+    --brand-shadow: 0 20px 48px rgba(232, 121, 18, .14);
 }
 
 html {
@@ -26,24 +26,24 @@ html {
 
 body {
     font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif !important;
-    color: var(--brand-ink) !important;
+    color: #000000 !important;
     background:
-        linear-gradient(180deg, var(--brand-white) 0%, var(--brand-paper) 48%, var(--brand-cream) 100%) !important;
+        linear-gradient(180deg, #FF8A18 0%, #FF8A18 48%, #FF8A18 100%) !important;
     letter-spacing: 0 !important;
 }
 
 body[data-theme="dark"] {
-    color: #fff7ed !important;
-    background: linear-gradient(180deg, #090909 0%, #111111 58%, #1b130c 100%) !important;
+    color: #FFFFFF !important;
+    background: linear-gradient(180deg, #FF8A18 0%, #FF8A18 58%, #FF8A18 100%) !important;
 }
 
 .topbar,
 header,
 .hero {
     background:
-        linear-gradient(135deg, var(--brand-black) 0%, #1b120b 54%, var(--brand-orange-deep) 100%) !important;
-    border-color: rgba(248, 177, 27, .28) !important;
-    box-shadow: 0 16px 38px rgba(0, 0, 0, .24) !important;
+        linear-gradient(135deg, #E87912 0%, #E87912 54%, #FF8A18 100%) !important;
+    border-color: rgba(232, 121, 18, .28) !important;
+    box-shadow: 0 16px 38px rgba(232, 121, 18, .24) !important;
 }
 
 .brand-title,
@@ -56,7 +56,7 @@ header,
 .hero p,
 header .title,
 header .title-sub {
-    color: #fffaf2 !important;
+    color: #FFFFFF !important;
 }
 
 .brand-kicker,
@@ -64,7 +64,7 @@ header .title-sub {
 .eyebrow,
 .label,
 .label-main {
-    color: var(--brand-gold) !important;
+    color: #FFFFFF !important;
     letter-spacing: .14em !important;
 }
 
@@ -89,7 +89,7 @@ header .title-sub {
 .payment-brief,
 .hero-kpi-card {
     border-color: var(--brand-line) !important;
-    background: linear-gradient(180deg, var(--brand-white) 0%, var(--brand-paper) 100%) !important;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 100%) !important;
     box-shadow: var(--brand-shadow) !important;
 }
 
@@ -170,8 +170,8 @@ textarea:focus,
 .input-main:focus,
 .select-main:focus,
 .textarea-main:focus {
-    border-color: var(--brand-gold) !important;
-    box-shadow: 0 0 0 4px rgba(248, 177, 27, .20) !important;
+    border-color: #FF6F1F !important;
+    box-shadow: 0 0 0 4px rgba(255, 138, 24, .20) !important;
 }
 
 h1,
@@ -183,7 +183,7 @@ h3,
 .proof-modal-title,
 .pay-tile strong,
 .hero-kpi-card strong {
-    color: var(--brand-black) !important;
+    color: #000000 !important;
 }
 
 .muted,
@@ -196,18 +196,18 @@ h3,
 .title-sub,
 .field-help,
 .proof-preview-note {
-    color: var(--brand-muted) !important;
+    color: #000000 !important;
 }
 
 th {
-    background: rgba(248, 177, 27, .22) !important;
-    color: var(--brand-black) !important;
+    background: rgba(255, 138, 24, .22) !important;
+    color: #000000 !important;
 }
 
 td,
 tr,
 table {
-    border-color: rgba(248, 177, 27, .22) !important;
+    border-color: rgba(255, 138, 24, .22) !important;
 }
 
 .summary-total-box,

@@ -48,7 +48,7 @@ class ProductoImage extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      color: const Color(0xFFFFF1E4),
+      color: const Color(0xFFFFFFFF),
       alignment: Alignment.center,
       child: const Icon(Icons.image_not_supported_outlined, color: Colors.orange),
     );

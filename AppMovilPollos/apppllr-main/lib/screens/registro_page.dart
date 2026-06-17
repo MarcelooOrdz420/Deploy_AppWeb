@@ -222,7 +222,7 @@ class _RegistroPageState extends State<RegistroPage> {
                               gradient: LinearGradient(
                                 colors: [
                                   Colors.white.withOpacity(.94),
-                                  const Color(0xFFFFF1E3),
+                                  const Color(0xFFFFFFFF),
                                 ],
                               ),
                             ),
@@ -239,7 +239,7 @@ class _RegistroPageState extends State<RegistroPage> {
                                     fontSize: 11,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 2.1,
-                                    color: Color(0xFF9B5A2C),
+                                    color: Color(0xFF000000),
                                   ),
                                 ),
                                 SizedBox(height: 4),
@@ -330,7 +330,7 @@ class _RegistroPageState extends State<RegistroPage> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF4E8),
+                            color: const Color(0xFFFFFFFF),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: StoreTheme.lineStrong.withOpacity(.7)),
                           ),

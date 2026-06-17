@@ -8,18 +8,18 @@
     <title>@yield('title', 'Pollos y Parrillas El Dorado')</title>
     <style>
         :root {
-            --orange: #c86a2d;
-            --orange-soft: #f1be7d;
-            --orange-deep: #8d4314;
-            --cream: #faf4eb;
-            --cream-strong: #f3e6d6;
-            --paper: #ffffff;
-            --paper-soft: #fdf7ef;
-            --ink: #21140d;
-            --ink-soft: #4a3528;
-            --accent-ink: #25160d;
-            --panel-ink: #21140d;
-            --muted-ink: #6a5242;
+            --orange: #FF8A18;
+            --orange-soft: #FF6F1F;
+            --orange-deep: #E87912;
+            --cream: #FF8A18;
+            --cream-strong: #FF8A18;
+            --paper: #FFFFFF;
+            --paper-soft: #FFFFFF;
+            --ink: #FFFFFF;
+            --ink-soft: #000000;
+            --accent-ink: #000000;
+            --panel-ink: #000000;
+            --muted-ink: #000000;
             --line: rgba(200, 106, 45, .18);
             --line-strong: rgba(200, 106, 45, .28);
             --shadow-soft: 0 18px 40px rgba(89, 43, 14, .09);
@@ -30,18 +30,18 @@
         }
 
         body[data-theme="dark"] {
-            --orange: #c06a32;
-            --orange-soft: #e7bc86;
-            --orange-deep: #f0a868;
-            --cream: #17120e;
-            --cream-strong: #211913;
-            --paper: #1c1612;
-            --paper-soft: #241d18;
-            --ink: #fff4e7;
-            --ink-soft: #ead4bd;
-            --accent-ink: #2b170c;
-            --panel-ink: #fff4e7;
-            --muted-ink: #d8c0a7;
+            --orange: #FF8A18;
+            --orange-soft: #FF6F1F;
+            --orange-deep: #E87912;
+            --cream: #FF8A18;
+            --cream-strong: #FF8A18;
+            --paper: #FFFFFF;
+            --paper-soft: #FFFFFF;
+            --ink: #FFFFFF;
+            --ink-soft: #000000;
+            --accent-ink: #000000;
+            --panel-ink: #FFFFFF;
+            --muted-ink: #000000;
             --line: rgba(231, 188, 134, .16);
             --line-strong: rgba(231, 188, 134, .26);
             --shadow-soft: 0 18px 40px rgba(0, 0, 0, .3);
@@ -58,16 +58,16 @@
             font-family: "Trebuchet MS", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             color: var(--ink);
             background:
-                radial-gradient(circle at top left, rgba(200, 106, 45, .14), transparent 22%),
-                radial-gradient(circle at top right, rgba(241, 190, 125, .14), transparent 24%),
-                linear-gradient(180deg, #fdf9f3 0%, #f8efe4 54%, #f1e4d3 100%);
+                radial-gradient(circle at top left, rgba(255, 138, 24, .14), transparent 22%),
+                radial-gradient(circle at top right, rgba(255, 138, 24, .14), transparent 24%),
+                linear-gradient(180deg, #FF8A18 0%, #FF8A18 54%, #FF8A18 100%);
         }
 
         body[data-theme="dark"] {
             background:
-                radial-gradient(circle at top left, rgba(192, 106, 50, .18), transparent 24%),
-                radial-gradient(circle at top right, rgba(231, 188, 134, .12), transparent 26%),
-                linear-gradient(180deg, #110d0a 0%, #171310 52%, #201913 100%);
+                radial-gradient(circle at top left, rgba(255, 138, 24, .18), transparent 24%),
+                radial-gradient(circle at top right, rgba(255, 138, 24, .12), transparent 26%),
+                linear-gradient(180deg, #FF8A18 0%, #FF8A18 52%, #FF8A18 100%);
         }
 
         a { color: inherit; }
@@ -162,7 +162,7 @@
             margin: 0;
             font-size: clamp(24px, 3vw, 36px);
             line-height: .98;
-            color: var(--ink);
+            color: #FFFFFF;
         }
 
         .brand-subtitle {
@@ -689,21 +689,21 @@
             .brand-mark { width: 52px; height: 52px; }
         }
 
-        /* Identidad final: tema brasa/amarillo como la referencia enviada. */
+        /* Identidad final: tema naranja puro. */
         body,
         body[data-theme="dark"] {
-            --orange: #ff8a18;
-            --orange-soft: #ffc20e;
-            --orange-deep: #e87912;
-            --cream: #fff6ea;
-            --paper: #fffaf2;
-            --ink: #20130d;
-            --ink-soft: #5d4030;
+            --orange: #FF8A18;
+            --orange-soft: #FF6F1F;
+            --orange-deep: #E87912;
+            --cream: #FF8A18;
+            --paper: #FFFFFF;
+            --ink: #FFFFFF;
+            --ink-soft: #000000;
             --line: rgba(255, 138, 24, .34);
             background:
-                radial-gradient(circle at 12% 0%, rgba(255, 194, 14, .16), transparent 28%),
-                linear-gradient(180deg, #080604 0%, #130d09 45%, #211109 100%);
-            color: var(--ink);
+                radial-gradient(circle at 12% 0%, rgba(255, 138, 24, .16), transparent 28%),
+                linear-gradient(180deg, #FF8A18 0%, #FF8A18 45%, #FF8A18 100%);
+            color: #FFFFFF;
         }
 
         .store-shell,
@@ -716,8 +716,8 @@
             max-width: 1280px;
             margin: 0 auto;
             border-radius: 0;
-            background: #fff6ea;
-            border: 1px solid rgba(255, 194, 14, .18);
+            background: #FF8A18;
+            border: 1px solid rgba(255, 138, 24, .18);
             box-shadow: 0 28px 80px rgba(0, 0, 0, .35);
             overflow: hidden;
         }
@@ -729,7 +729,7 @@
             border-radius: 0;
             border: 0;
             background:
-                linear-gradient(90deg, #17110d 0%, #17110d 58%, #ffc20e 58%, #ffc20e 100%) !important;
+                linear-gradient(90deg, #E87912 0%, #E87912 58%, #FF8A18 58%, #FF8A18 100%) !important;
             box-shadow: none;
         }
 
@@ -740,27 +740,27 @@
 
         .brand-title,
         body[data-theme="dark"] .brand-title {
-            color: #fff8ed;
+            color: #FFFFFF;
             line-height: .95;
         }
 
         .brand-sub,
         body[data-theme="dark"] .brand-sub {
-            color: rgba(255, 248, 237, .82);
+            color: #FFFFFF;
             max-width: 520px;
         }
 
         .brand-kicker,
         body[data-theme="dark"] .brand-kicker {
-            color: #ffc20e !important;
+            color: #FFFFFF !important;
         }
 
         .brand-mark {
             width: 56px;
             height: 56px;
             border-radius: 8px;
-            border-color: rgba(255, 194, 14, .46);
-            background: #fff8ed;
+            border-color: rgba(255, 255, 255, .46);
+            background: #FFFFFF;
         }
 
         .session-strip,
@@ -778,8 +778,8 @@
         body[data-theme="dark"] .user-pill {
             min-height: 38px;
             border-radius: 999px;
-            background: rgba(23, 17, 13, .9);
-            color: #fff8ed;
+            background: rgba(232, 121, 18, .9);
+            color: #FFFFFF;
             border-color: rgba(255, 255, 255, .32);
             box-shadow: none;
         }
@@ -788,8 +788,8 @@
         .primary-link,
         body[data-theme="dark"] .store-nav a.active,
         body[data-theme="dark"] .primary-link {
-            background: linear-gradient(135deg, #ff9d19, #e87912);
-            color: #221006;
+            background: linear-gradient(135deg, #FF6F1F, #E87912);
+            color: #FFFFFF;
             border-color: rgba(255, 255, 255, .48);
         }
 
@@ -797,13 +797,13 @@
         .action-symbol,
         body[data-theme="dark"] .nav-index,
         body[data-theme="dark"] .action-symbol {
-            background: rgba(255, 194, 14, .22);
-            color: #ffc20e;
+            background: rgba(255, 255, 255, .22);
+            color: #FFFFFF;
         }
 
         main.page {
             padding: 0 20px 28px;
-            background: #fff6ea;
+            background: #FF8A18;
         }
 
         .surface,
@@ -812,9 +812,9 @@
         body[data-theme="dark"] .surface,
         body[data-theme="dark"] .panel,
         body[data-theme="dark"] .product-card {
-            background: #fffaf2;
+            background: #FFFFFF;
             border-color: rgba(255, 138, 24, .28);
-            color: #20130d;
+            color: #000000;
         }
 
         @media (max-width: 860px) {

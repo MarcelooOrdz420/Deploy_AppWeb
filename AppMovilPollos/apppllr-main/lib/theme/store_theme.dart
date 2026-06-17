@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 class StoreTheme {
-  static const Color orange = Color(0xFFF97316);
-  static const Color orangeSoft = Color(0xFFF8B11B);
-  static const Color orangeDeep = Color(0xFFC2410C);
-  static const Color cream = Color(0xFFFFF4DF);
+  static const Color orange = Color(0xFFFF8A18);
+  static const Color orangeSoft = Color(0xFFFF6F1F);
+  static const Color orangeDeep = Color(0xFFE87912);
+  static const Color cream = Color(0xFFFF8A18);
   static const Color paper = Color(0xFFFFFFFF);
-  static const Color paperSoft = Color(0xFFFFFAF2);
-  static const Color ink = Color(0xFF0F0F10);
-  static const Color inkSoft = Color(0xFF6F5745);
-  static const Color lineStrong = Color(0xFFF8B11B);
+  static const Color paperSoft = Color(0xFFFFFFFF);
+  static const Color ink = Color(0xFF000000);
+  static const Color inkSoft = Color(0xFF000000);
+  static const Color lineStrong = Color(0xFFFF8A18);
 
   static ThemeData theme() {
     final base = ThemeData(
@@ -74,13 +74,13 @@ class StoreTheme {
 
     return base.copyWith(
       textTheme: base.textTheme.apply(
-        bodyColor: const Color(0xFFF8EBDD),
-        displayColor: const Color(0xFFF8EBDD),
+        bodyColor: const Color(0xFF000000),
+        displayColor: const Color(0xFF000000),
       ),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Color(0xFFFFF4DF),
-        contentTextStyle: TextStyle(color: Color(0xFF0F0F10)),
+        backgroundColor: Color(0xFFFF8A18),
+        contentTextStyle: TextStyle(color: Color(0xFFFFFFFF)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

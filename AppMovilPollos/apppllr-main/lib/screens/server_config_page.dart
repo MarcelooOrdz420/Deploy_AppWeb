@@ -149,7 +149,7 @@ class _ServerConfigPageState extends State<ServerConfigPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7F0),
+                  color: const Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: StoreTheme.lineStrong.withOpacity(.8)),
                 ),
