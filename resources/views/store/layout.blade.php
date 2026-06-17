@@ -8,11 +8,11 @@
     <title>@yield('title', 'Pollos y Parrillas El Dorado')</title>
     <style>
         :root {
-            --orange: #FF8A18;
-            --orange-soft: #FF6F1F;
-            --orange-deep: #E87912;
-            --cream: #FF8A18;
-            --cream-strong: #FF8A18;
+            --orange: #FFD700;
+            --orange-soft: #FFE135;
+            --orange-deep: #FFC700;
+            --cream: #FFD700;
+            --cream-strong: #FFD700;
             --paper: #FFFFFF;
             --paper-soft: #FFFFFF;
             --ink: #FFFFFF;
@@ -20,34 +20,16 @@
             --accent-ink: #000000;
             --panel-ink: #000000;
             --muted-ink: #000000;
-            --line: rgba(200, 106, 45, .18);
-            --line-strong: rgba(200, 106, 45, .28);
-            --shadow-soft: 0 18px 40px rgba(89, 43, 14, .09);
-            --shadow-strong: 0 26px 60px rgba(89, 43, 14, .13);
+            --line: rgba(255, 215, 0, .18);
+            --line-strong: rgba(255, 215, 0, .28);
+            --shadow-soft: 0 18px 40px rgba(255, 215, 0, .09);
+            --shadow-strong: 0 26px 60px rgba(255, 215, 0, .13);
             --radius-xl: 28px;
             --radius-lg: 22px;
             --radius-md: 16px;
         }
 
-        body[data-theme="dark"] {
-            --orange: #FF8A18;
-            --orange-soft: #FF6F1F;
-            --orange-deep: #E87912;
-            --cream: #FF8A18;
-            --cream-strong: #FF8A18;
-            --paper: #FFFFFF;
-            --paper-soft: #FFFFFF;
-            --ink: #FFFFFF;
-            --ink-soft: #000000;
-            --accent-ink: #000000;
-            --panel-ink: #FFFFFF;
-            --muted-ink: #000000;
-            --line: rgba(231, 188, 134, .16);
-            --line-strong: rgba(231, 188, 134, .26);
-            --shadow-soft: 0 18px 40px rgba(0, 0, 0, .3);
-            --shadow-strong: 0 26px 60px rgba(0, 0, 0, .34);
-            color-scheme: dark;
-        }
+
 
         * { box-sizing: border-box; }
 
@@ -58,16 +40,9 @@
             font-family: "Trebuchet MS", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             color: var(--ink);
             background:
-                radial-gradient(circle at top left, rgba(255, 138, 24, .14), transparent 22%),
-                radial-gradient(circle at top right, rgba(255, 138, 24, .14), transparent 24%),
-                linear-gradient(180deg, #FF8A18 0%, #FF8A18 54%, #FF8A18 100%);
-        }
-
-        body[data-theme="dark"] {
-            background:
-                radial-gradient(circle at top left, rgba(255, 138, 24, .18), transparent 24%),
-                radial-gradient(circle at top right, rgba(255, 138, 24, .12), transparent 26%),
-                linear-gradient(180deg, #FF8A18 0%, #FF8A18 52%, #FF8A18 100%);
+                radial-gradient(circle at top left, rgba(255, 215, 0, .14), transparent 22%),
+                radial-gradient(circle at top right, rgba(255, 215, 0, .14), transparent 24%),
+                linear-gradient(180deg, #FFD700 0%, #FFD700 54%, #FFD700 100%);
         }
 
         a { color: inherit; }
@@ -498,71 +473,7 @@
             filter: saturate(1.05);
         }
 
-        body[data-theme="dark"] .pill-btn,
-        body[data-theme="dark"] .pill-link,
-        body[data-theme="dark"] .store-nav a,
-        body[data-theme="dark"] .user-pill,
-        body[data-theme="dark"] .store-frame,
-        body[data-theme="dark"] .topbar,
-        body[data-theme="dark"] .surface,
-        body[data-theme="dark"] .panel,
-        body[data-theme="dark"] .product-card,
-        body[data-theme="dark"] .product-image-wrap,
-        body[data-theme="dark"] .input-main,
-        body[data-theme="dark"] .select-main,
-        body[data-theme="dark"] .textarea-main {
-            border-color: rgba(243, 181, 98, .18);
-        }
 
-        body[data-theme="dark"] .store-frame,
-        body[data-theme="dark"] .surface,
-        body[data-theme="dark"] .panel,
-        body[data-theme="dark"] .product-card {
-            background: linear-gradient(180deg, rgba(24, 17, 13, .98), rgba(33, 25, 19, .98));
-        }
-
-        body[data-theme="dark"] .topbar,
-        body[data-theme="dark"] .pill-btn,
-        body[data-theme="dark"] .pill-link,
-        body[data-theme="dark"] .store-nav a,
-        body[data-theme="dark"] .user-pill,
-        body[data-theme="dark"] .input-main,
-        body[data-theme="dark"] .select-main,
-        body[data-theme="dark"] .textarea-main,
-        body[data-theme="dark"] .product-image-wrap {
-            background: rgba(28, 20, 15, .96);
-            color: var(--ink);
-        }
-
-        body[data-theme="dark"] .btn-soft {
-            background: rgba(35, 26, 20, .96);
-            color: var(--ink);
-            border-color: rgba(243, 181, 98, .22);
-        }
-
-        body[data-theme="dark"] .nav-index,
-        body[data-theme="dark"] .action-symbol {
-            background: rgba(231, 188, 134, .16);
-            color: var(--orange-soft);
-        }
-
-        body[data-theme="dark"] .brand-kicker,
-        body[data-theme="dark"] .eyebrow,
-        body[data-theme="dark"] .label-main {
-            color: var(--orange-soft);
-        }
-
-        .store-shell {
-            padding: 0;
-            background:
-                linear-gradient(180deg, #fff7ea 0%, #fffaf5 46%, #fff1dc 100%);
-        }
-
-        body[data-theme="dark"] .store-shell {
-            background: linear-gradient(180deg, #100c09 0%, #17110d 100%);
-        }
-
-        .store-frame {
             border-radius: 0;
             border-left: 1px solid rgba(251, 180, 54, .34);
             border-right: 1px solid rgba(251, 180, 54, .34);
@@ -716,20 +627,19 @@
             max-width: 1280px;
             margin: 0 auto;
             border-radius: 0;
-            background: #FF8A18;
-            border: 1px solid rgba(255, 138, 24, .18);
+            background: #FFD700;
+            border: 1px solid rgba(255, 215, 0, .18);
             box-shadow: 0 28px 80px rgba(0, 0, 0, .35);
             overflow: hidden;
         }
 
-        .topbar,
-        body[data-theme="dark"] .topbar {
+        .topbar {
             position: sticky;
             top: 0;
             border-radius: 0;
             border: 0;
             background:
-                linear-gradient(90deg, #E87912 0%, #E87912 58%, #FF8A18 58%, #FF8A18 100%) !important;
+                linear-gradient(90deg, #FFC700 0%, #FFC700 58%, #FFD700 58%, #FFD700 100%) !important;
             box-shadow: none;
         }
 
@@ -738,20 +648,17 @@
             padding: 18px 22px;
         }
 
-        .brand-title,
-        body[data-theme="dark"] .brand-title {
+        .brand-title {
             color: #FFFFFF;
             line-height: .95;
         }
 
-        .brand-sub,
-        body[data-theme="dark"] .brand-sub {
+        .brand-sub {
             color: #FFFFFF;
             max-width: 520px;
         }
 
-        .brand-kicker,
-        body[data-theme="dark"] .brand-kicker {
+        .brand-kicker {
             color: #FFFFFF !important;
         }
 
@@ -858,7 +765,7 @@
                                 <span class="user-dot"></span>
                                 Invitado
                             </span>
-                            <button id="storeThemeBtn" class="pill-btn" type="button"><span class="action-symbol">&#9681;</span>Modo oscuro</button>
+
                             <button id="clientAlertsBtn" class="pill-btn" type="button">
                                 <span class="action-symbol">&#9679;</span>Avisos
                                 <span id="clientAlertCount" class="cart-count" style="position:static; min-width:22px; height:22px;">0</span>
@@ -929,10 +836,8 @@ const clientLoginBtn = document.getElementById('clientLoginBtn');
 const clientLogoutBtn = document.getElementById('clientLogoutBtn');
 const clientAlertsBtn = document.getElementById('clientAlertsBtn');
 const clientAlertCount = document.getElementById('clientAlertCount');
-const storeThemeBtn = document.getElementById('storeThemeBtn');
 const CLIENT_TIMEOUT_MS = 60 * 60 * 1000;
 const CLIENT_ALERTS_KEY = 'ed_order_alert_count';
-const STORE_THEME_KEY = 'ed_store_theme';
 
 function parseUser() {
     const raw = localStorage.getItem('ed_user');
@@ -960,21 +865,7 @@ function setClientAlertCount(value) {
     if (clientAlertCount) clientAlertCount.textContent = String(next);
 }
 
-function getStoreTheme() {
-    const saved = localStorage.getItem(STORE_THEME_KEY);
-    if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
 
-function applyStoreTheme(theme) {
-    document.body.dataset.theme = theme;
-    localStorage.setItem(STORE_THEME_KEY, theme);
-    if (storeThemeBtn) {
-        storeThemeBtn.innerHTML = theme === 'dark'
-            ? '<span class="action-symbol">&#9728;</span>Modo claro'
-            : '<span class="action-symbol">&#9681;</span>Modo oscuro';
-    }
-}
 
 let cartSyncTimer = null;
 
@@ -1104,9 +995,7 @@ clientAlertsBtn?.addEventListener('click', () => {
         window.location.href = '/mis-pedidos';
     }
 });
-storeThemeBtn?.addEventListener('click', () => {
-    applyStoreTheme(getStoreTheme() === 'dark' ? 'light' : 'dark');
-});
+
 clientLogoutBtn.addEventListener('click', () => {
     clearClientSession();
     updateTopBar();
@@ -1127,7 +1016,6 @@ setInterval(() => {
 }, 15000);
 
 initClientSession();
-applyStoreTheme(getStoreTheme());
 </script>
 
 <style>

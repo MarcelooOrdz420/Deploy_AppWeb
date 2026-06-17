@@ -8,18 +8,18 @@
     <title>Administración </title>
     <style>
         :root {
-            --orange: #FF8A18;
-            --orange-soft: #FF6F1F;
-            --orange-deep: #E87912;
-            --line: rgba(255, 138, 24, .18);
+            --orange: #FFD700;
+            --orange-soft: #FFE135;
+            --orange-deep: #FFC700;
+            --line: rgba(255, 215, 0, .18);
             --text: #FFFFFF;
-            --bg: #FF8A18;
+            --bg: #FFD700;
             --panel: rgba(255, 255, 255, .94);
             --ink-soft: #000000;
             --panel-ink: #000000;
             --muted-ink: #000000;
-            --shadow-soft: 0 16px 34px rgba(232, 121, 18, .08);
-            --shadow-strong: 0 24px 52px rgba(232, 121, 18, .12);
+            --shadow-soft: 0 16px 34px rgba(255, 215, 0, .08);
+            --shadow-strong: 0 24px 52px rgba(255, 215, 0, .12);
         }
 
         * { box-sizing: border-box; }
@@ -28,9 +28,9 @@
             margin: 0;
             font-family: "Trebuchet MS", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             background:
-                radial-gradient(circle at top left, rgba(255, 138, 24, .16), transparent 24%),
-                radial-gradient(circle at bottom right, rgba(255, 138, 24, .18), transparent 20%),
-                linear-gradient(180deg, #FF8A18 0%, #FF8A18 48%, #FF8A18 100%);
+                radial-gradient(circle at top left, rgba(255, 215, 0, .16), transparent 24%),
+                radial-gradient(circle at bottom right, rgba(255, 215, 0, .18), transparent 20%),
+                linear-gradient(180deg, #FFD700 0%, #FFD700 48%, #FFD700 100%);
             color: #FFFFFF;
         }
 
@@ -41,9 +41,9 @@
             top: 0;
             z-index: 30;
             backdrop-filter: blur(12px);
-            background: #FF8A18;
-            border-bottom: 1px solid rgba(232, 121, 18, .9);
-            box-shadow: 0 12px 30px rgba(232, 121, 18, .15);
+            background: #FFD700;
+            border-bottom: 1px solid rgba(255, 215, 0, .9);
+            box-shadow: 0 12px 30px rgba(255, 215, 0, .15);
         }
 
         .head {
@@ -95,7 +95,7 @@
             padding: 10px 14px;
             border-radius: 999px;
             border: 1px solid rgba(255, 255, 255, .88);
-            background: rgba(232, 121, 18, .95);
+            background: rgba(255, 215, 0, .95);
             font-size: 13px;
             color: #FFFFFF;
             font-weight: 800;
@@ -241,7 +241,7 @@
 
         .btn-main {
             border: 0;
-            background: linear-gradient(120deg, #FF8A18, #FF6F1F);
+            background: linear-gradient(120deg, #FFD700, #FFE135);
             color: #FFFFFF;
             font-weight: 800;
             box-shadow: 0 12px 24px rgba(255, 138, 24, .18);
@@ -747,7 +747,7 @@
         }
 
         body[data-theme="dark"] {
-            background: linear-gradient(180deg, #FF8A18 0%, #FF8A18 100%);
+            background: linear-gradient(180deg, #FFD700 0%, #FFD700 100%);
         }
 
         body[data-theme="dark"] header,
@@ -755,28 +755,26 @@
             background: linear-gradient(90deg, #E87912 0%, #E87912 58%, #FF6F1F 58%, #FF6F1F 100%) !important;
         }
 
-        /* Tema final unificado: naranja puro. */
-        body,
-        body[data-theme="dark"] {
-            --orange: #FF8A18;
-            --orange-soft: #FF6F1F;
-            --orange-deep: #E87912;
-            --line: rgba(255, 138, 24, .34);
+        /* Tema final unificado: amarillo dorado. */
+        body {
+            --orange: #FFD700;
+            --orange-soft: #FFE135;
+            --orange-deep: #FFC700;
+            --line: rgba(255, 215, 0, .34);
             --text: #FFFFFF;
             --panel: #FFFFFF;
             --panel-ink: #000000;
             --muted-ink: #000000;
             background:
-                radial-gradient(circle at 12% 0%, rgba(255, 194, 14, .16), transparent 28%),
-                linear-gradient(180deg, #080604 0%, #130d09 45%, #211109 100%);
-            color: #fff8ed;
+                radial-gradient(circle at 12% 0%, rgba(255, 215, 0, .16), transparent 28%),
+                linear-gradient(180deg, #FFD700 0%, #FFD700 45%, #FFD700 100%);
+            color: #FFFFFF;
         }
 
-        header,
-        body[data-theme="dark"] header {
+        header {
             background:
-                linear-gradient(90deg, #E87912 0%, #E87912 58%, #FF8A18 58%, #FF8A18 100%) !important;
-            border-bottom: 1px solid rgba(232, 121, 18, .42);
+                linear-gradient(90deg, #FFC700 0%, #FFC700 58%, #FFD700 58%, #FFD700 100%) !important;
+            border-bottom: 1px solid rgba(255, 215, 0, .42);
             box-shadow: none;
         }
 
@@ -795,41 +793,33 @@
 
         .menu-tab,
         .user,
-        button:not(.btn-main),
-        body[data-theme="dark"] .menu-tab,
-        body[data-theme="dark"] .user,
-        body[data-theme="dark"] button:not(.btn-main) {
+        button:not(.btn-main) {
             min-height: 40px;
             border-radius: 999px;
-            background: rgba(232, 121, 18, .9) !important;
+            background: rgba(255, 215, 0, .9) !important;
             color: #FFFFFF !important;
             border-color: rgba(255, 255, 255, .34) !important;
             box-shadow: none;
         }
 
         .menu-tab.active,
-        .btn-main,
-        body[data-theme="dark"] .menu-tab.active,
-        body[data-theme="dark"] .btn-main {
-            background: linear-gradient(135deg, #FF6F1F, #E87912) !important;
+        .btn-main {
+            background: linear-gradient(135deg, #FFE135, #FFC700) !important;
             color: #FFFFFF !important;
             border-color: rgba(255, 255, 255, .48) !important;
         }
 
         .tab-icon,
-        .action-icon,
-        body[data-theme="dark"] .tab-icon,
-        body[data-theme="dark"] .action-icon {
+        .action-icon {
             background: rgba(255, 255, 255, .22);
             color: #FFFFFF;
         }
 
-        .admin-menu,
-        body[data-theme="dark"] .admin-menu {
+        .admin-menu {
             top: 96px;
             border-radius: 8px;
-            background: #FF8A18 !important;
-            border-color: rgba(255, 138, 24, .28) !important;
+            background: #FFD700 !important;
+            border-color: rgba(255, 215, 0, .28) !important;
         }
 
         .panel,
@@ -839,19 +829,11 @@
         .chart-card,
         .toggle-row,
         .upload-box,
-        .inline-note,
-        body[data-theme="dark"] .panel,
-        body[data-theme="dark"] .card,
-        body[data-theme="dark"] .module-summary,
-        body[data-theme="dark"] .metric-card,
-        body[data-theme="dark"] .chart-card,
-        body[data-theme="dark"] .toggle-row,
-        body[data-theme="dark"] .upload-box,
-        body[data-theme="dark"] .inline-note {
+        .inline-note {
             border-radius: 8px;
             background: #FFFFFF !important;
             color: #000000 !important;
-            border-color: rgba(255, 138, 24, .30) !important;
+            border-color: rgba(255, 215, 0, .30) !important;
             box-shadow: none !important;
         }
 
@@ -862,35 +844,23 @@
         .label,
         .section-subtitle,
         .helper-text,
-        .muted,
-        body[data-theme="dark"] .panel h2,
-        body[data-theme="dark"] .panel h3,
-        body[data-theme="dark"] .product-card-title,
-        body[data-theme="dark"] .product-card-price,
-        body[data-theme="dark"] .label,
-        body[data-theme="dark"] .section-subtitle,
-        body[data-theme="dark"] .helper-text,
-        body[data-theme="dark"] .muted {
+        .muted {
             color: #000000 !important;
         }
 
         input,
         select,
-        textarea,
-        body[data-theme="dark"] input,
-        body[data-theme="dark"] select,
-        body[data-theme="dark"] textarea {
+        textarea {
             border-radius: 8px;
             background: #FFFFFF !important;
             color: #000000 !important;
-            border-color: rgba(255, 138, 24, .34) !important;
+            border-color: rgba(255, 215, 0, .34) !important;
         }
 
         @media (max-width: 860px) {
-            header,
-            body[data-theme="dark"] header {
-                background: linear-gradient(180deg, #E87912 0%, #E87912 58%, #FF8A18 58%, #FF8A18 100%) !important;
-            }
+            header {
+                background: linear-gradient(180deg, #FFC700 0%, #FFC700 58%, #FFD700 58%, #FFD700 100%) !important;
+            }}
 
             .admin-menu {
                 top: 0;
@@ -909,7 +879,7 @@
         </div>
         <div class="head-actions">
             <a href="/admin/dashboard" class="menu-tab"><span class="action-icon">&#10022;</span>Dashboard</a>
-            <button id="adminThemeBtn" class="menu-tab" type="button"><span class="action-icon">&#9681;</span>Modo claro</button>
+
             <button id="adminUnreadBtn" class="menu-tab" type="button"><span class="action-icon">&#9679;</span>Nuevos <span id="adminUnreadCount">0</span></button>
             <div class="user" id="adminUserLabel">Validando sesion...</div>
             <button id="adminLogoutBtn" class="logout-btn"><span class="action-icon">&#8617;</span>Cerrar sesion</button>
@@ -1454,35 +1424,16 @@ const adminOrderToastBody = document.getElementById('adminOrderToastBody');
 const adminOrderToastCloseBtn = document.getElementById('adminOrderToastCloseBtn');
 const adminUnreadBtn = document.getElementById('adminUnreadBtn');
 const adminUnreadCount = document.getElementById('adminUnreadCount');
-const adminThemeBtn = document.getElementById('adminThemeBtn');
 const dashboardOrdersMetric = document.getElementById('dashboardOrdersMetric');
 const dashboardPendingPaymentsMetric = document.getElementById('dashboardPendingPaymentsMetric');
 const dashboardProductsMetric = document.getElementById('dashboardProductsMetric');
 const dashboardUsersMetric = document.getElementById('dashboardUsersMetric');
 
-const BASE_CATEGORIES = ['pollos', 'parrillas', 'bebidas'];
 const ADMIN_TIMEOUT_MS = 30 * 60 * 1000;
-const ADMIN_THEME_KEY = 'ed_admin_theme';
 let productsCache = [];
 let refreshTimer = null;
 let productImageRemoved = false;
 let adminUnreadOrders = 0;
-
-function getAdminTheme() {
-    const saved = localStorage.getItem(ADMIN_THEME_KEY);
-    if (saved === 'light' || saved === 'dark') return saved;
-    return 'dark';
-}
-
-function applyAdminTheme(theme) {
-    document.body.dataset.theme = theme;
-    localStorage.setItem(ADMIN_THEME_KEY, theme);
-    if (adminThemeBtn) {
-        adminThemeBtn.innerHTML = theme === 'dark'
-            ? '<span class="action-icon">&#9728;</span>Modo claro'
-            : '<span class="action-icon">&#9681;</span>Modo oscuro';
-    }
-}
 
 const STATUS_ES = {
     pending: 'Pendiente',
@@ -2683,11 +2634,6 @@ if (adminUnreadBtn) {
         showAdminTab('sec-orders');
     });
 }
-if (adminThemeBtn) {
-    adminThemeBtn.addEventListener('click', () => {
-        applyAdminTheme(getAdminTheme() === 'dark' ? 'light' : 'dark');
-    });
-}
 proofModal.addEventListener('click', (event) => {
     if (event.target === proofModal) closeProofModal();
 });
@@ -2704,7 +2650,6 @@ adminMenuTabs.forEach(tab => {
 
 bootRealtimeOrders();
 renderAdminUnread();
-applyAdminTheme(getAdminTheme());
 boot();
 syncProductAvailabilityLabel();
 bindImagePreview(productImageInput, productImagePreview);
