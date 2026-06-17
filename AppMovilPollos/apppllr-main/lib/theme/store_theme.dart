@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 class StoreTheme {
-  static const Color orange = Color(0xFFFF8A18);
-  static const Color orangeSoft = Color(0xFFFFC20E);
-  static const Color orangeDeep = Color(0xFFE87912);
-  static const Color cream = Color(0xFFFFF6EA);
-  static const Color paper = Color(0xFFFFFAF2);
-  static const Color paperSoft = Color(0xFFFFE7B4);
-  static const Color ink = Color(0xFF20130D);
-  static const Color inkSoft = Color(0xFF5D4030);
-  static const Color lineStrong = Color(0xFFFF8A18);
+  static const Color orange = Color(0xFFF97316);
+  static const Color orangeSoft = Color(0xFFF8B11B);
+  static const Color orangeDeep = Color(0xFFC2410C);
+  static const Color cream = Color(0xFFFFF4DF);
+  static const Color paper = Color(0xFFFFFFFF);
+  static const Color paperSoft = Color(0xFFFFFAF2);
+  static const Color ink = Color(0xFF0F0F10);
+  static const Color inkSoft = Color(0xFF6F5745);
+  static const Color lineStrong = Color(0xFFF8B11B);
 
   static ThemeData theme() {
     final base = ThemeData(
@@ -50,9 +50,9 @@ class StoreTheme {
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Color(0xFF17110D),
+        backgroundColor: ink,
         selectedItemColor: orangeSoft,
-        unselectedItemColor: Color(0xFFFFE8BF),
+        unselectedItemColor: Color(0xFFFFE2A3),
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
       ),
@@ -68,7 +68,7 @@ class StoreTheme {
         secondary: const Color(0xFFFFC078),
         brightness: Brightness.dark,
       ),
-      scaffoldBackgroundColor: const Color(0xFF080604),
+      scaffoldBackgroundColor: const Color(0xFF090909),
       fontFamily: 'Trebuchet MS',
     );
 
@@ -79,31 +79,31 @@ class StoreTheme {
       ),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Color(0xFFFFF1E3),
-        contentTextStyle: TextStyle(color: Color(0xFF25170F)),
+        backgroundColor: Color(0xFFFFF4DF),
+        contentTextStyle: TextStyle(color: Color(0xFF0F0F10)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1B140F),
-        hintStyle: const TextStyle(color: Color(0xFFD2B59B)),
+        fillColor: const Color(0xFF17110D),
+        hintStyle: const TextStyle(color: Color(0xFFFFE2A3)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFF8C6449)),
+          borderSide: const BorderSide(color: Color(0xFFF8B11B)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFF8C6449)),
+          borderSide: const BorderSide(color: Color(0xFFF8B11B)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFFFFB36F), width: 1.4),
+          borderSide: const BorderSide(color: orange, width: 1.4),
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Color(0xFF0F0B08),
-        selectedItemColor: Color(0xFFFFB36F),
-        unselectedItemColor: Color(0xFFD2B59B),
+        backgroundColor: Color(0xFF090909),
+        selectedItemColor: orangeSoft,
+        unselectedItemColor: Color(0xFFFFE2A3),
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
       ),
@@ -115,8 +115,8 @@ class StoreTheme {
     end: Alignment.bottomCenter,
     colors: <Color>[
       Color(0xFF080604),
-      Color(0xFF130D09),
-      Color(0xFF211109),
+      Color(0xFF17110D),
+      Color(0xFF2B1306),
     ],
   );
 

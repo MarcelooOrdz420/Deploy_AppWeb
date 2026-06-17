@@ -10,6 +10,7 @@ import '../services/order_api_service.dart';
 import '../services/peru_lookup_service.dart';
 import '../services/session_service.dart';
 import '../state/cart_controller.dart';
+import '../theme/store_theme.dart';
 
 enum PayMethod { yape, plin, mercadoPago, efectivo }
 enum DeliveryType { delivery, pickup }
@@ -447,9 +448,14 @@ class _PaymentPageState extends State<PaymentPage> {
         : null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Pago y entrega')),
+      appBar: AppBar(
+        title: const Text('Pago y entrega'),
+        backgroundColor: StoreTheme.ink,
+        foregroundColor: StoreTheme.cream,
+      ),
+      bottomNavigationBar: _bottomPayBar(cart: cart, total: total),
       body: ListView(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 112),
         children: [
           const Text(
             'Completa tus datos y elige como pagar',
@@ -612,21 +618,83 @@ class _PaymentPageState extends State<PaymentPage> {
             ),
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              onPressed: cart.items.isEmpty || _submitting ? null : _submitOrder,
-              child: Text(
-                _submitting ? 'Registrando pedido...' : 'Continuar con el pedido',
-                style: TextStyle(color: Colors.white),
+        ],
+      ),
+    );
+  }
+
+  Widget _bottomPayBar({
+    required CartController cart,
+    required double total,
+  }) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+        decoration: const BoxDecoration(
+          color: StoreTheme.ink,
+          border: Border(
+            top: BorderSide(color: StoreTheme.orangeSoft, width: 1.2),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, .28),
+              blurRadius: 20,
+              offset: Offset(0, -8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Total a pagar',
+                    style: TextStyle(
+                      color: StoreTheme.orangeSoft,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    'S/. ${total.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: StoreTheme.cream,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: StoreTheme.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: cart.items.isEmpty || _submitting ? null : _submitOrder,
+              icon: _submitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.lock_outline),
+              label: Text(_submitting ? 'Enviando' : 'Pagar'),
+            ),
+          ],
+        ),
       ),
     );
   }

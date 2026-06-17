@@ -1,22 +1,23 @@
 /*
- * Visual refresh 2026: quieter operations palette for customer, auth and admin
- * surfaces. Loaded after inline view styles so it can unify the app without
- * touching each screen's behavior.
+ * Visual refresh: orange, white, black and gold identity for web, admin and
+ * auth surfaces. Loaded after inline styles to unify the existing screens.
  */
 :root {
-    --brand-graphite: #111827;
-    --brand-graphite-2: #1f2937;
-    --brand-slate: #334155;
-    --brand-teal: #0f766e;
-    --brand-teal-soft: #14b8a6;
-    --brand-gold: #f59e0b;
-    --brand-amber: #fbbf24;
-    --brand-paper: #f8fafc;
-    --brand-surface: #ffffff;
-    --brand-surface-2: #eef6f5;
-    --brand-line: rgba(15, 118, 110, .18);
-    --brand-line-strong: rgba(15, 118, 110, .34);
-    --brand-shadow: 0 20px 48px rgba(17, 24, 39, .12);
+    --brand-black: #0f0f10;
+    --brand-graphite: #1b1b1d;
+    --brand-ink: #231407;
+    --brand-orange: #f97316;
+    --brand-orange-deep: #c2410c;
+    --brand-orange-soft: #fb923c;
+    --brand-gold: #f8b11b;
+    --brand-gold-soft: #ffe2a3;
+    --brand-white: #ffffff;
+    --brand-paper: #fffaf2;
+    --brand-cream: #fff4df;
+    --brand-muted: #6f5745;
+    --brand-line: rgba(248, 177, 27, .34);
+    --brand-line-strong: rgba(249, 115, 22, .42);
+    --brand-shadow: 0 20px 48px rgba(45, 22, 4, .14);
 }
 
 html {
@@ -25,32 +26,24 @@ html {
 
 body {
     font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif !important;
-    color: var(--brand-graphite) !important;
+    color: var(--brand-ink) !important;
     background:
-        linear-gradient(180deg, rgba(248, 250, 252, .98) 0%, rgba(237, 246, 245, .98) 52%, rgba(229, 239, 236, .98) 100%) !important;
+        linear-gradient(180deg, var(--brand-white) 0%, var(--brand-paper) 48%, var(--brand-cream) 100%) !important;
     letter-spacing: 0 !important;
 }
 
 body[data-theme="dark"] {
-    color: #f8fafc !important;
-    background:
-        linear-gradient(180deg, #0b1120 0%, #111827 54%, #172033 100%) !important;
-}
-
-.store-shell,
-.container,
-main,
-.login-shell {
-    isolation: isolate;
+    color: #fff7ed !important;
+    background: linear-gradient(180deg, #090909 0%, #111111 58%, #1b130c 100%) !important;
 }
 
 .topbar,
 header,
 .hero {
     background:
-        linear-gradient(135deg, var(--brand-graphite) 0%, #142033 58%, var(--brand-teal) 100%) !important;
-    border-color: rgba(255, 255, 255, .12) !important;
-    box-shadow: 0 16px 36px rgba(17, 24, 39, .18) !important;
+        linear-gradient(135deg, var(--brand-black) 0%, #1b120b 54%, var(--brand-orange-deep) 100%) !important;
+    border-color: rgba(248, 177, 27, .28) !important;
+    box-shadow: 0 16px 38px rgba(0, 0, 0, .24) !important;
 }
 
 .brand-title,
@@ -63,7 +56,7 @@ header,
 .hero p,
 header .title,
 header .title-sub {
-    color: #f8fafc !important;
+    color: #fffaf2 !important;
 }
 
 .brand-kicker,
@@ -71,7 +64,7 @@ header .title-sub {
 .eyebrow,
 .label,
 .label-main {
-    color: var(--brand-amber) !important;
+    color: var(--brand-gold) !important;
     letter-spacing: .14em !important;
 }
 
@@ -89,22 +82,27 @@ header .title-sub {
 .order-proof-box,
 .proof-modal-card,
 .upload-box,
-.toggle-row {
+.toggle-row,
+.summary-note,
+.field-card,
+.proof-panel,
+.payment-brief,
+.hero-kpi-card {
     border-color: var(--brand-line) !important;
-    background: linear-gradient(180deg, var(--brand-surface) 0%, var(--brand-surface-2) 100%) !important;
+    background: linear-gradient(180deg, var(--brand-white) 0%, var(--brand-paper) 100%) !important;
     box-shadow: var(--brand-shadow) !important;
 }
 
 .login-story {
-    border-color: var(--brand-line) !important;
+    border-color: rgba(248, 177, 27, .32) !important;
     background:
-        linear-gradient(160deg, rgba(17, 24, 39, .96), rgba(15, 118, 110, .92)) !important;
+        linear-gradient(150deg, var(--brand-black) 0%, #261308 52%, var(--brand-orange-deep) 100%) !important;
 }
 
 .login-story h1,
 .login-story .lead,
 .login-story .eyebrow {
-    color: #f8fafc !important;
+    color: #fffaf2 !important;
 }
 
 .store-nav a,
@@ -119,9 +117,9 @@ button,
 .story-badges span,
 .tag,
 .status-badge {
-    border-color: var(--brand-line-strong) !important;
-    background: rgba(255, 255, 255, .9) !important;
-    color: var(--brand-slate) !important;
+    border-color: var(--brand-line) !important;
+    background: rgba(255, 255, 255, .94) !important;
+    color: var(--brand-ink) !important;
 }
 
 .store-nav a.active,
@@ -132,25 +130,27 @@ button[type="submit"],
 .cart-count,
 .value,
 .bar-fill {
-    background: linear-gradient(135deg, var(--brand-teal-soft), var(--brand-teal)) !important;
-    color: #ecfeff !important;
-    border-color: rgba(20, 184, 166, .42) !important;
-    box-shadow: 0 14px 28px rgba(15, 118, 110, .22) !important;
+    background: linear-gradient(135deg, var(--brand-gold), var(--brand-orange)) !important;
+    color: #160b02 !important;
+    border-color: rgba(248, 177, 27, .62) !important;
+    box-shadow: 0 14px 28px rgba(249, 115, 22, .24) !important;
 }
 
 .btn-soft,
 button:not([type="submit"]) {
-    background: #ffffff !important;
-    color: var(--brand-teal) !important;
+    background: var(--brand-white) !important;
+    color: var(--brand-orange-deep) !important;
 }
 
 .action-symbol,
 .nav-index,
 .tab-icon,
 .action-icon,
-.user-dot {
-    background: rgba(20, 184, 166, .14) !important;
-    color: var(--brand-teal) !important;
+.user-dot,
+.stage-number,
+.pay-icon {
+    background: rgba(248, 177, 27, .18) !important;
+    color: var(--brand-orange-deep) !important;
 }
 
 input,
@@ -159,9 +159,9 @@ textarea,
 .input-main,
 .select-main,
 .textarea-main {
-    border-color: rgba(15, 118, 110, .25) !important;
-    background: #ffffff !important;
-    color: var(--brand-graphite) !important;
+    border-color: rgba(249, 115, 22, .30) !important;
+    background: var(--brand-white) !important;
+    color: var(--brand-ink) !important;
 }
 
 input:focus,
@@ -170,8 +170,8 @@ textarea:focus,
 .input-main:focus,
 .select-main:focus,
 .textarea-main:focus {
-    border-color: var(--brand-teal-soft) !important;
-    box-shadow: 0 0 0 4px rgba(20, 184, 166, .16) !important;
+    border-color: var(--brand-gold) !important;
+    box-shadow: 0 0 0 4px rgba(248, 177, 27, .20) !important;
 }
 
 h1,
@@ -180,8 +180,10 @@ h3,
 .section-title,
 .product-card-title,
 .card-head h2,
-.proof-modal-title {
-    color: var(--brand-graphite) !important;
+.proof-modal-title,
+.pay-tile strong,
+.hero-kpi-card strong {
+    color: var(--brand-black) !important;
 }
 
 .muted,
@@ -191,27 +193,36 @@ h3,
 .lead,
 .helper-text,
 .brand-subtitle,
-.title-sub {
-    color: #64748b !important;
+.title-sub,
+.field-help,
+.proof-preview-note {
+    color: var(--brand-muted) !important;
 }
 
 th {
-    background: rgba(15, 118, 110, .12) !important;
-    color: var(--brand-graphite) !important;
+    background: rgba(248, 177, 27, .22) !important;
+    color: var(--brand-black) !important;
 }
 
 td,
 tr,
 table {
-    border-color: rgba(15, 118, 110, .14) !important;
+    border-color: rgba(248, 177, 27, .22) !important;
+}
+
+.summary-total-box,
+.bottom-pay-bar {
+    background: linear-gradient(135deg, var(--brand-black), #251205) !important;
+    color: #fffaf2 !important;
+    border-color: rgba(248, 177, 27, .38) !important;
 }
 
 .msg.success,
 .tag.payment-verified,
 .status-badge.ok {
-    color: #047857 !important;
-    background: #ecfdf5 !important;
-    border-color: #a7f3d0 !important;
+    color: #166534 !important;
+    background: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
 }
 
 .msg.error,
@@ -235,8 +246,8 @@ body[data-theme="dark"] .panel,
 body[data-theme="dark"] .card,
 body[data-theme="dark"] .table-shell,
 body[data-theme="dark"] .product-card {
-    background: linear-gradient(180deg, #111827 0%, #182236 100%) !important;
-    border-color: rgba(45, 212, 191, .18) !important;
+    background: linear-gradient(180deg, #121212 0%, #1b130c 100%) !important;
+    border-color: rgba(248, 177, 27, .28) !important;
 }
 
 body[data-theme="dark"] h1,
@@ -244,14 +255,14 @@ body[data-theme="dark"] h2,
 body[data-theme="dark"] h3,
 body[data-theme="dark"] .section-title,
 body[data-theme="dark"] .product-card-title {
-    color: #f8fafc !important;
+    color: #fffaf2 !important;
 }
 
 body[data-theme="dark"] .muted,
 body[data-theme="dark"] .muted-main,
 body[data-theme="dark"] .section-subtitle,
 body[data-theme="dark"] .section-copy {
-    color: #cbd5e1 !important;
+    color: #f5d6ae !important;
 }
 
 body[data-theme="dark"] input,
@@ -262,19 +273,12 @@ body[data-theme="dark"] .pill-btn,
 body[data-theme="dark"] .pill-link,
 body[data-theme="dark"] .user-pill,
 body[data-theme="dark"] .menu-tab {
-    background: rgba(15, 23, 42, .92) !important;
-    color: #f8fafc !important;
-    border-color: rgba(45, 212, 191, .18) !important;
+    background: rgba(18, 18, 18, .94) !important;
+    color: #fffaf2 !important;
+    border-color: rgba(248, 177, 27, .30) !important;
 }
 
 @media (max-width: 760px) {
-    .topbar-inner,
-    .head,
-    .hero,
-    .login-shell {
-        gap: 14px !important;
-    }
-
     .store-nav,
     .head-actions,
     .topbar-actions {

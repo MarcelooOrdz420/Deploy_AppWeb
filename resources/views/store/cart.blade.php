@@ -35,6 +35,8 @@
                         <span>Total estimado</span>
                         <strong>S/ <span id="cartTotal">0.00</span></strong>
                     </div>
+
+                    <button type="submit" form="orderForm" class="btn-main sidebar-submit">Confirmar pedido</button>
                 </section>
 
                 <section id="lastOrderBox" class="surface recent-order-panel" style="display:none;"></section>
@@ -330,6 +332,7 @@
         .summary-total-box{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:24px;background:#23150d;color:#fff1e8}
         .summary-total-box span{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,241,232,.74)}
         .summary-total-box strong{font-size:32px}
+        .sidebar-submit{width:100%;min-height:54px;font-size:15px}
         .summary-note-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
         .summary-note,.recent-order-panel,.field-card,.proof-panel,.payment-brief{display:grid;gap:10px;padding:16px;border-radius:22px;border:1px solid rgba(234,182,138,.72);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,247,240,.88))}
         .summary-note strong,.recent-order-panel strong{display:block;margin-bottom:6px;color:#8d3d00}
