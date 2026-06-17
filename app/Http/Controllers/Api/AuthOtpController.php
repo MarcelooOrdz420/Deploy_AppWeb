@@ -8,6 +8,7 @@ use App\Services\Auth\OtpService;
 use App\Services\JwtService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AuthOtpController extends Controller
 {
@@ -59,7 +60,19 @@ class AuthOtpController extends Controller
             return response()->json(['message' => 'Este correo ya esta verificado.'], 422);
         }
 
-        $otpService->sendForUser($user);
+        try {
+            $otpService->sendForUser($user);
+        } catch (\Throwable $exception) {
+            Log::error('No se pudo reenviar OTP', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'No pudimos reenviar el codigo de verificacion. Revisa la configuracion de correo e intenta nuevamente.',
+            ], 503);
+        }
 
         return response()->json([
             'message' => 'Codigo OTP reenviado correctamente.',

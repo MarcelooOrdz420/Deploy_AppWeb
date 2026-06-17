@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -66,7 +67,21 @@ class AuthController extends Controller
             ]);
         });
 
-        $otpService->sendForUser($user);
+        try {
+            $otpService->sendForUser($user);
+        } catch (\Throwable $exception) {
+            Log::error('No se pudo enviar OTP de registro', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'La cuenta fue creada, pero no pudimos enviar el codigo de verificacion. Revisa la configuracion de correo o intenta reenviar el codigo en unos minutos.',
+                'requires_verification' => true,
+                'user' => $user,
+            ], 503);
+        }
 
         return response()->json([
             'message' => 'Te enviamos un codigo de verificacion a tu correo. Ingresa el codigo para activar tu cuenta.',
