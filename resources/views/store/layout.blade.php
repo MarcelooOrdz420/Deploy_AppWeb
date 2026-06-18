@@ -1114,6 +1114,14 @@ initClientSession();
         letter-spacing: 0;
     }
 
+    .pollia-launcher img {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        object-fit: cover;
+        box-shadow: 0 0 0 2px rgba(255, 248, 236, .72);
+    }
+
     .pollia-widget {
         position: fixed;
         right: 18px;
@@ -1143,6 +1151,24 @@ initClientSession();
         padding: 13px 14px;
         background: #050505;
         color: #fffaf0;
+    }
+
+    .pollia-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .pollia-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 1px solid rgba(255, 207, 58, .42);
+        background: #fff8ec;
+        box-shadow: 0 10px 22px rgba(0, 0, 0, .24);
     }
 
     .pollia-title {
@@ -1272,12 +1298,17 @@ initClientSession();
     }
 </style>
 
-<button id="polliaLauncher" type="button" class="pollia-launcher" aria-label="Abrir POLL-IA">IA</button>
+<button id="polliaLauncher" type="button" class="pollia-launcher" aria-label="Abrir POLL-IA">
+    <img src="/images/ico-pollo.jpg" alt="" aria-hidden="true">
+</button>
 <section id="polliaWidget" class="pollia-widget" aria-label="Asistente POLL-IA">
     <div class="pollia-head">
-        <div class="pollia-title">
-            <strong>POLL-IA</strong>
-            <span id="polliaStatus">Asistente de Pollos y Parrillas El Dorado</span>
+        <div class="pollia-brand">
+            <img src="/images/ico-pollo.jpg" alt="El Dorado" class="pollia-avatar">
+            <div class="pollia-title">
+                <strong>POLL-IA</strong>
+                <span id="polliaStatus">Asistente de Pollos y Parrillas El Dorado</span>
+            </div>
         </div>
         <button id="polliaClose" type="button" class="pollia-close" aria-label="Cerrar">X</button>
     </div>

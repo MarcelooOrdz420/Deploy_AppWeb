@@ -1229,18 +1229,25 @@
         }
 
         .hero-showcase::after {
-            content: "DELIVERY 500 8800";
+            content: "El Dorado";
             position: absolute;
             right: 16px;
             bottom: 16px;
             z-index: 5;
-            padding: 14px 24px;
-            background: #ffbf00;
-            color: #b40020;
-            font-size: clamp(24px, 4vw, 46px);
+            min-height: 76px;
+            padding: 16px 24px 16px 92px;
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid rgba(255, 207, 58, .42);
+            border-radius: 18px;
+            background:
+                linear-gradient(135deg, rgba(16, 13, 10, .90), rgba(58, 33, 19, .82)),
+                url('/images/ico-pollo.jpg') 18px center / 56px 56px no-repeat;
+            color: #fff8ec;
+            font-size: clamp(22px, 3vw, 34px);
             font-weight: 900;
-            letter-spacing: .04em;
-            box-shadow: 0 18px 36px rgba(0, 0, 0, .28);
+            letter-spacing: .01em;
+            box-shadow: 0 18px 36px rgba(0, 0, 0, .30);
         }
 
         .hero-hours-bar {
@@ -1334,6 +1341,7 @@
                 left: 16px;
                 right: 16px;
                 text-align: center;
+                justify-content: center;
             }
         }
     </style>
