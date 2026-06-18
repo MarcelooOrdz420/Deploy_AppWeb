@@ -375,7 +375,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="/css/brand-refresh.css?v=20260618-pollia2">
+    <link rel="stylesheet" href="/css/brand-refresh.css?v=20260618-presentable">
 </head>
 <body>
 <main class="auth-shell">
