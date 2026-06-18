@@ -91,7 +91,7 @@ class LocalResponder
             $lines[] = "Contraentrega: {$msg}";
         }
 
-        return $lines ? "Medios de pago:\n- ".implode("\n- ", $lines) : null;
+        return $lines ? "Medios de pago\n".implode("\n", array_map(fn (string $line): string => "• {$line}", $lines)) : null;
     }
 
     private function cheapestProducts(): ?string
@@ -118,7 +118,9 @@ class LocalResponder
             return "{$product->name}{$suffix}: S/ ".number_format((float) $product->price, 2, '.', '');
         })->all();
 
-        return "Opciones mas economicas ahora:\n- ".implode("\n- ", $lines)."\nQue categoria te provoca: pollos, parrillas o bebidas?";
+        return "Opciones mas economicas ahora\n"
+            .implode("\n", array_map(fn (string $line): string => "• {$line}", $lines))
+            ."\n\nDime si buscas pollos, parrillas o bebidas y lo ajusto mejor.";
     }
 
     private function categoryListing(string $normalized): ?string
@@ -157,7 +159,9 @@ class LocalResponder
             ->map(fn (Product $product): string => $this->productLine($product))
             ->all();
 
-        return "Algunos {$category} disponibles:\n- ".implode("\n- ", $lines)."\nQuieres ver el mas barato o una recomendacion?";
+        return "Algunos {$category} disponibles\n"
+            .implode("\n", array_map(fn (string $line): string => "• {$line}", $lines))
+            ."\n\nPuedo recomendarte el mas economico o una combinacion.";
     }
 
     private function comboSuggestion(string $normalized): ?string
@@ -203,7 +207,9 @@ class LocalResponder
             return "Para combinar con {$product->name}, una bebida fria o una guarnicion va muy bien. Prefieres algo personal o familiar?";
         }
 
-        return "Para combinar con {$product->name}, te recomiendo:\n- ".implode("\n- ", $suggestions)."\nSi me dices si quieres algo personal, familiar o economico, puedo ajustar mejor la combinacion.";
+        return "Combinacion recomendada para {$product->name}\n"
+            .implode("\n", array_map(fn (string $line): string => "• {$line}", $suggestions))
+            ."\n\nSi me dices si quieres algo personal, familiar o economico, puedo ajustar mejor la combinacion.";
     }
 
     private function menuOverview(): ?string
@@ -228,14 +234,15 @@ class LocalResponder
         $lines = [];
 
         foreach ($groups as $category => $products) {
-            $sample = $products
-                ->take(6)
-                ->map(fn (Product $product): string => $this->productLine($product))
-                ->implode("\n  - ");
-            $lines[] = ucfirst((string) $category).": {$sample}";
+            $lines[] = strtoupper((string) $category);
+            foreach ($products->take(6) as $product) {
+                $lines[] = "• ".$this->productLine($product);
+            }
         }
 
-        return "Tenemos estas opciones disponibles:\n- ".implode("\n- ", $lines)."\nPuedo ayudarte a elegir una combinacion personal, familiar o economica.";
+        return "Tenemos estas opciones disponibles\n"
+            .implode("\n", $lines)
+            ."\n\nPuedo ayudarte a elegir una combinacion personal, familiar o economica.";
     }
 
     private function generalHelp(): string
@@ -250,7 +257,7 @@ class LocalResponder
         $description = trim((string) $product->description);
         $descriptionText = $description !== '' ? " - {$description}" : '';
 
-        return "{$product->name}: S/ ".number_format((float) $product->price, 2, '.', '')." ({$product->stock} disponibles){$descriptionText}";
+        return "{$product->name} - S/ ".number_format((float) $product->price, 2, '.', '')." ({$product->stock} disponibles){$descriptionText}";
     }
 
     private function guidedComboSuggestion(): ?string
@@ -282,7 +289,9 @@ class LocalResponder
             $lines[] = $this->productLine($drink);
         }
 
-        return "Para empezar, te sugiero esta combinacion:\n- ".implode("\n- ", $lines)."\nTambien puedo ayudarte a elegir por presupuesto, cantidad de personas o antojo.";
+        return "Para empezar, te sugiero esta combinacion\n"
+            .implode("\n", array_map(fn (string $line): string => "• {$line}", $lines))
+            ."\n\nTambien puedo ayudarte a elegir por presupuesto, cantidad de personas o antojo.";
     }
 
     private function findMentionedProduct(string $normalized): ?Product

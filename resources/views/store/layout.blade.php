@@ -740,7 +740,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="/css/brand-refresh.css?v=20260616-orange2">
+    <link rel="stylesheet" href="/css/brand-refresh.css?v=20260618-pollia2">
 </head>
 <body>
 <div class="store-shell">
@@ -1187,7 +1187,32 @@ initClientSession();
         border-radius: 12px;
         font-size: 13px;
         line-height: 1.45;
-        white-space: pre-wrap;
+    }
+
+    .pollia-msg p {
+        margin: 0 0 8px;
+    }
+
+    .pollia-msg p:last-child {
+        margin-bottom: 0;
+    }
+
+    .pollia-msg .pollia-heading {
+        display: block;
+        margin: 6px 0 5px;
+        font-weight: 950;
+        color: #7a2f00;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+    }
+
+    .pollia-msg ul {
+        margin: 6px 0 10px;
+        padding-left: 18px;
+    }
+
+    .pollia-msg li {
+        margin: 4px 0;
     }
 
     .pollia-msg.bot {
@@ -1291,10 +1316,60 @@ initClientSession();
     function addMessage(role, text) {
         const item = document.createElement('div');
         item.className = `pollia-msg ${role}`;
-        item.textContent = text;
+        if (role === 'bot') {
+            item.innerHTML = formatBotReply(text);
+        } else {
+            item.textContent = text;
+        }
         log.appendChild(item);
         log.scrollTop = log.scrollHeight + 80;
         return item;
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function formatBotReply(text) {
+        const lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
+        const html = [];
+        let list = [];
+
+        function flushList() {
+            if (!list.length) return;
+            html.push(`<ul>${list.map((line) => `<li>${line}</li>`).join('')}</ul>`);
+            list = [];
+        }
+
+        lines.forEach((raw) => {
+            const line = raw.trim();
+            if (!line) {
+                flushList();
+                return;
+            }
+
+            const bullet = line.match(/^[-•]\s*(.+)$/);
+            if (bullet) {
+                list.push(escapeHtml(bullet[1]));
+                return;
+            }
+
+            flushList();
+            const looksLikeHeading = line.length <= 56 && !/[.!?]$/.test(line);
+            if (looksLikeHeading) {
+                html.push(`<span class="pollia-heading">${escapeHtml(line)}</span>`);
+            } else {
+                html.push(`<p>${escapeHtml(line)}</p>`);
+            }
+        });
+
+        flushList();
+        return html.join('') || '<p>No tengo una respuesta clara todavia.</p>';
     }
 
     async function checkStatus() {
