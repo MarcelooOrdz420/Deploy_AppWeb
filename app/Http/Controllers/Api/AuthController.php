@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -38,9 +39,9 @@ class AuthController extends Controller
             ]);
         }
 
-        $user = DB::transaction(function () use ($data, $existingUser): User {
-            if ($existingUser) {
-                $existingUser->forceFill([
+        try {
+            $user = DB::transaction(function () use ($data, $existingUser): User {
+                $userData = [
                     'name' => $data['name'],
                     'phone' => $data['phone'] ?? null,
                     'role' => 'customer',
@@ -49,23 +50,28 @@ class AuthController extends Controller
                     'email_verified_at' => null,
                     'marketing_emails_enabled' => (bool) ($data['marketing_emails_enabled'] ?? true),
                     'password' => Hash::make($data['password']),
-                ])->save();
+                ];
 
-                return $existingUser->fresh();
-            }
+                $userData = $this->filterUserColumns($userData);
 
-            return User::create([
-                'name' => $data['name'],
+                if ($existingUser) {
+                    $existingUser->forceFill($userData)->save();
+
+                    return $existingUser->fresh();
+                }
+
+                return User::create(array_merge(['email' => $data['email']], $userData));
+            });
+        } catch (\Throwable $exception) {
+            Log::error('No se pudo crear usuario durante registro', [
                 'email' => $data['email'],
-                'phone' => $data['phone'] ?? null,
-                'role' => 'customer',
-                'is_active' => false,
-                'is_verified' => false,
-                'email_verified_at' => null,
-                'marketing_emails_enabled' => (bool) ($data['marketing_emails_enabled'] ?? true),
-                'password' => Hash::make($data['password']),
+                'error' => $exception->getMessage(),
             ]);
-        });
+
+            return response()->json([
+                'message' => 'No pudimos crear la cuenta. Verifica que la base de datos este migrada y vuelve a intentar.',
+            ], 500);
+        }
 
         try {
             $otpService->sendForUser($user);
@@ -77,7 +83,9 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'La cuenta fue creada, pero no pudimos enviar el codigo de verificacion. Revisa la configuracion de correo o intenta reenviar el codigo en unos minutos.',
+                'message' => str_contains($exception->getMessage(), 'Faltan columnas OTP')
+                    ? $exception->getMessage()
+                    : 'La cuenta fue creada, pero no pudimos enviar el codigo de verificacion. Revisa la configuracion de correo o intenta reenviar el codigo en unos minutos.',
                 'requires_verification' => true,
                 'user' => $user,
             ], 503);
@@ -223,5 +231,14 @@ class AuthController extends Controller
         return response()->json([
             'user' => $request->user(),
         ]);
+    }
+
+    private function filterUserColumns(array $data): array
+    {
+        static $columns = null;
+
+        $columns ??= Schema::getColumnListing('users');
+
+        return array_intersect_key($data, array_flip($columns));
     }
 }

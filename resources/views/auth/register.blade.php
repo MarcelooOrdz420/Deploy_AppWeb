@@ -496,6 +496,19 @@ function extractRegisterError(data) {
     return firstError || data?.message || 'No se pudo registrar.';
 }
 
+async function readApiResponse(res) {
+    const contentType = res.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+        return res.json();
+    }
+
+    const text = await res.text();
+    return {
+        message: text.trim() || `Error del servidor (${res.status}).`,
+    };
+}
+
 function setSessionFromAuth(data) {
     localStorage.setItem('ed_token', data.token);
     localStorage.setItem('ed_user', JSON.stringify(data.user));
@@ -578,7 +591,7 @@ form.addEventListener('submit', async (e) => {
             body: JSON.stringify(payload),
         });
 
-        const data = await res.json();
+        const data = await readApiResponse(res);
 
         if (!res.ok) {
             msg.textContent = extractRegisterError(data);
@@ -610,7 +623,7 @@ otpForm.addEventListener('submit', async (e) => {
             body: JSON.stringify({ email: pendingEmail, code }),
         });
 
-        const data = await res.json();
+        const data = await readApiResponse(res);
 
         if (!res.ok) {
             setOtpMessage(data.message || 'No se pudo verificar el codigo.');
@@ -640,7 +653,7 @@ resendOtpBtn.addEventListener('click', async () => {
             body: JSON.stringify({ email: pendingEmail }),
         });
 
-        const data = await res.json();
+        const data = await readApiResponse(res);
 
         if (!res.ok) {
             setOtpMessage(data.message || 'No se pudo reenviar el codigo.');
@@ -665,7 +678,7 @@ window.handleGoogleRegister = async (response) => {
             body: JSON.stringify({ id_token: response.credential }),
         });
 
-        const data = await res.json();
+        const data = await readApiResponse(res);
 
         if (!res.ok) {
             msg.textContent = data.message || 'No se pudo registrar con Google.';

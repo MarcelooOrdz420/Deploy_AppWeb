@@ -7,6 +7,7 @@ use App\Services\Mail\ResendEmailService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
 
@@ -19,6 +20,10 @@ class OtpService
 
     public function sendForUser(User $user): string
     {
+        if (! Schema::hasColumn('users', 'otp_code') || ! Schema::hasColumn('users', 'otp_expires_at')) {
+            throw new RuntimeException('Faltan columnas OTP en la tabla users. Ejecuta php artisan migrate --force.');
+        }
+
         $code = $this->generateCode();
 
         $user->forceFill([
