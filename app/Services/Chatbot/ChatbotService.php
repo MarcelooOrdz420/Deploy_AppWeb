@@ -21,6 +21,7 @@ class ChatbotService
 
         try {
             $text = match ($provider) {
+                'local' => $this->local->reply($message),
                 'ollama' => $this->ollama->respond($model, $system, $message),
                 default => $this->openai->respond($model, $system, $message),
             };
@@ -46,6 +47,15 @@ class ChatbotService
     public function status(): array
     {
         [$provider, $model] = $this->resolveProviderAndModel();
+
+        if ($provider === 'local') {
+            return [
+                'provider' => $provider,
+                'ok' => true,
+                'model' => $model,
+                'message' => 'POLL-IA esta usando respuestas locales sin credenciales externas.',
+            ];
+        }
 
         if ($provider === 'ollama') {
             return [
@@ -97,6 +107,14 @@ class ChatbotService
     private function resolveProviderAndModel(): array
     {
         $provider = strtolower(trim((string) config('chatbot.provider', 'ollama')));
+
+        if ((bool) config('chatbot.ollama.enabled', false)) {
+            return ['ollama', (string) config('chatbot.ollama.model', 'llama3.1:8b')];
+        }
+
+        if ($provider === 'local') {
+            return ['local', 'knowledge-base'];
+        }
 
         if ($provider === 'openai') {
             return ['openai', (string) config('chatbot.openai.model', 'gpt-4.1-mini')];

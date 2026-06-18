@@ -82,20 +82,47 @@ Las cuentas registradas con Google no pueden cambiar contrasena desde el flujo n
 
 ## Ollama / POLL-IA
 
+Si no puedes usar VPS, Ollama ni APIs de pago, usa el modo local:
+
+```env
+CHATBOT_PROVIDER=local
+```
+
+Ese modo no usa credenciales externas. Responde con productos de la base de datos, pagos, horarios, ubicacion, delivery y el contenido de `resources/chatbot/knowledge.md`.
+
+Para usar Ollama:
+
 ```env
 CHATBOT_PROVIDER=ollama
+CHATBOT_ENABLE_OLLAMA=true
 OLLAMA_URL=http://host.docker.internal:11434
+OLLAMA_BASE_URL=
+OLLAMA_API_KEY=
 OLLAMA_MODEL=llama3.1:8b
-OLLAMA_TIMEOUT=60
-OLLAMA_TEMPERATURE=0.4
-OLLAMA_NUM_PREDICT=350
+OLLAMA_TIMEOUT=90
+OLLAMA_TIMEOUT_SECONDS=
+OLLAMA_TEMPERATURE=0.35
+OLLAMA_NUM_PREDICT=450
+OLLAMA_KEEP_ALIVE=10m
 ```
+
+Para Ollama Cloud en `ollama.com`, usa `OLLAMA_BASE_URL=https://ollama.com`, deja `OLLAMA_URL` vacio y configura `OLLAMA_API_KEY`.
 
 Comprueba:
 
 ```text
 GET https://tu-dominio.com/api/v1/chatbot/status
 ```
+
+La web y la app movil consumen Laravel, no Ollama directo:
+
+```text
+POST https://tu-dominio.com/api/v1/chatbot/message
+```
+
+Si Laravel corre en Docker/Coolify y Ollama en el mismo servidor host, usa `OLLAMA_URL=http://host.docker.internal:11434`. Si Ollama corre como servicio en la misma red interna de Coolify, usa `OLLAMA_URL=http://ollama:11434`.
+
+Si tu hosting no permite instalar Ollama, instala Ollama en un VPS/servidor externo y usa `OLLAMA_URL=http://IP_PRIVADA_DEL_SERVIDOR:11434`. Si lo publicas con HTTPS detras de un proxy protegido, usa `OLLAMA_URL=https://ia.tudominio.com` y rellena `OLLAMA_API_KEY`.
 
 ## Pusher realtime
 

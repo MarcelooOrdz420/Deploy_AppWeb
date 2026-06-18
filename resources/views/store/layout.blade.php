@@ -1096,6 +1096,326 @@ initClientSession();
     </div>
 </div>
 
+<style>
+    .pollia-launcher {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 9997;
+        width: 58px;
+        height: 58px;
+        border: 0;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #ffbf00, #ff7a18);
+        color: #160b02;
+        box-shadow: 0 18px 42px rgba(0, 0, 0, .34);
+        cursor: pointer;
+        font-weight: 950;
+        letter-spacing: 0;
+    }
+
+    .pollia-widget {
+        position: fixed;
+        right: 18px;
+        bottom: 88px;
+        z-index: 9997;
+        display: none;
+        width: min(390px, calc(100vw - 32px));
+        height: min(560px, calc(100vh - 118px));
+        overflow: hidden;
+        border: 1px solid rgba(255, 191, 0, .30);
+        border-radius: 12px;
+        background: #fffaf0;
+        color: #1b1108;
+        box-shadow: 0 28px 70px rgba(0, 0, 0, .38);
+    }
+
+    .pollia-widget.open {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+    }
+
+    .pollia-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 13px 14px;
+        background: #050505;
+        color: #fffaf0;
+    }
+
+    .pollia-title {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .pollia-title strong {
+        font-size: 14px;
+        line-height: 1.1;
+    }
+
+    .pollia-title span {
+        color: rgba(255, 250, 240, .70);
+        font-size: 11px;
+    }
+
+    .pollia-close {
+        width: 34px;
+        height: 34px;
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 10px;
+        background: rgba(255,255,255,.08);
+        color: #fffaf0;
+        cursor: pointer;
+        font-weight: 900;
+    }
+
+    .pollia-log {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow-y: auto;
+        padding: 14px;
+        background: linear-gradient(180deg, #fffaf0 0%, #fff6e8 100%);
+    }
+
+    .pollia-msg {
+        max-width: 86%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+    }
+
+    .pollia-msg.bot {
+        align-self: flex-start;
+        border: 1px solid rgba(255, 191, 0, .24);
+        background: #ffffff;
+        color: #1b1108;
+    }
+
+    .pollia-msg.user {
+        align-self: flex-end;
+        background: #ffbf00;
+        color: #160b02;
+        font-weight: 800;
+    }
+
+    .pollia-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 0 14px 10px;
+        background: #fff6e8;
+    }
+
+    .pollia-suggestions button {
+        border: 1px solid rgba(255, 191, 0, .34) !important;
+        border-radius: 999px;
+        background: #fffaf0 !important;
+        color: #1b1108 !important;
+        padding: 8px 10px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 850;
+    }
+
+    .pollia-form {
+        display: flex;
+        gap: 8px;
+        padding: 10px;
+        border-top: 1px solid rgba(255, 191, 0, .22);
+        background: #fffaf0;
+    }
+
+    .pollia-form input {
+        min-width: 0;
+        flex: 1;
+        border: 1px solid rgba(255, 191, 0, .30) !important;
+        border-radius: 10px;
+        padding: 11px 12px;
+        background: #ffffff !important;
+        color: #1b1108 !important;
+    }
+
+    .pollia-form button {
+        width: 46px;
+        border: 0 !important;
+        border-radius: 10px;
+        background: #ffbf00 !important;
+        color: #160b02 !important;
+        cursor: pointer;
+        font-weight: 950;
+    }
+
+    @media (max-width: 720px) {
+        .pollia-launcher {
+            right: 12px;
+            bottom: 12px;
+        }
+
+        .pollia-widget {
+            right: 10px;
+            bottom: 78px;
+            width: calc(100vw - 20px);
+            height: min(560px, calc(100vh - 96px));
+        }
+    }
+</style>
+
+<button id="polliaLauncher" type="button" class="pollia-launcher" aria-label="Abrir POLL-IA">IA</button>
+<section id="polliaWidget" class="pollia-widget" aria-label="Asistente POLL-IA">
+    <div class="pollia-head">
+        <div class="pollia-title">
+            <strong>POLL-IA</strong>
+            <span id="polliaStatus">Asistente de Pollos y Parrillas El Dorado</span>
+        </div>
+        <button id="polliaClose" type="button" class="pollia-close" aria-label="Cerrar">X</button>
+    </div>
+    <div id="polliaLog" class="pollia-log"></div>
+    <div class="pollia-suggestions">
+        <button type="button" data-pollia-preset="Que productos tienen disponibles?">Productos</button>
+        <button type="button" data-pollia-preset="Cuales son sus medios de pago?">Pagos</button>
+        <button type="button" data-pollia-preset="Cual es el horario de atencion?">Horario</button>
+        <button type="button" data-pollia-preset="Donde estan ubicados?">Ubicacion</button>
+    </div>
+    <form id="polliaForm" class="pollia-form">
+        <input id="polliaInput" type="text" maxlength="1200" autocomplete="off" placeholder="Escribe tu consulta..." aria-label="Mensaje para POLL-IA">
+        <button id="polliaSend" type="submit" aria-label="Enviar">></button>
+    </form>
+</section>
+
+<script>
+(() => {
+    const launcher = document.getElementById('polliaLauncher');
+    const widget = document.getElementById('polliaWidget');
+    const closeBtn = document.getElementById('polliaClose');
+    const form = document.getElementById('polliaForm');
+    const input = document.getElementById('polliaInput');
+    const log = document.getElementById('polliaLog');
+    const statusEl = document.getElementById('polliaStatus');
+    const sendBtn = document.getElementById('polliaSend');
+    const suggestions = document.querySelectorAll('[data-pollia-preset]');
+
+    if (!launcher || !widget || !form || !input || !log) return;
+
+    const guestKey = 'ed_pollia_guest_session';
+    let booted = false;
+    let sending = false;
+
+    function guestSession() {
+        const existing = localStorage.getItem(guestKey);
+        if (existing) return existing;
+        const id = `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        localStorage.setItem(guestKey, id);
+        return id;
+    }
+
+    function addMessage(role, text) {
+        const item = document.createElement('div');
+        item.className = `pollia-msg ${role}`;
+        item.textContent = text;
+        log.appendChild(item);
+        log.scrollTop = log.scrollHeight + 80;
+        return item;
+    }
+
+    async function checkStatus() {
+        try {
+            const res = await fetch('/api/v1/chatbot/status', { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            if (statusEl) {
+                const provider = (data.provider || 'ia').toString().toUpperCase();
+                const model = (data.model || '').toString();
+                statusEl.textContent = data.ok ? `${provider}${model ? ` - ${model}` : ''}` : 'Modo respuesta local';
+            }
+        } catch {
+            if (statusEl) statusEl.textContent = 'Modo respuesta local';
+        }
+    }
+
+    function openWidget() {
+        widget.classList.add('open');
+        launcher.style.display = 'none';
+        if (!booted) {
+            booted = true;
+            addMessage('bot', 'Hola, soy POLL-IA. Puedo ayudarte con productos, pedidos, pagos, horarios, delivery y ubicacion.');
+            checkStatus();
+        }
+        setTimeout(() => input.focus(), 80);
+    }
+
+    function closeWidget() {
+        widget.classList.remove('open');
+        launcher.style.display = 'block';
+    }
+
+    async function sendMessage(raw) {
+        const message = (raw || '').trim();
+        if (!message || sending) return;
+
+        sending = true;
+        sendBtn.disabled = true;
+        addMessage('user', message);
+        input.value = '';
+        const typing = addMessage('bot', 'Escribiendo...');
+
+        try {
+            const token = localStorage.getItem('ed_token') || '';
+            const headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            };
+            const payload = { message };
+
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            } else {
+                payload.guest_session = guestSession();
+            }
+
+            const res = await fetch('/api/v1/chatbot/message', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json().catch(() => ({}));
+            typing.remove();
+
+            if (!res.ok) {
+                addMessage('bot', data.message || 'No pude procesar tu consulta en este momento.');
+                return;
+            }
+
+            addMessage('bot', (data.reply || '').toString().trim() || 'No tengo una respuesta clara todavia.');
+        } catch {
+            typing.remove();
+            addMessage('bot', 'No pude conectar con el asistente. Revisa tu conexion e intentalo de nuevo.');
+        } finally {
+            sending = false;
+            sendBtn.disabled = false;
+            input.focus();
+        }
+    }
+
+    launcher.addEventListener('click', openWidget);
+    closeBtn?.addEventListener('click', closeWidget);
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        sendMessage(input.value);
+    });
+    suggestions.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            openWidget();
+            sendMessage(btn.getAttribute('data-pollia-preset') || '');
+        });
+    });
+})();
+</script>
+
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script>
 (() => {

@@ -15,10 +15,13 @@ return [
     ],
 
     'ollama' => [
-        'base_url' => env('OLLAMA_URL', env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434')),
+        'enabled' => env('CHATBOT_ENABLE_OLLAMA', false),
+        'base_url' => env('OLLAMA_URL') ?: env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),
+        'api_key' => env('OLLAMA_API_KEY', ''),
         'model' => env('OLLAMA_MODEL', 'llama3.1:8b'),
-        'timeout' => env('OLLAMA_TIMEOUT', 60),
+        'timeout' => env('OLLAMA_TIMEOUT_SECONDS', env('OLLAMA_TIMEOUT', 60)),
         'temperature' => env('OLLAMA_TEMPERATURE', 0.4),
         'num_predict' => env('OLLAMA_NUM_PREDICT', 350),
+        'keep_alive' => env('OLLAMA_KEEP_ALIVE', '10m'),
     ],
 ];

@@ -11,13 +11,12 @@ class OllamaClient
         $baseUrl = rtrim((string) config('chatbot.ollama.base_url', 'http://127.0.0.1:11434'), '/');
         $timeout = (int) config('chatbot.ollama.timeout', 60);
 
-        $res = Http::acceptJson()
+        $res = $this->request(8, $timeout)
             ->asJson()
-            ->connectTimeout(8)
-            ->timeout($timeout)
             ->post($baseUrl.'/api/chat', [
                 'model' => $model,
                 'stream' => false,
+                'keep_alive' => config('chatbot.ollama.keep_alive', '10m'),
                 'messages' => [
                     [
                         'role' => 'system',
@@ -55,10 +54,7 @@ class OllamaClient
         $baseUrl = rtrim((string) config('chatbot.ollama.base_url', 'http://127.0.0.1:11434'), '/');
 
         try {
-            $res = Http::acceptJson()
-                ->connectTimeout(4)
-                ->timeout(8)
-                ->get($baseUrl.'/api/tags');
+            $res = $this->request(4, 8)->get($baseUrl.'/api/tags');
 
             if (! $res->ok()) {
                 return [
@@ -92,5 +88,19 @@ class OllamaClient
                 'message' => 'No se pudo conectar con Ollama: '.$e->getMessage(),
             ];
         }
+    }
+
+    private function request(int $connectTimeout, int $timeout): \Illuminate\Http\Client\PendingRequest
+    {
+        $request = Http::acceptJson()
+            ->connectTimeout($connectTimeout)
+            ->timeout($timeout);
+
+        $apiKey = trim((string) config('chatbot.ollama.api_key', ''));
+        if ($apiKey !== '') {
+            $request = $request->withToken($apiKey);
+        }
+
+        return $request;
     }
 }

@@ -49,11 +49,11 @@ class LocalResponder
             return $this->comboSuggestion($normalized);
         }
 
-        if ($this->matchesAny($normalized, ['pollos', 'parrillas', 'bebidas', 'menu', 'carta', 'productos'])) {
+        if ($this->matchesAny($normalized, ['pollos', 'parrillas', 'bebidas', 'menu', 'carta', 'productos', 'venden', 'ofrecen'])) {
             return $this->categoryListing($normalized);
         }
 
-        return null;
+        return $this->generalHelp();
     }
 
     private function contactLine(): string
@@ -130,7 +130,7 @@ class LocalResponder
             $category = 'bebidas';
         }
         if (! $category) {
-            return null;
+            return $this->menuOverview();
         }
 
         try {
@@ -192,6 +192,45 @@ class LocalResponder
         }
 
         return "Para combinar con {$product->name}, te recomiendo:\n- ".implode("\n- ", $suggestions);
+    }
+
+    private function menuOverview(): ?string
+    {
+        try {
+            $items = Product::query()
+                ->where('is_available', true)
+                ->where('stock', '>', 0)
+                ->orderBy('category')
+                ->orderBy('price')
+                ->limit(9)
+                ->get(['name', 'price', 'category']);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        $groups = $items->groupBy(fn (Product $product): string => trim((string) $product->category) ?: 'general');
+        $lines = [];
+
+        foreach ($groups as $category => $products) {
+            $sample = $products
+                ->take(3)
+                ->map(fn (Product $product): string => "{$product->name} S/ ".number_format((float) $product->price, 2, '.', ''))
+                ->implode(', ');
+            $lines[] = ucfirst((string) $category).": {$sample}";
+        }
+
+        return "Tenemos estas opciones disponibles:\n- ".implode("\n- ", $lines)."\nQuieres que te recomiende algo barato, familiar o por categoria?";
+    }
+
+    private function generalHelp(): string
+    {
+        $brand = (string) config('chatbot.brand_name');
+
+        return "Soy POLL-IA de {$brand}. Puedo ayudarte con productos, precios, pagos, delivery, horario, ubicacion y seguimiento de pedidos. Prueba preguntarme: \"que productos tienen\", \"cuales son sus pagos\" o \"donde estan ubicados\".";
     }
 
     private function findMentionedProduct(string $normalized): ?Product
