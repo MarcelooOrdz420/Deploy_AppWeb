@@ -1,23 +1,23 @@
 /*
- * Visual refresh: orange, white, black and gold identity for web, admin and
- * auth surfaces. Loaded after inline styles to unify the existing screens.
+ * Visual refresh: golden identity with warm blacks, cream panels and bright
+ * contrast for the store, admin and auth surfaces.
  */
 :root {
-    --brand-black: #000000;
-    --brand-graphite: #000000;
-    --brand-ink: #000000;
-    --brand-orange: #FFD700;
-    --brand-orange-deep: #FFC700;
-    --brand-orange-soft: #FFE135;
-    --brand-gold: #FFFFFF;
-    --brand-gold-soft: #FFFFFF;
-    --brand-white: #FFFFFF;
-    --brand-paper: #FFFFFF;
-    --brand-cream: #FFD700;
-    --brand-muted: #000000;
-    --brand-line: rgba(255, 215, 0, .34);
-    --brand-line-strong: rgba(255, 215, 0, .42);
-    --brand-shadow: 0 20px 48px rgba(255, 215, 0, .14);
+    --brand-black: #1E1308;
+    --brand-graphite: #3F2B1A;
+    --brand-ink: #1E1308;
+    --brand-orange: #F6B205;
+    --brand-orange-deep: #BE7D00;
+    --brand-orange-soft: #FCE2A4;
+    --brand-gold: #FFF5D0;
+    --brand-gold-soft: #FFF1C2;
+    --brand-white: #FBF4E4;
+    --brand-paper: #FFF8F0;
+    --brand-cream: #F7C655;
+    --brand-muted: #5F4227;
+    --brand-line: rgba(222, 160, 34, .24);
+    --brand-line-strong: rgba(235, 145, 28, .36);
+    --brand-shadow: 0 20px 56px rgba(99, 56, 14, .14);
 }
 
 html {
@@ -26,9 +26,9 @@ html {
 
 body {
     font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif !important;
-    color: #000000 !important;
+    color: var(--brand-ink) !important;
     background:
-        linear-gradient(180deg, #FFD700 0%, #FFD700 48%, #FFD700 100%) !important;
+        linear-gradient(180deg, #fff2c0 0%, #f7cd19 46%, #f3b209 100%) !important;
     letter-spacing: 0 !important;
 }
 
@@ -36,9 +36,9 @@ body {
 header,
 .hero {
     background:
-        linear-gradient(135deg, #FFC700 0%, #FFC700 54%, #FFD700 100%) !important;
-    border-color: rgba(232, 121, 18, .28) !important;
-    box-shadow: 0 16px 38px rgba(232, 121, 18, .24) !important;
+        linear-gradient(135deg, #f9c316 0%, #f7be0d 54%, #f0a607 100%) !important;
+    border-color: rgba(222, 160, 34, .28) !important;
+    box-shadow: 0 16px 38px rgba(99, 56, 14, .18) !important;
 }
 
 .brand-title,
@@ -235,43 +235,6 @@ table {
     border-color: #fde68a !important;
 }
 
-body[data-theme="dark"] .store-frame,
-body[data-theme="dark"] .surface,
-body[data-theme="dark"] .panel,
-body[data-theme="dark"] .card,
-body[data-theme="dark"] .table-shell,
-body[data-theme="dark"] .product-card {
-    background: linear-gradient(180deg, #121212 0%, #1b130c 100%) !important;
-    border-color: rgba(248, 177, 27, .28) !important;
-}
-
-body[data-theme="dark"] h1,
-body[data-theme="dark"] h2,
-body[data-theme="dark"] h3,
-body[data-theme="dark"] .section-title,
-body[data-theme="dark"] .product-card-title {
-    color: #fffaf2 !important;
-}
-
-body[data-theme="dark"] .muted,
-body[data-theme="dark"] .muted-main,
-body[data-theme="dark"] .section-subtitle,
-body[data-theme="dark"] .section-copy {
-    color: #f5d6ae !important;
-}
-
-body[data-theme="dark"] input,
-body[data-theme="dark"] select,
-body[data-theme="dark"] textarea,
-body[data-theme="dark"] .store-nav a,
-body[data-theme="dark"] .pill-btn,
-body[data-theme="dark"] .pill-link,
-body[data-theme="dark"] .user-pill,
-body[data-theme="dark"] .menu-tab {
-    background: rgba(18, 18, 18, .94) !important;
-    color: #fffaf2 !important;
-    border-color: rgba(248, 177, 27, .30) !important;
-}
 
 @media (max-width: 760px) {
     .store-nav,
@@ -279,4 +242,112 @@ body[data-theme="dark"] .menu-tab {
     .topbar-actions {
         justify-content: flex-start !important;
     }
+}
+
+/*
+ * Villa-style pass: black header, food-photo hero, wood warmth and yellow
+ * delivery accents. Visual-only overrides for the requested direction.
+ */
+:root {
+    --brand-black: #030303;
+    --brand-graphite: #111111;
+    --brand-ink: #f9f4e8;
+    --brand-orange: #ffbf00;
+    --brand-orange-deep: #d98a00;
+    --brand-orange-soft: #ffe36b;
+    --brand-paper: #fffaf0;
+    --brand-muted: #cfc4ae;
+    --brand-line: rgba(255, 191, 0, .28);
+    --brand-shadow: 0 28px 70px rgba(0, 0, 0, .38);
+}
+
+body {
+    background:
+        radial-gradient(circle at 72% 14%, rgba(255, 173, 18, .16), transparent 24%),
+        linear-gradient(180deg, #000 0%, #0b0907 44%, #19100a 100%) !important;
+    color: #fffaf0 !important;
+}
+
+.store-frame {
+    border-radius: 0 !important;
+    border-color: rgba(255, 255, 255, .08) !important;
+    background: #050505 !important;
+    box-shadow: var(--brand-shadow) !important;
+}
+
+.topbar,
+header {
+    background: #000 !important;
+    border-color: rgba(255, 255, 255, .08) !important;
+    box-shadow: none !important;
+}
+
+.brand-title {
+    color: #fff !important;
+    font-family: "Trebuchet MS", "Segoe UI", cursive !important;
+    font-size: clamp(28px, 3.5vw, 46px) !important;
+    font-style: italic !important;
+    letter-spacing: -.04em !important;
+    text-shadow: 0 3px 12px rgba(255, 255, 255, .18) !important;
+}
+
+.brand-kicker,
+.brand-subtitle {
+    color: rgba(255, 255, 255, .68) !important;
+}
+
+.brand-mark {
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, .16) !important;
+    box-shadow: none !important;
+}
+
+.store-nav a,
+.pill-btn,
+.pill-link,
+.user-pill {
+    background: #000 !important;
+    color: #f7f1e7 !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    text-transform: uppercase !important;
+    letter-spacing: .04em !important;
+}
+
+.store-nav a.active,
+.store-nav a:hover,
+.primary-link,
+.btn-main,
+button[type="submit"] {
+    background: var(--brand-orange) !important;
+    color: #2a0300 !important;
+    border-color: var(--brand-orange) !important;
+    box-shadow: 0 14px 30px rgba(255, 191, 0, .26) !important;
+}
+
+.nav-index,
+.action-symbol,
+.user-dot {
+    background: rgba(255, 191, 0, .18) !important;
+    color: var(--brand-orange) !important;
+}
+
+main.page {
+    background:
+        linear-gradient(180deg, #080604 0%, #17100b 100%) !important;
+}
+
+.surface,
+.panel,
+.card,
+.table-shell,
+.product-card,
+.tool-card,
+.catalog-tools,
+.float-cart-panel,
+.product-modal-card {
+    background: #fffaf0 !important;
+    color: #1b1108 !important;
+    border-color: rgba(255, 191, 0, .18) !important;
+    box-shadow: 0 18px 38px rgba(0, 0, 0, .20) !important;
 }

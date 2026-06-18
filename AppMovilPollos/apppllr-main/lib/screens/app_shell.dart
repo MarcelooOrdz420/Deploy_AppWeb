@@ -363,9 +363,9 @@ class _AppShellState extends State<AppShell> {
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: StoreTheme.paper.withOpacity(.92),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: StoreTheme.lineStrong.withOpacity(.78)),
+                      color: StoreTheme.ink.withOpacity(.96),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: StoreTheme.orange.withOpacity(.24)),
                     ),
                     child: BottomNavigationBar(
                       currentIndex: _index,

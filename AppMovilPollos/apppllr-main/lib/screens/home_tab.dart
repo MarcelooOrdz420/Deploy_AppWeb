@@ -329,12 +329,12 @@ class _HomeTabState extends State<HomeTab> {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            Color(0xFF17110D),
-            Color(0xFF17110D),
-            Color(0xFFFFC20E),
-            Color(0xFFFFC20E),
+            Color(0xFF000000),
+            Color(0xFF000000),
+            Color(0xFF17100A),
+            Color(0xFFFFBF00),
           ],
-          stops: [0, .58, .58, 1],
+          stops: [0, .62, .86, 1],
         ),
         boxShadow: const [
           BoxShadow(
@@ -358,9 +358,10 @@ class _HomeTabState extends State<HomeTab> {
               'Horario de atencion · Lun-Vie 12 pm a 8 pm · Sab 11 am a 9 pm · Dom 11 am a 7 pm',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white,
+                color: Color(0xFF220A00),
                 fontSize: 11,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
+                letterSpacing: .5,
               ),
             ),
           ),
@@ -404,7 +405,12 @@ class _HomeTabState extends State<HomeTab> {
                     const SizedBox(height: 4),
                     const Text(
                       'Pollos y Parrillas "El Dorado"',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFFFFF8ED)),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFFFFF8ED),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -453,7 +459,7 @@ class _HomeTabState extends State<HomeTab> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: Color(0xFF17110D),
+              color: Color(0xFF000000),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: Colors.white.withOpacity(.35)),
             ),
@@ -466,7 +472,7 @@ class _HomeTabState extends State<HomeTab> {
                     'Menu visual, rapido y listo para pedir.',
                     style: TextStyle(
                       color: Color(0xFFFFF8ED),
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
@@ -494,12 +500,12 @@ class _HomeTabState extends State<HomeTab> {
         borderRadius: BorderRadius.circular(14),
         gradient: const LinearGradient(
           colors: [
-            Color(0xFF15110F),
-            Color(0xFF241913),
-            Color(0xFFFFB400),
-            Color(0xFFFFC21A),
+            Color(0xFF000000),
+            Color(0xFF090604),
+            Color(0xFF2A170B),
+            Color(0xFFFFBF00),
           ],
-          stops: [0, .52, .52, 1],
+          stops: [0, .52, .82, 1],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -516,28 +522,31 @@ class _HomeTabState extends State<HomeTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Menu',
+            'Las mejores promos',
             style: TextStyle(
-              fontSize: 11,
-              letterSpacing: 2.2,
-              color: Color(0xFFFFE0B4),
+              fontSize: 24,
+              height: 1,
+              letterSpacing: -.6,
+              fontStyle: FontStyle.italic,
+              color: Color(0xFFFFBF00),
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 8),
           const Text(
-            'SA\nBRO\nSO!',
+            'APP\nEL\nDORADO',
             style: TextStyle(
-              fontSize: 58,
-              height: .82,
+              fontSize: 56,
+              height: .78,
               fontWeight: FontWeight.w900,
               color: Colors.white,
+              letterSpacing: -2.4,
             ),
           ),
           const SizedBox(height: 10),
           const Text(
-            'Pollo, parrilla y bebidas en una vitrina mas directa, mas viva y mas facil de comprar.',
-            style: TextStyle(color: Color(0xFFFCE8D0), height: 1.5),
+            'Descarga, compra y sigue tus pedidos con una experiencia directa, oscura y dorada.',
+            style: TextStyle(color: Color(0xFFEFE7DA), height: 1.5, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -548,6 +557,32 @@ class _HomeTabState extends State<HomeTab> {
               _pill('Parrillas'),
               _pill('Bebidas'),
             ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFBF00),
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromRGBO(0, 0, 0, .28),
+                  blurRadius: 18,
+                  offset: Offset(0, 10),
+                ),
+              ],
+            ),
+            child: const Text(
+              'DELIVERY 500 8800',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFB40020),
+                fontSize: 26,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           LayoutBuilder(

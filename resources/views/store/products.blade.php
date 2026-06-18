@@ -175,13 +175,13 @@
             padding: 0;
             overflow: hidden;
             background:
-                linear-gradient(90deg, #15110f 0%, #1f1713 54%, #f7b400 54%, #f6be17 100%);
+                linear-gradient(180deg, #fff8e4 0%, #fff0c4 36%, #f6c810 100%);
         }
 
         .hero-hours-bar {
             padding: 8px 20px;
-            background: #f7b400;
-            color: #fffdf8;
+            background: rgba(255, 187, 0, .95);
+            color: #1E1308;
             text-align: center;
             font-size: 12px;
             font-weight: 800;
@@ -316,8 +316,8 @@
             border-radius: 34px;
             overflow: hidden;
             background:
-                linear-gradient(135deg, rgba(255, 51, 102, .24), transparent 26%),
-                linear-gradient(120deg, #083d2f 0%, #142b26 36%, #7f1d1d 72%, #f08f00 100%);
+                linear-gradient(135deg, rgba(255, 255, 255, .72), transparent 24%),
+                linear-gradient(120deg, #fff8e9 0%, #fdf2c7 42%, #f7c319 100%);
         }
 
         .hero-stage-rays {
@@ -673,6 +673,11 @@
         .product-card {
             display: grid;
             gap: 12px;
+            border-radius: 28px;
+            padding: 18px;
+            background: #fffdf5;
+            border: 1px solid rgba(255, 187, 0, .18);
+            box-shadow: 0 22px 46px rgba(92, 47, 12, .08);
         }
 
         .product-head {
@@ -685,7 +690,7 @@
         .product-name {
             margin: 0;
             font-size: 22px;
-            color: #28160c;
+            color: #1E1308;
             line-height: 1.04;
         }
 
@@ -1173,6 +1178,126 @@
 
             .hero-feature-main {
                 max-width: none;
+            }
+        }
+
+        /* Villa-style hero requested from the reference image. */
+        .hero-showcase {
+            position: relative;
+            border-radius: 0 !important;
+            border: 0 !important;
+            background:
+                linear-gradient(90deg, rgba(0, 0, 0, .96) 0%, rgba(0, 0, 0, .82) 36%, rgba(30, 17, 9, .50) 58%, rgba(127, 70, 18, .10) 100%),
+                linear-gradient(180deg, #050505 0%, #21140a 50%, #8b581d 100%) !important;
+            box-shadow: none !important;
+        }
+
+        .hero-showcase::after {
+            content: "DELIVERY 500 8800";
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            z-index: 5;
+            padding: 14px 24px;
+            background: #ffbf00;
+            color: #b40020;
+            font-size: clamp(24px, 4vw, 46px);
+            font-weight: 900;
+            letter-spacing: .04em;
+            box-shadow: 0 18px 36px rgba(0, 0, 0, .28);
+        }
+
+        .hero-hours-bar {
+            background: #000 !important;
+            color: #f4f0e8 !important;
+            text-transform: uppercase;
+        }
+
+        .catalog-hero {
+            min-height: 460px;
+            padding: 70px 32px 64px !important;
+            background:
+                linear-gradient(90deg, rgba(0,0,0,.76), rgba(0,0,0,.26) 48%, rgba(0,0,0,.04)),
+                url('/images/hero/slide-1.jpg') center right / cover no-repeat;
+        }
+
+        .hero-copy-stack {
+            max-width: 430px;
+            padding-left: clamp(10px, 4vw, 58px) !important;
+        }
+
+        .hero-logo-lockup {
+            color: #fff !important;
+        }
+
+        .hero-logo-badge {
+            display: none;
+        }
+
+        .hero-logo-copy span {
+            color: rgba(255, 255, 255, .68) !important;
+        }
+
+        .hero-logo-copy strong {
+            color: #fff !important;
+            font-style: italic;
+            font-size: 30px !important;
+            text-shadow: 0 3px 14px rgba(255,255,255,.22);
+        }
+
+        .hero-copy-stack .eyebrow {
+            color: #ffbf00 !important;
+            font-size: 34px !important;
+            line-height: 1 !important;
+            letter-spacing: -.04em !important;
+            text-transform: none !important;
+            font-style: italic;
+        }
+
+        .catalog-hero .title {
+            max-width: 420px !important;
+            color: #fff !important;
+            font-size: clamp(68px, 9vw, 132px) !important;
+            line-height: .76 !important;
+            letter-spacing: -.07em !important;
+            text-transform: uppercase;
+            text-shadow: 0 10px 24px rgba(0, 0, 0, .65) !important;
+        }
+
+        .hero-text {
+            color: rgba(255, 255, 255, .82) !important;
+            max-width: 360px !important;
+        }
+
+        .hero-badges span,
+        .hero-cta {
+            background: rgba(0, 0, 0, .66) !important;
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, .24) !important;
+        }
+
+        .hero-cta {
+            background: #ffbf00 !important;
+            color: #250f02 !important;
+            border-color: #ffbf00 !important;
+        }
+
+        .hero-visual-stage {
+            display: none !important;
+        }
+
+        @media (max-width: 980px) {
+            .catalog-hero {
+                min-height: 520px;
+                background:
+                    linear-gradient(180deg, rgba(0,0,0,.88), rgba(0,0,0,.50) 50%, rgba(0,0,0,.08)),
+                    url('/images/hero/slide-1.jpg') center bottom / cover no-repeat;
+            }
+
+            .hero-showcase::after {
+                left: 16px;
+                right: 16px;
+                text-align: center;
             }
         }
     </style>
