@@ -138,9 +138,9 @@ class LocalResponder
                 ->where('is_available', true)
                 ->where('category', $category)
                 ->where('stock', '>', 0)
-                ->orderBy('price')
-                ->limit(6)
-                ->get(['name', 'price']);
+                ->orderBy('name')
+                ->limit(12)
+                ->get(['name', 'price', 'description', 'stock']);
         } catch (\Throwable) {
             return null;
         }
@@ -150,7 +150,7 @@ class LocalResponder
         }
 
         $lines = $items
-            ->map(fn (Product $product): string => "{$product->name}: S/ ".number_format((float) $product->price, 2, '.', ''))
+            ->map(fn (Product $product): string => $this->productLine($product))
             ->all();
 
         return "Algunos {$category} disponibles:\n- ".implode("\n- ", $lines)."\nQuieres ver el mas barato o una recomendacion?";
@@ -201,9 +201,9 @@ class LocalResponder
                 ->where('is_available', true)
                 ->where('stock', '>', 0)
                 ->orderBy('category')
-                ->orderBy('price')
-                ->limit(9)
-                ->get(['name', 'price', 'category']);
+                ->orderBy('name')
+                ->limit(18)
+                ->get(['name', 'price', 'category', 'description', 'stock']);
         } catch (\Throwable) {
             return null;
         }
@@ -217,9 +217,9 @@ class LocalResponder
 
         foreach ($groups as $category => $products) {
             $sample = $products
-                ->take(3)
-                ->map(fn (Product $product): string => "{$product->name} S/ ".number_format((float) $product->price, 2, '.', ''))
-                ->implode(', ');
+                ->take(6)
+                ->map(fn (Product $product): string => $this->productLine($product))
+                ->implode("\n  - ");
             $lines[] = ucfirst((string) $category).": {$sample}";
         }
 
@@ -231,6 +231,14 @@ class LocalResponder
         $brand = (string) config('chatbot.brand_name');
 
         return "Soy POLL-IA de {$brand}. Puedo ayudarte con productos, precios, pagos, delivery, horario, ubicacion y seguimiento de pedidos. Prueba preguntarme: \"que productos tienen\", \"cuales son sus pagos\" o \"donde estan ubicados\".";
+    }
+
+    private function productLine(Product $product): string
+    {
+        $description = trim((string) $product->description);
+        $descriptionText = $description !== '' ? " - {$description}" : '';
+
+        return "{$product->name}: S/ ".number_format((float) $product->price, 2, '.', '')." ({$product->stock} disponibles){$descriptionText}";
     }
 
     private function findMentionedProduct(string $normalized): ?Product

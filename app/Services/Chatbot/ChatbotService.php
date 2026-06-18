@@ -18,10 +18,15 @@ class ChatbotService
     {
         $system = $this->buildSystemPrompt($userName, $sessionId);
         [$provider, $model] = $this->resolveProviderAndModel();
+        $local = $this->local->reply($message);
+
+        if ($local && $this->shouldPreferLocal($message, $provider)) {
+            return $local;
+        }
 
         try {
             $text = match ($provider) {
-                'local' => $this->local->reply($message),
+                'local' => $local,
                 'ollama' => $this->ollama->respond($model, $system, $message),
                 default => $this->openai->respond($model, $system, $message),
             };
@@ -37,8 +42,6 @@ class ChatbotService
                 'session_id' => $sessionId,
                 'user_id' => auth()->id(),
             ]);
-
-            $local = $this->local->reply($message);
 
             return $local ?: $this->fallback();
         }
@@ -165,9 +168,9 @@ class ChatbotService
                 ->where('is_available', true)
                 ->where('stock', '>', 0)
                 ->orderBy('category')
-                ->orderBy('price')
-                ->limit(10)
-                ->get(['name', 'price', 'category', 'stock']);
+                ->orderBy('name')
+                ->limit(30)
+                ->get(['name', 'price', 'category', 'description', 'stock']);
         } catch (\Throwable) {
             return null;
         }
@@ -179,11 +182,30 @@ class ChatbotService
         return $products->map(function (Product $product): string {
             $category = trim((string) $product->category);
             $categoryText = $category !== '' ? $category : 'general';
+            $description = trim((string) $product->description);
+            $descriptionText = $description !== '' ? " | {$description}" : '';
 
             return "- {$product->name} | Categoria: {$categoryText} | Precio: S/ "
                 .number_format((float) $product->price, 2, '.', '')
-                ." | Stock: {$product->stock}";
+                ." | Stock: {$product->stock}{$descriptionText}";
         })->implode("\n");
+    }
+
+    private function shouldPreferLocal(string $message, string $provider): bool
+    {
+        if ($provider === 'local') {
+            return true;
+        }
+
+        $normalized = str((string) $message)->lower()->ascii()->toString();
+
+        foreach (['producto', 'productos', 'menu', 'carta', 'pollos', 'parrillas', 'bebidas', 'precio', 'precios', 'stock', 'disponible', 'disponibles', 'barato', 'economico', 'combo', 'combinar', 'recomienda'] as $needle) {
+            if (str_contains($normalized, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function fallback(): string

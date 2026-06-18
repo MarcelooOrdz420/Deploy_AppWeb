@@ -1204,25 +1204,6 @@ initClientSession();
         font-weight: 800;
     }
 
-    .pollia-suggestions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 0 14px 10px;
-        background: #fff6e8;
-    }
-
-    .pollia-suggestions button {
-        border: 1px solid rgba(255, 191, 0, .34) !important;
-        border-radius: 999px;
-        background: #fffaf0 !important;
-        color: #1b1108 !important;
-        padding: 8px 10px;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 850;
-    }
-
     .pollia-form {
         display: flex;
         gap: 8px;
@@ -1276,12 +1257,6 @@ initClientSession();
         <button id="polliaClose" type="button" class="pollia-close" aria-label="Cerrar">X</button>
     </div>
     <div id="polliaLog" class="pollia-log"></div>
-    <div class="pollia-suggestions">
-        <button type="button" data-pollia-preset="Que productos tienen disponibles?">Productos</button>
-        <button type="button" data-pollia-preset="Cuales son sus medios de pago?">Pagos</button>
-        <button type="button" data-pollia-preset="Cual es el horario de atencion?">Horario</button>
-        <button type="button" data-pollia-preset="Donde estan ubicados?">Ubicacion</button>
-    </div>
     <form id="polliaForm" class="pollia-form">
         <input id="polliaInput" type="text" maxlength="1200" autocomplete="off" placeholder="Escribe tu consulta..." aria-label="Mensaje para POLL-IA">
         <button id="polliaSend" type="submit" aria-label="Enviar">></button>
@@ -1298,7 +1273,6 @@ initClientSession();
     const log = document.getElementById('polliaLog');
     const statusEl = document.getElementById('polliaStatus');
     const sendBtn = document.getElementById('polliaSend');
-    const suggestions = document.querySelectorAll('[data-pollia-preset]');
 
     if (!launcher || !widget || !form || !input || !log) return;
 
@@ -1406,12 +1380,6 @@ initClientSession();
     form.addEventListener('submit', (event) => {
         event.preventDefault();
         sendMessage(input.value);
-    });
-    suggestions.forEach((btn) => {
-        btn.addEventListener('click', () => {
-            openWidget();
-            sendMessage(btn.getAttribute('data-pollia-preset') || '');
-        });
     });
 })();
 </script>
