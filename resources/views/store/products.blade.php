@@ -17,15 +17,6 @@
                 <p class="muted-main hero-text">
                     Pollo, parrilla y bebidas en una vitrina mas directa, mas viva y mas facil de comprar.
                 </p>
-                <div class="hero-badges">
-                    <span>Pollos</span>
-                    <span>Parrillas</span>
-                    <span>Bebidas</span>
-                </div>
-                <div class="hero-badges hero-badges-soft">
-                    <span id="heroProductsMetric">0 productos listos</span>
-                    <span id="heroAvailableMetric">0 disponibles hoy</span>
-                </div>
                 <a href="#productsGrid" class="hero-cta">Ver menu</a>
                 </div>
 
@@ -1101,6 +1092,51 @@
             background: #ffc20e;
             color: #271204;
             box-shadow: none;
+        }
+
+        /*
+         * Correcciones visuales solicitadas: el hero debe quedar limpio,
+         * sin chips que parezcan botones sin accion, y el carrito visible.
+         */
+        .hero-badges,
+        .hero-badges-soft {
+            display: none !important;
+        }
+
+        .hero-cta {
+            width: fit-content;
+            min-height: 44px;
+            padding: 12px 18px !important;
+            border: 0 !important;
+            border-radius: 999px !important;
+            background: linear-gradient(135deg, #ffcf3a 0%, #f2b705 52%, #d97904 100%) !important;
+            color: #1b1008 !important;
+            box-shadow: 0 14px 30px rgba(217, 121, 4, .28) !important;
+        }
+
+        .float-cart {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .float-cart-toggle {
+            min-height: 58px;
+            border: 1px solid rgba(255, 207, 58, .66) !important;
+            background: linear-gradient(135deg, #ffcf3a 0%, #f2b705 52%, #d97904 100%) !important;
+            color: #1b1008 !important;
+            box-shadow: 0 18px 42px rgba(0, 0, 0, .30) !important;
+        }
+
+        .float-cart-toggle *,
+        .float-cart-label,
+        .float-cart-count {
+            color: #1b1008 !important;
+        }
+
+        .float-cart-icon,
+        .float-cart-count {
+            background: rgba(255, 248, 236, .72) !important;
+            border-color: rgba(27, 16, 8, .16) !important;
         }
 
         .hero-visual-stage {

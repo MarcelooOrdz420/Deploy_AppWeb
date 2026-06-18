@@ -146,7 +146,7 @@ class LocalResponder
                 ->where('stock', '>', 0)
                 ->orderBy('name')
                 ->limit(12)
-                ->get(['name', 'price', 'description', 'stock']);
+                ->get(['name', 'price', 'description']);
         } catch (\Throwable) {
             return null;
         }
@@ -221,7 +221,7 @@ class LocalResponder
                 ->orderBy('category')
                 ->orderBy('name')
                 ->limit(18)
-                ->get(['name', 'price', 'category', 'description', 'stock']);
+                ->get(['name', 'price', 'category', 'description']);
         } catch (\Throwable) {
             return null;
         }
@@ -257,7 +257,7 @@ class LocalResponder
         $description = trim((string) $product->description);
         $descriptionText = $description !== '' ? " - {$description}" : '';
 
-        return "{$product->name} - S/ ".number_format((float) $product->price, 2, '.', '')." ({$product->stock} disponibles){$descriptionText}";
+        return "{$product->name} - S/ ".number_format((float) $product->price, 2, '.', '')."{$descriptionText}";
     }
 
     private function guidedComboSuggestion(): ?string
@@ -268,14 +268,14 @@ class LocalResponder
                 ->where('stock', '>', 0)
                 ->whereIn('category', ['pollos', 'parrillas'])
                 ->orderBy('price')
-                ->first(['name', 'price', 'category', 'description', 'stock']);
+                ->first(['name', 'price', 'category', 'description']);
 
             $drink = Product::query()
                 ->where('is_available', true)
                 ->where('stock', '>', 0)
                 ->where('category', 'bebidas')
                 ->orderBy('price')
-                ->first(['name', 'price', 'category', 'description', 'stock']);
+                ->first(['name', 'price', 'category', 'description']);
         } catch (\Throwable) {
             return null;
         }

@@ -20,7 +20,7 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        return response()->json($products);
+        return response()->json($products->map(fn (Product $product): array => $this->publicProductPayload($product))->values());
     }
 
     public function adminIndex(): JsonResponse
@@ -35,7 +35,7 @@ class ProductController extends Controller
 
     public function show(Product $product): JsonResponse
     {
-        return response()->json($product);
+        return response()->json($this->publicProductPayload($product));
     }
 
     public function store(Request $request): JsonResponse
@@ -127,5 +127,21 @@ class ProductController extends Controller
         }
 
         return $fallback;
+    }
+
+    private function publicProductPayload(Product $product): array
+    {
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'category' => $product->category,
+            'description' => $product->description,
+            'price' => $product->price,
+            'image_url' => $product->image_url,
+            'is_available' => (bool) $product->is_available,
+            'is_sold_out' => $product->is_sold_out,
+            'can_sell' => $product->can_sell,
+            'availability_label' => $product->availability_label,
+        ];
     }
 }

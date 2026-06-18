@@ -98,7 +98,8 @@ class ChatbotService
             'Solo responde sobre productos, pedidos, pagos, delivery, horarios, ubicacion, contacto y uso de la app/web.',
             'Si falta informacion, pide 1 o 2 datos concretos, por ejemplo codigo de tracking o correo.',
             'Si el usuario pide algo fuera del negocio, responde que no aplica y ofrece el contacto humano.',
-            'No inventes precios, stock, horarios ni datos de pago: usa el contexto disponible.',
+            'No inventes precios, disponibilidad, horarios ni datos de pago: usa el contexto disponible.',
+            'Nunca muestres cantidades de stock ni existencias exactas. Si un producto esta en el catalogo publico, solo puedes decir que esta disponible.',
             'No reveles ni solicites datos internos, administrativos, credenciales, tokens, claves, contrasenas, reportes internos, datos de clientes, direcciones privadas, DNI/RUC de clientes, correos privados ni configuracion del sistema.',
             'Para consultas de productos usa solo el catalogo publico incluido en este contexto.',
             "Horario: {$hours}.",
@@ -172,7 +173,7 @@ class ChatbotService
                 ->orderBy('category')
                 ->orderBy('name')
                 ->limit(30)
-                ->get(['name', 'price', 'category', 'description', 'stock']);
+                ->get(['name', 'price', 'category', 'description']);
         } catch (\Throwable) {
             return null;
         }
@@ -189,7 +190,7 @@ class ChatbotService
 
             return "- {$product->name} | Categoria: {$categoryText} | Precio: S/ "
                 .number_format((float) $product->price, 2, '.', '')
-                ." | Stock: {$product->stock}{$descriptionText}";
+                ." | Disponibilidad: disponible{$descriptionText}";
         })->implode("\n");
     }
 

@@ -31,9 +31,11 @@ class Producto {
         ? rawRating.toDouble()
         : double.tryParse((rawRating ?? '4.5').toString()) ?? 4.5;
     final rawStock = json['stock'];
+    final rawSoldOut = json['is_sold_out'];
+    final rawCanSell = json['can_sell'];
     final parsedStock = rawStock is num
         ? rawStock.toInt()
-        : int.tryParse((rawStock ?? '10').toString()) ?? 10;
+        : (rawSoldOut == true || rawCanSell == false ? 0 : 10);
 
     return Producto(
       id: (json['id'] as num).toInt(),

@@ -1065,3 +1065,58 @@ textarea,
 .slider-panel .eyebrow {
     color: var(--ed-gold-2) !important;
 }
+
+/* Header cleanup: separate user actions from navigation and remove noisy badges. */
+.topbar-inner {
+    grid-template-columns: minmax(320px, 1fr) minmax(360px, auto) !important;
+    gap: 24px !important;
+    align-items: center !important;
+}
+
+.topbar-actions {
+    align-items: flex-end !important;
+    gap: 12px !important;
+}
+
+.session-strip,
+.store-nav {
+    justify-content: flex-end !important;
+    gap: 10px !important;
+}
+
+.session-strip {
+    opacity: .98;
+}
+
+.store-nav a,
+.pill-btn,
+.pill-link,
+.user-pill {
+    min-height: 42px !important;
+    padding: 10px 15px !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+}
+
+.store-nav .nav-index,
+.session-strip .action-symbol {
+    display: none !important;
+}
+
+.cart-link {
+    width: 48px !important;
+    padding: 0 !important;
+}
+
+@media (max-width: 980px) {
+    .topbar-inner {
+        grid-template-columns: 1fr !important;
+    }
+
+    .topbar-actions,
+    .session-strip,
+    .store-nav {
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+    }
+}
