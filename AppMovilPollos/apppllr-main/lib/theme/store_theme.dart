@@ -74,8 +74,8 @@ class StoreTheme {
 
     return base.copyWith(
       textTheme: base.textTheme.apply(
-        bodyColor: const Color(0xFF000000),
-        displayColor: const Color(0xFF000000),
+        bodyColor: const Color(0xFFFFFAF0),
+        displayColor: const Color(0xFFFFFAF0),
       ),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
@@ -149,7 +149,7 @@ class StoreTheme {
       gradient: const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: <Color>[paper, paperSoft],
+        colors: <Color>[Color(0xFFFFFCF4), Color(0xFFFFF6DF)],
       ),
       boxShadow: const <BoxShadow>[
         BoxShadow(
@@ -168,7 +168,7 @@ class StoreTheme {
       gradient: const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: <Color>[paper, paperSoft],
+        colors: <Color>[Color(0xFFFFFCF4), Color(0xFFFFF6DF)],
       ),
     );
   }

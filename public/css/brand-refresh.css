@@ -351,3 +351,125 @@ main.page {
     border-color: rgba(255, 191, 0, .18) !important;
     box-shadow: 0 18px 38px rgba(0, 0, 0, .20) !important;
 }
+
+/*
+ * Contrast maintenance pass: keep admin/customer data surfaces readable.
+ * Dark sections keep light text, light cards/forms/tables force dark text.
+ */
+.surface,
+.panel,
+.card,
+.table-shell,
+.product-card,
+.tool-card,
+.catalog-tools,
+.float-cart-panel,
+.product-modal-card,
+.login-card,
+.metric-card,
+.chart-card,
+.module-summary,
+.field-card,
+.payment-brief,
+.proof-panel,
+.upload-box,
+.toggle-row {
+    color: #1b1108 !important;
+}
+
+.surface *,
+.panel *,
+.card *,
+.table-shell *,
+.product-card *,
+.tool-card *,
+.catalog-tools *,
+.float-cart-panel *,
+.product-modal-card *,
+.login-card *,
+.metric-card *,
+.chart-card *,
+.module-summary *,
+.field-card *,
+.payment-brief *,
+.proof-panel *,
+.upload-box *,
+.toggle-row * {
+    color: inherit;
+}
+
+.topbar,
+header,
+.login-story,
+.catalog-hero,
+.hero,
+.summary-total-box,
+.bottom-pay-bar {
+    color: #fffaf0 !important;
+}
+
+.topbar *,
+header *,
+.login-story *,
+.catalog-hero *,
+.hero *,
+.summary-total-box *,
+.bottom-pay-bar * {
+    color: inherit;
+}
+
+.store-nav a.active,
+.primary-link,
+.btn-main,
+button[type="submit"],
+.menu-tab.active,
+.cart-count,
+.value,
+.bar-fill {
+    color: #160b02 !important;
+}
+
+input,
+select,
+textarea,
+.input-main,
+.select-main,
+.textarea-main,
+td,
+th {
+    color: #1b1108 !important;
+}
+
+.muted,
+.muted-main,
+.section-subtitle,
+.section-copy,
+.helper-text,
+.field-help,
+.proof-preview-note,
+.title-sub {
+    color: #4f3924 !important;
+}
+
+.msg.success,
+.tag.payment-verified,
+.status-badge.ok {
+    color: #166534 !important;
+    background: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+}
+
+.msg.error,
+.tag.payment-rejected,
+.status-badge.alert {
+    color: #b91c1c !important;
+    background: #fef2f2 !important;
+    border-color: #fecaca !important;
+}
+
+.tag.payment-pending,
+.tag.payment-reported {
+    color: #92400e !important;
+    background: #fffbeb !important;
+    border-color: #fde68a !important;
+}

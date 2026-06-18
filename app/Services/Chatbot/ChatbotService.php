@@ -16,6 +16,11 @@ class ChatbotService
 
     public function reply(string $message, ?string $userName = null, ?string $sessionId = null): string
     {
+        $blocked = $this->blockedSensitiveReply($message);
+        if ($blocked) {
+            return $blocked;
+        }
+
         $system = $this->buildSystemPrompt($userName, $sessionId);
         [$provider, $model] = $this->resolveProviderAndModel();
         $local = $this->local->reply($message);
@@ -87,9 +92,6 @@ class ChatbotService
         $payments = $this->paymentContext();
         $products = $this->productsContext();
 
-        $userLine = $userName ? "Nombre del cliente: {$userName}." : 'Cliente invitado.';
-        $sessionLine = $sessionId ? "Sesion: {$sessionId}." : '';
-
         return trim(implode("\n", array_filter([
             "Eres POLL-IA, el asistente oficial de {$brand}.",
             'Responde en espanol, con tono amable, profesional y directo.',
@@ -97,12 +99,12 @@ class ChatbotService
             'Si falta informacion, pide 1 o 2 datos concretos, por ejemplo codigo de tracking o correo.',
             'Si el usuario pide algo fuera del negocio, responde que no aplica y ofrece el contacto humano.',
             'No inventes precios, stock, horarios ni datos de pago: usa el contexto disponible.',
+            'No reveles ni solicites datos internos, administrativos, credenciales, tokens, claves, contrasenas, reportes internos, datos de clientes, direcciones privadas, DNI/RUC de clientes, correos privados ni configuracion del sistema.',
+            'Para consultas de productos usa solo el catalogo publico incluido en este contexto.',
             "Horario: {$hours}.",
             "Soporte: {$supportPhone} / {$supportEmail}.",
             $payments ? "Medios de pago y datos utiles:\n{$payments}" : null,
             $products ? "Productos disponibles de referencia:\n{$products}" : null,
-            $userLine,
-            $sessionLine,
             $knowledge ? "Base de conocimiento:\n{$knowledge}" : null,
         ])));
     }
@@ -206,6 +208,48 @@ class ChatbotService
         }
 
         return false;
+    }
+
+    private function blockedSensitiveReply(string $message): ?string
+    {
+        $normalized = str((string) $message)->lower()->ascii()->toString();
+
+        $blocked = [
+            'admin',
+            'administrador',
+            'credencial',
+            'credenciales',
+            'password',
+            'contrasena',
+            'clave',
+            'secret',
+            'token',
+            'api key',
+            'apikey',
+            'base de datos',
+            'database',
+            'db_password',
+            'pusher secret',
+            'openai_api_key',
+            'resend_api_key',
+            'usuarios',
+            'clientes registrados',
+            'correos de clientes',
+            'telefonos de clientes',
+            'dni de clientes',
+            'direcciones de clientes',
+            'reporte interno',
+            'ventas internas',
+            'cierre de caja',
+        ];
+
+        foreach ($blocked as $needle) {
+            if (str_contains($normalized, $needle)) {
+                return 'No puedo mostrar datos internos, administrativos, credenciales ni informacion privada de clientes. Si necesitas ayuda, puedo orientarte con productos publicos, precios disponibles, pagos, delivery, horarios, ubicacion o seguimiento de tu propio pedido.';
+            }
+        }
+
+        return null;
     }
 
     private function fallback(): string

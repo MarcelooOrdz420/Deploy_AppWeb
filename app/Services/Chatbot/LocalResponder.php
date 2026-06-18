@@ -11,6 +11,10 @@ class LocalResponder
     {
         $normalized = $this->normalize($message);
 
+        if ($this->isSensitiveRequest($normalized)) {
+            return 'No puedo mostrar datos internos, administrativos, credenciales ni informacion privada de clientes. Puedo ayudarte con productos publicos, precios disponibles, pagos, delivery, horarios, ubicacion o seguimiento de tu propio pedido.';
+        }
+
         if ($this->matchesAny($normalized, ['ubicacion', 'direccion', 'donde', 'mapa', 'como llegar', 'google maps'])) {
             return $this->knowledgeSection('Ubicacion')
                 ?: 'Estamos en el local principal configurado para Pollos y Parrillas El Dorado. Puedes revisar la seccion Ubicacion de la app para abrir el mapa.';
@@ -169,7 +173,7 @@ class LocalResponder
         }
 
         if (! $product) {
-            return $this->cheapestProducts();
+            return $this->guidedComboSuggestion();
         }
 
         $suggestions = [];
@@ -178,12 +182,20 @@ class LocalResponder
         if (in_array($category, ['pollos', 'parrillas'], true)) {
             $drink = (clone $available)->where('category', 'bebidas')->orderBy('price')->first();
             if ($drink) {
-                $suggestions[] = "{$drink->name} (bebida) - S/ ".number_format((float) $drink->price, 2, '.', '');
+                $suggestions[] = $this->productLine($drink);
+            }
+
+            $side = (clone $available)
+                ->whereNotIn('category', ['pollos', 'parrillas', 'bebidas'])
+                ->orderBy('price')
+                ->first();
+            if ($side) {
+                $suggestions[] = $this->productLine($side);
             }
         } elseif ($category === 'bebidas') {
             $main = (clone $available)->whereIn('category', ['pollos', 'parrillas'])->orderBy('price')->first();
             if ($main) {
-                $suggestions[] = "{$main->name} ({$main->category}) - S/ ".number_format((float) $main->price, 2, '.', '');
+                $suggestions[] = $this->productLine($main);
             }
         }
 
@@ -191,7 +203,7 @@ class LocalResponder
             return "Para combinar con {$product->name}, una bebida fria o una guarnicion va muy bien. Prefieres algo personal o familiar?";
         }
 
-        return "Para combinar con {$product->name}, te recomiendo:\n- ".implode("\n- ", $suggestions);
+        return "Para combinar con {$product->name}, te recomiendo:\n- ".implode("\n- ", $suggestions)."\nSi me dices si quieres algo personal, familiar o economico, puedo ajustar mejor la combinacion.";
     }
 
     private function menuOverview(): ?string
@@ -223,7 +235,7 @@ class LocalResponder
             $lines[] = ucfirst((string) $category).": {$sample}";
         }
 
-        return "Tenemos estas opciones disponibles:\n- ".implode("\n- ", $lines)."\nQuieres que te recomiende algo barato, familiar o por categoria?";
+        return "Tenemos estas opciones disponibles:\n- ".implode("\n- ", $lines)."\nPuedo ayudarte a elegir una combinacion personal, familiar o economica.";
     }
 
     private function generalHelp(): string
@@ -239,6 +251,38 @@ class LocalResponder
         $descriptionText = $description !== '' ? " - {$description}" : '';
 
         return "{$product->name}: S/ ".number_format((float) $product->price, 2, '.', '')." ({$product->stock} disponibles){$descriptionText}";
+    }
+
+    private function guidedComboSuggestion(): ?string
+    {
+        try {
+            $main = Product::query()
+                ->where('is_available', true)
+                ->where('stock', '>', 0)
+                ->whereIn('category', ['pollos', 'parrillas'])
+                ->orderBy('price')
+                ->first(['name', 'price', 'category', 'description', 'stock']);
+
+            $drink = Product::query()
+                ->where('is_available', true)
+                ->where('stock', '>', 0)
+                ->where('category', 'bebidas')
+                ->orderBy('price')
+                ->first(['name', 'price', 'category', 'description', 'stock']);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (! $main) {
+            return $this->cheapestProducts();
+        }
+
+        $lines = [$this->productLine($main)];
+        if ($drink) {
+            $lines[] = $this->productLine($drink);
+        }
+
+        return "Para empezar, te sugiero esta combinacion:\n- ".implode("\n- ", $lines)."\nTambien puedo ayudarte a elegir por presupuesto, cantidad de personas o antojo.";
     }
 
     private function findMentionedProduct(string $normalized): ?Product
@@ -335,6 +379,41 @@ class LocalResponder
         foreach ($needles as $needle) {
             $needle = $this->normalize((string) $needle);
             if ($needle !== '' && Str::contains($normalized, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isSensitiveRequest(string $normalized): bool
+    {
+        foreach ([
+            'admin',
+            'administrador',
+            'credencial',
+            'credenciales',
+            'password',
+            'contrasena',
+            'clave',
+            'secret',
+            'token',
+            'api key',
+            'apikey',
+            'base de datos',
+            'database',
+            'usuario',
+            'usuarios',
+            'clientes registrados',
+            'correos de clientes',
+            'telefonos de clientes',
+            'dni de clientes',
+            'direcciones de clientes',
+            'reporte interno',
+            'ventas internas',
+            'cierre de caja',
+        ] as $needle) {
+            if (Str::contains($normalized, $needle)) {
                 return true;
             }
         }
