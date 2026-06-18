@@ -166,7 +166,12 @@ class LocalResponder
 
     private function comboSuggestion(string $normalized): ?string
     {
-        $product = $this->findMentionedProduct($normalized);
+        $mentionedProducts = $this->findMentionedProducts($normalized);
+        if (count($mentionedProducts) >= 2) {
+            return $this->selectedCombinationReply($mentionedProducts, $normalized);
+        }
+
+        $product = $mentionedProducts[0] ?? $this->findMentionedProduct($normalized);
 
         try {
             $available = Product::query()
@@ -294,19 +299,49 @@ class LocalResponder
             ."\n\nTambien puedo ayudarte a elegir por presupuesto, cantidad de personas o antojo.";
     }
 
+    private function selectedCombinationReply(array $products, string $normalized): string
+    {
+        $products = array_values(array_slice($products, 0, 4));
+        $lines = array_map(fn (Product $product): string => "â€¢ ".$this->productLine($product), $products);
+        $total = array_reduce(
+            $products,
+            fn (float $carry, Product $product): float => $carry + (float) $product->price,
+            0.0
+        );
+
+        $contactNote = preg_match('/\b9\d{8}\b/', $normalized)
+            ? "\n\nVeo que tambien escribiste un numero de contacto. Usalo o confirmalo en el checkout para evitar errores de entrega."
+            : '';
+
+        return "Buena eleccion. Tu combinacion quedaria asi:\n"
+            .implode("\n", $lines)
+            ."\n\nTotal referencial: S/ ".number_format($total, 2, '.', '')
+            ."\n\nSi estas conforme, agregalos al carrito desde la tienda y continua con el pago."
+            .$contactNote;
+    }
+
     private function findMentionedProduct(string $normalized): ?Product
+    {
+        return $this->findMentionedProducts($normalized)[0] ?? null;
+    }
+
+    /**
+     * Detects product mentions with light fuzzy matching, so phrases like
+     * "combo familiar + inca cola" match "Mega Combo Familiar" and "Inca Kola".
+     */
+    private function findMentionedProducts(string $normalized): array
     {
         try {
             $candidates = Product::query()
                 ->where('is_available', true)
+                ->where('stock', '>', 0)
                 ->limit(80)
-                ->get(['id', 'name', 'category', 'price']);
+                ->get(['id', 'name', 'category', 'price', 'description']);
         } catch (\Throwable) {
-            return null;
+            return [];
         }
 
-        $best = null;
-        $bestLen = 0;
+        $matches = [];
 
         foreach ($candidates as $product) {
             $name = $this->normalize($product->name);
@@ -315,15 +350,59 @@ class LocalResponder
             }
 
             if (Str::contains($normalized, $name) || Str::contains($name, $normalized)) {
-                $len = strlen($name);
-                if ($len > $bestLen) {
-                    $best = $product;
-                    $bestLen = $len;
-                }
+                $matches[] = ['score' => 100 + strlen($name), 'product' => $product];
+                continue;
+            }
+
+            $score = $this->productMentionScore($normalized, $name);
+            if ($score >= 2) {
+                $matches[] = ['score' => $score, 'product' => $product];
             }
         }
 
-        return $best;
+        usort($matches, fn (array $a, array $b): int => $b['score'] <=> $a['score']);
+
+        $products = [];
+        $seen = [];
+        foreach ($matches as $match) {
+            $product = $match['product'];
+            if (isset($seen[$product->id])) {
+                continue;
+            }
+            $seen[$product->id] = true;
+            $products[] = $product;
+        }
+
+        return $products;
+    }
+
+    private function productMentionScore(string $message, string $productName): int
+    {
+        $words = preg_split('/\s+/', $productName) ?: [];
+        $words = array_values(array_filter($words, function (string $word): bool {
+            return strlen($word) >= 4 && ! in_array($word, [
+                'brasa',
+                'personal',
+                'tradicional',
+                'bebida',
+                'helada',
+                'papas',
+                'ensalada',
+            ], true);
+        }));
+
+        if (! $words) {
+            return 0;
+        }
+
+        $score = 0;
+        foreach ($words as $word) {
+            if (Str::contains($message, $word)) {
+                $score++;
+            }
+        }
+
+        return $score;
     }
 
     private function knowledgeSection(string $title): ?string
@@ -378,6 +457,7 @@ class LocalResponder
     {
         $text = Str::lower(trim($text));
         $text = Str::of($text)->ascii()->toString();
+        $text = str_replace('kola', 'cola', $text);
         $text = preg_replace('/\\s+/', ' ', $text);
 
         return trim((string) $text);
