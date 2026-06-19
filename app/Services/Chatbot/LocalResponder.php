@@ -188,6 +188,13 @@ class LocalResponder
         $suggestions = [];
         $category = Str::lower((string) $product->category);
 
+        if (in_array($category, ['pollos', 'parrillas'], true) && $this->mentionsDrink($normalized)) {
+            $drink = $this->requestedDrinkProduct($normalized);
+            if ($drink) {
+                return $this->selectedCombinationReply([$product, $drink], $normalized);
+            }
+        }
+
         if (in_array($category, ['pollos', 'parrillas'], true)) {
             $drink = (clone $available)->where('category', 'bebidas')->orderBy('price')->first();
             if ($drink) {
@@ -356,6 +363,54 @@ class LocalResponder
         }
 
         return min(20, max(1, $quantity));
+    }
+
+    private function mentionsDrink(string $normalized): bool
+    {
+        return $this->matchesAny($normalized, [
+            'gaseosa',
+            'gaseosas',
+            'bebida',
+            'bebidas',
+            'coca cola',
+            'inca cola',
+            'sprite',
+        ]);
+    }
+
+    private function requestedDrinkProduct(string $normalized): ?Product
+    {
+        try {
+            $drinks = Product::query()
+                ->where('is_available', true)
+                ->where('stock', '>', 0)
+                ->where('category', 'bebidas')
+                ->orderBy('price')
+                ->limit(30)
+                ->get(['id', 'name', 'category', 'price', 'description']);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $best = null;
+        $bestScore = 0;
+
+        foreach ($drinks as $drink) {
+            $name = $this->normalize($drink->name);
+            $score = $this->productMentionScore($normalized, $name);
+
+            if ($this->matchesAny($normalized, ['gaseosa', 'gaseosas', 'bebida', 'bebidas'])
+                && $this->matchesAny($name, ['coca cola', 'inca cola', 'sprite', 'gaseosa'])) {
+                $score += 2;
+            }
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $drink;
+            }
+        }
+
+        return $bestScore > 0 ? $best : null;
     }
 
     private function findMentionedProduct(string $normalized): ?Product

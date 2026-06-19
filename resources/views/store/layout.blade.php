@@ -1375,7 +1375,7 @@ initClientSession();
 
         function formatInline(value) {
             return escapeHtml(value).replace(
-                /(\/(?:login|register|carrito)(?:\?email=[A-Za-z0-9._%+\-@]+)?)/g,
+                /(\/(?:login|register|carrito)(?:\?[A-Za-z0-9._%+\-@=&/%]+)?)/g,
                 '<a href="$1" style="color:#7a2f00;font-weight:950;text-decoration:underline;">$1</a>'
             );
         }
@@ -1419,6 +1419,8 @@ initClientSession();
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
             .replace(/kola/g, 'cola')
+            .replace(/(\d+)\s*(ml|l)\b/g, '$1$2')
+            .replace(/[^a-z0-9/.]+/g, ' ')
             .replace(/\s+/g, ' ');
     }
 
@@ -1483,7 +1485,7 @@ initClientSession();
 
     async function capturePendingCartFromReply(reply) {
         const text = String(reply || '');
-        if (!/(combinacion|eleccion|sugiero)/i.test(text)) return;
+        if (!/(buena eleccion|tu combinacion quedaria|total referencial)/i.test(text)) return;
 
         const products = await publicProducts();
         if (!products.length) return;

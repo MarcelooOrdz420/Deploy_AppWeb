@@ -106,7 +106,7 @@ class ChatbotController
                 'status' => 'login_required',
                 'registered' => true,
                 'authenticated' => false,
-                'login_url' => '/login?email='.rawurlencode($email),
+                'login_url' => '/login?email='.rawurlencode($email).'&next='.rawurlencode('/carrito'),
                 'cart_url' => '/carrito',
                 'message' => 'Ese correo ya tiene cuenta. Guarde la combinacion en este navegador; inicia sesion y luego entra al carrito para finalizar la compra.',
             ]);
@@ -116,7 +116,7 @@ class ChatbotController
             'status' => 'registration_required',
             'registered' => false,
             'authenticated' => false,
-            'register_url' => '/register?email='.rawurlencode($email),
+            'register_url' => '/register?email='.rawurlencode($email).'&next='.rawurlencode('/carrito'),
             'cart_url' => '/carrito',
             'message' => 'No encontre una cuenta con ese correo. Guarde la combinacion en este navegador; crea tu cuenta para convertirla en pedido real.',
         ]);

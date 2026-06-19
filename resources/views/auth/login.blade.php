@@ -442,6 +442,17 @@ try {
     if (email && form?.email) form.email.value = email;
 } catch {}
 
+function redirectAfterAuth(user) {
+    if (user && user.role === 'admin') return '/admin/panel';
+
+    try {
+        const next = new URLSearchParams(window.location.search).get('next');
+        if (next && next.startsWith('/') && !next.startsWith('//')) return next;
+    } catch {}
+
+    return '/productos';
+}
+
 function loadResetPending() {
     try {
         const data = JSON.parse(localStorage.getItem(RESET_PENDING_KEY) || 'null');
@@ -525,7 +536,7 @@ form.addEventListener('submit', async (e) => {
         }
 
         setSessionFromAuth(data);
-        window.location.href = data.user && data.user.role === 'admin' ? '/admin/panel' : '/productos';
+        window.location.href = redirectAfterAuth(data.user);
     } catch {
         msg.textContent = 'No se pudo conectar con el servidor.';
     }
@@ -595,7 +606,7 @@ window.handleGoogleCredential = async (response) => {
         }
 
         setSessionFromAuth(data);
-        window.location.href = '/productos';
+        window.location.href = redirectAfterAuth(data.user);
     } catch {
         msg.textContent = 'No se pudo conectar con el servidor.';
     }
