@@ -14,14 +14,14 @@ class ChatbotService
     ) {
     }
 
-    public function reply(string $message, ?string $userName = null, ?string $sessionId = null): string
+    public function reply(string $message, ?string $userName = null, ?string $sessionId = null, ?string $draftContext = null): string
     {
         $blocked = $this->blockedSensitiveReply($message);
         if ($blocked) {
             return $blocked;
         }
 
-        $system = $this->buildSystemPrompt($userName, $sessionId);
+        $system = $this->buildSystemPrompt($userName, $sessionId, $draftContext);
         [$provider, $model] = $this->resolveProviderAndModel();
         $local = $this->local->reply($message);
 
@@ -82,7 +82,7 @@ class ChatbotService
         ];
     }
 
-    private function buildSystemPrompt(?string $userName, ?string $sessionId): string
+    private function buildSystemPrompt(?string $userName, ?string $sessionId, ?string $draftContext = null): string
     {
         $brand = (string) config('chatbot.brand_name');
         $supportPhone = (string) config('chatbot.support_phone');
@@ -97,6 +97,7 @@ class ChatbotService
             'Responde en espanol, con tono amable, profesional y directo.',
             'Solo responde sobre productos, pedidos, pagos, delivery, horarios, ubicacion, contacto y uso de la app/web.',
             'Si falta informacion, pide 1 o 2 datos concretos, por ejemplo codigo de tracking o correo.',
+            'Si hay un pedido temporal en contexto, no vuelvas a preguntar esos mismos productos o datos. Solo pide lo que falte.',
             'Si el usuario pide algo fuera del negocio, responde que no aplica y ofrece el contacto humano.',
             'No inventes precios, disponibilidad, horarios ni datos de pago: usa el contexto disponible.',
             'Nunca muestres cantidades de stock ni existencias exactas. Si un producto esta en el catalogo publico, solo puedes decir que esta disponible.',
@@ -106,6 +107,7 @@ class ChatbotService
             "Soporte: {$supportPhone} / {$supportEmail}.",
             $payments ? "Medios de pago y datos utiles:\n{$payments}" : null,
             $products ? "Productos disponibles de referencia:\n{$products}" : null,
+            $draftContext ? "Pedido temporal ya indicado por el cliente:\n{$draftContext}" : null,
             $knowledge ? "Base de conocimiento:\n{$knowledge}" : null,
         ])));
     }

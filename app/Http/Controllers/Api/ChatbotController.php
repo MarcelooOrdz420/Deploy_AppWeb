@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Events\ChatbotReplySent;
 use App\Models\User;
 use App\Services\CartRecoveryService;
+use App\Services\Chatbot\ChatOrderDraftService;
 use App\Services\Chatbot\ChatbotService;
 use App\Services\JwtService;
 use Illuminate\Broadcasting\Channel;
@@ -44,11 +45,22 @@ class ChatbotController
             $channel = new Channel($publicChannelName);
         }
 
-        $reply = $this->chatbot->reply(
+        $draftResult = app(ChatOrderDraftService::class)->capture(
             message: $data['message'],
-            userName: $user?->name,
-            sessionId: $sessionId,
+            user: $user,
+            guestSession: $sessionId,
         );
+
+        if (($draftResult['order_activity'] ?? false) && ! empty($draftResult['reply'])) {
+            $reply = (string) $draftResult['reply'];
+        } else {
+            $reply = $this->chatbot->reply(
+                message: $data['message'],
+                userName: $user?->name,
+                sessionId: $sessionId,
+                draftContext: app(ChatOrderDraftService::class)->contextFor($user, $sessionId),
+            );
+        }
 
         broadcast(new ChatbotReplySent($channel, $reply, $sessionId));
 
@@ -91,6 +103,7 @@ class ChatbotController
                 items: $data['items'],
                 source: 'pollia',
             );
+            app(ChatOrderDraftService::class)->markConverted($authUser, $data['guest_session'] ?? null);
 
             return response()->json([
                 'status' => 'ready_to_checkout',
