@@ -1493,10 +1493,11 @@ initClientSession();
 
         text.split(/\r?\n/).forEach((raw) => {
             const line = raw.replace(/^[-*•â€¢\s]+/, '').trim();
-            const match = line.match(/^(.+?)\s+-\s+S\/\s*\d/i);
+            const match = line.match(/^(?:(\d+)\s*x\s*)?(.+?)\s+-\s+S\/\s*\d/i);
             if (!match) return;
 
-            const product = byName.get(normalizeProductName(match[1]));
+            const qty = Math.max(1, Math.min(20, Number(match[1] || 1)));
+            const product = byName.get(normalizeProductName(match[2]));
             if (!product || product.can_sell === false || product.is_sold_out) return;
 
             items.push({
@@ -1504,7 +1505,7 @@ initClientSession();
                 name: product.name,
                 category: product.category || '',
                 price: Number(product.price || 0),
-                qty: 1,
+                qty,
                 image_url: product.image_url || '',
             });
         });

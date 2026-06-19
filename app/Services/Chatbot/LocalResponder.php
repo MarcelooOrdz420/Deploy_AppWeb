@@ -308,6 +308,20 @@ class LocalResponder
             fn (float $carry, Product $product): float => $carry + (float) $product->price,
             0.0
         );
+        $items = array_map(fn (Product $product): array => [
+            'product' => $product,
+            'qty' => $this->quantityForProduct($normalized, $product),
+        ], $products);
+        $lines = array_map(function (array $item): string {
+            $qtyText = $item['qty'] > 1 ? "{$item['qty']} x " : '';
+
+            return "â€¢ ".$qtyText.$this->productLine($item['product']);
+        }, $items);
+        $total = array_reduce(
+            $items,
+            fn (float $carry, array $item): float => $carry + ((float) $item['product']->price * (int) $item['qty']),
+            0.0
+        );
 
         $contactNote = preg_match('/\b9\d{8}\b/', $normalized)
             ? "\n\nVeo que tambien escribiste un numero de contacto. Usalo o confirmalo en el checkout para evitar errores de entrega."
@@ -318,6 +332,30 @@ class LocalResponder
             ."\n\nTotal referencial: S/ ".number_format($total, 2, '.', '')
             ."\n\nSi estas conforme, agregalos al carrito desde la tienda y continua con el pago."
             .$contactNote;
+    }
+
+    private function quantityForProduct(string $normalized, Product $product): int
+    {
+        $category = Str::lower((string) $product->category);
+        $name = $this->normalize($product->name);
+        $words = $this->meaningfulProductWords($name);
+        $quantity = 1;
+
+        if ($category === 'bebidas') {
+            foreach (['gaseosas?', 'bebidas?', 'cocas?', 'colas?', 'coca cola', 'inca cola', 'sprite', 'aguas?'] as $term) {
+                if (preg_match('/\b([1-9]\d?)\s+(?:de\s+)?'.$term.'\b/u', $normalized, $match)) {
+                    $quantity = max($quantity, (int) $match[1]);
+                }
+            }
+        }
+
+        foreach ($words as $word) {
+            if (preg_match('/\b([1-9]\d?)\s*(?:x\s*)?(?:\w+\s+){0,3}'.preg_quote($word, '/').'\b/u', $normalized, $match)) {
+                $quantity = max($quantity, (int) $match[1]);
+            }
+        }
+
+        return min(20, max(1, $quantity));
     }
 
     private function findMentionedProduct(string $normalized): ?Product
@@ -378,18 +416,15 @@ class LocalResponder
 
     private function productMentionScore(string $message, string $productName): int
     {
-        $words = preg_split('/\s+/', $productName) ?: [];
-        $words = array_values(array_filter($words, function (string $word): bool {
-            return strlen($word) >= 4 && ! in_array($word, [
-                'brasa',
-                'personal',
-                'tradicional',
-                'bebida',
-                'helada',
-                'papas',
-                'ensalada',
-            ], true);
-        }));
+        if (
+            preg_match('/\b\d+(?:\.\d+)?(?:ml|l)\b/u', $message)
+            && preg_match('/\b\d+(?:\.\d+)?(?:ml|l)\b/u', $productName, $unit)
+            && ! Str::contains($message, $unit[0])
+        ) {
+            return 0;
+        }
+
+        $words = $this->meaningfulProductWords($productName);
 
         if (! $words) {
             return 0;
@@ -403,6 +438,27 @@ class LocalResponder
         }
 
         return $score;
+    }
+
+    private function meaningfulProductWords(string $productName): array
+    {
+        $words = preg_split('/\s+/', $productName) ?: [];
+
+        return array_values(array_filter($words, function (string $word): bool {
+            return strlen($word) >= 4 && ! in_array($word, [
+                'brasa',
+                'personal',
+                'tradicional',
+                'bebida',
+                'bebidas',
+                'helada',
+                'papas',
+                'ensalada',
+                'gaseosa',
+                'gaseosas',
+                'pollo',
+            ], true);
+        }));
     }
 
     private function knowledgeSection(string $title): ?string
@@ -458,6 +514,8 @@ class LocalResponder
         $text = Str::lower(trim($text));
         $text = Str::of($text)->ascii()->toString();
         $text = str_replace('kola', 'cola', $text);
+        $text = preg_replace('/(\d+)\s*(ml|l)\b/u', '$1$2', (string) $text);
+        $text = preg_replace('/[^a-z0-9\/.]+/u', ' ', (string) $text);
         $text = preg_replace('/\\s+/', ' ', $text);
 
         return trim((string) $text);
