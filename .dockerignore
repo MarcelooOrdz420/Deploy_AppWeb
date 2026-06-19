@@ -13,7 +13,7 @@ storage/framework/views/*
 .env.*
 !.env.example
 !.env.production.example
-# public/storage
+public/storage
 # public/build
 public/hot
 README.md
