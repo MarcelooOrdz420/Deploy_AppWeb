@@ -858,11 +858,16 @@ class _PaymentPageState extends State<PaymentPage> {
 
   Widget _payTile(String title, PayMethod method, IconData icon) {
     return RadioListTile<PayMethod>(
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       value: method,
       groupValue: _method,
       onChanged: (value) => setState(() => _method = value!),
-      title: Text(title),
+      title: Text(
+        title,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
       secondary: Icon(icon, color: Colors.orange),
     );
   }
@@ -916,9 +921,18 @@ class _PaymentPageState extends State<PaymentPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(color: Colors.black54)),
+          Text(
+            subtitle,
+            style: const TextStyle(color: Colors.black54, height: 1.35),
+            softWrap: true,
+          ),
           const SizedBox(height: 10),
           Center(child: child),
         ],

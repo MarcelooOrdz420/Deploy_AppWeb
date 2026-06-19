@@ -369,8 +369,23 @@
         .processing-image{width:96px;height:96px;object-fit:contain;border-radius:18px;border:1px solid #ffc999;background:#fff}
         .processing-card h3{margin:12px 0 6px;color:#8d3d00}
         .processing-card p{margin:0;color:#6f431f}
-        @media (max-width:1120px){.checkout-board,.checkout-hero,.payment-stage-layout{grid-template-columns:1fr}.checkout-sidebar{position:static}.pay-stage-grid,.extended-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-        @media (max-width:760px){.checkout-hero-panel,.form-grid,.extended-grid,.summary-note-grid,.pay-stage-grid,.lookup-row{grid-template-columns:1fr}.summary-panel-head,.cart-item-card{grid-template-columns:1fr}.cart-item-actions{justify-items:start}.choice-cluster{flex-direction:column}}
+        .checkout-shell *{min-width:0}
+        .checkout-shell .title,.section-title,.hero-kpi-card strong,.cart-item-name,.pay-tile strong,.payment-brief strong{overflow-wrap:anywhere;line-height:1.12}
+        .checkout-shell .title{font-size:clamp(30px,4.8vw,58px)}
+        .section-title{font-size:clamp(22px,2.6vw,34px)}
+        .checkout-board{grid-template-columns:minmax(330px,.82fr) minmax(0,1.18fr)}
+        .checkout-flow{min-width:0}
+        .form-stage{overflow:hidden}
+        .field-card,.proof-panel,.payment-brief{min-width:0}
+        .pay-stage-grid{grid-template-columns:repeat(2,minmax(220px,1fr))}
+        .pay-tile{min-height:118px;align-items:center}
+        .pay-tile strong{font-size:clamp(18px,2vw,24px)}
+        .pay-tile small{overflow-wrap:break-word}
+        .payment-stage-layout{grid-template-columns:minmax(220px,.86fr) minmax(260px,1.14fr);align-items:start}
+        .choice-cluster{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+        .choice-chip{white-space:normal;line-height:1.25}
+        @media (max-width:1120px){.checkout-board,.checkout-hero,.payment-stage-layout{grid-template-columns:1fr}.checkout-sidebar{position:static}.extended-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pay-stage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media (max-width:760px){.checkout-shell{gap:14px}.checkout-hero{padding:16px}.checkout-hero-panel,.form-grid,.extended-grid,.summary-note-grid,.lookup-row{grid-template-columns:1fr}.summary-panel-head,.cart-item-card{grid-template-columns:1fr}.cart-item-actions{justify-items:start}.choice-cluster{grid-template-columns:1fr}.pay-stage-grid{grid-template-columns:1fr}.pay-tile{grid-template-columns:auto minmax(0,1fr);min-height:auto;padding:14px}.summary-total-box strong{font-size:24px}.checkout-shell .title{font-size:clamp(28px,8vw,42px)}}
         .hero-kpi-card strong,
         .pay-tile strong{color:var(--panel-ink)}
     </style>

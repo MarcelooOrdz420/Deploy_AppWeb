@@ -405,8 +405,10 @@ class _HomeTabState extends State<HomeTab> {
                     const SizedBox(height: 4),
                     const Text(
                       'Pollos y Parrillas "El Dorado"',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 22,
                         fontStyle: FontStyle.italic,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFFFFF8ED),
@@ -415,6 +417,8 @@ class _HomeTabState extends State<HomeTab> {
                     const SizedBox(height: 6),
                     Text(
                       'Hola, $_userName',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Color(0xFFFFE7B4)),
                     ),
                   ],

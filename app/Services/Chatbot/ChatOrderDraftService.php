@@ -180,14 +180,31 @@ class ChatOrderDraftService
             $missing[] = 'correo';
         }
 
+        $upsell = $this->needsComplementOffer($items, $metadata)
+            ? "\n\nQuieres agregar alguna bebida o algun otro platillo antes de continuar?"
+            : '';
+
         $next = $missing
-            ? 'Para continuar falta: '.implode(', ', $missing).'.'
+            ? 'Para continuar falta: '.implode(', ', $missing).'.'.$upsell
             : 'Ya tengo productos, direccion, telefono y correo. Si estas conforme, inicia sesion o crea cuenta para pasar directo al carrito.';
 
         return "Buena eleccion. Voy guardando tu pedido temporal:\n"
             .implode("\n", $lines)
             ."\n\nTotal referencial: S/ ".number_format($total, 2, '.', '')
             ."\n\n{$next}";
+    }
+
+    private function needsComplementOffer(array $items, array $metadata): bool
+    {
+        if (! empty($metadata['pending_drink_qty'])) {
+            return false;
+        }
+
+        $categories = collect($items)
+            ->map(fn (array $item): string => Str::lower((string) ($item['category'] ?? '')))
+            ->all();
+
+        return in_array('pollos', $categories, true) || in_array('parrillas', $categories, true);
     }
 
     private function findMentionedProducts(string $normalized): array

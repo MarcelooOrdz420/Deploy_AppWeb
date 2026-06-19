@@ -1376,7 +1376,7 @@ initClientSession();
         function formatInline(value) {
             return escapeHtml(value).replace(
                 /(\/(?:login|register|carrito)(?:\?[A-Za-z0-9._%+\-@=&/%]+)?)/g,
-                '<a href="$1" style="color:#7a2f00;font-weight:950;text-decoration:underline;">$1</a>'
+                '<a class="pollia-action-link" href="$1">Continuar</a>'
             );
         }
 
@@ -1548,12 +1548,12 @@ initClientSession();
         }
 
         const action = data.authenticated
-            ? 'Ir al carrito: /carrito'
+            ? '/carrito'
             : data.registered
-                ? `Iniciar sesion: ${data.login_url || '/login'}`
-                : `Crear cuenta: ${data.register_url || '/register'}`;
+                ? (data.login_url || '/login')
+                : (data.register_url || '/register');
 
-        return `${data.message || 'Combinacion guardada.'}\n\n${action}\nCarrito: ${data.cart_url || '/carrito'}`;
+        return `${data.message || 'Combinacion guardada.'}\n\nContinuar con el pago:\n${action}`;
     }
 
     async function checkStatus() {
