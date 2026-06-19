@@ -1333,8 +1333,10 @@ initClientSession();
     if (!launcher || !widget || !form || !input || !log) return;
 
     const guestKey = 'ed_pollia_guest_session';
+    const pendingCartKey = 'ed_pollia_pending_cart_v1';
     let booted = false;
     let sending = false;
+    let productsCache = null;
 
     function guestSession() {
         const existing = localStorage.getItem(guestKey);
@@ -1371,6 +1373,13 @@ initClientSession();
         const html = [];
         let list = [];
 
+        function formatInline(value) {
+            return escapeHtml(value).replace(
+                /(\/(?:login|register|carrito)(?:\?email=[A-Za-z0-9._%+\-@]+)?)/g,
+                '<a href="$1" style="color:#7a2f00;font-weight:950;text-decoration:underline;">$1</a>'
+            );
+        }
+
         function flushList() {
             if (!list.length) return;
             html.push(`<ul>${list.map((line) => `<li>${line}</li>`).join('')}</ul>`);
@@ -1386,21 +1395,162 @@ initClientSession();
 
             const bullet = line.match(/^[-•]\s*(.+)$/);
             if (bullet) {
-                list.push(escapeHtml(bullet[1]));
+                list.push(formatInline(bullet[1]));
                 return;
             }
 
             flushList();
             const looksLikeHeading = line.length <= 56 && !/[.!?]$/.test(line);
             if (looksLikeHeading) {
-                html.push(`<span class="pollia-heading">${escapeHtml(line)}</span>`);
+                html.push(`<span class="pollia-heading">${formatInline(line)}</span>`);
             } else {
-                html.push(`<p>${escapeHtml(line)}</p>`);
+                html.push(`<p>${formatInline(line)}</p>`);
             }
         });
 
         flushList();
         return html.join('') || '<p>No tengo una respuesta clara todavia.</p>';
+    }
+
+    function normalizeProductName(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/kola/g, 'cola')
+            .replace(/\s+/g, ' ');
+    }
+
+    async function publicProducts() {
+        if (productsCache) return productsCache;
+        try {
+            const res = await fetch('/api/v1/products', { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            productsCache = Array.isArray(data) ? data : [];
+        } catch {
+            productsCache = [];
+        }
+        return productsCache;
+    }
+
+    function pendingCart() {
+        try {
+            const rows = JSON.parse(localStorage.getItem(pendingCartKey) || '[]');
+            return Array.isArray(rows) ? rows : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function savePendingCart(items) {
+        const clean = (items || [])
+            .filter((item) => item && Number(item.id) > 0 && Number(item.qty || 0) > 0)
+            .map((item) => ({
+                id: Number(item.id),
+                name: String(item.name || ''),
+                category: String(item.category || ''),
+                price: Number(item.price || 0),
+                qty: Number(item.qty || 1),
+                image_url: String(item.image_url || ''),
+            }));
+        if (!clean.length) return;
+        localStorage.setItem(pendingCartKey, JSON.stringify(clean));
+    }
+
+    function mergeIntoCart(items) {
+        const cart = JSON.parse(localStorage.getItem('ed_cart') || '[]');
+        const next = Array.isArray(cart) ? cart.map((item) => ({ ...item })) : [];
+        (items || []).forEach((item) => {
+            const id = Number(item.id || 0);
+            if (!id) return;
+            const existing = next.find((row) => Number(row.id) === id);
+            if (existing) {
+                existing.qty = Number(existing.qty || 0) + Number(item.qty || 1);
+            } else {
+                next.push({
+                    id,
+                    name: item.name,
+                    category: item.category || '',
+                    price: Number(item.price || 0),
+                    qty: Number(item.qty || 1),
+                });
+            }
+        });
+        localStorage.setItem('ed_cart', JSON.stringify(next));
+        window.dispatchEvent(new Event('storage'));
+    }
+
+    async function capturePendingCartFromReply(reply) {
+        const text = String(reply || '');
+        if (!/(combinacion|eleccion|sugiero)/i.test(text)) return;
+
+        const products = await publicProducts();
+        if (!products.length) return;
+
+        const byName = new Map(products.map((product) => [normalizeProductName(product.name), product]));
+        const items = [];
+
+        text.split(/\r?\n/).forEach((raw) => {
+            const line = raw.replace(/^[-*•â€¢\s]+/, '').trim();
+            const match = line.match(/^(.+?)\s+-\s+S\/\s*\d/i);
+            if (!match) return;
+
+            const product = byName.get(normalizeProductName(match[1]));
+            if (!product || product.can_sell === false || product.is_sold_out) return;
+
+            items.push({
+                id: product.id,
+                name: product.name,
+                category: product.category || '',
+                price: Number(product.price || 0),
+                qty: 1,
+                image_url: product.image_url || '',
+            });
+        });
+
+        if (items.length) savePendingCart(items);
+    }
+
+    function extractEmail(message) {
+        const match = String(message || '').match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+        return match ? match[0].toLowerCase() : '';
+    }
+
+    async function handleCheckoutEmail(email) {
+        const items = pendingCart();
+        if (!items.length) return null;
+
+        mergeIntoCart(items);
+
+        const token = localStorage.getItem('ed_token') || '';
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        };
+        if (token) headers.Authorization = `Bearer ${token}`;
+
+        const res = await fetch('/api/v1/chatbot/cart-intent', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                email,
+                guest_session: guestSession(),
+                items,
+            }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            return data.message || 'No pude guardar esta combinacion. Puedes entrar al carrito y continuar desde ahi: /carrito';
+        }
+
+        const action = data.authenticated
+            ? 'Ir al carrito: /carrito'
+            : data.registered
+                ? `Iniciar sesion: ${data.login_url || '/login'}`
+                : `Crear cuenta: ${data.register_url || '/register'}`;
+
+        return `${data.message || 'Combinacion guardada.'}\n\n${action}\nCarrito: ${data.cart_url || '/carrito'}`;
     }
 
     async function checkStatus() {
@@ -1444,6 +1594,14 @@ initClientSession();
         const typing = addMessage('bot', 'Escribiendo...');
 
         try {
+            const checkoutEmail = extractEmail(message);
+            if (checkoutEmail && pendingCart().length) {
+                const reply = await handleCheckoutEmail(checkoutEmail);
+                typing.remove();
+                addMessage('bot', reply || 'Guarde tu combinacion en este navegador. Ahora puedes continuar desde el carrito: /carrito');
+                return;
+            }
+
             const token = localStorage.getItem('ed_token') || '';
             const headers = {
                 'Accept': 'application/json',
@@ -1470,7 +1628,9 @@ initClientSession();
                 return;
             }
 
-            addMessage('bot', (data.reply || '').toString().trim() || 'No tengo una respuesta clara todavia.');
+            const reply = (data.reply || '').toString().trim() || 'No tengo una respuesta clara todavia.';
+            addMessage('bot', reply);
+            await capturePendingCartFromReply(reply);
         } catch {
             typing.remove();
             addMessage('bot', 'No pude conectar con el asistente. Revisa tu conexion e intentalo de nuevo.');

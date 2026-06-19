@@ -491,6 +491,11 @@ let pendingEmail = '';
 let cooldownTimer = null;
 let cooldown = 0;
 
+try {
+    const email = new URLSearchParams(window.location.search).get('email');
+    if (email && form?.email) form.email.value = email;
+} catch {}
+
 function extractRegisterError(data) {
     const firstError = Object.values(data?.errors || {})[0]?.[0];
     return firstError || data?.message || 'No se pudo registrar.';

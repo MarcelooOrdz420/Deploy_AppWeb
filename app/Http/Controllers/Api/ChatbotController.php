@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\ChatbotReplySent;
 use App\Models\User;
+use App\Services\CartRecoveryService;
 use App\Services\Chatbot\ChatbotService;
 use App\Services\JwtService;
 use Illuminate\Broadcasting\Channel;
@@ -63,6 +64,62 @@ class ChatbotController
         $status = $this->chatbot->status();
 
         return response()->json($status, ($status['ok'] ?? false) ? 200 : 503);
+    }
+
+    public function cartIntent(Request $request, CartRecoveryService $cartRecoveryService): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email', 'max:120'],
+            'guest_session' => ['nullable', 'string', 'min:8', 'max:120'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.id' => ['required', 'integer'],
+            'items.*.name' => ['required', 'string', 'max:160'],
+            'items.*.category' => ['nullable', 'string', 'max:80'],
+            'items.*.price' => ['required', 'numeric', 'min:0'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'items.*.image_url' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $this->tryAuthenticate($request);
+        $authUser = auth()->user();
+        $email = strtolower(trim((string) $data['email']));
+        $registeredUser = User::query()->where('email', $email)->first();
+
+        if ($authUser) {
+            $cartRecoveryService->syncForUser(
+                user: $authUser,
+                items: $data['items'],
+                source: 'pollia',
+            );
+
+            return response()->json([
+                'status' => 'ready_to_checkout',
+                'registered' => true,
+                'authenticated' => true,
+                'cart_url' => '/carrito',
+                'message' => 'Listo, guarde tu combinacion en tu cuenta. Puedes revisar el carrito y completar entrega, ensalada y pago.',
+            ]);
+        }
+
+        if ($registeredUser) {
+            return response()->json([
+                'status' => 'login_required',
+                'registered' => true,
+                'authenticated' => false,
+                'login_url' => '/login?email='.rawurlencode($email),
+                'cart_url' => '/carrito',
+                'message' => 'Ese correo ya tiene cuenta. Guarde la combinacion en este navegador; inicia sesion y luego entra al carrito para finalizar la compra.',
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'registration_required',
+            'registered' => false,
+            'authenticated' => false,
+            'register_url' => '/register?email='.rawurlencode($email),
+            'cart_url' => '/carrito',
+            'message' => 'No encontre una cuenta con ese correo. Guarde la combinacion en este navegador; crea tu cuenta para convertirla en pedido real.',
+        ]);
     }
 
     private function tryAuthenticate(Request $request): void

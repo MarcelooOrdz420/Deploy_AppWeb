@@ -437,6 +437,11 @@ const RESET_PENDING_KEY = 'ed_password_reset_pending_v1';
 const RESET_CHANNEL = 'BroadcastChannel' in window ? new BroadcastChannel('ed-password-reset') : null;
 const RESET_TAB_ID = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+try {
+    const email = new URLSearchParams(window.location.search).get('email');
+    if (email && form?.email) form.email.value = email;
+} catch {}
+
 function loadResetPending() {
     try {
         const data = JSON.parse(localStorage.getItem(RESET_PENDING_KEY) || 'null');
