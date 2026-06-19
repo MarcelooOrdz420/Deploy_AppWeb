@@ -19,3 +19,8 @@ public/build
 README.md
 FCM_SETUP.md
 AppMovilPollos
+
+public/downloads/
+public/downloads/*.apk
+public/downloads/AppMovilPollos.apk
+*.apk
