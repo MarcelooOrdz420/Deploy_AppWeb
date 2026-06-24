@@ -14,6 +14,7 @@ use App\Services\InventoryMovementService;
 use App\Services\Realtime\PusherNotifier;
 use App\Services\SimplePdfReceiptService;
 use App\Services\CartRecoveryService;
+use App\Services\Chatbot\ChatOrderDraftService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -202,12 +203,12 @@ class OrderController extends Controller
             'delivery_window_label' => ['nullable', 'string', 'max:120'],
             'payment_method' => ['required', Rule::in(['yape', 'plin', 'mercado_pago', 'cod'])],
             'payment_reference' => ['nullable', 'string', 'max:120'],
-            'billing_document_type' => ['nullable', Rule::in(['dni'])],
+            'billing_document_type' => ['nullable', Rule::in(['dni', 'ruc'])],
             'billing_document_number' => ['nullable', 'string', 'max:20'],
             'billing_name' => ['nullable', 'string', 'max:180'],
             'billing_email' => ['nullable', 'email', 'max:120'],
             'billing_address' => ['nullable', 'string', 'max:255'],
-            'billing_receipt_type' => ['nullable', Rule::in(['boleta'])],
+            'billing_receipt_type' => ['nullable', Rule::in(['boleta', 'factura'])],
             'salad_type' => ['nullable', Rule::in(['dulce', 'salada'])],
             'drink_note' => ['nullable', 'string', 'max:120'],
             'address' => ['nullable', 'string', 'max:255'],
@@ -253,6 +254,15 @@ class OrderController extends Controller
             }
             if (empty($data['billing_name'])) {
                 return response()->json(['message' => 'La boleta requiere el nombre del cliente validado por DNI.'], 422);
+            }
+        }
+
+        if (($data['billing_receipt_type'] ?? null) === 'factura') {
+            if (($data['billing_document_type'] ?? null) !== 'ruc' || strlen((string) ($data['billing_document_number'] ?? '')) !== 11) {
+                return response()->json(['message' => 'La factura requiere RUC valido de 11 digitos.'], 422);
+            }
+            if (empty($data['billing_name'])) {
+                return response()->json(['message' => 'La factura requiere la razon social validada por RUC.'], 422);
             }
         }
 
@@ -393,6 +403,7 @@ class OrderController extends Controller
         }
 
         app(CartRecoveryService::class)->clearForUser($request->user());
+        app(ChatOrderDraftService::class)->markConverted($request->user(), null);
 
         return response()->json($order, 201);
     }
@@ -569,7 +580,7 @@ class OrderController extends Controller
         }
 
         $content = $pdfReceiptService->generate($order);
-        $filename = 'boleta-'.$order->tracking_code.'.pdf';
+        $filename = ($order->billing_receipt_type === 'factura' ? 'factura-' : 'boleta-').$order->tracking_code.'.pdf';
 
         return response($content, 200, [
             'Content-Type' => 'application/pdf',
@@ -586,7 +597,7 @@ class OrderController extends Controller
 
         return response($pdfReceiptService->generate($order), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="boleta-'.$order->tracking_code.'.pdf"',
+            'Content-Disposition' => 'inline; filename="'.($order->billing_receipt_type === 'factura' ? 'factura-' : 'boleta-').$order->tracking_code.'.pdf"',
         ]);
     }
 

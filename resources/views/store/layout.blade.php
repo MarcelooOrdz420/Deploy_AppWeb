@@ -1334,6 +1334,7 @@ initClientSession();
 
     const guestKey = 'ed_pollia_guest_session';
     const pendingCartKey = 'ed_pollia_pending_cart_v1';
+    const checkoutPrefillKey = 'ed_pollia_checkout_prefill_v1';
     let booted = false;
     let sending = false;
     let productsCache = null;
@@ -1460,6 +1461,18 @@ initClientSession();
         localStorage.setItem(pendingCartKey, JSON.stringify(clean));
     }
 
+    function saveCheckoutPrefill(draft) {
+        if (!draft || typeof draft !== 'object') return;
+        const prefill = {
+            phone: String(draft.phone || ''),
+            email: String(draft.email || ''),
+            address: String(draft.delivery_address || ''),
+            reference: String(draft.delivery_reference || ''),
+        };
+        if (!prefill.phone && !prefill.email && !prefill.address && !prefill.reference) return;
+        localStorage.setItem(checkoutPrefillKey, JSON.stringify(prefill));
+    }
+
     function mergeIntoCart(items) {
         const cart = JSON.parse(localStorage.getItem('ed_cart') || '[]');
         const next = Array.isArray(cart) ? cart.map((item) => ({ ...item })) : [];
@@ -1546,6 +1559,7 @@ initClientSession();
         if (!res.ok) {
             return data.message || 'No pude guardar esta combinacion. Puedes entrar al carrito y continuar desde ahi: /carrito';
         }
+        saveCheckoutPrefill(data.draft);
 
         const action = data.authenticated
             ? '/carrito'

@@ -35,15 +35,17 @@ class SimplePdfReceiptService
             'rejected' => 'Rechazado',
             default => (string) $order->payment_status,
         };
+        $receiptLabel = $order->billing_receipt_type === 'factura' ? 'Factura de compra' : 'Boleta de compra';
+        $documentLabel = $order->billing_document_type === 'ruc' ? 'RUC' : 'DNI';
 
         $lines = [
             ['font' => 'F1', 'size' => 19, 'x' => 50, 'y' => 800, 'text' => 'Pollos y Parrillas El Dorado'],
-            ['font' => 'F1', 'size' => 12, 'x' => 50, 'y' => 780, 'text' => 'Boleta de compra'],
+            ['font' => 'F1', 'size' => 12, 'x' => 50, 'y' => 780, 'text' => $receiptLabel],
             ['font' => 'F1', 'size' => 11, 'x' => 50, 'y' => 760, 'text' => 'Codigo: '.$order->tracking_code],
             ['font' => 'F1', 'size' => 11, 'x' => 330, 'y' => 760, 'text' => 'Fecha: '.$createdAt],
             ['font' => 'F1', 'size' => 11, 'x' => 50, 'y' => 738, 'text' => 'Cliente: '.$this->normalize($order->billing_name ?: $order->customer_name)],
             ['font' => 'F1', 'size' => 11, 'x' => 50, 'y' => 722, 'text' => 'Telefono: '.$this->normalize($order->customer_phone ?: 'n/a')],
-            ['font' => 'F1', 'size' => 11, 'x' => 330, 'y' => 722, 'text' => 'DNI: '.$this->normalize($order->billing_document_number ?: 'n/a')],
+            ['font' => 'F1', 'size' => 11, 'x' => 330, 'y' => 722, 'text' => $documentLabel.': '.$this->normalize($order->billing_document_number ?: 'n/a')],
             ['font' => 'F1', 'size' => 11, 'x' => 50, 'y' => 700, 'text' => 'Entrega: '.$delivery],
             ['font' => 'F1', 'size' => 11, 'x' => 330, 'y' => 700, 'text' => 'Pago: '.$paymentMethod.' / '.$paymentStatus],
             ['font' => 'F1', 'size' => 11, 'x' => 50, 'y' => 678, 'text' => 'Operacion: '.$this->normalize($order->payment_reference ?: 'sin codigo')],

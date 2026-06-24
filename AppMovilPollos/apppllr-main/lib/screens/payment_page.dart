@@ -14,7 +14,7 @@ import '../theme/store_theme.dart';
 
 enum PayMethod { yape, plin, mercadoPago, efectivo }
 enum DeliveryType { delivery, pickup }
-enum ReceiptType { none, boleta }
+enum ReceiptType { none, boleta, factura }
 
 class PaymentPage extends StatefulWidget {
   const PaymentPage({super.key});
@@ -48,8 +48,9 @@ class _PaymentPageState extends State<PaymentPage> {
   ReceiptType _receiptType = ReceiptType.none;
   String _saladType = 'dulce';
   String _billingDocumentType = '';
-  String _lookupMessage = 'Activa boleta para identificar al cliente antes de pagar.';
+  String _lookupMessage = 'Activa boleta o factura para identificar al cliente antes de pagar.';
   String _lastLookupValue = '';
+  Map<String, dynamic>? _billingMetadata;
   bool _submitting = false;
   bool _lookingUpDocument = false;
   CompanySettings _settings = CompanySettings.fallback();
@@ -159,8 +160,14 @@ class _PaymentPageState extends State<PaymentPage> {
         return null;
       case ReceiptType.boleta:
         return 'boleta';
+      case ReceiptType.factura:
+        return 'factura';
     }
   }
+
+  int get _billingDocumentLength => _billingDocumentType == 'ruc' ? 11 : 8;
+
+  String get _billingDocumentLabel => _billingDocumentType == 'ruc' ? 'RUC' : 'DNI';
 
   Future<void> _lookupDocument({bool silent = false}) async {
     if (_lookingUpDocument) return;
@@ -178,9 +185,9 @@ class _PaymentPageState extends State<PaymentPage> {
       return;
     }
 
-    if (_billingDocumentType == 'dni' && number.length != 8) {
+    if (_billingDocumentType.isNotEmpty && number.length != _billingDocumentLength) {
       if (mounted) {
-        setState(() => _lookupMessage = 'El DNI debe tener 8 digitos.');
+        setState(() => _lookupMessage = 'El $_billingDocumentLabel debe tener $_billingDocumentLength digitos.');
       }
       return;
     }
@@ -188,16 +195,25 @@ class _PaymentPageState extends State<PaymentPage> {
     setState(() => _lookingUpDocument = true);
 
     try {
-      final data = await _peruLookupService.lookupDni(token: token, dni: number);
+      final data = _billingDocumentType == 'ruc'
+          ? await _peruLookupService.lookupRuc(token: token, ruc: number)
+          : await _peruLookupService.lookupDni(token: token, dni: number);
       final normalized = (data['normalized'] as Map? ?? <String, dynamic>{}).cast<String, dynamic>();
-      _billingNameCtrl.text = (normalized['full_name'] ?? '').toString();
+      _billingNameCtrl.text = (_billingDocumentType == 'ruc'
+              ? normalized['business_name']
+              : normalized['full_name'])
+          ?.toString() ??
+          '';
       if (_nameCtrl.text.trim().isEmpty) {
         _nameCtrl.text = _billingNameCtrl.text.trim();
       }
-      _billingAddressCtrl.clear();
+      _billingAddressCtrl.text = _billingDocumentType == 'ruc'
+          ? (normalized['address'] ?? '').toString()
+          : '';
+      _billingMetadata = {'normalized': normalized};
       _lookupMessage = _billingNameCtrl.text.trim().isEmpty
-          ? 'No se encontro informacion para ese DNI.'
-          : 'Cliente identificado por DNI. Ya puedes emitir boleta.';
+          ? 'No se encontro informacion para ese $_billingDocumentLabel.'
+          : 'Documento identificado. Ya puedes emitir ${_receiptType == ReceiptType.factura ? 'factura' : 'boleta'}.';
 
       _lastLookupValue = number;
 
@@ -229,15 +245,19 @@ class _PaymentPageState extends State<PaymentPage> {
         _billingNameCtrl.clear();
         _billingEmailCtrl.clear();
         _billingAddressCtrl.clear();
+        _billingMetadata = null;
       } else {
-        _billingDocumentType = 'dni';
+        _billingDocumentType = _receiptType == ReceiptType.factura ? 'ruc' : 'dni';
         _billingNumberCtrl.clear();
         _billingNameCtrl.clear();
         _billingAddressCtrl.clear();
-        _lookupMessage = 'Ingresa el DNI del cliente y lo identificamos automaticamente.';
+        _billingMetadata = null;
+        _lookupMessage = _receiptType == ReceiptType.factura
+            ? 'Ingresa el RUC del cliente y consultamos la razon social.'
+            : 'Ingresa el DNI del cliente y lo identificamos automaticamente.';
       }
       if (_receiptType == ReceiptType.none) {
-        _lookupMessage = 'Activa boleta para identificar al cliente antes de pagar.';
+        _lookupMessage = 'Activa boleta o factura para identificar al cliente antes de pagar.';
       }
       _lastLookupValue = '';
     });
@@ -255,14 +275,14 @@ class _PaymentPageState extends State<PaymentPage> {
     if (!mounted) return;
 
     setState(() {
-      if (_billingDocumentType == 'dni') {
-        _lookupMessage = digits.length < 8
-            ? 'Faltan ${8 - digits.length} digitos para consultar el DNI.'
+      if (_billingDocumentType.isNotEmpty) {
+        _lookupMessage = digits.length < _billingDocumentLength
+            ? 'Faltan ${_billingDocumentLength - digits.length} digitos para consultar el $_billingDocumentLabel.'
             : _lookupMessage;
       }
     });
 
-    final requiredLength = 8;
+    final requiredLength = _billingDocumentLength;
     if (_billingDocumentType.isNotEmpty &&
         digits.length == requiredLength &&
         digits != _lastLookupValue) {
@@ -362,6 +382,7 @@ class _PaymentPageState extends State<PaymentPage> {
           'billing_name': _billingNameCtrl.text.trim().isEmpty ? null : _billingNameCtrl.text.trim(),
           'billing_email': _billingEmailCtrl.text.trim().isEmpty ? null : _billingEmailCtrl.text.trim(),
           'billing_address': _billingAddressCtrl.text.trim().isEmpty ? null : _billingAddressCtrl.text.trim(),
+          'billing_metadata': _billingMetadata,
           'salad_type': hasChicken ? _saladType : null,
           'drink_note': null,
           'address': address.isEmpty ? null : address,
@@ -764,8 +785,8 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Widget _billingSection() {
-    final docLabel = 'DNI';
-    final docLength = 8;
+    final docLabel = _receiptType == ReceiptType.factura ? 'RUC' : 'DNI';
+    final docLength = _receiptType == ReceiptType.factura ? 11 : 8;
     final requiresReceipt = _receiptType != ReceiptType.none;
 
     return Column(
@@ -776,6 +797,7 @@ class _PaymentPageState extends State<PaymentPage> {
           items: const [
             DropdownMenuItem(value: ReceiptType.none, child: Text('No deseo comprobante')),
             DropdownMenuItem(value: ReceiptType.boleta, child: Text('Boleta con DNI')),
+            DropdownMenuItem(value: ReceiptType.factura, child: Text('Factura con RUC')),
           ],
           decoration: _decor('Comprobante'),
           onChanged: (value) => _onReceiptChanged(value ?? ReceiptType.none),
@@ -814,7 +836,7 @@ class _PaymentPageState extends State<PaymentPage> {
             ],
             onChanged: _onDocumentChanged,
             decoration: _decor('$docLabel del cliente').copyWith(
-              hintText: 'Ej: 12345678',
+              hintText: _receiptType == ReceiptType.factura ? 'Ej: 20131312955' : 'Ej: 12345678',
               suffixIcon: _lookingUpDocument
                   ? const Padding(
                       padding: EdgeInsets.all(12),
@@ -834,7 +856,7 @@ class _PaymentPageState extends State<PaymentPage> {
           TextField(
             controller: _billingNameCtrl,
             readOnly: true,
-            decoration: _decor('Nombre del cliente'),
+            decoration: _decor(_receiptType == ReceiptType.factura ? 'Razon social' : 'Nombre del cliente'),
           ),
           const SizedBox(height: 12),
           TextField(

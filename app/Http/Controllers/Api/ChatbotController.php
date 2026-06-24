@@ -96,6 +96,8 @@ class ChatbotController
         $authUser = auth()->user();
         $email = strtolower(trim((string) $data['email']));
         $registeredUser = User::query()->where('email', $email)->first();
+        $draftService = app(ChatOrderDraftService::class);
+        $draftSnapshot = $draftService->snapshotFor($authUser, $data['guest_session'] ?? null);
 
         if ($authUser) {
             $cartRecoveryService->syncForUser(
@@ -103,13 +105,14 @@ class ChatbotController
                 items: $data['items'],
                 source: 'pollia',
             );
-            app(ChatOrderDraftService::class)->markConverted($authUser, $data['guest_session'] ?? null);
+            $draftService->markConverted($authUser, $data['guest_session'] ?? null);
 
             return response()->json([
                 'status' => 'ready_to_checkout',
                 'registered' => true,
                 'authenticated' => true,
                 'cart_url' => '/carrito',
+                'draft' => $draftSnapshot,
                 'message' => 'Listo, guarde tu combinacion en tu cuenta. Puedes revisar el carrito y completar entrega, ensalada y pago.',
             ]);
         }
@@ -121,6 +124,7 @@ class ChatbotController
                 'authenticated' => false,
                 'login_url' => '/login?email='.rawurlencode($email).'&next='.rawurlencode('/carrito'),
                 'cart_url' => '/carrito',
+                'draft' => $draftSnapshot,
                 'message' => 'Ese correo ya tiene cuenta. Guarde la combinacion en este navegador; inicia sesion y luego entra al carrito para finalizar la compra.',
             ]);
         }
@@ -131,6 +135,7 @@ class ChatbotController
             'authenticated' => false,
             'register_url' => '/register?email='.rawurlencode($email).'&next='.rawurlencode('/carrito'),
             'cart_url' => '/carrito',
+            'draft' => $draftSnapshot,
             'message' => 'No encontre una cuenta con ese correo. Guarde la combinacion en este navegador; crea tu cuenta para convertirla en pedido real.',
         ]);
     }

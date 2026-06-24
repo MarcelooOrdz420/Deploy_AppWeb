@@ -24,23 +24,28 @@ class ChatOrderDraftService
         $normalized = $this->normalize($message);
         $metadata = is_array($draft->metadata) ? $draft->metadata : [];
         $items = is_array($draft->items) ? $draft->items : [];
-        $changed = false;
+        $purchaseRelated = $this->isPurchaseRelated($normalized);
+        $metadata = $this->appendCustomerMessage($metadata, $message, $purchaseRelated);
+        $changed = true;
         $orderActivity = false;
 
         if ($email = $this->extractEmail($message)) {
             $draft->email = $email;
+            $metadata['last_email_detected'] = $email;
             $changed = true;
             $orderActivity = true;
         }
 
         if ($phone = $this->extractPhone($message)) {
             $draft->phone = $phone;
+            $metadata['last_phone_detected'] = $phone;
             $changed = true;
             $orderActivity = true;
         }
 
         $matches = $this->findMentionedProducts($normalized);
         if ($matches) {
+            $metadata['last_product_message'] = Str::limit($message, 1200, '');
             foreach ($matches as $product) {
                 $qty = $this->quantityForProduct($normalized, $product, $metadata);
                 $items = $this->mergeItem($items, $product, $qty);
@@ -50,6 +55,7 @@ class ChatOrderDraftService
             $orderActivity = true;
         } elseif ($this->mentionsGenericDrink($normalized)) {
             $metadata['pending_drink_qty'] = $this->quantityFromText($normalized) ?: 1;
+            $metadata['last_product_message'] = Str::limit($message, 1200, '');
             $changed = true;
             $orderActivity = true;
         }
@@ -57,8 +63,10 @@ class ChatOrderDraftService
         if ($address = $this->extractAddress($message, $orderActivity || ! empty($items))) {
             if ($this->looksLikeReference($address)) {
                 $draft->delivery_reference = $address;
+                $metadata['last_reference_message'] = Str::limit($message, 1200, '');
             } else {
                 $draft->delivery_address = $address;
+                $metadata['last_address_message'] = Str::limit($message, 1200, '');
             }
             $changed = true;
             $orderActivity = true;
@@ -88,6 +96,15 @@ class ChatOrderDraftService
         }
 
         $draft = $this->draftFor($user, $guestSession, false);
+        $guestSession = trim((string) $guestSession);
+        if (! $draft && $guestSession !== '') {
+            $draft = ChatOrderDraft::query()
+                ->where('guest_session', $guestSession)
+                ->where('status', 'active')
+                ->latest()
+                ->first();
+        }
+
         if (! $draft) {
             return null;
         }
@@ -117,13 +134,49 @@ class ChatOrderDraftService
             return;
         }
 
-        $draft = $this->draftFor($user, $guestSession, false);
-        if (! $draft) {
-            return;
+        if ($user) {
+            ChatOrderDraft::query()
+                ->where('user_id', $user->id)
+                ->where('status', 'active')
+                ->update(['status' => 'converted']);
         }
 
-        $draft->status = 'converted';
-        $draft->save();
+        $guestSession = trim((string) $guestSession);
+        if ($guestSession !== '') {
+            ChatOrderDraft::query()
+                ->where('guest_session', $guestSession)
+                ->where('status', 'active')
+                ->update(['status' => 'converted']);
+        }
+    }
+
+    public function snapshotFor(?User $user, ?string $guestSession): ?array
+    {
+        if (! $this->tableExists()) {
+            return null;
+        }
+
+        $draft = $this->draftFor($user, $guestSession, false);
+        $guestSession = trim((string) $guestSession);
+        if (! $draft && $guestSession !== '') {
+            $draft = ChatOrderDraft::query()
+                ->where('guest_session', $guestSession)
+                ->where('status', 'active')
+                ->latest()
+                ->first();
+        }
+
+        if (! $draft) {
+            return null;
+        }
+
+        return [
+            'email' => $draft->email,
+            'phone' => $draft->phone,
+            'delivery_address' => $draft->delivery_address,
+            'delivery_reference' => $draft->delivery_reference,
+            'items' => $draft->items ?: [],
+        ];
     }
 
     private function draftFor(?User $user, ?string $guestSession, bool $create = true): ?ChatOrderDraft
@@ -142,6 +195,76 @@ class ChatOrderDraftService
         return $create
             ? ChatOrderDraft::query()->firstOrCreate(['guest_session' => $guestSession, 'status' => 'active'])
             : ChatOrderDraft::query()->where('guest_session', $guestSession)->where('status', 'active')->latest()->first();
+    }
+
+    private function appendCustomerMessage(array $metadata, string $message, bool $purchaseRelated): array
+    {
+        $entry = [
+            'text' => Str::limit(trim($message), 1200, ''),
+            'purchase_related' => $purchaseRelated,
+            'captured_at' => now()->toIso8601String(),
+        ];
+
+        $messages = is_array($metadata['customer_messages'] ?? null)
+            ? $metadata['customer_messages']
+            : [];
+        $messages[] = $entry;
+        $metadata['customer_messages'] = $messages;
+        $metadata['last_customer_message'] = $entry;
+
+        if ($purchaseRelated) {
+            $purchaseMessages = is_array($metadata['purchase_messages'] ?? null)
+                ? $metadata['purchase_messages']
+                : [];
+            $purchaseMessages[] = $entry;
+            $metadata['purchase_messages'] = $purchaseMessages;
+            $metadata['last_purchase_message'] = $entry;
+        }
+
+        return $metadata;
+    }
+
+    private function isPurchaseRelated(string $normalized): bool
+    {
+        if ($normalized === '') {
+            return false;
+        }
+
+        foreach ([
+            'quiero',
+            'deseo',
+            'pedido',
+            'pedir',
+            'comprar',
+            'compra',
+            'carrito',
+            'delivery',
+            'recojo',
+            'direccion',
+            'telefono',
+            'correo',
+            'boleta',
+            'factura',
+            'dni',
+            'ruc',
+            'pago',
+            'yape',
+            'plin',
+            'mercado pago',
+            'contraentrega',
+            'pollo',
+            'parrilla',
+            'gaseosa',
+            'bebida',
+            'combo',
+            'mostrito',
+        ] as $needle) {
+            if (Str::contains($normalized, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function replyFor(ChatOrderDraft $draft): ?string
