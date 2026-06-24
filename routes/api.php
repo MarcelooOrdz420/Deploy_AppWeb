@@ -46,6 +46,7 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('auth.api')->group(function (): void {
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/lookups/dni', [PeruLookupController::class, 'lookupDni']);
+        Route::post('/lookups/ruc', [PeruLookupController::class, 'lookupRuc']);
         Route::get('/profile/addresses', [ProfileAddressController::class, 'index']);
         Route::post('/profile/addresses', [ProfileAddressController::class, 'store']);
         Route::delete('/profile/addresses/{address}', [ProfileAddressController::class, 'destroy']);

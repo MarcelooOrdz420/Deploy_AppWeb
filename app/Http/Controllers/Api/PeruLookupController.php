@@ -25,4 +25,19 @@ class PeruLookupController extends Controller
             return response()->json(['message' => 'La consulta de DNI no pudo completarse en este momento.'], 503);
         }
     }
+
+    public function lookupRuc(Request $request, PeruRegistryLookupService $service): JsonResponse
+    {
+        $data = $request->validate([
+            'ruc' => ['required', 'digits:11'],
+        ]);
+
+        try {
+            return response()->json($service->lookupRuc($data['ruc']));
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 503);
+        } catch (Throwable $exception) {
+            return response()->json(['message' => 'La consulta de RUC no pudo completarse en este momento.'], 503);
+        }
+    }
 }

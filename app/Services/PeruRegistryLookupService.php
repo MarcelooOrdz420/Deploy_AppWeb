@@ -42,7 +42,7 @@ class PeruRegistryLookupService
     {
         $this->ensureConfigured('sunat');
 
-        $response = $this->requestLookup('sunat', ['ruc' => $ruc, 'numero' => $ruc], $this->sunatToken());
+        $response = $this->requestLookup('sunat', ['ruc' => $ruc, 'numero' => $ruc], $this->sunatToken() ?: null);
 
         $data = $this->decodeResponse($response, 'SUNAT');
         $normalized = [
