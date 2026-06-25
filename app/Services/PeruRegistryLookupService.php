@@ -40,6 +40,10 @@ class PeruRegistryLookupService
 
     public function lookupRuc(string $ruc): array
     {
+        if (! $this->isValidRuc($ruc)) {
+            throw new RuntimeException('El RUC ingresado no es valido. Verifica los 11 digitos antes de consultar.');
+        }
+
         $this->ensureConfigured('sunat');
 
         $response = $this->requestLookup('sunat', ['ruc' => $ruc, 'numero' => $ruc], $this->sunatToken() ?: null);
@@ -47,11 +51,11 @@ class PeruRegistryLookupService
         $data = $this->decodeResponse($response, 'SUNAT');
         $normalized = [
             'document_number' => (string) $this->firstFilled($data, ['ruc', 'numeroDocumento', 'numero', 'document_number'], $ruc),
-            'business_name' => $this->firstFilled($data, ['razonSocial', 'nombreOrazonSocial', 'nombreoRazonSocial', 'business_name', 'nombre']),
-            'trade_name' => $this->firstFilled($data, ['nombreComercial', 'trade_name']),
+            'business_name' => $this->firstFilled($data, ['razonSocial', 'nombreOrazonSocial', 'nombreoRazonSocial', 'business_name', 'nombre', 'razon_social']),
+            'trade_name' => $this->firstFilled($data, ['nombreComercial', 'trade_name', 'nombre_comercial']),
             'status' => $this->firstFilled($data, ['estado', 'status']),
             'condition' => $this->firstFilled($data, ['condicion', 'condition']),
-            'address' => $this->firstFilled($data, ['direccion', 'domicilioFiscal', 'address']),
+            'address' => $this->firstFilled($data, ['direccion', 'domicilioFiscal', 'address', 'domicilio_fiscal']),
             'department' => $this->firstFilled($data, ['departamento', 'department']),
             'province' => $this->firstFilled($data, ['provincia', 'province']),
             'district' => $this->firstFilled($data, ['distrito', 'district']),
@@ -242,9 +246,38 @@ class PeruRegistryLookupService
             if ($value !== null && trim((string) $value) !== '') {
                 return $value;
             }
+
+            if (! str_contains($key, '.')) {
+                $nestedValue = data_get($data, 'data.'.$key);
+                if ($nestedValue !== null && trim((string) $nestedValue) !== '') {
+                    return $nestedValue;
+                }
+            }
         }
 
         return $default;
+    }
+
+    private function isValidRuc(string $ruc): bool
+    {
+        if (! preg_match('/^\d{11}$/', $ruc)) {
+            return false;
+        }
+
+        $weights = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+        $sum = 0;
+        for ($i = 0; $i < 10; $i++) {
+            $sum += ((int) $ruc[$i]) * $weights[$i];
+        }
+
+        $digit = 11 - ($sum % 11);
+        if ($digit === 10) {
+            $digit = 0;
+        } elseif ($digit === 11) {
+            $digit = 1;
+        }
+
+        return $digit === (int) $ruc[10];
     }
 
     private function normalizeFullName(array $data): string
@@ -314,6 +347,12 @@ class PeruRegistryLookupService
             'data.message',
         ]);
 
-        return trim((string) ($message ?? '')) !== '' ? trim((string) $message) : $fallback;
+        $message = trim((string) ($message ?? ''));
+        $genericMessage = preg_replace('/[^a-z]/', '', strtolower($message));
+        if ($message === '' || in_array($genericMessage, ['ocurriunerror', 'ocurriounerror'], true)) {
+            return $fallback;
+        }
+
+        return $message;
     }
 }
