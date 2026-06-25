@@ -9,6 +9,7 @@ use App\Services\Fcm\FcmClient;
 use App\Services\Payments\IzipayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class PaymentController extends Controller
 {
@@ -25,17 +26,17 @@ class PaymentController extends Controller
         return response()->json($izipayService->createPayment($order));
     }
 
-    public function izipayWebhook(Request $request, IzipayService $izipayService): JsonResponse
+    public function izipayWebhook(Request $request, IzipayService $izipayService): JsonResponse|Response
     {
         if ($request->isMethod('GET') || $request->isMethod('HEAD')) {
-            return response()->json(['ok' => true, 'provider' => 'izipay']);
+            return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
         if ($request->isMethod('POST')
             && trim($request->getContent()) === ''
             && ! $request->has('kr-answer')
         ) {
-            return response()->json(['ok' => true, 'provider' => 'izipay', 'validation' => true]);
+            return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
         if (! $izipayService->isConfigured()) {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/productos');
@@ -26,6 +27,10 @@ Route::get('/descargar-apk', function () {
 
     return response()->download($path, 'AppMovilPollos.apk');
 })->name('apk.download');
+
+Route::match(['get', 'head', 'post'], '/izipay-ipn', [PaymentController::class, 'izipayWebhook'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->name('izipay.ipn');
 
 Route::get('/pago/izipay/{order}', function (\App\Models\Order $order, \Illuminate\Http\Request $request) {
     abort_if((string) $order->payment_method !== 'izipay', 404);
