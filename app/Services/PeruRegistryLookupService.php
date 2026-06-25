@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 use RuntimeException;
@@ -11,11 +10,11 @@ class PeruRegistryLookupService
 {
     public function lookupDni(string $dni): array
     {
-        $this->ensureConfigured('reniec');
+        $this->ensureConfigured('apisperu_dni');
 
-        $response = $this->requestLookup('reniec', ['dni' => $dni, 'numero' => $dni]);
+        $response = $this->requestLookup('apisperu_dni', ['dni' => $dni, 'numero' => $dni]);
 
-        $data = $this->decodeResponse($response, 'RENIEC');
+        $data = $this->decodeResponse($response, 'APIs Peru');
         $normalized = [
             'document_number' => (string) $this->firstFilled($data, ['dni', 'numeroDocumento', 'numero', 'documento', 'document_number'], $dni),
             'full_name' => $this->normalizeFullName($data),
@@ -30,7 +29,7 @@ class PeruRegistryLookupService
         }
 
         return [
-            'provider' => 'reniec',
+            'provider' => 'apisperu_dniruc',
             'document_type' => 'dni',
             'document_number' => $dni,
             'raw' => $data,
@@ -44,11 +43,11 @@ class PeruRegistryLookupService
             throw new RuntimeException('El RUC ingresado no es valido. Verifica los 11 digitos antes de consultar.');
         }
 
-        $this->ensureConfigured('sunat');
+        $this->ensureConfigured('apisperu_ruc');
 
-        $response = $this->requestLookup('sunat', ['ruc' => $ruc, 'numero' => $ruc], $this->sunatToken() ?: null);
+        $response = $this->requestLookup('apisperu_ruc', ['ruc' => $ruc, 'numero' => $ruc]);
 
-        $data = $this->decodeResponse($response, 'SUNAT');
+        $data = $this->decodeResponse($response, 'APIs Peru');
         $normalized = [
             'document_number' => (string) $this->firstFilled($data, ['ruc', 'numeroDocumento', 'numero', 'document_number'], $ruc),
             'business_name' => $this->firstFilled($data, ['razonSocial', 'nombreOrazonSocial', 'nombreoRazonSocial', 'business_name', 'nombre', 'razon_social']),
@@ -67,7 +66,7 @@ class PeruRegistryLookupService
         }
 
         return [
-            'provider' => 'sunat',
+            'provider' => 'apisperu_dniruc',
             'document_type' => 'ruc',
             'document_number' => $ruc,
             'raw' => $data,
@@ -87,54 +86,6 @@ class PeruRegistryLookupService
         if ($authMode === 'query' && $token === '') {
             throw new RuntimeException('Falta configurar APISPERU_DNIRUC_TOKEN o el token del proveedor contratado.');
         }
-    }
-
-    private function sunatToken(): string
-    {
-        $staticToken = trim((string) config('services.sunat.token'));
-        if ($staticToken !== '') {
-            return $staticToken;
-        }
-
-        $tokenUrl = trim((string) config('services.sunat.token_url'));
-        $grantType = trim((string) config('services.sunat.grant_type', 'password'));
-        $clientId = trim((string) config('services.sunat.client_id'));
-        $clientSecret = trim((string) config('services.sunat.client_secret'));
-        $username = trim((string) config('services.sunat.username'));
-        $password = trim((string) config('services.sunat.password'));
-
-        if ($tokenUrl === '' || $clientId === '' || $clientSecret === '') {
-            return '';
-        }
-
-        return Cache::remember('sunat_api_token', now()->addMinutes(50), function () use ($tokenUrl, $grantType, $clientId, $clientSecret, $username, $password): string {
-            if ($grantType === 'password' && ($username === '' || $password === '')) {
-                throw new RuntimeException('SUNAT requiere usuario SOL y clave SOL para generar el token.');
-            }
-
-            $request = Http::asForm()
-                ->timeout((int) config('services.sunat.timeout', 15))
-                ->acceptJson()
-                ->post($tokenUrl, array_filter([
-                    'grant_type' => $grantType,
-                    'scope' => trim((string) config('services.sunat.scope')),
-                    'client_id' => $clientId,
-                    'client_secret' => $clientSecret,
-                    'username' => $grantType === 'password' ? $username : null,
-                    'password' => $grantType === 'password' ? $password : null,
-                ], static fn ($value): bool => $value !== ''));
-
-            if ($request->failed()) {
-                throw new RuntimeException('No se pudo obtener el token OAuth de SUNAT.');
-            }
-
-            $accessToken = (string) data_get($request->json(), 'access_token', '');
-            if ($accessToken === '') {
-                throw new RuntimeException('SUNAT no devolvio access_token.');
-            }
-
-            return $accessToken;
-        });
     }
 
     private function requestLookup(string $provider, array $params, ?string $token = null)
@@ -177,6 +128,19 @@ class PeruRegistryLookupService
 
     private function providerLookupUrl(string $provider): string
     {
+        if (str_starts_with($provider, 'apisperu_')) {
+            $baseUrl = trim((string) config('services.apisperu_dniruc.base_url', ''));
+            if ($baseUrl === '') {
+                return '';
+            }
+
+            return match ($provider) {
+                'apisperu_dni' => rtrim($baseUrl, '/').'/dni/{numero}',
+                'apisperu_ruc' => rtrim($baseUrl, '/').'/ruc/{numero}',
+                default => '',
+            };
+        }
+
         $configured = trim((string) config("services.{$provider}.lookup_url"));
         if ($configured !== '') {
             return $configured;
@@ -196,6 +160,10 @@ class PeruRegistryLookupService
 
     private function providerToken(string $provider): string
     {
+        if (str_starts_with($provider, 'apisperu_')) {
+            return trim((string) config('services.apisperu_dniruc.token', ''));
+        }
+
         $configured = trim((string) config("services.{$provider}.token"));
         if ($configured !== '' && ! $this->isPlaceholderToken($configured)) {
             return $configured;
@@ -219,6 +187,10 @@ class PeruRegistryLookupService
 
     private function providerAuthMode(string $provider): string
     {
+        if (str_starts_with($provider, 'apisperu_')) {
+            return trim((string) config('services.apisperu_dniruc.auth_mode', 'query'));
+        }
+
         $configured = trim((string) config("services.{$provider}.auth_mode"));
         if ($configured !== '') {
             return $configured;
@@ -229,6 +201,10 @@ class PeruRegistryLookupService
 
     private function providerTokenQueryParam(string $provider): string
     {
+        if (str_starts_with($provider, 'apisperu_')) {
+            return trim((string) config('services.apisperu_dniruc.token_query_param', 'token'));
+        }
+
         $configured = trim((string) config("services.{$provider}.token_query_param"));
         if ($configured !== '') {
             return $configured;
@@ -239,6 +215,10 @@ class PeruRegistryLookupService
 
     private function providerTimeout(string $provider): int
     {
+        if (str_starts_with($provider, 'apisperu_')) {
+            return (int) config('services.apisperu_dniruc.timeout', 15);
+        }
+
         $configured = (int) config("services.{$provider}.timeout", 0);
         if ($configured > 0) {
             return $configured;
@@ -249,6 +229,10 @@ class PeruRegistryLookupService
 
     private function providerEnvKey(string $provider): string
     {
+        if (str_starts_with($provider, 'apisperu_')) {
+            return 'APISPERU_DNIRUC_BASE_URL';
+        }
+
         return $provider === 'reniec' ? 'RENIEC_LOOKUP_URL' : 'SUNAT_LOOKUP_URL';
     }
 
