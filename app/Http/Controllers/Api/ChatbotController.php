@@ -45,7 +45,8 @@ class ChatbotController
             $channel = new Channel($publicChannelName);
         }
 
-        $draftResult = app(ChatOrderDraftService::class)->capture(
+        $draftService = app(ChatOrderDraftService::class);
+        $draftResult = $draftService->capture(
             message: $data['message'],
             user: $user,
             guestSession: $sessionId,
@@ -58,16 +59,18 @@ class ChatbotController
                 message: $data['message'],
                 userName: $user?->name,
                 sessionId: $sessionId,
-                draftContext: app(ChatOrderDraftService::class)->contextFor($user, $sessionId),
+                draftContext: $draftService->contextFor($user, $sessionId),
             );
         }
 
         broadcast(new ChatbotReplySent($channel, $reply, $sessionId));
+        $draftSnapshot = $draftResult['snapshot'] ?? $draftService->snapshotFor($user, $sessionId);
 
         return response()->json([
             'reply' => $reply,
             'channel' => $user ? ('private-user.'.$user->id) : $publicChannelName,
             'event' => 'chatbot.reply',
+            'draft' => $draftSnapshot,
         ]);
     }
 
@@ -83,7 +86,7 @@ class ChatbotController
         $data = $request->validate([
             'email' => ['required', 'email', 'max:120'],
             'guest_session' => ['nullable', 'string', 'min:8', 'max:120'],
-            'items' => ['required', 'array', 'min:1'],
+            'items' => ['nullable', 'array', 'min:1'],
             'items.*.id' => ['required', 'integer'],
             'items.*.name' => ['required', 'string', 'max:160'],
             'items.*.category' => ['nullable', 'string', 'max:80'],
@@ -98,11 +101,19 @@ class ChatbotController
         $registeredUser = User::query()->where('email', $email)->first();
         $draftService = app(ChatOrderDraftService::class);
         $draftSnapshot = $draftService->snapshotFor($authUser, $data['guest_session'] ?? null);
+        $items = $data['items'] ?? ($draftSnapshot['items'] ?? []);
+
+        if (! is_array($items) || count($items) === 0) {
+            return response()->json([
+                'message' => 'Todavia no tengo productos claros para guardar. Dime que deseas pedir y lo mantendre en tu pedido temporal.',
+                'draft' => $draftSnapshot,
+            ], 422);
+        }
 
         if ($authUser) {
             $cartRecoveryService->syncForUser(
                 user: $authUser,
-                items: $data['items'],
+                items: $items,
                 source: 'pollia',
             );
             $draftService->markConverted($authUser, $data['guest_session'] ?? null);

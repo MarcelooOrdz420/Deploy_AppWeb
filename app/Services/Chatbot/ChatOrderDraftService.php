@@ -86,6 +86,7 @@ class ChatOrderDraftService
             'draft' => $draft->fresh(),
             'order_activity' => $orderActivity,
             'reply' => $this->replyFor($draft->fresh()),
+            'snapshot' => $this->snapshotFromDraft($draft->fresh()),
         ];
     }
 
@@ -170,6 +171,11 @@ class ChatOrderDraftService
             return null;
         }
 
+        return $this->snapshotFromDraft($draft);
+    }
+
+    private function snapshotFromDraft(ChatOrderDraft $draft): array
+    {
         return [
             'email' => $draft->email,
             'phone' => $draft->phone,
@@ -423,8 +429,20 @@ class ChatOrderDraftService
 
     private function mentionScore(string $message, string $productName): int
     {
+        if (
+            preg_match('/\b\d+(?:\.\d+)?(?:ml|l)\b/u', $message)
+            && preg_match('/\b\d+(?:\.\d+)?(?:ml|l)\b/u', $productName, $unit)
+            && ! Str::contains($message, $unit[0])
+        ) {
+            return 0;
+        }
+
+        if (! $this->hasCategoryIntentForProduct($message, $productName)) {
+            return 0;
+        }
+
         $words = preg_split('/\s+/', $productName) ?: [];
-        $ignore = ['brasa', 'personal', 'tradicional', 'bebida', 'bebidas', 'helada', 'papas', 'ensalada', 'pollo'];
+        $ignore = ['brasa', 'personal', 'tradicional', 'bebida', 'bebidas', 'helada', 'papas', 'ensalada', 'pollo', 'cola'];
         $score = 0;
 
         foreach ($words as $word) {
@@ -434,6 +452,17 @@ class ChatOrderDraftService
         }
 
         return $score;
+    }
+
+    private function hasCategoryIntentForProduct(string $message, string $productName): bool
+    {
+        $isDrink = Str::contains($productName, ['coca', 'inca', 'sprite', 'agua', 'chicha', 'limonada', 'maracuya']);
+        if ($isDrink) {
+            return $this->mentionsGenericDrink($message)
+                || Str::contains($message, ['coca', 'inca', 'sprite', 'agua', 'chicha', 'limonada', 'maracuya']);
+        }
+
+        return true;
     }
 
     private function mentionsGenericDrink(string $normalized): bool

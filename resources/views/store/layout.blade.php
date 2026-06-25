@@ -1461,6 +1461,43 @@ initClientSession();
         localStorage.setItem(pendingCartKey, JSON.stringify(clean));
     }
 
+    function mergePendingCart(items) {
+        const next = pendingCart().map((item) => ({ ...item }));
+        (items || [])
+            .filter((item) => item && Number(item.id) > 0 && Number(item.qty || 0) > 0)
+            .forEach((item) => {
+                const id = Number(item.id);
+                const existing = next.find((row) => Number(row.id) === id);
+                const qty = Math.max(1, Math.min(20, Number(item.qty || 1)));
+                if (existing) {
+                    existing.qty = qty;
+                    existing.name = String(item.name || existing.name || '');
+                    existing.category = String(item.category || existing.category || '');
+                    existing.price = Number(item.price || existing.price || 0);
+                    existing.image_url = String(item.image_url || existing.image_url || '');
+                    return;
+                }
+                next.push({
+                    id,
+                    name: String(item.name || ''),
+                    category: String(item.category || ''),
+                    price: Number(item.price || 0),
+                    qty,
+                    image_url: String(item.image_url || ''),
+                });
+            });
+        savePendingCart(next);
+    }
+
+    function capturePendingCartFromDraft(draft) {
+        if (!draft || typeof draft !== 'object') return false;
+        const items = Array.isArray(draft.items) ? draft.items : [];
+        if (!items.length) return false;
+        mergePendingCart(items);
+        saveCheckoutPrefill(draft);
+        return true;
+    }
+
     function saveCheckoutPrefill(draft) {
         if (!draft || typeof draft !== 'object') return;
         const prefill = {
@@ -1647,7 +1684,9 @@ initClientSession();
 
             const reply = (data.reply || '').toString().trim() || 'No tengo una respuesta clara todavia.';
             addMessage('bot', reply);
-            await capturePendingCartFromReply(reply);
+            if (!capturePendingCartFromDraft(data.draft)) {
+                await capturePendingCartFromReply(reply);
+            }
         } catch {
             typing.remove();
             addMessage('bot', 'No pude conectar con el asistente. Revisa tu conexion e intentalo de nuevo.');
