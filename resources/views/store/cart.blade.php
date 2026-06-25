@@ -68,9 +68,109 @@
                         </div>
                     </section>
 
-                    <section class="surface form-stage">
+                    <section class="surface form-stage payment-stage">
                         <div class="stage-head">
                             <span class="stage-number">02</span>
+                            <div>
+                                <p class="eyebrow">Pago</p>
+                                <h3 class="section-title">Elige como pagaras</h3>
+                            </div>
+                        </div>
+
+                        <div id="payOptions" class="pay-stage-grid">
+                            <label class="pay-tile" data-method="yape">
+                                <input type="radio" name="payment_method" value="yape" checked>
+                                <span class="pay-icon" aria-hidden="true">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        <path d="M21 3v6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        <path d="M10 9.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        <path d="M10 14.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                <div class="pay-tile-body">
+                                    <span class="pay-tile-kicker">Billetera</span>
+                                    <strong>Yape</strong>
+                                    <small>QR o numero.</small>
+                                </div>
+                            </label>
+                            <label class="pay-tile" data-method="plin">
+                                <input type="radio" name="payment_method" value="plin">
+                                <span class="pay-icon" aria-hidden="true">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                                        <path d="M7 7h10v10H7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                        <path d="M9 4h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        <path d="M9 20h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        <path d="M10 12h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                <div class="pay-tile-body">
+                                    <span class="pay-tile-kicker">Billetera</span>
+                                    <strong>Plin</strong>
+                                    <small>Voucher requerido.</small>
+                                </div>
+                            </label>
+                            <label class="pay-tile" data-method="mercado_pago">
+                                <input type="radio" name="payment_method" value="mercado_pago">
+                                <span class="pay-icon" aria-hidden="true">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                                        <path d="M4 10h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        <path d="M6 10V7.5A2.5 2.5 0 0 1 8.5 5h7A2.5 2.5 0 0 1 18 7.5V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        <path d="M6 10v8a1.8 1.8 0 0 0 1.8 1.8h8.4A1.8 1.8 0 0 0 18 18v-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        <path d="M9 14h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                <div class="pay-tile-body">
+                                    <span class="pay-tile-kicker">Seguro</span>
+                                    <strong>Mercado Pago</strong>
+                                    <small>Tarjeta o cuenta.</small>
+                                </div>
+                            </label>
+                            <label class="pay-tile" data-method="cod">
+                                <input type="radio" name="payment_method" value="cod">
+                                <span class="pay-icon" aria-hidden="true">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                                        <path d="M3 8h12v9H3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                        <path d="M15 10h3l3 3v4h-6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                        <path d="M7 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke="currentColor" stroke-width="1.8"/>
+                                        <path d="M17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke="currentColor" stroke-width="1.8"/>
+                                    </svg>
+                                </span>
+                                <div class="pay-tile-body">
+                                    <span class="pay-tile-kicker">Entrega</span>
+                                    <strong>Contraentrega</strong>
+                                    <small>Pagas al recibir.</small>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="payment-stage-layout">
+                            <div id="paymentInfo" class="payment-brief"></div>
+                            <div class="payment-support-stack">
+                                <label class="field-card">
+                                    <span class="label-main">Codigo de operacion</span>
+                                    <input class="input-main" name="payment_reference" placeholder="Ej: 1234567890">
+                                    <span class="field-help">Para Yape o Plin.</span>
+                                </label>
+
+                                <div id="paymentProofWrap" class="proof-panel">
+                                    <div class="proof-panel-head">
+                                        <div>
+                                            <span class="label-main">Comprobante digital</span>
+                                            <p>Adjunta imagen o PDF si usas pago digital.</p>
+                                        </div>
+                                    </div>
+                                    <input id="paymentProofFile" class="input-main" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf">
+                                    <div id="paymentProofPreview" class="proof-preview-note">Aun no seleccionaste archivo.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="surface form-stage">
+                        <div class="stage-head">
+                            <span class="stage-number">03</span>
                             <div>
                                 <p class="eyebrow">Comprobante</p>
                                 <h3 class="section-title">Elige boleta, factura o compra simple</h3>
@@ -124,7 +224,7 @@
 
                     <section class="surface form-stage">
                         <div class="stage-head">
-                            <span class="stage-number">03</span>
+                            <span class="stage-number">04</span>
                             <div>
                                 <p class="eyebrow">Entrega</p>
                                 <h3 class="section-title">Elige recojo o delivery</h3>
@@ -162,7 +262,7 @@
 
                     <section id="saladWrap" class="surface form-stage" style="display:none;">
                         <div class="stage-head">
-                            <span class="stage-number">04</span>
+                            <span class="stage-number">05</span>
                             <div>
                                 <p class="eyebrow">Pollo a la brasa</p>
                                 <h3 class="section-title">Define tu preferencia de ensalada</h3>
@@ -178,111 +278,6 @@
                                     <option value="salada">Salada</option>
                                 </select>
                             </label>
-                        </div>
-                    </section>
-
-                    <section class="surface form-stage payment-stage">
-                        <div class="stage-head">
-                            <span class="stage-number">05</span>
-                            <div>
-                                <p class="eyebrow">Pago</p>
-                                <h3 class="section-title">Confirma el metodo y sube tu comprobante</h3>
-                            </div>
-                        </div>
-
-                        <div id="payOptions" class="pay-stage-grid">
-                            <label class="pay-tile" data-method="yape">
-                                <input type="radio" name="payment_method" value="yape" checked>
-                                <span class="pay-icon" aria-hidden="true">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                                        <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M21 3v6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M10 9.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M10 14.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                    </svg>
-                                </span>
-                                <div class="pay-tile-body">
-                                    <span class="pay-tile-kicker">Billetera</span>
-                                    <strong>Yape</strong>
-                                    <small>Escanea el QR o usa el numero.</small>
-                                </div>
-                            </label>
-                            <label class="pay-tile" data-method="plin">
-                                <input type="radio" name="payment_method" value="plin">
-                                <span class="pay-icon" aria-hidden="true">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                                        <path d="M7 7h10v10H7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                                        <path d="M9 4h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M9 20h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M10 12h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                    </svg>
-                                </span>
-                                <div class="pay-tile-body">
-                                    <span class="pay-tile-kicker">Billetera</span>
-                                    <strong>Plin</strong>
-                                    <small>Adjunta tu voucher para validar.</small>
-                                </div>
-                            </label>
-                            <label class="pay-tile" data-method="mercado_pago">
-                                <input type="radio" name="payment_method" value="mercado_pago">
-                                <span class="pay-icon" aria-hidden="true">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                                        <path d="M4 10h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M6 10V7.5A2.5 2.5 0 0 1 8.5 5h7A2.5 2.5 0 0 1 18 7.5V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M6 10v8a1.8 1.8 0 0 0 1.8 1.8h8.4A1.8 1.8 0 0 0 18 18v-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M9 14h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                    </svg>
-                                </span>
-                                <div class="pay-tile-body">
-                                    <span class="pay-tile-kicker">Seguro</span>
-                                    <strong>Mercado Pago</strong>
-                                    <small>Tarjetas, cuenta Mercado Pago y Yape con checkout protegido.</small>
-                                </div>
-                            </label>
-                            <label class="pay-tile" data-method="cod">
-                                <input type="radio" name="payment_method" value="cod">
-                                <span class="pay-icon" aria-hidden="true">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                                        <path d="M3 8h12v9H3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                                        <path d="M15 10h3l3 3v4h-6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                                        <path d="M7 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke="currentColor" stroke-width="1.8"/>
-                                        <path d="M17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke="currentColor" stroke-width="1.8"/>
-                                    </svg>
-                                </span>
-                                <div class="pay-tile-body">
-                                    <span class="pay-tile-kicker">Entrega</span>
-                                    <strong>Contraentrega</strong>
-                                    <small>Pagas al recibir o recoger el pedido.</small>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div class="payment-stage-layout">
-                            <div id="paymentInfo" class="payment-brief"></div>
-                            <div class="payment-support-stack">
-                                <label class="field-card">
-                                    <span class="label-main">Codigo de operacion</span>
-                                    <input class="input-main" name="payment_reference" placeholder="Ej: 1234567890">
-                                    <span class="field-help">Recomendado para Yape, Plin y Transferencia.</span>
-                                </label>
-
-                                <div id="paymentProofWrap" class="proof-panel">
-                                    <div class="proof-panel-head">
-                                        <div>
-                                            <span class="label-main">Comprobante digital</span>
-                                            <p>Adjunta imagen o PDF antes de confirmar si usas un pago digital.</p>
-                                        </div>
-                                    </div>
-                                    <input id="paymentProofFile" class="input-main" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf">
-                                    <div class="proof-guidelines">
-                                        <span>Voucher obligatorio para Yape</span>
-                                        <span>Voucher obligatorio para Plin</span>
-                                        <span>Mercado Pago no requiere voucher manual</span>
-                                    </div>
-                                    <div id="paymentProofPreview" class="proof-preview-note">Aun no seleccionaste archivo.</div>
-                                </div>
-                            </div>
                         </div>
                     </section>
 
@@ -304,21 +299,21 @@
     </section>
 
     <style>
-        .checkout-shell,.checkout-form,.checkout-flow{display:grid;gap:18px}
-        .checkout-hero{display:grid;grid-template-columns:1.06fr .94fr;gap:18px;padding:20px}
+        .checkout-shell,.checkout-form,.checkout-flow{display:grid;gap:14px}
+        .checkout-hero{display:grid;grid-template-columns:1.12fr .88fr;gap:14px;padding:16px}
         .checkout-hero-copy{display:grid;gap:18px;align-content:center}
         .hero-copy-text{max-width:560px;font-size:15px}
         .checkout-highlights,.rule-cloud,.proof-guidelines{display:flex;flex-wrap:wrap;gap:10px}
         .checkout-highlights span,.rule-cloud span,.proof-guidelines span{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:999px;border:1px solid rgba(234,182,138,.8);background:rgba(255,247,240,.86);color:#82471f;font-size:12px;font-weight:900}
         .checkout-hero-panel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-        .hero-kpi-card{display:grid;gap:8px;padding:18px;border-radius:26px;border:1px solid rgba(234,182,138,.76);background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,245,236,.92));box-shadow:0 18px 34px rgba(52,17,0,.08)}
+        .hero-kpi-card{display:grid;gap:8px;padding:14px;border-radius:18px;border:1px solid rgba(234,182,138,.76);background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,245,236,.92));box-shadow:0 12px 24px rgba(52,17,0,.08)}
         .hero-kpi-wide{grid-column:1/-1}
         .hero-kpi-label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#9b5a2c;font-weight:900}
-        .hero-kpi-card strong{font-size:26px;color:#2d1708}
+        .hero-kpi-card strong{font-size:22px;color:#2d1708}
         .hero-kpi-card p{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.55}
-        .checkout-board{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px;align-items:start}
-        .checkout-sidebar{position:sticky;top:112px;display:grid;gap:18px}
-        .summary-panel,.form-stage{padding:18px;display:grid;gap:18px}
+        .checkout-board{display:grid;grid-template-columns:.9fr 1.1fr;gap:14px;align-items:start}
+        .checkout-sidebar{position:sticky;top:96px;display:grid;gap:14px}
+        .summary-panel,.form-stage{padding:16px;display:grid;gap:14px}
         .summary-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
         .cart-rows{display:grid;gap:12px}
         .cart-item-card{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:14px;border-radius:22px;border:1px solid rgba(234,182,138,.72);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,245,237,.9))}
@@ -341,8 +336,8 @@
         .summary-note p,.recent-order-panel p,.field-help,.proof-panel-head p,.proof-preview-note{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.55}
         .recent-order-panel a{color:#8d3d00;font-weight:900}
         .stage-head{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
-        .stage-number{width:48px;height:48px;border-radius:18px;display:grid;place-items:center;font-size:14px;font-weight:900;color:#6f3916;background:linear-gradient(120deg,rgba(255,111,31,.18),rgba(255,157,90,.26));border:1px solid rgba(234,182,138,.84)}
-        .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+        .stage-number{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:13px;font-weight:900;color:#6f3916;background:linear-gradient(120deg,rgba(255,111,31,.18),rgba(255,157,90,.26));border:1px solid rgba(234,182,138,.84)}
+        .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
         .extended-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
         .lookup-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
         .info-ribbon{padding:14px 16px;border-radius:20px;border:1px dashed rgba(234,182,138,.9);background:rgba(255,247,240,.78);color:#6f431f;font-size:13px;line-height:1.55}
@@ -350,38 +345,38 @@
         .choice-cluster{display:flex;flex-wrap:wrap;gap:10px}
         .choice-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(234,182,138,.78);background:rgba(255,249,245,.92);color:#6f431f;font-size:13px;font-weight:700}
         .geo-btn{justify-self:start}
-        .pay-stage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-        .pay-tile{position:relative;display:grid;grid-template-columns:auto 1fr;column-gap:12px;row-gap:6px;align-items:start;min-height:146px;padding:16px;border-radius:24px;border:1px solid rgba(234,182,138,.72);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,247,240,.88));cursor:pointer;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+        .pay-stage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+        .pay-tile{position:relative;display:grid;grid-template-columns:auto 1fr;column-gap:10px;row-gap:4px;align-items:center;min-height:92px;padding:12px;border-radius:16px;border:1px solid rgba(234,182,138,.72);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,247,240,.88));cursor:pointer;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
         .pay-tile:hover,.pay-tile.is-active{transform:translateY(-2px);border-color:rgba(255,111,31,.42);box-shadow:0 14px 28px rgba(255,111,31,.12)}
         .pay-tile input{position:absolute;top:12px;right:12px}
-        .pay-icon{width:44px;height:44px;border-radius:18px;display:grid;place-items:center;border:1px solid rgba(234,182,138,.75);background:rgba(255,247,240,.88);color:#8d3d00;box-shadow:0 10px 20px rgba(255,111,31,.10)}
-        .pay-tile-body{display:grid;gap:6px}
-        .pay-tile-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#9b5a2c;font-weight:900}
-        .pay-tile strong{font-size:24px;color:#2d1708}
-        .pay-tile small{color:var(--ink-soft);font-size:12px;line-height:1.5}
-        .payment-stage-layout{display:grid;grid-template-columns:.92fr 1.08fr;gap:14px}
-        .payment-brief{align-content:start;min-height:100%}
-        .payment-brief strong{font-size:24px;color:#8d3d00}
-        .payment-brief .qr-image{width:min(100%,220px);aspect-ratio:1/1;object-fit:contain;border-radius:18px;border:1px dashed rgba(255,111,31,.35);background:#fff;padding:12px}
+        .pay-icon{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;border:1px solid rgba(234,182,138,.75);background:rgba(255,247,240,.88);color:#8d3d00;box-shadow:0 8px 16px rgba(255,111,31,.10)}
+        .pay-tile-body{display:grid;gap:3px}
+        .pay-tile-kicker{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#9b5a2c;font-weight:900}
+        .pay-tile strong{font-size:19px;color:#2d1708}
+        .pay-tile small{color:var(--ink-soft);font-size:11px;line-height:1.35}
+        .payment-stage-layout{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(260px,1.2fr);gap:12px}
+        .payment-brief{align-content:start;min-height:auto}
+        .payment-brief strong{font-size:20px;color:#8d3d00}
+        .payment-brief .qr-image{width:min(100%,150px);aspect-ratio:1/1;object-fit:contain;border-radius:14px;border:1px dashed rgba(255,111,31,.35);background:#fff;padding:8px}
         .checkout-actions{display:grid;gap:10px;padding-bottom:8px}
         .checkout-submit{min-height:58px;font-size:16px}
         .order-feedback{min-height:22px;color:#7b3d11;font-size:14px;line-height:1.5}
-        .processing-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(16,10,6,.58);z-index:90}
-        .processing-card{width:100%;max-width:420px;border-radius:18px;padding:18px;border:1px solid #ffc999;background:linear-gradient(180deg,#fffdfb 0%,#fff1e5 100%);box-shadow:0 18px 40px rgba(70,28,0,.18);text-align:center}
-        .processing-image{width:96px;height:96px;object-fit:contain;border-radius:18px;border:1px solid #ffc999;background:#fff}
-        .processing-card h3{margin:12px 0 6px;color:#8d3d00}
-        .processing-card p{margin:0;color:#6f431f}
+        .processing-overlay{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;padding:18px;background:rgba(16,10,6,.32);z-index:90}
+        .processing-card{width:min(92vw,360px);margin-top:24px;border-radius:12px;padding:12px 14px;border:1px solid #ffc999;background:linear-gradient(180deg,#fffdfb 0%,#fff1e5 100%);box-shadow:0 12px 28px rgba(70,28,0,.16);text-align:left;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+        .processing-image{width:54px;height:54px;object-fit:contain;border-radius:12px;border:1px solid #ffc999;background:#fff;grid-row:span 2}
+        .processing-card h3{margin:0;color:#8d3d00;font-size:16px;line-height:1.2}
+        .processing-card p{margin:0;color:#6f431f;font-size:13px;line-height:1.35}
         .checkout-shell *{min-width:0}
         .checkout-shell .title,.section-title,.hero-kpi-card strong,.cart-item-name,.pay-tile strong,.payment-brief strong{overflow-wrap:anywhere;line-height:1.12}
-        .checkout-shell .title{font-size:clamp(30px,4.8vw,58px)}
-        .section-title{font-size:clamp(22px,2.6vw,34px)}
+        .checkout-shell .title{font-size:clamp(30px,4.1vw,48px)}
+        .section-title{font-size:clamp(22px,2.2vw,30px)}
         .checkout-board{grid-template-columns:minmax(330px,.82fr) minmax(0,1.18fr)}
         .checkout-flow{min-width:0}
         .form-stage{overflow:hidden}
         .field-card,.proof-panel,.payment-brief{min-width:0}
-        .pay-stage-grid{grid-template-columns:repeat(2,minmax(220px,1fr))}
-        .pay-tile{min-height:118px;align-items:center}
-        .pay-tile strong{font-size:clamp(18px,2vw,24px)}
+        .pay-stage-grid{grid-template-columns:repeat(2,minmax(190px,1fr))}
+        .pay-tile{min-height:86px;align-items:center}
+        .pay-tile strong{font-size:clamp(17px,1.7vw,20px)}
         .pay-tile small{overflow-wrap:break-word}
         .payment-stage-layout{grid-template-columns:minmax(220px,.86fr) minmax(260px,1.14fr);align-items:start}
         .choice-cluster{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
