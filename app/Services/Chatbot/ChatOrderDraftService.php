@@ -38,8 +38,15 @@ class ChatOrderDraftService
         }
 
         if ($phone = $this->extractPhone($message)) {
-            $draft->phone = $phone;
+            $this->setDraftValue($draft, $metadata, 'phone', $phone);
             $metadata['last_phone_detected'] = $phone;
+            $changed = true;
+            $orderActivity = true;
+        }
+
+        foreach ($this->extractCheckoutFields($message, $normalized) as $field => $value) {
+            $this->setDraftValue($draft, $metadata, $field, $value);
+            $metadata['last_'.$field.'_detected'] = $value;
             $changed = true;
             $orderActivity = true;
         }
@@ -134,10 +141,17 @@ class ChatOrderDraftService
 
         return trim(implode("\n", array_filter([
             $parts ? 'Productos ya indicados: '.implode(', ', $parts) : null,
+            $this->draftValue($draft, 'customer_name') ? "Nombre indicado: {$this->draftValue($draft, 'customer_name')}" : null,
+            $this->draftValue($draft, 'delivery_type') ? "Tipo de entrega indicado: {$this->draftValue($draft, 'delivery_type')}" : null,
             $draft->delivery_address ? "Direccion indicada: {$draft->delivery_address}" : null,
             $draft->delivery_reference ? "Referencia indicada: {$draft->delivery_reference}" : null,
             $draft->phone ? "Telefono indicado: {$draft->phone}" : null,
             $draft->email ? "Correo indicado: {$draft->email}" : null,
+            $this->draftValue($draft, 'payment_method') ? "Metodo de pago indicado: {$this->draftValue($draft, 'payment_method')}" : null,
+            $this->draftValue($draft, 'payment_reference') ? "Operacion de pago indicada: {$this->draftValue($draft, 'payment_reference')}" : null,
+            $this->draftValue($draft, 'salad_type') ? "Ensalada indicada: {$this->draftValue($draft, 'salad_type')}" : null,
+            $this->draftValue($draft, 'billing_receipt_type') ? "Comprobante indicado: {$this->draftValue($draft, 'billing_receipt_type')}" : null,
+            $this->draftValue($draft, 'billing_document_number') ? "Documento indicado: {$this->draftValue($draft, 'billing_document_number')}" : null,
         ]))) ?: null;
     }
 
@@ -191,8 +205,18 @@ class ChatOrderDraftService
         return [
             'email' => $draft->email,
             'phone' => $draft->phone,
+            'customer_name' => $this->draftValue($draft, 'customer_name'),
+            'delivery_type' => $this->draftValue($draft, 'delivery_type'),
             'delivery_address' => $draft->delivery_address,
             'delivery_reference' => $draft->delivery_reference,
+            'payment_method' => $this->draftValue($draft, 'payment_method'),
+            'payment_reference' => $this->draftValue($draft, 'payment_reference'),
+            'salad_type' => $this->draftValue($draft, 'salad_type'),
+            'billing_receipt_type' => $this->draftValue($draft, 'billing_receipt_type'),
+            'billing_document_type' => $this->draftValue($draft, 'billing_document_type'),
+            'billing_document_number' => $this->draftValue($draft, 'billing_document_number'),
+            'billing_name' => $this->draftValue($draft, 'billing_name'),
+            'pending_drink_qty' => (int) (((array) $draft->metadata)['pending_drink_qty'] ?? 0),
             'items' => $draft->items ?: [],
         ];
     }
@@ -285,6 +309,77 @@ class ChatOrderDraftService
         return false;
     }
 
+    private function extractCheckoutFields(string $message, string $normalized): array
+    {
+        $fields = [];
+
+        if ($name = $this->extractCustomerName($message)) {
+            $fields['customer_name'] = $name;
+            $fields['billing_name'] = $name;
+        }
+
+        if (Str::contains($normalized, ['delivery', 'envio', 'enviar', 'reparto', 'domicilio'])) {
+            $fields['delivery_type'] = 'delivery';
+        } elseif (Str::contains($normalized, ['recojo', 'recoger', 'retiro', 'local', 'tienda'])) {
+            $fields['delivery_type'] = 'pickup';
+        }
+
+        if (Str::contains($normalized, 'yape')) {
+            $fields['payment_method'] = 'yape';
+        } elseif (Str::contains($normalized, 'plin')) {
+            $fields['payment_method'] = 'plin';
+        } elseif (Str::contains($normalized, ['mercado pago', 'mercadopago', 'tarjeta'])) {
+            $fields['payment_method'] = 'mercado_pago';
+        } elseif (Str::contains($normalized, ['contraentrega', 'contra entrega', 'efectivo'])) {
+            $fields['payment_method'] = 'cod';
+        }
+
+        if (Str::contains($normalized, 'salada')) {
+            $fields['salad_type'] = 'salada';
+        } elseif (Str::contains($normalized, 'dulce')) {
+            $fields['salad_type'] = 'dulce';
+        }
+
+        if (Str::contains($normalized, 'factura')) {
+            $fields['billing_receipt_type'] = 'factura';
+            $fields['billing_document_type'] = 'ruc';
+        } elseif (Str::contains($normalized, 'boleta')) {
+            $fields['billing_receipt_type'] = 'boleta';
+            $fields['billing_document_type'] = 'dni';
+        }
+
+        if (preg_match('/\b(?:dni|documento)\s*(\d{8})\b/u', $normalized, $match)) {
+            $fields['billing_document_type'] = 'dni';
+            $fields['billing_document_number'] = $match[1];
+            $fields['billing_receipt_type'] = $fields['billing_receipt_type'] ?? 'boleta';
+        }
+
+        if (preg_match('/\b(?:ruc)\s*(\d{11})\b/u', $normalized, $match)) {
+            $fields['billing_document_type'] = 'ruc';
+            $fields['billing_document_number'] = $match[1];
+            $fields['billing_receipt_type'] = 'factura';
+        }
+
+        if (preg_match('/\b(?:operacion|operación|codigo|código|referencia|voucher)\s*(?:es|:)?\s*(\d{5,20})\b/iu', $message, $match)) {
+            $fields['payment_reference'] = $match[1];
+        }
+
+        return $fields;
+    }
+
+    private function extractCustomerName(string $message): ?string
+    {
+        if (! preg_match('/\b(?:me llamo|mi nombre es|soy)\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]{2,80})/u', $message, $match)) {
+            return null;
+        }
+
+        $name = trim((string) preg_replace('/\s+/', ' ', $match[1]));
+        $name = preg_replace('/\b(?:quiero|deseo|pago|delivery|recojo|telefono|correo)\b.*$/iu', '', (string) $name);
+        $name = trim((string) $name);
+
+        return $name !== '' ? Str::limit($name, 120, '') : null;
+    }
+
     private function replyFor(ChatOrderDraft $draft): ?string
     {
         $items = (array) $draft->items;
@@ -311,14 +406,34 @@ class ChatOrderDraftService
         }
 
         $missing = [];
+        if (! $this->draftValue($draft, 'customer_name')) {
+            $missing[] = 'nombre';
+        }
+        if (! $this->draftValue($draft, 'delivery_type')) {
+            $missing[] = 'entrega o recojo';
+        }
         if (! $draft->delivery_address) {
-            $missing[] = 'direccion';
+            if ($this->draftValue($draft, 'delivery_type') === 'delivery') {
+                $missing[] = 'direccion';
+            }
         }
         if (! $draft->phone) {
             $missing[] = 'telefono';
         }
         if (! $draft->email) {
             $missing[] = 'correo';
+        }
+        if (! empty($metadata['pending_drink_qty'])) {
+            $missing[] = 'marca de gaseosa';
+        }
+        if ($this->hasChickenItems($items) && ! $this->draftValue($draft, 'salad_type')) {
+            $missing[] = 'ensalada dulce o salada';
+        }
+        if (! $this->draftValue($draft, 'payment_method')) {
+            $missing[] = 'metodo de pago';
+        }
+        if (in_array($this->draftValue($draft, 'payment_method'), ['yape', 'plin'], true) && ! $this->draftValue($draft, 'payment_reference')) {
+            $missing[] = 'codigo de operacion';
         }
 
         $upsell = $this->needsComplementOffer($items, $metadata)
@@ -346,6 +461,17 @@ class ChatOrderDraftService
             ->all();
 
         return in_array('pollos', $categories, true) || in_array('parrillas', $categories, true);
+    }
+
+    private function hasChickenItems(array $items): bool
+    {
+        foreach ($items as $item) {
+            if (Str::lower((string) ($item['category'] ?? '')) === 'pollos') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function findMentionedProducts(string $normalized): array
@@ -560,12 +686,51 @@ class ChatOrderDraftService
             if ($this->findMentionedProducts($normalized) || $this->mentionsGenericDrink($normalized)) {
                 continue;
             }
+            if ($this->isCheckoutControlPhrase($normalized)) {
+                continue;
+            }
             if ($this->looksLikeAddress($normalized) || ($hasOrderContext && str_word_count($normalized) >= 2)) {
                 return Str::limit($part, 500, '');
             }
         }
 
         return null;
+    }
+
+    private function isCheckoutControlPhrase(string $normalized): bool
+    {
+        foreach ([
+            'delivery',
+            'envio',
+            'recojo',
+            'recoger',
+            'retiro',
+            'local',
+            'tienda',
+            'yape',
+            'plin',
+            'mercado pago',
+            'mercadopago',
+            'tarjeta',
+            'contraentrega',
+            'efectivo',
+            'ensalada',
+            'salada',
+            'dulce',
+            'boleta',
+            'factura',
+            'dni',
+            'ruc',
+            'operacion',
+            'codigo',
+            'referencia de pago',
+        ] as $needle) {
+            if (Str::contains($normalized, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function looksLikeAddress(string $normalized): bool
@@ -588,6 +753,53 @@ class ChatOrderDraftService
         $text = preg_replace('/\s+/', ' ', (string) $text);
 
         return trim((string) $text);
+    }
+
+    private function setDraftValue(ChatOrderDraft $draft, array &$metadata, string $field, mixed $value): void
+    {
+        if ($value === null || $value === '') {
+            return;
+        }
+
+        if ($this->columnExists($field)) {
+            $draft->{$field} = $value;
+
+            return;
+        }
+
+        $checkout = is_array($metadata['checkout'] ?? null) ? $metadata['checkout'] : [];
+        $checkout[$field] = $value;
+        $metadata['checkout'] = $checkout;
+    }
+
+    private function draftValue(ChatOrderDraft $draft, string $field): ?string
+    {
+        if ($this->columnExists($field)) {
+            $value = $draft->{$field} ?? null;
+
+            return $value !== null && $value !== '' ? (string) $value : null;
+        }
+
+        $metadata = is_array($draft->metadata) ? $draft->metadata : [];
+        $checkout = is_array($metadata['checkout'] ?? null) ? $metadata['checkout'] : [];
+        $value = $checkout[$field] ?? null;
+
+        return $value !== null && $value !== '' ? (string) $value : null;
+    }
+
+    private function columnExists(string $column): bool
+    {
+        static $columns = [];
+
+        if (! array_key_exists($column, $columns)) {
+            try {
+                $columns[$column] = Schema::hasColumn('chat_order_drafts', $column);
+            } catch (\Throwable) {
+                $columns[$column] = false;
+            }
+        }
+
+        return $columns[$column];
     }
 
     private function tableExists(): bool

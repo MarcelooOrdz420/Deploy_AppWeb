@@ -1503,12 +1503,21 @@ initClientSession();
     function saveCheckoutPrefill(draft) {
         if (!draft || typeof draft !== 'object') return;
         const prefill = {
+            customer_name: String(draft.customer_name || ''),
             phone: String(draft.phone || ''),
             email: String(draft.email || ''),
+            delivery_type: String(draft.delivery_type || ''),
             address: String(draft.delivery_address || ''),
             reference: String(draft.delivery_reference || ''),
+            payment_method: String(draft.payment_method || ''),
+            payment_reference: String(draft.payment_reference || ''),
+            salad_type: String(draft.salad_type || ''),
+            billing_receipt_type: String(draft.billing_receipt_type || ''),
+            billing_document_type: String(draft.billing_document_type || ''),
+            billing_document_number: String(draft.billing_document_number || ''),
+            billing_name: String(draft.billing_name || ''),
         };
-        if (!prefill.phone && !prefill.email && !prefill.address && !prefill.reference) return;
+        if (!Object.values(prefill).some(Boolean)) return;
         localStorage.setItem(checkoutPrefillKey, JSON.stringify(prefill));
     }
 
