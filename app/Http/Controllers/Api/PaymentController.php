@@ -31,6 +31,13 @@ class PaymentController extends Controller
             return response()->json(['ok' => true, 'provider' => 'izipay']);
         }
 
+        if ($request->isMethod('POST')
+            && trim($request->getContent()) === ''
+            && ! $request->has('kr-answer')
+        ) {
+            return response()->json(['ok' => true, 'provider' => 'izipay', 'validation' => true]);
+        }
+
         if (! $izipayService->isConfigured()) {
             return response()->json(['ok' => false, 'message' => 'Izipay no configurado.'], 503);
         }
