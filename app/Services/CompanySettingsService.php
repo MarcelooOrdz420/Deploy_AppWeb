@@ -18,27 +18,11 @@ class CompanySettingsService
             'currency' => config('company.currency', 'PEN'),
             'location' => $this->locationSettings(),
             'payments' => [
-                'yape' => [
-                    'label' => config('company.payments.yape.label'),
-                    'phone' => config('company.payments.yape.phone'),
-                    'qr_url' => $this->assetUrl(config('company.payments.yape.qr_path')),
-                    'enabled' => (bool) config('company.payments.yape.enabled'),
-                ],
-                'plin' => [
-                    'label' => config('company.payments.plin.label'),
-                    'phone' => config('company.payments.plin.phone'),
-                    'qr_url' => $this->assetUrl(config('company.payments.plin.qr_path')),
-                    'enabled' => (bool) config('company.payments.plin.enabled'),
-                ],
-                'cod' => [
-                    'label' => config('company.payments.cod.label'),
-                    'message' => config('company.payments.cod.message'),
-                    'enabled' => (bool) config('company.payments.cod.enabled'),
-                ],
-                'mercado_pago' => [
-                    'label' => config('company.payments.mercado_pago.label'),
-                    'enabled' => (bool) config('company.payments.mercado_pago.enabled'),
-                    'public_key' => config('services.mercadopago.public_key'),
+                'izipay' => [
+                    'label' => config('company.payments.izipay.label'),
+                    'message' => config('company.payments.izipay.message'),
+                    'enabled' => (bool) config('company.payments.izipay.enabled'),
+                    'public_key' => config('services.izipay.public_key'),
                 ],
             ],
         ];

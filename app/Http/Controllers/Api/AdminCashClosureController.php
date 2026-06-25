@@ -161,10 +161,10 @@ class AdminCashClosureController extends Controller
             ]);
 
         $grossSales = round((float) $orders->sum('total_amount'), 2);
-        $cashSales = round((float) $orders->where('payment_method', 'cod')->sum('total_amount'), 2);
-        $digitalSales = round((float) $orders->where('payment_method', '!=', 'cod')->sum('total_amount'), 2);
+        $cashSales = 0.0;
+        $digitalSales = round((float) $orders->where('payment_method', 'izipay')->sum('total_amount'), 2);
         $verifiedSales = round((float) $orders
-            ->filter(fn (Order $order): bool => $order->payment_method === 'cod' || $order->payment_status === 'verified')
+            ->filter(fn (Order $order): bool => $order->payment_status === 'verified')
             ->sum('total_amount'), 2);
 
         $paymentBreakdown = $orders

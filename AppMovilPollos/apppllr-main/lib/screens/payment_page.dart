@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/company_settings.dart';
 import '../services/profile_data_service.dart';
 import '../services/company_settings_service.dart';
@@ -12,7 +13,7 @@ import '../services/session_service.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
 
-enum PayMethod { yape, plin, mercadoPago, efectivo }
+enum PayMethod { izipay }
 enum DeliveryType { delivery, pickup }
 enum ReceiptType { none, boleta, factura }
 
@@ -43,7 +44,7 @@ class _PaymentPageState extends State<PaymentPage> {
   final _latitudeCtrl = TextEditingController();
   final _longitudeCtrl = TextEditingController();
 
-  PayMethod _method = PayMethod.yape;
+  PayMethod _method = PayMethod.izipay;
   DeliveryType _deliveryType = DeliveryType.delivery;
   ReceiptType _receiptType = ReceiptType.none;
   String _saladType = 'dulce';
@@ -82,8 +83,7 @@ class _PaymentPageState extends State<PaymentPage> {
     super.dispose();
   }
 
-  bool get _needsOperationCode =>
-      _method == PayMethod.yape || _method == PayMethod.plin;
+  bool get _needsOperationCode => false;
 
   Future<void> _loadSettings() async {
     final settings = await _companySettingsService.fetch();
@@ -137,14 +137,8 @@ class _PaymentPageState extends State<PaymentPage> {
 
   String _paymentMethodValue() {
     switch (_method) {
-      case PayMethod.yape:
-        return 'yape';
-      case PayMethod.plin:
-        return 'plin';
-      case PayMethod.mercadoPago:
-        return 'mercado_pago';
-      case PayMethod.efectivo:
-        return 'cod';
+      case PayMethod.izipay:
+        return 'izipay';
     }
   }
 
@@ -405,34 +399,37 @@ class _PaymentPageState extends State<PaymentPage> {
               (_deliveryType == DeliveryType.delivery ? cart.deliveryFee() : 0.0));
       final itemsText = cart.items.map((item) => item.producto.name).join(', ');
 
-      if (_method == PayMethod.mercadoPago && orderId > 0) {
-        final checkout = await _orderApiService.mercadoPagoCheckout(
+      if (_method == PayMethod.izipay && orderId > 0) {
+        final checkout = await _orderApiService.izipayCheckout(
           token: token,
           orderId: orderId,
         );
-        final checkoutUrl =
-            (checkout['checkout_url'] ?? checkout['sandbox_checkout_url'] ?? '')
-                .toString()
-                .trim();
+        final checkoutUrl = (checkout['payment_url'] ?? '').toString().trim();
 
         if (checkoutUrl.isNotEmpty && mounted) {
           await Clipboard.setData(ClipboardData(text: checkoutUrl));
-          await showDialog<void>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Mercado Pago listo'),
-              content: Text(
-                'Copiamos el enlace de pago para tu pedido $trackingCode. '
-                'Abre el navegador del celular y pega el enlace para completar el pago seguro.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Continuar'),
-                ),
-              ],
-            ),
+          final opened = await launchUrl(
+            Uri.parse(checkoutUrl),
+            mode: LaunchMode.externalApplication,
           );
+          if (!opened && mounted) {
+            await showDialog<void>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Izipay listo'),
+                content: Text(
+                  'Copiamos el enlace de pago para tu pedido $trackingCode. '
+                  'Abre tu navegador y pega el enlace para completar el pago seguro.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Continuar'),
+                  ),
+                ],
+              ),
+            );
+          }
         }
       }
 
@@ -614,10 +611,7 @@ class _PaymentPageState extends State<PaymentPage> {
             title: 'Metodo de pago',
             child: Column(
               children: [
-                _payTile('Yape', PayMethod.yape, Icons.qr_code_2),
-                _payTile('Plin', PayMethod.plin, Icons.qr_code),
-                _payTile('Mercado Pago', PayMethod.mercadoPago, Icons.credit_card),
-                _payTile('Pago contraentrega', PayMethod.efectivo, Icons.local_shipping),
+                _payTile('Izipay', PayMethod.izipay, Icons.credit_card),
                 const SizedBox(height: 10),
                 _paymentPanel(),
                 if (_needsOperationCode) ...[
@@ -895,35 +889,12 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Widget _paymentPanel() {
-    if (_method == PayMethod.yape) {
-      return _paymentInfoCard(
-        title: _settings.yape.label,
-        subtitle: 'Numero: ${_settings.yape.phone.isEmpty ? 'Pendiente' : _settings.yape.phone}',
-        child: _networkPreview(_settings.yape.qrUrl),
-      );
-    }
-
-    if (_method == PayMethod.plin) {
-      return _paymentInfoCard(
-        title: _settings.plin.label,
-        subtitle: 'Numero: ${_settings.plin.phone.isEmpty ? 'Pendiente' : _settings.plin.phone}',
-        child: _networkPreview(_settings.plin.qrUrl),
-      );
-    }
-
-    if (_method == PayMethod.mercadoPago) {
-      return _paymentInfoCard(
-        title: _settings.mercadoPago.label,
-        subtitle:
-            'Te daremos un enlace seguro para completar el pago con tarjeta, cuenta Mercado Pago o Yape.',
-        child: const Icon(Icons.credit_score_outlined, size: 44, color: Colors.orange),
-      );
-    }
-
     return _paymentInfoCard(
-      title: _settings.cod.label,
-      subtitle: _settings.cod.message,
-      child: const Icon(Icons.payments_outlined, size: 44, color: Colors.orange),
+      title: _settings.izipay.label,
+      subtitle: _settings.izipay.message.isEmpty
+          ? 'Te llevaremos al checkout seguro de Izipay para pagar con tarjeta, Yape o Plin.'
+          : _settings.izipay.message,
+      child: const Icon(Icons.credit_score_outlined, size: 44, color: Colors.orange),
     );
   }
 

@@ -290,10 +290,10 @@ class ChatOrderDraftService
             'dni',
             'ruc',
             'pago',
+            'izipay',
             'yape',
             'plin',
-            'mercado pago',
-            'contraentrega',
+            'tarjeta',
             'pollo',
             'parrilla',
             'gaseosa',
@@ -324,14 +324,8 @@ class ChatOrderDraftService
             $fields['delivery_type'] = 'pickup';
         }
 
-        if (Str::contains($normalized, 'yape')) {
-            $fields['payment_method'] = 'yape';
-        } elseif (Str::contains($normalized, 'plin')) {
-            $fields['payment_method'] = 'plin';
-        } elseif (Str::contains($normalized, ['mercado pago', 'mercadopago', 'tarjeta'])) {
-            $fields['payment_method'] = 'mercado_pago';
-        } elseif (Str::contains($normalized, ['contraentrega', 'contra entrega', 'efectivo'])) {
-            $fields['payment_method'] = 'cod';
+        if (Str::contains($normalized, ['izipay', 'yape', 'plin', 'tarjeta'])) {
+            $fields['payment_method'] = 'izipay';
         }
 
         if (Str::contains($normalized, 'salada')) {
@@ -431,9 +425,6 @@ class ChatOrderDraftService
         }
         if (! $this->draftValue($draft, 'payment_method')) {
             $missing[] = 'metodo de pago';
-        }
-        if (in_array($this->draftValue($draft, 'payment_method'), ['yape', 'plin'], true) && ! $this->draftValue($draft, 'payment_reference')) {
-            $missing[] = 'codigo de operacion';
         }
 
         $upsell = $this->needsComplementOffer($items, $metadata)
@@ -707,13 +698,10 @@ class ChatOrderDraftService
             'retiro',
             'local',
             'tienda',
+            'izipay',
             'yape',
             'plin',
-            'mercado pago',
-            'mercadopago',
             'tarjeta',
-            'contraentrega',
-            'efectivo',
             'ensalada',
             'salada',
             'dulce',

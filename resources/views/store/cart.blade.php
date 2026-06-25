@@ -78,41 +78,8 @@
                         </div>
 
                         <div id="payOptions" class="pay-stage-grid">
-                            <label class="pay-tile" data-method="yape">
-                                <input type="radio" name="payment_method" value="yape" checked>
-                                <span class="pay-icon" aria-hidden="true">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                                        <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M21 3v6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M10 9.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M10 14.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                    </svg>
-                                </span>
-                                <div class="pay-tile-body">
-                                    <span class="pay-tile-kicker">Billetera</span>
-                                    <strong>Yape</strong>
-                                    <small>QR o numero.</small>
-                                </div>
-                            </label>
-                            <label class="pay-tile" data-method="plin">
-                                <input type="radio" name="payment_method" value="plin">
-                                <span class="pay-icon" aria-hidden="true">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                                        <path d="M7 7h10v10H7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                                        <path d="M9 4h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M9 20h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        <path d="M10 12h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                    </svg>
-                                </span>
-                                <div class="pay-tile-body">
-                                    <span class="pay-tile-kicker">Billetera</span>
-                                    <strong>Plin</strong>
-                                    <small>Voucher requerido.</small>
-                                </div>
-                            </label>
-                            <label class="pay-tile" data-method="mercado_pago">
-                                <input type="radio" name="payment_method" value="mercado_pago">
+                            <label class="pay-tile" data-method="izipay">
+                                <input type="radio" name="payment_method" value="izipay" checked>
                                 <span class="pay-icon" aria-hidden="true">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                                         <path d="M4 10h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -123,48 +90,15 @@
                                 </span>
                                 <div class="pay-tile-body">
                                     <span class="pay-tile-kicker">Seguro</span>
-                                    <strong>Mercado Pago</strong>
-                                    <small>Tarjeta o cuenta.</small>
-                                </div>
-                            </label>
-                            <label class="pay-tile" data-method="cod">
-                                <input type="radio" name="payment_method" value="cod">
-                                <span class="pay-icon" aria-hidden="true">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                                        <path d="M3 8h12v9H3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                                        <path d="M15 10h3l3 3v4h-6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                                        <path d="M7 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke="currentColor" stroke-width="1.8"/>
-                                        <path d="M17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke="currentColor" stroke-width="1.8"/>
-                                    </svg>
-                                </span>
-                                <div class="pay-tile-body">
-                                    <span class="pay-tile-kicker">Entrega</span>
-                                    <strong>Contraentrega</strong>
-                                    <small>Pagas al recibir.</small>
+                                    <strong>Izipay</strong>
+                                    <small>Tarjeta, Yape o Plin.</small>
                                 </div>
                             </label>
                         </div>
 
                         <div class="payment-stage-layout">
                             <div id="paymentInfo" class="payment-brief"></div>
-                            <div class="payment-support-stack">
-                                <label class="field-card">
-                                    <span class="label-main">Codigo de operacion</span>
-                                    <input class="input-main" name="payment_reference" placeholder="Ej: 1234567890">
-                                    <span class="field-help">Para Yape o Plin.</span>
-                                </label>
-
-                                <div id="paymentProofWrap" class="proof-panel">
-                                    <div class="proof-panel-head">
-                                        <div>
-                                            <span class="label-main">Comprobante digital</span>
-                                            <p>Adjunta imagen o PDF si usas pago digital.</p>
-                                        </div>
-                                    </div>
-                                    <input id="paymentProofFile" class="input-main" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf">
-                                    <div id="paymentProofPreview" class="proof-preview-note">Aun no seleccionaste archivo.</div>
-                                </div>
-                            </div>
+                            <input type="hidden" name="payment_reference">
                         </div>
                     </section>
 
@@ -392,15 +326,15 @@
 
 @section('scripts')
 <script>
-const COMPANY={brand_name:'Pollos y Parrillas El Dorado',payments:{yape:{label:'Yape Empresa',phone:'999888777',qr_url:'/images/yape-qr.png'},plin:{label:'Plin Empresa',phone:'999888777',qr_url:'/images/plin-qr.png'},mercado_pago:{label:'Mercado Pago',public_key:''},cod:{label:'Pago contraentrega',message:'Pagas cuando recibes tu pedido.'}}};
+const COMPANY={brand_name:'Pollos y Parrillas El Dorado',payments:{izipay:{label:'Pago seguro con Izipay',message:'Paga con tarjeta, Yape o Plin desde el checkout seguro de Izipay.',public_key:''}}};
 const cartListEl=document.getElementById('cartList'),cartTotalEl=document.getElementById('cartTotal'),orderForm=document.getElementById('orderForm'),orderMsg=document.getElementById('orderMsg'),payOptions=document.getElementById('payOptions'),paymentInfo=document.getElementById('paymentInfo'),saladWrap=document.getElementById('saladWrap'),lastOrderBox=document.getElementById('lastOrderBox'),processingOverlay=document.getElementById('processingOverlay'),processingTitle=document.getElementById('processingTitle'),processingText=document.getElementById('processingText'),geoBtn=document.getElementById('geoBtn'),geoMsg=document.getElementById('geoMsg'),paymentProofWrap=document.getElementById('paymentProofWrap'),paymentProofFile=document.getElementById('paymentProofFile'),paymentProofPreview=document.getElementById('paymentProofPreview'),billingReceiptType=document.getElementById('billingReceiptType'),billingDocumentType=document.getElementById('billingDocumentType'),billingMetadata=document.getElementById('billingMetadata'),billingDocumentWrap=document.getElementById('billingDocumentWrap'),billingDocumentLabel=document.getElementById('billingDocumentLabel'),billingDocumentNumber=document.getElementById('billingDocumentNumber'),lookupDocumentBtn=document.getElementById('lookupDocumentBtn'),billingLookupBox=document.getElementById('billingLookupBox'),billingFieldsWrap=document.getElementById('billingFieldsWrap'),billingName=document.getElementById('billingName'),billingEmail=document.getElementById('billingEmail'),billingNameLabel=document.getElementById('billingNameLabel'),billingEmailWrap=document.getElementById('billingEmailWrap'),deliveryType=document.getElementById('deliveryType'),deliveryFieldsWrap=document.getElementById('deliveryFieldsWrap'),heroStatus=document.getElementById('heroStatus');let lastLookupValue='';
-function getToken(){return localStorage.getItem('ed_token')}function isLoggedIn(){return Boolean(getToken())}function getCart(){return JSON.parse(localStorage.getItem('ed_cart')||'[]')}function setCart(cart){localStorage.setItem('ed_cart',JSON.stringify(cart));window.dispatchEvent(new Event('storage'))}function money(n){return Number(n).toFixed(2)}function digits(v){return String(v||'').replace(/\D/g,'')}function optionalTrim(field){return field?field.value.trim()||null:null}function needsDigitalProof(method){return['yape','plin'].includes(method)}
+function getToken(){return localStorage.getItem('ed_token')}function isLoggedIn(){return Boolean(getToken())}function getCart(){return JSON.parse(localStorage.getItem('ed_cart')||'[]')}function setCart(cart){localStorage.setItem('ed_cart',JSON.stringify(cart));window.dispatchEvent(new Event('storage'))}function money(n){return Number(n).toFixed(2)}function digits(v){return String(v||'').replace(/\D/g,'')}function optionalTrim(field){return field?field.value.trim()||null:null}function needsDigitalProof(method){return false}
 const PURCHASE_LIMITS={exact:{'pollo entero a la brasa':1,'mega combo familiar':1,'1/2 pollo a la brasa':2,'1/4 pollo a la brasa':4,'mostrito tradicional':4,'chicha morada 1l':2,'limonada frozen':2},sodaNames:['coca-cola personal 500ml','inca kola personal 500ml','sprite personal 500ml'],sodaMax:3};
 function setProcessingState(visible,title='Espera, estamos procesando tu pedido',text='Validando productos, datos de entrega y forma de pago.'){processingOverlay.style.display=visible?'flex':'none';processingTitle.textContent=title;processingText.textContent=text}
 function hasChickenInCart(){return getCart().some(item=>String(item.category||'').toLowerCase()==='pollos')}
 function normalizeProductName(name){return String(name||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
 function validateCartLimits(cart){const totals={};let sodaTotal=0;cart.forEach(item=>{const normalizedName=normalizeProductName(item.name),quantity=Number(item.qty||0);totals[normalizedName]=(totals[normalizedName]||0)+quantity;if(PURCHASE_LIMITS.sodaNames.includes(normalizedName))sodaTotal+=quantity});for(const[name,max]of Object.entries(PURCHASE_LIMITS.exact)){if((totals[name]||0)>max){const label=cart.find(item=>normalizeProductName(item.name)===name)?.name||name;return`Solo se permiten ${max} unidades de ${label} por pedido.`}}if(sodaTotal>PURCHASE_LIMITS.sodaMax)return`Solo se permiten ${PURCHASE_LIMITS.sodaMax} gaseosas personales por pedido.`;return null}
-function paymentMethod(){const checked=orderForm.querySelector('input[name="payment_method"]:checked');return checked?checked.value:'yape'}
+function paymentMethod(){const checked=orderForm.querySelector('input[name="payment_method"]:checked');return checked?checked.value:'izipay'}
 function updateHeroStatus(cart){heroStatus.textContent=!cart.length?'Carrito vacio':needsDigitalProof(paymentMethod())?'Listo para pagar con voucher':'Listo para confirmar'}
 function renderCart(){const cart=getCart();if(!cart.length){cartListEl.textContent='Sin productos agregados.';cartTotalEl.textContent='0.00';saladWrap.style.display='none';updateHeroStatus(cart);return}let total=0;cartListEl.innerHTML=cart.map((item,index)=>{const line=Number(item.price)*Number(item.qty);total+=line;return`<article class="cart-item-card"><div class="cart-item-index">#${index+1}</div><div class="cart-item-main"><strong class="cart-item-name">${item.name}</strong><div class="cart-item-meta">${item.category||'general'} - S/ ${money(item.price)} c/u</div></div><div class="cart-item-actions"><strong class="cart-item-line">S/ ${money(line)}</strong><div class="qty-actions"><button data-minus="${item.id}" class="qty-btn" type="button">-</button><span class="qty-read">${item.qty}</span><button data-plus="${item.id}" class="qty-btn" type="button">+</button></div></div></article>`}).join('');cartTotalEl.textContent=money(total);saladWrap.style.display=hasChickenInCart()?'block':'none';updateHeroStatus(cart);cartListEl.querySelectorAll('[data-minus]').forEach(btn=>btn.addEventListener('click',()=>changeQty(Number(btn.getAttribute('data-minus')),-1)));cartListEl.querySelectorAll('[data-plus]').forEach(btn=>btn.addEventListener('click',()=>changeQty(Number(btn.getAttribute('data-plus')),1)))}
 function changeQty(productId,delta){const cart=getCart(),item=cart.find(i=>i.id===productId);if(!item)return;const nextCart=cart.map(entry=>({...entry})),nextItem=nextCart.find(i=>i.id===productId);nextItem.qty+=delta;const limitError=validateCartLimits(nextCart.filter(i=>i.qty>0));if(limitError){orderMsg.textContent=limitError;return}item.qty+=delta;setCart(cart.filter(i=>i.qty>0));renderCart()}
@@ -413,9 +347,8 @@ function updateReceiptDeliveryUi(){const mode=selectedReceiptDelivery(),currentU
 function updateDeliveryUi(){const isDelivery=deliveryType.value==='delivery';deliveryFieldsWrap.style.display=isDelivery?'grid':'none';geoBtn.style.display=isDelivery?'inline-flex':'none';geoMsg.style.display='none';if(!isDelivery){orderForm.address.value='';orderForm.reference.value='';if(orderForm.latitude)orderForm.latitude.value='';if(orderForm.longitude)orderForm.longitude.value=''}}
 async function reverseGeocode(latitude,longitude){const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),8000),url=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=18&addressdetails=1`;try{const res=await fetch(url,{headers:{'Accept':'application/json'},signal:controller.signal});if(!res.ok)throw new Error('No se pudo traducir la ubicacion a calles cercanas.');return res.json()}finally{clearTimeout(timeout)}}
 async function loadCompanySettings(){try{const res=await fetch('/api/v1/settings/public'),data=await res.json();if(res.ok&&data&&data.payments){COMPANY.brand_name=data.brand_name||COMPANY.brand_name;COMPANY.payments=data.payments}}catch{}}
-function updatePaymentInfo(){const method=paymentMethod(),yape=COMPANY.payments?.yape||{},plin=COMPANY.payments?.plin||{},mercadoPago=COMPANY.payments?.mercado_pago||{},cod=COMPANY.payments?.cod||{};payOptions.querySelectorAll('.pay-tile').forEach(option=>option.classList.toggle('is-active',option.getAttribute('data-method')===method));paymentProofWrap.style.display=needsDigitalProof(method)?'grid':'none';updateHeroStatus(getCart());if(method==='yape'){paymentInfo.innerHTML=`<span class="hero-kpi-label">Pago elegido</span><strong>${yape.label||'Yape Empresa'}</strong><div>Numero: ${yape.phone||'Pendiente'}</div>${yape.qr_url?`<img src="${yape.qr_url}" alt="QR Yape" class="qr-image">`:'<div class="qr-image" style="display:grid;place-items:center;">QR pendiente</div>'}`;return}if(method==='plin'){paymentInfo.innerHTML=`<span class="hero-kpi-label">Pago elegido</span><strong>${plin.label||'Plin Empresa'}</strong><div>Numero: ${plin.phone||'Pendiente'}</div>${plin.qr_url?`<img src="${plin.qr_url}" alt="QR Plin" class="qr-image">`:'<div class="qr-image" style="display:grid;place-items:center;">QR pendiente</div>'}`;return}if(method==='mercado_pago'){paymentInfo.innerHTML=`<span class="hero-kpi-label">Pago elegido</span><strong>${mercadoPago.label||'Mercado Pago'}</strong><div>Te redirigiremos al checkout seguro para completar el pago.</div><div>No compartes los datos de tu tarjeta con esta web.</div>`;return}paymentInfo.innerHTML=`<span class="hero-kpi-label">Pago elegido</span><strong>${cod.label||'Pago contraentrega'}</strong><div>${cod.message||'Pagas cuando recibes tu pedido.'}</div>`}
-async function openMercadoPagoCheckout(orderId){const token=getToken(),res=await fetch(`/api/v1/orders/${orderId}/payments/mercado-pago-checkout`,{headers:{'Authorization':`Bearer ${token}`}}),data=await res.json();if(!res.ok)throw new Error(data.message||'No se pudo iniciar Mercado Pago.');const checkoutUrl=data.checkout_url||data.sandbox_checkout_url;if(!checkoutUrl)throw new Error('Mercado Pago aun no esta configurado en el servidor.');window.location.href=checkoutUrl}
-async function uploadPaymentProofForOrder(orderId){const file=paymentProofFile.files?.[0],token=getToken(),formData=new FormData();formData.append('proof',file);if(orderForm.payment_reference.value.trim())formData.append('payment_reference',orderForm.payment_reference.value.trim());const res=await fetch(`/api/v1/orders/${orderId}/payment-proof`,{method:'POST',headers:{'Authorization':`Bearer ${token}`},body:formData}),data=await res.json();if(!res.ok)throw new Error(data.message||'No se pudo subir el comprobante.');return data}
+function updatePaymentInfo(){const method=paymentMethod(),izipay=COMPANY.payments?.izipay||{};payOptions.querySelectorAll('.pay-tile').forEach(option=>option.classList.toggle('is-active',option.getAttribute('data-method')===method));if(paymentProofWrap)paymentProofWrap.style.display='none';updateHeroStatus(getCart());paymentInfo.innerHTML=`<span class="hero-kpi-label">Pago elegido</span><strong>${izipay.label||'Pago seguro con Izipay'}</strong><div>${izipay.message||'Paga con tarjeta, Yape o Plin desde el checkout seguro de Izipay.'}</div><div>No compartes los datos de tu tarjeta con esta web.</div>`}
+async function openIzipayCheckout(orderId){const token=getToken(),res=await fetch(`/api/v1/orders/${orderId}/payments/izipay-checkout`,{headers:{'Authorization':`Bearer ${token}`}}),data=await res.json();if(!res.ok)throw new Error(data.message||'No se pudo iniciar Izipay.');const checkoutUrl=data.payment_url;if(!checkoutUrl)throw new Error('Izipay aun no esta configurado en el servidor.');window.location.href=checkoutUrl}
 function showLastOrder(){const tracking=localStorage.getItem('ed_last_tracking');if(!tracking)return;lastOrderBox.style.display='block';lastOrderBox.innerHTML=`<strong>Ultimo pedido: ${tracking}</strong><p>Tu ultimo codigo queda guardado para que puedas volver a seguirlo sin buscarlo otra vez.</p><a href="/mis-pedidos">Ver seguimiento en Mis pedidos</a>`}
 function applyPolliaCheckoutPrefill(){try{const raw=localStorage.getItem('ed_pollia_checkout_prefill_v1');if(!raw)return;const data=JSON.parse(raw);if(data.customer_name&&!orderForm.customer_name.value.trim())orderForm.customer_name.value=data.customer_name;if(data.phone&&!orderForm.customer_phone.value.trim())orderForm.customer_phone.value=data.phone;if(data.delivery_type)orderForm.delivery_type.value=data.delivery_type;if(data.address&&!orderForm.address.value.trim()){orderForm.delivery_type.value='delivery';orderForm.address.value=data.address}if(data.reference&&!orderForm.reference.value.trim())orderForm.reference.value=data.reference;if(data.payment_method){const radio=orderForm.querySelector(`input[name="payment_method"][value="${data.payment_method}"]`);if(radio)radio.checked=true}if(data.payment_reference&&!orderForm.payment_reference.value.trim())orderForm.payment_reference.value=data.payment_reference;if(data.salad_type&&orderForm.salad_type)orderForm.salad_type.value=data.salad_type;if(data.billing_receipt_type)orderForm.billing_receipt_type.value=data.billing_receipt_type;updateBillingUi();if(data.billing_document_type)billingDocumentType.value=data.billing_document_type;if(data.billing_document_number&&!billingDocumentNumber.value.trim())billingDocumentNumber.value=data.billing_document_number;if(data.billing_name&&!billingName.value.trim())billingName.value=data.billing_name;if(data.email&&!billingEmail.value.trim())billingEmail.value=data.email;updateDeliveryUi();updatePaymentInfo();localStorage.removeItem('ed_pollia_checkout_prefill_v1')}catch{}}
 orderForm.querySelectorAll('input[name="payment_method"]').forEach(radio=>radio.addEventListener('change',updatePaymentInfo));orderForm.querySelectorAll('input[name="receipt_delivery"]').forEach(radio=>radio.addEventListener('change',updateReceiptDeliveryUi));
@@ -436,11 +369,6 @@ orderForm.addEventListener('submit', async e => {
     const limitError = validateCartLimits(cart);
     if (limitError) {
         orderMsg.textContent = limitError;
-        return;
-    }
-
-    if (needsDigitalProof(paymentMethod()) && !paymentProofFile.files?.[0]) {
-        orderMsg.textContent = 'Sube el comprobante digital para Yape o Plin antes de confirmar.';
         return;
     }
 
@@ -503,25 +431,14 @@ orderForm.addEventListener('submit', async e => {
             return;
         }
 
-        if (needsDigitalProof(paymentMethod())) {
-            setProcessingState(true, 'Pedido creado, subiendo comprobante', 'Estamos adjuntando tu voucher para validacion.');
+        if (paymentMethod() === 'izipay') {
+            setProcessingState(true, 'Pedido creado, redirigiendo a Izipay', 'Tu pedido ya esta registrado. Ahora completaremos el pago seguro.');
             try {
-                await uploadPaymentProofForOrder(data.id);
-            } catch (error) {
-                setProcessingState(false);
-                orderMsg.textContent = `Pedido creado con codigo ${data.tracking_code}, pero el comprobante no se pudo subir: ${error.message}`;
-                return;
-            }
-        }
-
-        if (paymentMethod() === 'mercado_pago') {
-            setProcessingState(true, 'Pedido creado, redirigiendo a Mercado Pago', 'Tu pedido ya esta registrado. Ahora completaremos el pago seguro.');
-            try {
-                await openMercadoPagoCheckout(data.id);
+                await openIzipayCheckout(data.id);
                 return;
             } catch (error) {
                 setProcessingState(false);
-                orderMsg.textContent = `Pedido creado con codigo ${data.tracking_code}, pero no se pudo abrir Mercado Pago: ${error.message}`;
+                orderMsg.textContent = `Pedido creado con codigo ${data.tracking_code}, pero no se pudo abrir Izipay: ${error.message}`;
                 return;
             }
         }
@@ -534,7 +451,7 @@ orderForm.addEventListener('submit', async e => {
         setCart([]);
         renderCart();
         orderForm.reset();
-        paymentProofPreview.textContent = 'Aun no seleccionaste archivo.';
+        if(paymentProofPreview)paymentProofPreview.textContent = 'Aun no seleccionaste archivo.';
         updatePaymentInfo();
         updateBillingUi();
         updateDeliveryUi();
@@ -548,6 +465,6 @@ orderForm.addEventListener('submit', async e => {
         orderMsg.textContent = 'No se pudo conectar al servidor.';
     }
 });
-renderCart();billingReceiptType.addEventListener('change',updateBillingUi);deliveryType.addEventListener('change',updateDeliveryUi);billingDocumentNumber.addEventListener('input',()=>{billingDocumentNumber.value=digits(billingDocumentNumber.value).slice(0,currentDocumentLength());const needed=currentDocumentLength(),current=billingDocumentNumber.value.length;if(currentReceiptType())billingLookupBox.textContent=current<needed?`Faltan ${needed-current} digitos para consultar el ${billingDocumentType.value.toUpperCase()}.`:billingLookupBox.textContent;if(current===needed&&billingDocumentNumber.value!==lastLookupValue)lookupDocument()});lookupDocumentBtn.addEventListener('click',()=>lookupDocument());paymentProofFile.addEventListener('change',()=>{const file=paymentProofFile.files?.[0];paymentProofPreview.textContent=file?`Archivo listo: ${file.name} (${Math.round(file.size/1024)} KB)`:'Aun no seleccionaste archivo.';updateHeroStatus(getCart())});updateBillingUi();applyPolliaCheckoutPrefill();updateDeliveryUi();loadCompanySettings().finally(()=>{updatePaymentInfo();updateReceiptDeliveryUi();showLastOrder();updateHeroStatus(getCart())});
+renderCart();billingReceiptType.addEventListener('change',updateBillingUi);deliveryType.addEventListener('change',updateDeliveryUi);billingDocumentNumber.addEventListener('input',()=>{billingDocumentNumber.value=digits(billingDocumentNumber.value).slice(0,currentDocumentLength());const needed=currentDocumentLength(),current=billingDocumentNumber.value.length;if(currentReceiptType())billingLookupBox.textContent=current<needed?`Faltan ${needed-current} digitos para consultar el ${billingDocumentType.value.toUpperCase()}.`:billingLookupBox.textContent;if(current===needed&&billingDocumentNumber.value!==lastLookupValue)lookupDocument()});lookupDocumentBtn.addEventListener('click',()=>lookupDocument());if(paymentProofFile)paymentProofFile.addEventListener('change',()=>{const file=paymentProofFile.files?.[0];paymentProofPreview.textContent=file?`Archivo listo: ${file.name} (${Math.round(file.size/1024)} KB)`:'Aun no seleccionaste archivo.';updateHeroStatus(getCart())});updateBillingUi();applyPolliaCheckoutPrefill();updateDeliveryUi();loadCompanySettings().finally(()=>{updatePaymentInfo();updateReceiptDeliveryUi();showLastOrder();updateHeroStatus(getCart())});
 </script>
 @endsection

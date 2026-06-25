@@ -149,18 +149,10 @@ class ChatbotService
         $payments = (array) config('company.payments', []);
         $lines = [];
 
-        if (($payments['yape']['enabled'] ?? false) && ! empty($payments['yape']['phone'])) {
-            $lines[] = '- Yape: '.$payments['yape']['phone'];
-        }
-        if (($payments['plin']['enabled'] ?? false) && ! empty($payments['plin']['phone'])) {
-            $lines[] = '- Plin: '.$payments['plin']['phone'];
-        }
-        if (($payments['mercado_pago']['enabled'] ?? false)) {
-            $label = trim((string) ($payments['mercado_pago']['label'] ?? 'Mercado Pago'));
-            $lines[] = "- {$label}: checkout seguro para tarjetas, cuenta Mercado Pago y Yape.";
-        }
-        if (($payments['cod']['enabled'] ?? false) && ! empty($payments['cod']['message'])) {
-            $lines[] = '- Contraentrega: '.$payments['cod']['message'];
+        if (($payments['izipay']['enabled'] ?? false)) {
+            $label = trim((string) ($payments['izipay']['label'] ?? 'Izipay'));
+            $message = trim((string) ($payments['izipay']['message'] ?? 'Paga con tarjeta, Yape o Plin desde el checkout seguro.'));
+            $lines[] = "- {$label}: {$message}";
         }
 
         return $lines ? implode("\n", $lines) : null;

@@ -83,10 +83,16 @@ return [
         'timeout' => env('APISPERU_DNIRUC_TIMEOUT', 15),
     ],
 
-    'mercadopago' => [
-        'enabled' => (bool) env('MERCADOPAGO_ENABLED', false),
-        'public_key' => env('MERCADOPAGO_PUBLIC_KEY'),
-        'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
+    'izipay' => [
+        'enabled' => (bool) env('IZIPAY_ENABLED', false),
+        'mode' => env('IZIPAY_MODE', 'test'),
+        'api_base_url' => rtrim((string) env('IZIPAY_API_BASE_URL', 'https://api.micuentaweb.pe/api-payment/V4'), '/'),
+        'shop_id' => env('IZIPAY_SHOP_ID'),
+        'rest_api_key' => env('IZIPAY_REST_API_KEY'),
+        'public_key' => env('IZIPAY_PUBLIC_KEY'),
+        'hmac_key' => env('IZIPAY_HMAC_KEY'),
+        'js_url' => env('IZIPAY_JS_URL', 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js'),
+        'css_url' => env('IZIPAY_CSS_URL', 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/classic.css'),
     ],
 
     'apisperu_fact' => [

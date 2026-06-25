@@ -6,56 +6,46 @@ use App\Events\OrderStatusUpdatedForUser;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Fcm\FcmClient;
-use App\Services\Payments\MercadoPagoService;
+use App\Services\Payments\IzipayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
-    public function mercadoPagoCheckout(Request $request, Order $order, MercadoPagoService $mercadoPagoService): JsonResponse
+    public function izipayCheckout(Request $request, Order $order, IzipayService $izipayService): JsonResponse
     {
         if ($request->user()->role !== 'admin' && $order->user_id !== $request->user()->id) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
-        if ((string) $order->payment_method !== 'mercado_pago') {
-            return response()->json(['message' => 'Este pedido no usa Mercado Pago.'], 422);
+        if ((string) $order->payment_method !== 'izipay') {
+            return response()->json(['message' => 'Este pedido no usa Izipay.'], 422);
         }
 
-        $preference = $mercadoPagoService->createPreference($order->loadMissing('items'));
-
-        return response()->json([
-            'enabled' => (bool) config('services.mercadopago.enabled', false),
-            'public_key' => config('services.mercadopago.public_key'),
-            'currency_code' => config('company.currency', 'PEN'),
-            'checkout_url' => $preference['init_point'] ?? null,
-            'sandbox_checkout_url' => $preference['sandbox_init_point'] ?? null,
-            'preference_id' => $preference['id'] ?? null,
-            'order' => [
-                'id' => $order->id,
-                'tracking_code' => $order->tracking_code,
-                'customer_name' => $order->customer_name,
-                'customer_email' => $order->customer_email,
-            ],
-        ]);
+        return response()->json($izipayService->createPayment($order));
     }
 
-    public function mercadoPagoWebhook(Request $request, MercadoPagoService $mercadoPagoService): JsonResponse
+    public function izipayWebhook(Request $request, IzipayService $izipayService): JsonResponse
     {
-        if (! $mercadoPagoService->isConfigured()) {
-            return response()->json(['ok' => false, 'message' => 'Mercado Pago no configurado.'], 503);
+        if ($request->isMethod('GET') || $request->isMethod('HEAD')) {
+            return response()->json(['ok' => true, 'provider' => 'izipay']);
         }
 
-        $type = Str::lower((string) ($request->input('type') ?? $request->input('topic') ?? ''));
-        $paymentId = $request->input('data.id') ?? $request->input('id');
-
-        if (! in_array($type, ['payment'], true) || ! $paymentId) {
-            return response()->json(['ok' => true, 'ignored' => true]);
+        if (! $izipayService->isConfigured()) {
+            return response()->json(['ok' => false, 'message' => 'Izipay no configurado.'], 503);
         }
 
-        $payment = $mercadoPagoService->fetchPayment((string) $paymentId);
-        $trackingCode = (string) ($payment['external_reference'] ?? '');
+        if (! $izipayService->verifyWebhook($request)) {
+            return response()->json(['ok' => false, 'message' => 'Firma Izipay invalida.'], 401);
+        }
+
+        $payload = $izipayService->notificationPayload($request);
+        $trackingCode = (string) (
+            data_get($payload, 'orderId')
+            ?: data_get($payload, 'answer.orderDetails.orderId')
+            ?: data_get($payload, 'answer.orderId')
+            ?: ''
+        );
         if ($trackingCode === '') {
             return response()->json(['ok' => true, 'ignored' => true]);
         }
@@ -68,16 +58,16 @@ class PaymentController extends Controller
             return response()->json(['ok' => true, 'ignored' => true]);
         }
 
-        $status = Str::lower((string) ($payment['status'] ?? 'pending'));
-        $paymentStatus = match ($status) {
-            'approved' => 'verified',
-            'rejected', 'cancelled', 'refunded', 'charged_back' => 'rejected',
-            'in_process', 'pending', 'authorized' => 'pending',
-            default => 'pending',
-        };
+        $paymentStatus = $izipayService->paymentStatusFromPayload($payload);
+        $transactionUuid = (string) (
+            data_get($payload, 'transactions.0.uuid')
+            ?: data_get($payload, 'answer.transactions.0.uuid')
+            ?: data_get($payload, 'uuid')
+            ?: $order->payment_reference
+        );
 
         $order->forceFill([
-            'payment_reference' => (string) ($payment['id'] ?? $order->payment_reference),
+            'payment_reference' => $transactionUuid,
             'payment_status' => $paymentStatus,
             'payment_verified_at' => $paymentStatus === 'verified' ? now() : null,
         ])->save();

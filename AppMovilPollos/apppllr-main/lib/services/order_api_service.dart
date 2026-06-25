@@ -49,13 +49,13 @@ class OrderApiService {
     return list.map((e) => (e as Map).cast<String, dynamic>()).toList();
   }
 
-  Future<Map<String, dynamic>> mercadoPagoCheckout({
+  Future<Map<String, dynamic>> izipayCheckout({
     required String token,
     required int orderId,
   }) async {
     try {
       final res = await ApiClient.get<Map<String, dynamic>>(
-        '/orders/$orderId/payments/mercado-pago-checkout',
+        '/orders/$orderId/payments/izipay-checkout',
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
@@ -67,7 +67,7 @@ class OrderApiService {
       if (data is Map && data['message'] != null) {
         throw Exception(data['message'].toString());
       }
-      throw Exception('No se pudo iniciar Mercado Pago');
+      throw Exception('No se pudo iniciar Izipay');
     }
   }
 }

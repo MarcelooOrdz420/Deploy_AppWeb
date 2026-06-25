@@ -6,7 +6,7 @@ Usa este archivo para alimentar a POLL-IA con informacion de tu negocio y de tu 
 
 - Productos: el menu se divide en Pollos, Parrillas y Bebidas.
 - Pedidos: los clientes pueden ver su tracking en "Mis pedidos".
-- Pagos: Yape, Plin, Mercado Pago y contraentrega (segun configuracion).
+- Pagos: Izipay como pasarela unica; permite pagar con tarjeta, Yape o Plin desde el checkout seguro.
 - Delivery: pedir direccion + referencia para la entrega.
 - Soporte: usar el telefono/correo configurados en `.env`.
 

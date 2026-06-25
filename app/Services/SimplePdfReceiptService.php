@@ -22,9 +22,7 @@ class SimplePdfReceiptService
         $createdAt = optional($order->created_at)->format('d/m/Y h:i a') ?: 'n/a';
         $delivery = $order->delivery_type === 'delivery' ? 'Delivery' : 'Recojo en local';
         $paymentMethod = match ($order->payment_method) {
-            'yape' => 'Yape',
-            'plin' => 'Plin',
-            'mercado_pago' => 'Mercado Pago',
+            'izipay' => 'Izipay',
             'cod' => 'Contraentrega',
             default => (string) $order->payment_method,
         };

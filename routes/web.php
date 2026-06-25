@@ -26,3 +26,16 @@ Route::get('/descargar-apk', function () {
 
     return response()->download($path, 'AppMovilPollos.apk');
 })->name('apk.download');
+
+Route::get('/pago/izipay/{order}', function (\App\Models\Order $order, \Illuminate\Http\Request $request) {
+    abort_if((string) $order->payment_method !== 'izipay', 404);
+    abort_if(trim((string) $request->query('form_token')) === '', 404);
+
+    return view('payments.izipay-checkout', [
+        'order' => $order,
+        'formToken' => (string) $request->query('form_token'),
+        'publicKey' => config('services.izipay.public_key'),
+        'jsUrl' => config('services.izipay.js_url'),
+        'cssUrl' => config('services.izipay.css_url'),
+    ]);
+})->name('izipay.checkout');

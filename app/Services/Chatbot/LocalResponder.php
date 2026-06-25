@@ -31,7 +31,7 @@ class LocalResponder
             return $this->contactLine();
         }
 
-        if ($this->matchesAny($normalized, ['pago', 'pagos', 'yape', 'plin', 'mercado pago', 'contraentrega', 'qr'])) {
+        if ($this->matchesAny($normalized, ['pago', 'pagos', 'izipay', 'yape', 'plin', 'tarjeta', 'qr'])) {
             return $this->paymentHelp() ?: $this->contactLine();
         }
 
@@ -76,19 +76,10 @@ class LocalResponder
         $payments = (array) config('company.payments', []);
         $lines = [];
 
-        if (($payments['yape']['enabled'] ?? false) && ! empty($payments['yape']['phone'])) {
-            $lines[] = "Yape: {$payments['yape']['phone']}";
-        }
-        if (($payments['plin']['enabled'] ?? false) && ! empty($payments['plin']['phone'])) {
-            $lines[] = "Plin: {$payments['plin']['phone']}";
-        }
-        if (($payments['mercado_pago']['enabled'] ?? false)) {
-            $label = trim((string) ($payments['mercado_pago']['label'] ?? 'Mercado Pago'));
-            $lines[] = "{$label}: checkout seguro para tarjetas, cuenta Mercado Pago y Yape.";
-        }
-        if (($payments['cod']['enabled'] ?? false)) {
-            $msg = trim((string) ($payments['cod']['message'] ?? 'Pagas cuando recibes tu pedido.'));
-            $lines[] = "Contraentrega: {$msg}";
+        if (($payments['izipay']['enabled'] ?? false)) {
+            $label = trim((string) ($payments['izipay']['label'] ?? 'Izipay'));
+            $message = trim((string) ($payments['izipay']['message'] ?? 'Paga con tarjeta, Yape o Plin desde el checkout seguro.'));
+            $lines[] = "{$label}: {$message}";
         }
 
         return $lines ? "Medios de pago\n".implode("\n", array_map(fn (string $line): string => "• {$line}", $lines)) : null;

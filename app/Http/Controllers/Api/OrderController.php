@@ -201,7 +201,7 @@ class OrderController extends Controller
             'delivery_type' => ['required', Rule::in(['pickup', 'delivery'])],
             'scheduled_for' => ['nullable', 'date'],
             'delivery_window_label' => ['nullable', 'string', 'max:120'],
-            'payment_method' => ['required', Rule::in(['yape', 'plin', 'mercado_pago', 'cod'])],
+            'payment_method' => ['required', Rule::in(['izipay'])],
             'payment_reference' => ['nullable', 'string', 'max:120'],
             'billing_document_type' => ['nullable', Rule::in(['dni', 'ruc'])],
             'billing_document_number' => ['nullable', 'string', 'max:20'],
@@ -242,10 +242,6 @@ class OrderController extends Controller
             }
         } elseif ($now->format('H:i') > '23:00') {
             return response()->json(['message' => 'La cocina ya cerro por hoy. Puedes programar un pedido antes de las 11:00 PM.'], 422);
-        }
-
-        if (in_array($data['payment_method'], ['yape', 'plin'], true) && empty($data['payment_reference'])) {
-            return response()->json(['message' => 'Ingresa codigo/operacion del pago para validar.'], 422);
         }
 
         if (($data['billing_receipt_type'] ?? null) === 'boleta') {
@@ -300,7 +296,7 @@ class OrderController extends Controller
                 'status' => Order::STATUS_PENDING,
                 'total_amount' => 0,
                 'payment_method' => $data['payment_method'],
-                'payment_gateway' => $data['payment_method'] === 'mercado_pago' ? 'mercadopago' : null,
+                'payment_gateway' => 'izipay',
                 'payment_reference' => $data['payment_reference'] ?? null,
                 'payment_proof_path' => null,
                 'payment_status' => 'pending',
@@ -756,10 +752,8 @@ HTML;
     private function paymentMethodLabel(string $paymentMethod): string
     {
         return match ($paymentMethod) {
-            'yape' => 'Yape',
-            'plin' => 'Plin',
+            'izipay' => 'Izipay',
             'cod' => 'Contraentrega',
-            'mercado_pago' => 'Mercado Pago',
             default => $paymentMethod,
         };
     }
@@ -777,7 +771,7 @@ HTML;
 
     private function isDigitalPaymentMethod(string $paymentMethod): bool
     {
-        return in_array($paymentMethod, ['yape', 'plin'], true);
+        return false;
     }
 
     private function groupOrdersByPeriod(Collection $orders, string $period): array

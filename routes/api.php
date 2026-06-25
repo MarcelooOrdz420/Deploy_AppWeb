@@ -34,7 +34,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
     Route::get('/settings/public', PublicSettingsController::class);
-    Route::post('/payments/mercado-pago/webhook', [PaymentController::class, 'mercadoPagoWebhook']);
+    Route::match(['get', 'head', 'post'], '/payments/izipay/webhook', [PaymentController::class, 'izipayWebhook']);
 
     Route::get('/orders/track/{trackingCode}', [OrderController::class, 'track']);
 
@@ -57,7 +57,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/orders', [OrderController::class, 'store']);
         Route::get('/orders/my', [OrderController::class, 'myOrders']);
         Route::get('/orders/{order}', [OrderController::class, 'show']);
-        Route::get('/orders/{order}/payments/mercado-pago-checkout', [PaymentController::class, 'mercadoPagoCheckout']);
+        Route::get('/orders/{order}/payments/izipay-checkout', [PaymentController::class, 'izipayCheckout']);
         Route::post('/orders/{order}/payment-proof', [OrderController::class, 'uploadPaymentProof']);
         Route::get('/orders/{order}/receipt-view', [OrderController::class, 'receiptView']);
         Route::get('/orders/{order}/receipt', [OrderController::class, 'downloadReceipt']);

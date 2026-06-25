@@ -19,26 +19,10 @@ return [
         'pickup_notes' => env('COMPANY_PICKUP_NOTES', 'Programa la hora si buscas evitar espera en hora pico.'),
     ],
     'payments' => [
-        'yape' => [
-            'label' => env('COMPANY_YAPE_LABEL', 'Yape Empresa'),
-            'phone' => env('COMPANY_YAPE_PHONE', ''),
-            'qr_path' => env('COMPANY_YAPE_QR_PATH', '/images/yape-qr.png'),
-            'enabled' => (bool) env('COMPANY_YAPE_ENABLED', true),
-        ],
-        'plin' => [
-            'label' => env('COMPANY_PLIN_LABEL', 'Plin Empresa'),
-            'phone' => env('COMPANY_PLIN_PHONE', ''),
-            'qr_path' => env('COMPANY_PLIN_QR_PATH', '/images/plin-qr.png'),
-            'enabled' => (bool) env('COMPANY_PLIN_ENABLED', true),
-        ],
-        'cod' => [
-            'label' => env('COMPANY_COD_LABEL', 'Pago contraentrega'),
-            'message' => env('COMPANY_COD_MESSAGE', 'Pagas cuando recibes tu pedido.'),
-            'enabled' => (bool) env('COMPANY_COD_ENABLED', true),
-        ],
-        'mercado_pago' => [
-            'label' => env('COMPANY_MERCADOPAGO_LABEL', 'Mercado Pago'),
-            'enabled' => (bool) env('MERCADOPAGO_ENABLED', false),
+        'izipay' => [
+            'label' => env('COMPANY_IZIPAY_LABEL', 'Pago seguro con Izipay'),
+            'message' => env('COMPANY_IZIPAY_MESSAGE', 'Paga con tarjeta, Yape o Plin desde el checkout seguro de Izipay.'),
+            'enabled' => (bool) env('IZIPAY_ENABLED', true),
         ],
     ],
 ];
