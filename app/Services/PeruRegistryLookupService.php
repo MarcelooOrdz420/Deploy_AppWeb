@@ -197,11 +197,24 @@ class PeruRegistryLookupService
     private function providerToken(string $provider): string
     {
         $configured = trim((string) config("services.{$provider}.token"));
-        if ($configured !== '') {
+        if ($configured !== '' && ! $this->isPlaceholderToken($configured)) {
             return $configured;
         }
 
         return trim((string) config('services.apisperu_dniruc.token', ''));
+    }
+
+    private function isPlaceholderToken(string $token): bool
+    {
+        $normalized = strtolower(trim($token));
+
+        return in_array($normalized, [
+            'tu_nuevo_token',
+            'tu_token',
+            'token',
+            'your_token',
+            'your_new_token',
+        ], true);
     }
 
     private function providerAuthMode(string $provider): string
