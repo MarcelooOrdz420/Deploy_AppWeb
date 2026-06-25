@@ -1457,7 +1457,10 @@ initClientSession();
                 qty: Number(item.qty || 1),
                 image_url: String(item.image_url || ''),
             }));
-        if (!clean.length) return;
+        if (!clean.length) {
+            localStorage.removeItem(pendingCartKey);
+            return;
+        }
         localStorage.setItem(pendingCartKey, JSON.stringify(clean));
     }
 
@@ -1492,8 +1495,7 @@ initClientSession();
     function capturePendingCartFromDraft(draft) {
         if (!draft || typeof draft !== 'object') return false;
         const items = Array.isArray(draft.items) ? draft.items : [];
-        if (!items.length) return false;
-        mergePendingCart(items);
+        savePendingCart(items);
         saveCheckoutPrefill(draft);
         return true;
     }

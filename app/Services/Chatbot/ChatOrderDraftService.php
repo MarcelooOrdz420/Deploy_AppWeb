@@ -28,6 +28,7 @@ class ChatOrderDraftService
         $metadata = $this->appendCustomerMessage($metadata, $message, $purchaseRelated);
         $changed = true;
         $orderActivity = false;
+        $explicitReply = null;
 
         if ($email = $this->extractEmail($message)) {
             $draft->email = $email;
@@ -44,7 +45,14 @@ class ChatOrderDraftService
         }
 
         $matches = $this->findMentionedProducts($normalized);
-        if ($matches) {
+        if ($this->isRemovalRequest($normalized)) {
+            [$items, $metadata, $removedCount] = $this->removeRequestedItems($items, $metadata, $matches, $normalized);
+            $changed = true;
+            $orderActivity = true;
+            $explicitReply = $removedCount > 0
+                ? $this->removalReply($draft, $items, $metadata)
+                : 'No encontre ese producto en tu pedido temporal. Si quieres, dime el nombre exacto del producto que deseas quitar.';
+        } elseif ($matches) {
             $metadata['last_product_message'] = Str::limit($message, 1200, '');
             foreach ($matches as $product) {
                 $qty = $this->quantityForProduct($normalized, $product, $metadata);
@@ -60,7 +68,11 @@ class ChatOrderDraftService
             $orderActivity = true;
         }
 
-        if ($address = $this->extractAddress($message, $orderActivity || ! empty($items))) {
+        $address = $this->isRemovalRequest($normalized)
+            ? null
+            : $this->extractAddress($message, $orderActivity || ! empty($items));
+
+        if ($address) {
             if ($this->looksLikeReference($address)) {
                 $draft->delivery_reference = $address;
                 $metadata['last_reference_message'] = Str::limit($message, 1200, '');
@@ -85,7 +97,7 @@ class ChatOrderDraftService
         return [
             'draft' => $draft->fresh(),
             'order_activity' => $orderActivity,
-            'reply' => $this->replyFor($draft->fresh()),
+            'reply' => $explicitReply ?? $this->replyFor($draft->fresh()),
             'snapshot' => $this->snapshotFromDraft($draft->fresh()),
         ];
     }
@@ -403,6 +415,58 @@ class ChatOrderDraftService
         return $items;
     }
 
+    private function isRemovalRequest(string $normalized): bool
+    {
+        return (bool) preg_match('/\b(?:quita|quitar|saca|sacar|borra|borrar|elimina|eliminar|retira|retirar|cancela|cancelar|ya no quiero|no quiero)\b/u', $normalized);
+    }
+
+    private function removeRequestedItems(array $items, array $metadata, array $matches, string $normalized): array
+    {
+        $removedCount = 0;
+
+        if (Str::contains($normalized, ['todo', 'todos', 'pedido completo', 'compra completa', 'carrito'])) {
+            $removedCount = count($items) + (! empty($metadata['pending_drink_qty']) ? 1 : 0);
+            unset($metadata['pending_drink_qty']);
+
+            return [[], $metadata, $removedCount];
+        }
+
+        $removeDrink = $this->mentionsGenericDrink($normalized)
+            || Str::contains($normalized, ['coca', 'inca', 'sprite', 'agua', 'chicha', 'limonada', 'maracuya']);
+        if ($removeDrink && ! empty($metadata['pending_drink_qty'])) {
+            unset($metadata['pending_drink_qty']);
+            $removedCount++;
+        }
+
+        $matchedIds = collect($matches)->map(fn (Product $product): int => (int) $product->id)->all();
+        $items = array_values(array_filter($items, function (array $item) use ($matchedIds, $removeDrink, &$removedCount): bool {
+            $isMatched = in_array((int) ($item['id'] ?? 0), $matchedIds, true);
+            $isDrink = Str::lower((string) ($item['category'] ?? '')) === 'bebidas';
+
+            if ($isMatched || ($removeDrink && $isDrink)) {
+                $removedCount++;
+
+                return false;
+            }
+
+            return true;
+        }));
+
+        return [$items, $metadata, $removedCount];
+    }
+
+    private function removalReply(ChatOrderDraft $draft, array $items, array $metadata): string
+    {
+        if (! $items && empty($metadata['pending_drink_qty'])) {
+            return 'Listo, quite ese producto. Tu pedido temporal quedo vacio. Dime que deseas pedir y lo armo de nuevo.';
+        }
+
+        $draft->items = $items;
+        $draft->metadata = $metadata;
+
+        return "Listo, quite ese producto de tu pedido temporal.\n\n".((string) $this->replyFor($draft));
+    }
+
     private function quantityForProduct(string $normalized, Product $product, array $metadata): int
     {
         $category = Str::lower((string) $product->category);
@@ -417,7 +481,7 @@ class ChatOrderDraftService
 
     private function quantityFromText(string $normalized): ?int
     {
-        return preg_match('/\b([1-9]\d?)\s*(?:x|unidades?|gaseosas?|bebidas?)?\b/u', $normalized, $match)
+        return preg_match('/(?<![\/.])\b([1-9]\d?)(?!\s*\/)\s*(?:x|unidades?|gaseosas?|bebidas?)?\b/u', $normalized, $match)
             ? (int) $match[1]
             : null;
     }
