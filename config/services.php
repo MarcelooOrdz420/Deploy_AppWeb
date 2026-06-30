@@ -87,6 +87,7 @@ return [
         'enabled' => (bool) env('IZIPAY_ENABLED', false),
         'mode' => env('IZIPAY_MODE', 'test'),
         'api_base_url' => rtrim((string) env('IZIPAY_API_BASE_URL', 'https://api.micuentaweb.pe/api-payment/V4'), '/'),
+        'ipn_url' => env('IZIPAY_IPN_URL'),
         'shop_id' => env('IZIPAY_SHOP_ID'),
         'rest_api_key' => env('IZIPAY_REST_API_KEY'),
         'public_key' => env('IZIPAY_PUBLIC_KEY'),

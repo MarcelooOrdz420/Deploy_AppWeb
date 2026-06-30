@@ -10,6 +10,7 @@ Agrega estas variables en `.env` local y en Coolify/produccion:
 IZIPAY_ENABLED=true
 IZIPAY_MODE=production
 IZIPAY_API_BASE_URL=https://api.micuentaweb.pe/api-payment/V4
+IZIPAY_IPN_URL=https://tu-dominio.com/izipay-ipn.php
 IZIPAY_SHOP_ID=
 IZIPAY_REST_API_KEY=
 IZIPAY_PUBLIC_KEY=
@@ -22,8 +23,24 @@ Usa tus claves REST solo en `IZIPAY_REST_API_KEY`. Usa tu clave cliente JavaScri
 
 ## URLs que debes registrar en Izipay
 
-- IPN/Webhook: `https://tu-dominio.com/api/v1/payments/izipay/webhook`
+- URL de notificacion/IPN recomendada para Back Office: `https://tu-dominio.com/izipay-ipn.php`
+- URL alternativa compatible: `https://tu-dominio.com/izipay-ipn`
+- URL API interna compatible: `https://tu-dominio.com/api/v1/payments/izipay/webhook`
 - Retorno exitoso: `https://tu-dominio.com/mis-pedidos`
+
+Para tu dominio actual, configura:
+
+```text
+https://pollos.saborcentral.com/izipay-ipn.php
+```
+
+Si prefieres usar una ruta Laravel sin extension, tambien queda disponible:
+
+```text
+https://pollos.saborcentral.com/izipay-ipn
+```
+
+El endpoint responde `HTTP 200` a `GET`, `HEAD`, `POST` vacio y `POST` de validacion sin `orderId`. Cuando Izipay envie una notificacion real con `orderId`, Laravel valida la firma si configuraste `IZIPAY_HMAC_KEY` y actualiza el pedido.
 
 ## Flujo implementado
 

@@ -32,30 +32,23 @@ class PaymentController extends Controller
             return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
-        if ($request->isMethod('POST')
-            && trim($request->getContent()) === ''
-            && ! $request->has('kr-answer')
-        ) {
+        if (! $request->isMethod('POST')) {
             return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
-        if (! $izipayService->isConfigured()) {
-            return response()->json(['ok' => false, 'message' => 'Izipay no configurado.'], 503);
+        $payload = $izipayService->notificationPayload($request);
+        $trackingCode = $izipayService->trackingCodeFromPayload($payload);
+
+        if ($trackingCode === '') {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Izipay endpoint ready',
+                'ignored' => true,
+            ]);
         }
 
         if (! $izipayService->verifyWebhook($request)) {
             return response()->json(['ok' => false, 'message' => 'Firma Izipay invalida.'], 401);
-        }
-
-        $payload = $izipayService->notificationPayload($request);
-        $trackingCode = (string) (
-            data_get($payload, 'orderId')
-            ?: data_get($payload, 'answer.orderDetails.orderId')
-            ?: data_get($payload, 'answer.orderId')
-            ?: ''
-        );
-        if ($trackingCode === '') {
-            return response()->json(['ok' => true, 'ignored' => true]);
         }
 
         $order = Order::query()

@@ -32,6 +32,10 @@ Route::match(['get', 'head', 'post'], '/izipay-ipn', [PaymentController::class, 
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
     ->name('izipay.ipn');
 
+Route::match(['get', 'head', 'post'], '/izipay-ipn.php', [PaymentController::class, 'izipayWebhook'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->name('izipay.ipn.php');
+
 Route::get('/pago/izipay/{order}', function (\App\Models\Order $order, \Illuminate\Http\Request $request) {
     abort_if((string) $order->payment_method !== 'izipay', 404);
     abort_if(trim((string) $request->query('form_token')) === '', 404);

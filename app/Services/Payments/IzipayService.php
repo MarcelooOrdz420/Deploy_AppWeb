@@ -40,7 +40,7 @@ class IzipayService
                 'order_id' => (string) $order->id,
                 'tracking_code' => (string) $order->tracking_code,
             ],
-            'ipnTargetUrl' => rtrim((string) config('app.url'), '/').'/api/v1/payments/izipay/webhook',
+            'ipnTargetUrl' => $this->ipnTargetUrl(),
             'formAction' => 'PAYMENT',
         ];
 
@@ -116,6 +116,19 @@ class IzipayService
         return $request->all();
     }
 
+    public function trackingCodeFromPayload(array $payload): string
+    {
+        return trim((string) (
+            data_get($payload, 'orderId')
+            ?: data_get($payload, 'answer.orderDetails.orderId')
+            ?: data_get($payload, 'answer.orderId')
+            ?: data_get($payload, 'orderDetails.orderId')
+            ?: data_get($payload, 'metadata.tracking_code')
+            ?: data_get($payload, 'answer.metadata.tracking_code')
+            ?: ''
+        ));
+    }
+
     public function paymentStatusFromPayload(array $payload): string
     {
         $status = strtolower((string) (
@@ -141,5 +154,16 @@ class IzipayService
     private function endpoint(string $path): string
     {
         return rtrim((string) config('services.izipay.api_base_url'), '/').'/'.ltrim($path, '/');
+    }
+
+    private function ipnTargetUrl(): string
+    {
+        $configured = trim((string) config('services.izipay.ipn_url', ''));
+
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        return route('izipay.ipn');
     }
 }
