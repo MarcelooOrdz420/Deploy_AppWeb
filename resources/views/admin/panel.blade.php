@@ -878,7 +878,7 @@
             <div class="title-sub">Operacion, pedidos y cobros en una sola vista.</div>
         </div>
         <div class="head-actions">
-            <a href="/admin/dashboard" class="menu-tab"><span class="action-icon">&#10022;</span>Dashboard</a>
+            <button class="menu-tab" type="button" data-header-target="sec-dashboard"><span class="action-icon">&#10022;</span>Dashboard</button>
 
             <button id="adminUnreadBtn" class="menu-tab" type="button"><span class="action-icon">&#9679;</span>Nuevos <span id="adminUnreadCount">0</span></button>
             <div class="user" id="adminUserLabel">Validando sesion...</div>
@@ -1362,6 +1362,51 @@ function showAdminTab(targetId) {
     });
     if (adminContent) adminContent.classList.add('tab-mode');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function loadAdminTabData(targetId) {
+    if (!canUseAdmin()) return;
+
+    try {
+        if (targetId === 'sec-dashboard') {
+            await Promise.allSettled([
+                fetchProducts(),
+                fetchOrders(),
+                fetchCashClosureSummary(),
+                fetchUsers(),
+            ]);
+            return;
+        }
+
+        if (targetId === 'sec-products') {
+            await fetchProducts();
+            return;
+        }
+
+        if (targetId === 'sec-orders') {
+            await fetchOrders();
+            return;
+        }
+
+        if (targetId === 'sec-cash-closure') {
+            await Promise.allSettled([
+                fetchCashClosureSummary(),
+                fetchCashClosureHistory(),
+            ]);
+            return;
+        }
+
+        if (targetId === 'sec-users') {
+            await fetchUsers();
+            return;
+        }
+
+        if (targetId === 'sec-company') {
+            await fetchCompanyProfile();
+        }
+    } catch (error) {
+        console.error('No se pudo cargar la pestaña admin', targetId, error);
+    }
 }
 
 const productForm = document.getElementById('productForm');
@@ -2546,12 +2591,14 @@ async function boot() {
 
     upsertCategoryOptions();
     if (cashClosureDate && !cashClosureDate.value) cashClosureDate.value = todayDateValue();
-    await fetchProducts();
-    await fetchOrders();
-    await fetchCashClosureSummary();
-    await fetchCashClosureHistory();
-    await fetchUsers();
-    await fetchCompanyProfile();
+    await Promise.allSettled([
+        fetchProducts(),
+        fetchOrders(),
+        fetchCashClosureSummary(),
+        fetchCashClosureHistory(),
+        fetchUsers(),
+        fetchCompanyProfile(),
+    ]);
 
     refreshTimer = setInterval(async () => {
         if (Date.now() > Number((parseSession() || {}).expiresAt || 0)) {
@@ -2559,12 +2606,14 @@ async function boot() {
             window.location.href = '/admin/login';
             return;
         }
-        await fetchProducts();
-        await fetchOrders();
-        await fetchCashClosureSummary();
-        await fetchCashClosureHistory();
-        await fetchUsers();
-        await fetchCompanyProfile();
+        await Promise.allSettled([
+            fetchProducts(),
+            fetchOrders(),
+            fetchCashClosureSummary(),
+            fetchCashClosureHistory(),
+            fetchUsers(),
+            fetchCompanyProfile(),
+        ]);
     }, 20000);
 }
 
@@ -2639,7 +2688,16 @@ adminLogoutBtn.addEventListener('click', () => {
     window.location.href = '/admin/login';
 });
 adminMenuTabs.forEach(tab => {
-    tab.addEventListener('click', () => showAdminTab(tab.dataset.target));
+    tab.addEventListener('click', () => {
+        showAdminTab(tab.dataset.target);
+        loadAdminTabData(tab.dataset.target);
+    });
+});
+document.querySelectorAll('[data-header-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        showAdminTab(btn.dataset.headerTarget);
+        loadAdminTabData(btn.dataset.headerTarget);
+    });
 });
 ['click', 'keydown', 'mousemove', 'touchstart', 'scroll'].forEach(evt => {
     window.addEventListener(evt, touchAdminSession, { passive: true });

@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,7 +15,7 @@ Route::view('/login', 'auth.login')->name('login');
 Route::view('/register', 'auth.register')->name('register');
 Route::view('/reset-password', 'auth.reset-password')->name('password.reset');
 
-Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+Route::redirect('/admin/dashboard', '/admin/panel');
 Route::redirect('/admin', '/admin/login');
 Route::view('/admin/login', 'admin.login')->name('admin.login');
 Route::view('/admin/panel', 'admin.panel')->name('admin.panel');
