@@ -1472,6 +1472,7 @@ const dashboardProductsMetric = document.getElementById('dashboardProductsMetric
 const dashboardUsersMetric = document.getElementById('dashboardUsersMetric');
 
 const ADMIN_TIMEOUT_MS = 30 * 60 * 1000;
+const BASE_CATEGORIES = ['pollos', 'parrillas', 'bebidas'];
 let productsCache = [];
 let refreshTimer = null;
 let productImageRemoved = false;
