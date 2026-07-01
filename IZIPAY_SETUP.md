@@ -26,6 +26,7 @@ Usa tus claves REST solo en `IZIPAY_REST_API_KEY`. Usa tu clave cliente JavaScri
 - URL de notificacion/IPN recomendada para Back Office: `https://tu-dominio.com/izipay-ipn.php`
 - URL alternativa compatible: `https://tu-dominio.com/izipay-ipn`
 - URL API interna compatible: `https://tu-dominio.com/api/v1/payments/izipay/webhook`
+- URL solo para validar Back Office si la regla se pone roja: `https://tu-dominio.com/izipay-validate.php`
 - Retorno exitoso: `https://tu-dominio.com/mis-pedidos`
 
 Para tu dominio actual, configura:
@@ -41,6 +42,14 @@ https://pollos.saborcentral.com/izipay-ipn
 ```
 
 El endpoint responde `HTTP 200` a `GET`, `HEAD`, `POST` vacio y `POST` de validacion sin `orderId`. Cuando Izipay envie una notificacion real con `orderId`, Laravel valida la firma si configuraste `IZIPAY_HMAC_KEY` y actualiza el pedido.
+
+Si el Back Office sigue rechazando la regla aunque `/izipay-ipn.php` responda 200, registra temporalmente:
+
+```text
+https://pollos.saborcentral.com/izipay-validate.php
+```
+
+Esa URL solo confirma localizacion del servidor. Para pagos reales, deja `IZIPAY_IPN_URL=https://pollos.saborcentral.com/izipay-ipn.php`, porque esa es la URL que Laravel envia a Izipay en cada `CreatePayment`.
 
 ## Flujo implementado
 
