@@ -3,6 +3,7 @@
 return [
     'provider' => env('EINVOICE_PROVIDER', 'apisperu'),
     'environment' => env('EINVOICE_ENVIRONMENT', 'beta'),
+    'auto_send' => (bool) env('EINVOICE_AUTO_SEND', false),
     'currency' => env('EINVOICE_CURRENCY', 'PEN'),
     'boleta_series' => env('EINVOICE_BOLETA_SERIES', 'B001'),
     'factura_series' => env('EINVOICE_FACTURA_SERIES', 'F001'),

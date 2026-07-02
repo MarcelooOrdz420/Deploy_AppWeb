@@ -56,4 +56,41 @@ class IzipayWebhookTest extends TestCase
 
         Http::assertSent(fn ($request): bool => $request['ipnTargetUrl'] === 'https://pollos.saborcentral.com/izipay-ipn.php');
     }
+
+    public function test_yape_and_plin_orders_use_izipay_gateway_metadata(): void
+    {
+        config([
+            'services.izipay.ipn_url' => 'https://pollos.saborcentral.com/izipay-ipn.php',
+            'services.izipay.shop_id' => 'shop-id',
+            'services.izipay.rest_api_key' => 'rest-key',
+            'services.izipay.public_key' => 'public-key',
+        ]);
+
+        Http::fake([
+            'api.micuentaweb.pe/*' => Http::response([
+                'answer' => [
+                    'formToken' => 'test-form-token',
+                ],
+            ]),
+        ]);
+
+        foreach (['yape', 'plin'] as $method) {
+            $order = Order::query()->create([
+                'tracking_code' => 'ED-'.strtoupper($method),
+                'customer_name' => 'Cliente Test',
+                'customer_phone' => '999888777',
+                'delivery_type' => 'pickup',
+                'status' => Order::STATUS_PENDING,
+                'total_amount' => 25.50,
+                'payment_method' => $method,
+                'payment_gateway' => 'izipay',
+                'payment_status' => 'pending',
+            ]);
+
+            app(IzipayService::class)->createPayment($order);
+        }
+
+        Http::assertSent(fn ($request): bool => $request['metadata']['preferred_payment_method'] === 'yape');
+        Http::assertSent(fn ($request): bool => $request['metadata']['preferred_payment_method'] === 'plin');
+    }
 }

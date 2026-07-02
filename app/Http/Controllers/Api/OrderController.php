@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Services\Fcm\FcmClient;
+use App\Services\ApisPeruFacturationService;
 use App\Services\InventoryMovementService;
 use App\Services\Realtime\PusherNotifier;
 use App\Services\SimplePdfReceiptService;
@@ -201,7 +202,7 @@ class OrderController extends Controller
             'delivery_type' => ['required', Rule::in(['pickup', 'delivery'])],
             'scheduled_for' => ['nullable', 'date'],
             'delivery_window_label' => ['nullable', 'string', 'max:120'],
-            'payment_method' => ['required', Rule::in(['izipay'])],
+            'payment_method' => ['required', Rule::in(['izipay', 'yape', 'plin'])],
             'payment_reference' => ['nullable', 'string', 'max:120'],
             'billing_document_type' => ['nullable', Rule::in(['dni', 'ruc'])],
             'billing_document_number' => ['nullable', 'string', 'max:20'],
@@ -296,7 +297,7 @@ class OrderController extends Controller
                 'status' => Order::STATUS_PENDING,
                 'total_amount' => 0,
                 'payment_method' => $data['payment_method'],
-                'payment_gateway' => 'izipay',
+                'payment_gateway' => $this->paymentGatewayFor((string) $data['payment_method']),
                 'payment_reference' => $data['payment_reference'] ?? null,
                 'payment_proof_path' => null,
                 'payment_status' => 'pending',
@@ -477,6 +478,7 @@ class OrderController extends Controller
         ]);
 
         $this->sendOrderStatusPush($order, paymentStatus: $data['payment_status']);
+        $this->trySendElectronicReceipt($order->fresh(['items']));
 
         return response()->json($order->fresh(['items', 'statusHistory']));
     }
@@ -753,6 +755,8 @@ HTML;
     {
         return match ($paymentMethod) {
             'izipay' => 'Izipay',
+            'yape' => 'Yape via Izipay',
+            'plin' => 'Plin via Izipay',
             'cod' => 'Contraentrega',
             default => $paymentMethod,
         };
@@ -772,6 +776,34 @@ HTML;
     private function isDigitalPaymentMethod(string $paymentMethod): bool
     {
         return false;
+    }
+
+    private function paymentGatewayFor(string $paymentMethod): string
+    {
+        return in_array($paymentMethod, ['izipay', 'yape', 'plin'], true)
+            ? 'izipay'
+            : $paymentMethod;
+    }
+
+    private function trySendElectronicReceipt(Order $order): void
+    {
+        if ((string) $order->payment_status !== 'verified') {
+            return;
+        }
+
+        if (! (bool) config('einvoice.auto_send', false)) {
+            return;
+        }
+
+        if (! in_array((string) $order->billing_receipt_type, ['boleta', 'factura'], true)) {
+            return;
+        }
+
+        try {
+            app(ApisPeruFacturationService::class)->sendInvoice($order);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 
     private function groupOrdersByPeriod(Collection $orders, string $period): array

@@ -2164,6 +2164,7 @@ async function fetchOrders() {
                     <span class="tag ${paymentStatusClass(order.payment_status)}" style="margin-left:6px;">${paymentStatusEs(order.payment_status)}</span>
                 </div>
                 <div class="muted">Operacion: ${order.payment_reference || 'sin codigo'}</div>
+                <div class="muted">Tributario: ${order.billing_receipt_type ? `${order.billing_receipt_type} ${order.billing_document_number || ''}` : 'sin boleta/factura'}</div>
                 <div class="order-proof-box">
                     <div class="muted">Comprobante: ${order.payment_proof_path ? `<a href="${order.payment_proof_path}" target="_blank">Ver archivo</a>` : 'no subido'}</div>
                     ${order.payment_proof_path && isImageProof(order.payment_proof_path)
@@ -2174,6 +2175,7 @@ async function fetchOrders() {
                 <div style="display:flex; gap:8px; margin-top:8px;">
                     <button data-fill="${order.id}">Usar en actualizar estado</button>
                     ${order.payment_proof_path ? `<button data-proof-modal="${order.id}">Ver comprobante</button>` : ''}
+                    ${order.billing_receipt_type ? `<button data-einvoice-preview="${order.id}">Preview SUNAT</button><button data-einvoice-send="${order.id}">Emitir SUNAT</button>` : ''}
                     <button data-delete-order="${order.id}" style="border-color:#ffc1b5; color:#a53216;">Eliminar pedido</button>
                 </div>
             </article>
@@ -2195,9 +2197,49 @@ async function fetchOrders() {
             openProofModal(order);
         });
     });
+    ordersList.querySelectorAll('[data-einvoice-preview]').forEach(btn => {
+        btn.addEventListener('click', () => previewEinvoice(Number(btn.getAttribute('data-einvoice-preview'))));
+    });
+    ordersList.querySelectorAll('[data-einvoice-send]').forEach(btn => {
+        btn.addEventListener('click', () => sendEinvoice(Number(btn.getAttribute('data-einvoice-send'))));
+    });
     ordersList.querySelectorAll('[data-delete-order]').forEach(btn => {
         btn.addEventListener('click', () => deleteOrder(Number(btn.getAttribute('data-delete-order'))));
     });
+}
+
+async function previewEinvoice(orderId) {
+    const token = getToken();
+    paymentMsg.textContent = `Generando preview SUNAT para pedido ${orderId}...`;
+    const res = await fetch(`/api/v1/admin/orders/${orderId}/einvoice/preview`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        paymentMsg.textContent = data.message || 'No se pudo generar preview SUNAT.';
+        return;
+    }
+    paymentMsg.textContent = `Preview SUNAT listo para pedido ${orderId}.`;
+    alert(JSON.stringify(data, null, 2));
+}
+
+async function sendEinvoice(orderId) {
+    if (!confirm(`Emitir comprobante electronico para pedido ID ${orderId}?`)) return;
+    const token = getToken();
+    paymentMsg.textContent = `Enviando comprobante SUNAT para pedido ${orderId}...`;
+    const res = await fetch(`/api/v1/admin/orders/${orderId}/einvoice/send`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        paymentMsg.textContent = data.message || 'No se pudo emitir comprobante SUNAT.';
+        return;
+    }
+    paymentMsg.textContent = data.already_sent
+        ? `El pedido ${orderId} ya tenia comprobante emitido.`
+        : `Comprobante electronico enviado para pedido ${orderId}.`;
+    await fetchOrders();
 }
 
 async function exportCsv() {

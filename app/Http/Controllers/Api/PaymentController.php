@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Events\OrderStatusUpdatedForUser;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\ApisPeruFacturationService;
 use App\Services\Fcm\FcmClient;
 use App\Services\Payments\IzipayService;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ class PaymentController extends Controller
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
-        if ((string) $order->payment_method !== 'izipay') {
+        if (! $this->usesIzipay($order)) {
             return response()->json(['message' => 'Este pedido no usa Izipay.'], 422);
         }
 
@@ -75,8 +76,15 @@ class PaymentController extends Controller
 
         event(new OrderStatusUpdatedForUser($order->fresh(['items', 'statusHistory']), $paymentStatus));
         $this->sendOrderPaymentPush($order, $paymentStatus);
+        $this->trySendElectronicReceipt($order->fresh(['items']));
 
         return response()->json(['ok' => true]);
+    }
+
+    private function usesIzipay(Order $order): bool
+    {
+        return (string) $order->payment_gateway === 'izipay'
+            || in_array((string) $order->payment_method, ['izipay', 'yape', 'plin'], true);
     }
 
     private function sendOrderPaymentPush(Order $order, string $paymentStatus): void
@@ -114,6 +122,27 @@ class PaymentController extends Controller
             );
         } catch (\Throwable) {
             // No romper webhook por falla de push.
+        }
+    }
+
+    private function trySendElectronicReceipt(Order $order): void
+    {
+        if ((string) $order->payment_status !== 'verified') {
+            return;
+        }
+
+        if (! (bool) config('einvoice.auto_send', false)) {
+            return;
+        }
+
+        if (! in_array((string) $order->billing_receipt_type, ['boleta', 'factura'], true)) {
+            return;
+        }
+
+        try {
+            app(ApisPeruFacturationService::class)->sendInvoice($order);
+        } catch (\Throwable $exception) {
+            report($exception);
         }
     }
 }

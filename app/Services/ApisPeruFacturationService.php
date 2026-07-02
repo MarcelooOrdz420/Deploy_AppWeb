@@ -16,6 +16,15 @@ class ApisPeruFacturationService
 
     public function sendInvoice(Order $order): array
     {
+        $existing = data_get($order->billing_metadata, 'einvoice.response');
+        if (is_array($existing) && ! empty(data_get($order->billing_metadata, 'einvoice.sent_at'))) {
+            return [
+                'ok' => true,
+                'already_sent' => true,
+                'response' => $existing,
+            ];
+        }
+
         $token = $this->authToken();
         $payload = $this->buildPayload($order);
 
@@ -94,6 +103,8 @@ class ApisPeruFacturationService
         }
 
         $currency = (string) config('einvoice.currency', 'PEN');
+        $this->ensureCompanyCanInvoice();
+
         $series = $receiptType === 'factura'
             ? (string) config('einvoice.factura_series', 'F001')
             : (string) config('einvoice.boleta_series', 'B001');
@@ -155,19 +166,19 @@ class ApisPeruFacturationService
                 ],
             ],
             'company' => [
-                'ruc' => config('einvoice.company.ruc'),
-                'razonSocial' => config('einvoice.company.razon_social'),
-                'nombreComercial' => config('einvoice.company.nombre_comercial'),
-                'email' => config('einvoice.company.email'),
-                'telephone' => config('einvoice.company.telephone'),
+                'ruc' => trim((string) config('einvoice.company.ruc')),
+                'razonSocial' => trim((string) config('einvoice.company.razon_social')),
+                'nombreComercial' => trim((string) config('einvoice.company.nombre_comercial')),
+                'email' => trim((string) config('einvoice.company.email')),
+                'telephone' => trim((string) config('einvoice.company.telephone')),
                 'address' => [
-                    'direccion' => config('einvoice.company.address.direccion'),
-                    'departamento' => config('einvoice.company.address.departamento'),
-                    'provincia' => config('einvoice.company.address.provincia'),
-                    'distrito' => config('einvoice.company.address.distrito'),
-                    'ubigueo' => config('einvoice.company.address.ubigueo'),
-                    'codigoPais' => config('einvoice.company.address.codigo_pais', 'PE'),
-                    'codLocal' => config('einvoice.company.address.cod_local', '0000'),
+                    'direccion' => trim((string) config('einvoice.company.address.direccion')),
+                    'departamento' => trim((string) config('einvoice.company.address.departamento')),
+                    'provincia' => trim((string) config('einvoice.company.address.provincia')),
+                    'distrito' => trim((string) config('einvoice.company.address.distrito')),
+                    'ubigueo' => trim((string) config('einvoice.company.address.ubigueo')),
+                    'codigoPais' => trim((string) config('einvoice.company.address.codigo_pais', 'PE')),
+                    'codLocal' => trim((string) config('einvoice.company.address.cod_local', '0000')),
                 ],
             ],
             'mtoOperGravadas' => $taxedBase,
@@ -183,5 +194,29 @@ class ApisPeruFacturationService
             ]],
             'observacion' => 'Pedido '.($order->tracking_code ?: $order->id),
         ];
+    }
+
+    private function ensureCompanyCanInvoice(): void
+    {
+        $required = [
+            'RUC de empresa' => config('einvoice.company.ruc'),
+            'razon social de empresa' => config('einvoice.company.razon_social'),
+            'direccion fiscal' => config('einvoice.company.address.direccion'),
+            'departamento fiscal' => config('einvoice.company.address.departamento'),
+            'provincia fiscal' => config('einvoice.company.address.provincia'),
+            'distrito fiscal' => config('einvoice.company.address.distrito'),
+            'ubigeo fiscal' => config('einvoice.company.address.ubigueo'),
+        ];
+
+        $missing = [];
+        foreach ($required as $label => $value) {
+            if (trim((string) $value) === '') {
+                $missing[] = $label;
+            }
+        }
+
+        if ($missing !== []) {
+            throw new RuntimeException('Faltan datos fiscales para emitir comprobante: '.implode(', ', $missing).'.');
+        }
     }
 }
