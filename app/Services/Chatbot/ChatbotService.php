@@ -151,7 +151,7 @@ class ChatbotService
 
         if (($payments['izipay']['enabled'] ?? false)) {
             $label = trim((string) ($payments['izipay']['label'] ?? 'Izipay'));
-            $message = trim((string) ($payments['izipay']['message'] ?? 'Paga con tarjeta, Yape o Plin desde el checkout seguro.'));
+            $message = trim((string) ($payments['izipay']['message'] ?? 'Paga con tarjeta desde el checkout seguro.'));
             $lines[] = "- {$label}: {$message}";
         }
 

@@ -84,7 +84,7 @@ class PaymentController extends Controller
     private function usesIzipay(Order $order): bool
     {
         return (string) $order->payment_gateway === 'izipay'
-            || in_array((string) $order->payment_method, ['izipay', 'yape', 'plin'], true);
+            || (string) $order->payment_method === 'izipay';
     }
 
     private function sendOrderPaymentPush(Order $order, string $paymentStatus): void

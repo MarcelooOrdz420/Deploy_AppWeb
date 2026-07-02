@@ -202,7 +202,7 @@ class OrderController extends Controller
             'delivery_type' => ['required', Rule::in(['pickup', 'delivery'])],
             'scheduled_for' => ['nullable', 'date'],
             'delivery_window_label' => ['nullable', 'string', 'max:120'],
-            'payment_method' => ['required', Rule::in(['izipay', 'yape', 'plin'])],
+            'payment_method' => ['required', Rule::in(['izipay'])],
             'payment_reference' => ['nullable', 'string', 'max:120'],
             'billing_document_type' => ['nullable', Rule::in(['dni', 'ruc'])],
             'billing_document_number' => ['nullable', 'string', 'max:20'],
@@ -297,7 +297,7 @@ class OrderController extends Controller
                 'status' => Order::STATUS_PENDING,
                 'total_amount' => 0,
                 'payment_method' => $data['payment_method'],
-                'payment_gateway' => $this->paymentGatewayFor((string) $data['payment_method']),
+                'payment_gateway' => 'izipay',
                 'payment_reference' => $data['payment_reference'] ?? null,
                 'payment_proof_path' => null,
                 'payment_status' => 'pending',
@@ -550,7 +550,7 @@ class OrderController extends Controller
 
         if (! $this->isDigitalPaymentMethod((string) $order->payment_method)) {
             return response()->json([
-                'message' => 'Solo Yape, Plin y Transferencia requieren comprobante digital.',
+                'message' => 'Este metodo de pago no requiere comprobante digital.',
             ], 422);
         }
 
@@ -755,8 +755,6 @@ HTML;
     {
         return match ($paymentMethod) {
             'izipay' => 'Izipay',
-            'yape' => 'Yape via Izipay',
-            'plin' => 'Plin via Izipay',
             'cod' => 'Contraentrega',
             default => $paymentMethod,
         };
@@ -776,13 +774,6 @@ HTML;
     private function isDigitalPaymentMethod(string $paymentMethod): bool
     {
         return false;
-    }
-
-    private function paymentGatewayFor(string $paymentMethod): string
-    {
-        return in_array($paymentMethod, ['izipay', 'yape', 'plin'], true)
-            ? 'izipay'
-            : $paymentMethod;
     }
 
     private function trySendElectronicReceipt(Order $order): void

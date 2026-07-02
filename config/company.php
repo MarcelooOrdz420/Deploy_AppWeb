@@ -21,17 +21,7 @@ return [
     'payments' => [
         'izipay' => [
             'label' => env('COMPANY_IZIPAY_LABEL', 'Pago seguro con Izipay'),
-            'message' => env('COMPANY_IZIPAY_MESSAGE', 'Paga con tarjeta, Yape o Plin desde el checkout seguro de Izipay.'),
-            'enabled' => (bool) env('IZIPAY_ENABLED', true),
-        ],
-        'yape' => [
-            'label' => env('COMPANY_YAPE_LABEL', 'Yape con Izipay'),
-            'message' => env('COMPANY_YAPE_MESSAGE', 'Elige Yape en el checkout seguro de Izipay y confirma el pago desde tu app.'),
-            'enabled' => (bool) env('IZIPAY_ENABLED', true),
-        ],
-        'plin' => [
-            'label' => env('COMPANY_PLIN_LABEL', 'Plin con Izipay'),
-            'message' => env('COMPANY_PLIN_MESSAGE', 'Elige Plin en el checkout seguro de Izipay y completa el pago en tu billetera.'),
+            'message' => env('COMPANY_IZIPAY_MESSAGE', 'Paga con tarjeta desde el checkout seguro de Izipay.'),
             'enabled' => (bool) env('IZIPAY_ENABLED', true),
         ],
     ],

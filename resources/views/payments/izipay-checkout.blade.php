@@ -35,7 +35,6 @@
         <h1>Pago seguro con Izipay</h1>
         <p class="meta">
             Pedido {{ $order->tracking_code }}<br>
-            Metodo elegido: {{ $paymentLabel }}<br>
             Total: S/ {{ number_format((float) $order->total_amount, 2) }}
         </p>
 

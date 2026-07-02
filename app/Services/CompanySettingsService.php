@@ -24,18 +24,6 @@ class CompanySettingsService
                     'enabled' => (bool) config('company.payments.izipay.enabled'),
                     'public_key' => config('services.izipay.public_key'),
                 ],
-                'yape' => [
-                    'label' => config('company.payments.yape.label'),
-                    'message' => config('company.payments.yape.message'),
-                    'enabled' => (bool) config('company.payments.yape.enabled'),
-                    'public_key' => config('services.izipay.public_key'),
-                ],
-                'plin' => [
-                    'label' => config('company.payments.plin.label'),
-                    'message' => config('company.payments.plin.message'),
-                    'enabled' => (bool) config('company.payments.plin.enabled'),
-                    'public_key' => config('services.izipay.public_key'),
-                ],
             ],
         ];
     }

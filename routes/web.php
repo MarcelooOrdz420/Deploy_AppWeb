@@ -10,7 +10,9 @@ Route::view('/quienes-somos', 'store.about')->name('store.about');
 Route::view('/ubicacion', 'store.location')->name('store.location');
 Route::view('/expertos', 'store.experts')->name('store.experts');
 Route::view('/carrito', 'store.cart')->name('store.cart');
-Route::view('/mis-pedidos', 'store.orders')->name('store.orders');
+Route::match(['get', 'head', 'post'], '/mis-pedidos', fn () => view('store.orders'))
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->name('store.orders');
 Route::view('/login', 'auth.login')->name('login');
 Route::view('/register', 'auth.register')->name('register');
 Route::view('/reset-password', 'auth.reset-password')->name('password.reset');
@@ -36,7 +38,7 @@ Route::match(['get', 'head', 'post'], '/izipay-ipn.php', [PaymentController::cla
     ->name('izipay.ipn.php');
 
 Route::get('/pago/izipay/{order}', function (\App\Models\Order $order, \Illuminate\Http\Request $request) {
-    abort_if((string) $order->payment_gateway !== 'izipay' && ! in_array((string) $order->payment_method, ['izipay', 'yape', 'plin'], true), 404);
+    abort_if((string) $order->payment_gateway !== 'izipay' && (string) $order->payment_method !== 'izipay', 404);
     abort_if(trim((string) $request->query('form_token')) === '', 404);
 
     return view('payments.izipay-checkout', [
@@ -45,10 +47,5 @@ Route::get('/pago/izipay/{order}', function (\App\Models\Order $order, \Illumina
         'publicKey' => config('services.izipay.public_key'),
         'jsUrl' => config('services.izipay.js_url'),
         'cssUrl' => config('services.izipay.css_url'),
-        'paymentLabel' => match ((string) $order->payment_method) {
-            'yape' => 'Yape',
-            'plin' => 'Plin',
-            default => 'Tarjeta',
-        },
     ]);
 })->name('izipay.checkout');

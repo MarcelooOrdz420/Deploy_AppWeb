@@ -13,7 +13,7 @@ import '../services/session_service.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
 
-enum PayMethod { izipay, yape, plin }
+enum PayMethod { izipay }
 enum DeliveryType { delivery, pickup }
 enum ReceiptType { none, boleta, factura }
 
@@ -139,27 +139,6 @@ class _PaymentPageState extends State<PaymentPage> {
     switch (_method) {
       case PayMethod.izipay:
         return 'izipay';
-      case PayMethod.yape:
-        return 'yape';
-      case PayMethod.plin:
-        return 'plin';
-    }
-  }
-
-  bool _usesIzipayCheckout(PayMethod method) {
-    return method == PayMethod.izipay ||
-        method == PayMethod.yape ||
-        method == PayMethod.plin;
-  }
-
-  IzipayChannel _selectedPaymentChannel() {
-    switch (_method) {
-      case PayMethod.izipay:
-        return _settings.izipay;
-      case PayMethod.yape:
-        return _settings.yape;
-      case PayMethod.plin:
-        return _settings.plin;
     }
   }
 
@@ -420,7 +399,7 @@ class _PaymentPageState extends State<PaymentPage> {
               (_deliveryType == DeliveryType.delivery ? cart.deliveryFee() : 0.0));
       final itemsText = cart.items.map((item) => item.producto.name).join(', ');
 
-      if (_usesIzipayCheckout(_method) && orderId > 0) {
+      if (_method == PayMethod.izipay && orderId > 0) {
         final checkout = await _orderApiService.izipayCheckout(
           token: token,
           orderId: orderId,
@@ -633,8 +612,6 @@ class _PaymentPageState extends State<PaymentPage> {
             child: Column(
               children: [
                 _payTile('Izipay', PayMethod.izipay, Icons.credit_card),
-                _payTile('Yape', PayMethod.yape, Icons.phone_android),
-                _payTile('Plin', PayMethod.plin, Icons.account_balance_wallet_outlined),
                 const SizedBox(height: 10),
                 _paymentPanel(),
                 if (_needsOperationCode) ...[
@@ -912,12 +889,11 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Widget _paymentPanel() {
-    final channel = _selectedPaymentChannel();
     return _paymentInfoCard(
-      title: channel.label.isEmpty ? 'Pago seguro con Izipay' : channel.label,
-      subtitle: channel.message.isEmpty
-          ? 'Te llevaremos al checkout seguro de Izipay para completar el pago.'
-          : channel.message,
+      title: _settings.izipay.label,
+      subtitle: _settings.izipay.message.isEmpty
+          ? 'Te llevaremos al checkout seguro de Izipay para pagar con tarjeta.'
+          : _settings.izipay.message,
       child: const Icon(Icons.credit_score_outlined, size: 44, color: Colors.orange),
     );
   }

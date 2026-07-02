@@ -31,7 +31,7 @@ class LocalResponder
             return $this->contactLine();
         }
 
-        if ($this->matchesAny($normalized, ['pago', 'pagos', 'izipay', 'yape', 'plin', 'tarjeta', 'qr'])) {
+        if ($this->matchesAny($normalized, ['pago', 'pagos', 'izipay', 'tarjeta', 'qr'])) {
             return $this->paymentHelp() ?: $this->contactLine();
         }
 
@@ -78,7 +78,7 @@ class LocalResponder
 
         if (($payments['izipay']['enabled'] ?? false)) {
             $label = trim((string) ($payments['izipay']['label'] ?? 'Izipay'));
-            $message = trim((string) ($payments['izipay']['message'] ?? 'Paga con tarjeta, Yape o Plin desde el checkout seguro.'));
+            $message = trim((string) ($payments['izipay']['message'] ?? 'Paga con tarjeta desde el checkout seguro.'));
             $lines[] = "{$label}: {$message}";
         }
 

@@ -291,8 +291,6 @@ class ChatOrderDraftService
             'ruc',
             'pago',
             'izipay',
-            'yape',
-            'plin',
             'tarjeta',
             'pollo',
             'parrilla',
@@ -324,7 +322,7 @@ class ChatOrderDraftService
             $fields['delivery_type'] = 'pickup';
         }
 
-        if (Str::contains($normalized, ['izipay', 'yape', 'plin', 'tarjeta'])) {
+        if (Str::contains($normalized, ['izipay', 'tarjeta'])) {
             $fields['payment_method'] = 'izipay';
         }
 
@@ -699,8 +697,6 @@ class ChatOrderDraftService
             'local',
             'tienda',
             'izipay',
-            'yape',
-            'plin',
             'tarjeta',
             'ensalada',
             'salada',

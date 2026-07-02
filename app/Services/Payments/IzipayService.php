@@ -39,7 +39,6 @@ class IzipayService
             'metadata' => [
                 'order_id' => (string) $order->id,
                 'tracking_code' => (string) $order->tracking_code,
-                'preferred_payment_method' => (string) $order->payment_method,
             ],
             'ipnTargetUrl' => $this->ipnTargetUrl(),
             'formAction' => 'PAYMENT',
@@ -73,7 +72,6 @@ class IzipayService
                 'order' => $order->id,
                 'form_token' => $formToken,
             ]),
-            'preferred_payment_method' => (string) $order->payment_method,
             'order' => [
                 'id' => $order->id,
                 'tracking_code' => $order->tracking_code,
