@@ -25,8 +25,16 @@ class ApisPeruFacturationService
             ];
         }
 
-        $token = $this->authToken();
         $payload = $this->buildPayload($order);
+
+        if ($this->shouldSimulateSend()) {
+            $data = $this->simulatedResponse($order, $payload);
+            $this->storeEinvoiceMetadata($order, $payload, $data, true);
+
+            return $data;
+        }
+
+        $token = $this->authToken();
 
         $response = Http::baseUrl(rtrim((string) config('services.apisperu_fact.base_url'), '/'))
             ->timeout((int) config('services.apisperu_fact.timeout', 30))
@@ -40,9 +48,23 @@ class ApisPeruFacturationService
 
         $data = $response->json();
 
+        $this->storeEinvoiceMetadata($order, $payload, $data, false);
+
+        return $data;
+    }
+
+    public function previewPayload(Order $order): array
+    {
+        return $this->buildPayload($order);
+    }
+
+    private function storeEinvoiceMetadata(Order $order, array $payload, array $data, bool $simulated): void
+    {
         $metadata = $order->billing_metadata ?? [];
         $metadata['einvoice'] = [
             'provider' => 'apisperu',
+            'environment' => (string) config('einvoice.environment', 'beta'),
+            'simulated' => $simulated,
             'payload' => $payload,
             'response' => $data,
             'sent_at' => now()->toIso8601String(),
@@ -51,13 +73,41 @@ class ApisPeruFacturationService
         $order->update([
             'billing_metadata' => $metadata,
         ]);
-
-        return $data;
     }
 
-    public function previewPayload(Order $order): array
+    private function shouldSimulateSend(): bool
     {
-        return $this->buildPayload($order);
+        return (bool) config('einvoice.fake_send', false);
+    }
+
+    private function simulatedResponse(Order $order, array $payload): array
+    {
+        $documentNumber = $payload['serie'].'-'.$payload['correlativo'];
+
+        return [
+            'success' => true,
+            'simulated' => true,
+            'environment' => (string) config('einvoice.environment', 'beta'),
+            'message' => 'Comprobante simulado para desarrollo. No fue enviado a SUNAT.',
+            'document' => [
+                'tipoDoc' => $payload['tipoDoc'],
+                'serie' => $payload['serie'],
+                'correlativo' => $payload['correlativo'],
+                'numero' => $documentNumber,
+                'tracking_code' => $order->tracking_code,
+            ],
+            'sunatResponse' => [
+                'success' => true,
+                'cdrResponse' => [
+                    'accepted' => true,
+                    'code' => '0',
+                    'description' => 'La boleta/factura ha sido aceptada - SIMULADO',
+                    'notes' => [
+                        'Respuesta generada localmente para exposicion o pruebas.',
+                    ],
+                ],
+            ],
+        ];
     }
 
     private function authToken(): string
