@@ -10,7 +10,7 @@ use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Services\Fcm\FcmClient;
-use App\Services\ApisPeruFacturationService;
+use App\Services\ElectronicInvoiceService;
 use App\Services\InventoryMovementService;
 use App\Services\Realtime\PusherNotifier;
 use App\Services\SimplePdfReceiptService;
@@ -791,7 +791,7 @@ HTML;
         }
 
         try {
-            app(ApisPeruFacturationService::class)->sendInvoice($order);
+            app(ElectronicInvoiceService::class)->sendInvoice($order);
         } catch (\Throwable $exception) {
             report($exception);
         }

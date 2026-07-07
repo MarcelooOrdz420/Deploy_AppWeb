@@ -13,6 +13,7 @@ import 'cart_tab.dart';
 import 'home_tab.dart';
 import 'orders_tab.dart';
 import 'profile_tab.dart';
+import 'search_page.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -28,8 +29,9 @@ class _AppShellState extends State<AppShell> {
 
   final List<Widget> _pages = const [
     HomeTab(),
-    OrdersTab(),
+    SearchPage(),
     CartTab(),
+    OrdersTab(),
     ProfileTab(),
   ];
 
@@ -267,9 +269,9 @@ class _AppShellState extends State<AppShell> {
             ),
             onPressed: () {
               Navigator.of(context).pop();
-              AppShellController.instance.goTo(1);
+              AppShellController.instance.goTo(3);
               if (!mounted) return;
-              setState(() => _index = 1);
+              setState(() => _index = 3);
             },
             child: const Text('Ver pedidos'),
           ),
@@ -363,9 +365,23 @@ class _AppShellState extends State<AppShell> {
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: StoreTheme.ink.withOpacity(.96),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: StoreTheme.orange.withOpacity(.24)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withOpacity(.92),
+                          StoreTheme.cream.withOpacity(.94),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: StoreTheme.lineStrong.withOpacity(.72)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color.fromRGBO(52, 17, 0, .07),
+                          blurRadius: 24,
+                          offset: Offset(0, 10),
+                        ),
+                      ],
                     ),
                     child: BottomNavigationBar(
                       currentIndex: _index,
@@ -379,12 +395,16 @@ class _AppShellState extends State<AppShell> {
                           label: 'Inicio',
                         ),
                         BottomNavigationBarItem(
-                          icon: Icon(Icons.receipt_long_outlined),
-                          label: 'Pedidos',
+                          icon: Icon(Icons.search_outlined),
+                          label: 'Buscar',
                         ),
                         BottomNavigationBarItem(
                           icon: Icon(Icons.shopping_cart_outlined),
                           label: 'Carrito',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.receipt_long_outlined),
+                          label: 'Pedidos',
                         ),
                         BottomNavigationBarItem(
                           icon: Icon(Icons.person_outline),

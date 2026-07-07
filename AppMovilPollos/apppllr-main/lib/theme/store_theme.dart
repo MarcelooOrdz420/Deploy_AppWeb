@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
 class StoreTheme {
-  static const Color orange = Color(0xFFF2B705);
-  static const Color orangeSoft = Color(0xFFFFCF3A);
-  static const Color orangeDeep = Color(0xFFD97904);
-  static const Color cream = Color(0xFFFFF8EC);
-  static const Color paper = Color(0xFFFFFFFF);
-  static const Color paperSoft = Color(0xFFFFF4DF);
-  static const Color ink = Color(0xFF1F140D);
-  static const Color inkSoft = Color(0xFF6D5541);
-  static const Color lineStrong = Color(0xFFF2B705);
+  static const Color orange = Color(0xFFFF6F1F);
+  static const Color orangeSoft = Color(0xFFFF9D5A);
+  static const Color orangeDeep = Color(0xFFF25D00);
+  static const Color cream = Color(0xFFFFF8F2);
+  static const Color creamStrong = Color(0xFFFFF1E3);
+  static const Color paper = Color(0xFFFFFDF9);
+  static const Color paperSoft = Color(0xFFFFF6EE);
+  static const Color ink = Color(0xFF25170F);
+  static const Color inkSoft = Color(0xFF68432E);
+  static const Color lineStrong = Color(0xFFEAB68A);
 
   static ThemeData theme() {
     final base = ThemeData(
@@ -21,7 +22,7 @@ class StoreTheme {
         brightness: Brightness.light,
       ),
       scaffoldBackgroundColor: Colors.transparent,
-      fontFamily: 'Segoe UI',
+      fontFamily: 'Trebuchet MS',
     );
 
     return base.copyWith(
@@ -46,13 +47,13 @@ class StoreTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: orange, width: 1.4),
+          borderSide: const BorderSide(color: orangeSoft, width: 1.4),
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Color(0xFF100D0A),
-        selectedItemColor: orangeSoft,
-        unselectedItemColor: Color(0xFFD8C8B5),
+        backgroundColor: Colors.transparent,
+        selectedItemColor: orangeDeep,
+        unselectedItemColor: inkSoft,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
       ),
@@ -68,8 +69,8 @@ class StoreTheme {
         secondary: orangeDeep,
         brightness: Brightness.dark,
       ),
-      scaffoldBackgroundColor: const Color(0xFF100D0A),
-      fontFamily: 'Segoe UI',
+      scaffoldBackgroundColor: Colors.transparent,
+      fontFamily: 'Trebuchet MS',
     );
 
     return base.copyWith(
@@ -79,21 +80,21 @@ class StoreTheme {
       ),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: orangeSoft,
-        contentTextStyle: TextStyle(color: ink),
+        backgroundColor: ink,
+        contentTextStyle: TextStyle(color: cream),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1B130D),
-        hintStyle: const TextStyle(color: Color(0xFFD8C8B5)),
+        fillColor: paper,
+        hintStyle: const TextStyle(color: inkSoft),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0x66F2B705)),
+          borderSide: const BorderSide(color: lineStrong),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0x66F2B705)),
+          borderSide: const BorderSide(color: lineStrong),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
@@ -101,9 +102,9 @@ class StoreTheme {
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Color(0xFF100D0A),
-        selectedItemColor: orangeSoft,
-        unselectedItemColor: Color(0xFFD8C8B5),
+        backgroundColor: Colors.transparent,
+        selectedItemColor: orangeDeep,
+        unselectedItemColor: inkSoft,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
       ),
@@ -114,29 +115,29 @@ class StoreTheme {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: <Color>[
-      Color(0xFF1A1009),
-      Color(0xFF100D0A),
-      Color(0xFF24150C),
+      Color(0xFFFFFBF6),
+      Color(0xFFFFF1E5),
+      Color(0xFFFFEAD8),
     ],
   );
 
   static BoxDecoration frameDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: Colors.white.withOpacity(.10)),
+      borderRadius: BorderRadius.circular(32),
+      border: Border.all(color: lineStrong.withOpacity(.72)),
       gradient: LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: <Color>[
-          const Color(0xFF17100B),
-          const Color(0xFF100D0A),
+          Colors.white.withOpacity(.84),
+          cream.withOpacity(.94),
         ],
       ),
       boxShadow: const <BoxShadow>[
         BoxShadow(
-          color: Color.fromRGBO(8, 5, 2, .36),
-          blurRadius: 44,
-          offset: Offset(0, 22),
+          color: Color.fromRGBO(52, 17, 0, .13),
+          blurRadius: 40,
+          offset: Offset(0, 18),
         ),
       ],
     );
@@ -144,16 +145,16 @@ class StoreTheme {
 
   static BoxDecoration surfaceDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: lineStrong.withOpacity(.22)),
+      borderRadius: BorderRadius.circular(28),
+      border: Border.all(color: lineStrong.withOpacity(.74)),
       gradient: const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: <Color>[Color(0xFFFFFFFF), Color(0xFFFFF8EC)],
+        colors: <Color>[paper, paperSoft],
       ),
       boxShadow: const <BoxShadow>[
         BoxShadow(
-          color: Color.fromRGBO(31, 20, 13, .13),
+          color: Color.fromRGBO(52, 17, 0, .07),
           blurRadius: 28,
           offset: Offset(0, 14),
         ),
@@ -163,12 +164,12 @@ class StoreTheme {
 
   static BoxDecoration panelDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: lineStrong.withOpacity(.22)),
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: lineStrong.withOpacity(.7)),
       gradient: const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: <Color>[Color(0xFFFFFFFF), Color(0xFFFFF8EC)],
+        colors: <Color>[paper, paperSoft],
       ),
     );
   }

@@ -25,6 +25,9 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Administracion',
                 'phone' => '999888777',
                 'role' => 'admin',
+                'is_active' => true,
+                'is_verified' => true,
+                'email_verified_at' => now(),
                 'password' => Hash::make('admin12345'),
             ]
         );
@@ -174,6 +177,8 @@ class DatabaseSeeder extends Seeder
                     'phone' => $customer['phone'],
                     'role' => 'customer',
                     'is_active' => true,
+                    'is_verified' => true,
+                    'email_verified_at' => Carbon::create(2026, 4, 20 + $index, 10, 0, 0, 'America/Lima')->utc(),
                     'password' => Hash::make('cliente12345'),
                     'created_at' => Carbon::create(2026, 4, 20 + $index, 10, 0, 0, 'America/Lima')->utc(),
                     'updated_at' => Carbon::create(2026, 5, 20, 10, 0, 0, 'America/Lima')->utc(),

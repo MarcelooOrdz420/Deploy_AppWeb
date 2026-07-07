@@ -4,14 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Services\ApisPeruFacturationService;
+use App\Services\ElectronicInvoiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
 
 class EInvoiceController extends Controller
 {
-    public function preview(Request $request, Order $order, ApisPeruFacturationService $service): JsonResponse
+    public function preview(Request $request, Order $order, ElectronicInvoiceService $service): JsonResponse
     {
         if ($request->user()->role !== 'admin') {
             return response()->json(['message' => 'No autorizado'], 403);
@@ -24,7 +24,7 @@ class EInvoiceController extends Controller
         }
     }
 
-    public function send(Request $request, Order $order, ApisPeruFacturationService $service): JsonResponse
+    public function send(Request $request, Order $order, ElectronicInvoiceService $service): JsonResponse
     {
         if ($request->user()->role !== 'admin') {
             return response()->json(['message' => 'No autorizado'], 403);

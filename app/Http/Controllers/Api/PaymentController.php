@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Events\OrderStatusUpdatedForUser;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Services\ApisPeruFacturationService;
+use App\Services\ElectronicInvoiceService;
 use App\Services\Fcm\FcmClient;
 use App\Services\Payments\IzipayService;
 use Illuminate\Http\JsonResponse;
@@ -140,7 +140,7 @@ class PaymentController extends Controller
         }
 
         try {
-            app(ApisPeruFacturationService::class)->sendInvoice($order);
+            app(ElectronicInvoiceService::class)->sendInvoice($order);
         } catch (\Throwable $exception) {
             report($exception);
         }

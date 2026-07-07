@@ -104,4 +104,14 @@ return [
         'timeout' => env('APISPERU_FACT_TIMEOUT', 30),
     ],
 
+    'nubefact' => [
+        'route' => env('NUBEFACT_ROUTE'),
+        'token' => env('NUBEFACT_TOKEN'),
+        'timeout' => env('NUBEFACT_TIMEOUT', 30),
+        'send_to_sunat' => filter_var(env('NUBEFACT_SEND_TO_SUNAT', true), FILTER_VALIDATE_BOOLEAN),
+        'send_to_customer' => filter_var(env('NUBEFACT_SEND_TO_CUSTOMER', false), FILTER_VALIDATE_BOOLEAN),
+        'pdf_format' => env('NUBEFACT_PDF_FORMAT', ''),
+        'default_sunat_product_code' => env('NUBEFACT_DEFAULT_SUNAT_PRODUCT_CODE', '10000000'),
+    ],
+
 ];
