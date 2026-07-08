@@ -9,29 +9,51 @@
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: Arial, sans-serif;
-            background: #fff8f2;
-            color: #271408;
+            font-family: "Trebuchet MS", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(255, 157, 90, .22), transparent 28%),
+                radial-gradient(circle at top right, rgba(255, 111, 31, .16), transparent 26%),
+                linear-gradient(180deg, #fffaf6 0%, #fff1e5 44%, #ffead8 100%);
+            color: #25170f;
             display: grid;
             place-items: center;
             padding: 18px;
         }
         main {
             width: min(520px, 100%);
-            background: #fff;
-            border: 1px solid #ffd4b1;
-            border-radius: 14px;
-            box-shadow: 0 18px 42px rgba(70, 28, 4, .14);
-            padding: 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,246,238,.96));
+            border: 1px solid rgba(234, 182, 138, .78);
+            border-radius: 28px;
+            box-shadow: 0 26px 60px rgba(52, 17, 0, .13);
+            padding: 24px;
         }
-        h1 { margin: 0 0 8px; font-size: 22px; }
-        .meta { margin: 0 0 16px; color: #6b4a34; line-height: 1.45; }
+        .brand-mark {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 14px;
+            border-radius: 18px;
+            border: 1px solid rgba(234, 182, 138, .9);
+            background: #fffdf9;
+            padding: 8px;
+            box-shadow: 0 12px 24px rgba(255, 111, 31, .14);
+        }
+        .brand-mark img { width: 100%; height: 100%; object-fit: contain; }
+        h1 { margin: 0 0 8px; font-size: 24px; color: #25170f; text-align: center; }
+        .meta { margin: 0 0 18px; color: #68432e; line-height: 1.45; text-align: center; font-weight: 800; }
+        .kr-embedded {
+            overflow: hidden;
+            border-radius: 22px;
+            background: #fffdf9;
+        }
         .actions { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
         a { color: #b84d09; font-weight: 700; }
     </style>
 </head>
 <body>
     <main>
+        <div class="brand-mark">
+            <img src="/images/ico-pollo.jpg" alt="El Dorado">
+        </div>
         <h1>Pago seguro con Izipay</h1>
         <p class="meta">
             Pedido {{ $order->tracking_code }}<br>

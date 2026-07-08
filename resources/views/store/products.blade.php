@@ -1344,6 +1344,104 @@
                 justify-content: center;
             }
         }
+
+        /* El Dorado final product-card lock: readable warm cards. */
+        .products-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+            align-items: stretch;
+        }
+
+        .products-grid .product-card {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 14px;
+            min-height: 430px;
+            border: 1px solid rgba(234, 182, 138, .78) !important;
+            border-radius: 26px !important;
+            padding: 16px !important;
+            background: linear-gradient(180deg, #fffdfb 0%, #fff5ec 100%) !important;
+            color: #25170f !important;
+            box-shadow: 0 18px 34px rgba(52, 17, 0, .07) !important;
+        }
+
+        .products-grid .product-card,
+        .products-grid .product-card * {
+            text-shadow: none !important;
+        }
+
+        .products-grid .product-head {
+            align-items: flex-start;
+            color: #25170f !important;
+        }
+
+        .products-grid .product-name {
+            display: -webkit-box;
+            min-height: 54px;
+            max-width: 150px;
+            overflow: hidden;
+            color: #25170f !important;
+            font-size: 21px !important;
+            line-height: 1.06 !important;
+            font-weight: 950 !important;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+
+        .products-grid .product-price {
+            flex-shrink: 0;
+            color: #f25d00 !important;
+            font-size: 30px !important;
+            line-height: 1 !important;
+            font-weight: 950 !important;
+            white-space: nowrap;
+        }
+
+        .products-grid .product-category,
+        .products-grid .status-chip {
+            color: #82471f !important;
+            border-color: rgba(234, 182, 138, .82) !important;
+            background: rgba(255, 247, 240, .92) !important;
+        }
+
+        .products-grid .status-chip {
+            font-size: 11px !important;
+            font-weight: 900 !important;
+        }
+
+        .products-grid .product-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .products-grid .product-actions .btn-main,
+        .products-grid .product-actions .btn-soft {
+            min-height: 44px;
+            padding: 10px 12px !important;
+            color: #2d1406 !important;
+            white-space: nowrap;
+        }
+
+        .products-grid .product-image-wrap {
+            aspect-ratio: 4 / 3 !important;
+            border-radius: 22px !important;
+            background: linear-gradient(145deg, #ffe9d7, #fffaf5) !important;
+        }
+
+        .products-grid .product-image {
+            background: #fff8f2;
+        }
+
+        @media (max-width: 560px) {
+            .products-grid .product-head {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+            .products-grid .product-name {
+                max-width: none;
+            }
+        }
     </style>
 @endsection
 
@@ -1487,6 +1585,10 @@ function setSearchState(visible, title = 'Espera, estamos buscando...', text = '
 
 function productImage(product) {
     return product && product.image_url ? product.image_url : null;
+}
+
+function safeProductImage(product) {
+    return escapeHtml(productImage(product) || '/images/products/default.svg');
 }
 
 function normalizeProductName(name) {
@@ -1668,12 +1770,12 @@ function renderProducts() {
     productsGrid.innerHTML = list.map(product => `
         <article class="product-card">
             <div class="product-image-wrap">
-                <img src="${product.image_url || '/images/products/default.svg'}" alt="${product.name}" class="product-image">
+                <img src="${safeProductImage(product)}" alt="${escapeHtml(product.name)}" class="product-image" loading="lazy" onerror="this.onerror=null;this.src='/images/products/default.svg';">
             </div>
             <div class="product-head">
                 <div>
-                    <h3 class="product-name">${product.name}</h3>
-                    <span class="product-category">${product.category || 'general'}</span>
+                    <h3 class="product-name">${escapeHtml(product.name)}</h3>
+                    <span class="product-category">${escapeHtml(product.category || 'general')}</span>
                 </div>
                 <p class="product-price">S/ ${money(product.price)}</p>
             </div>

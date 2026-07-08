@@ -9,6 +9,7 @@ EINVOICE_PROVIDER=nubefact
 EINVOICE_BOLETA_SERIES=B001
 EINVOICE_FACTURA_SERIES=F001
 EINVOICE_AUTO_SEND=false
+EINVOICE_FAKE_SEND=false
 
 NUBEFACT_ROUTE=https://api.nubefact.com/api/v1/TU-RUTA
 NUBEFACT_TOKEN=TU_TOKEN_NUBEFACT
@@ -18,6 +19,26 @@ NUBEFACT_PDF_FORMAT=TICKET
 ```
 
 Nubefact no entrega tokens JWT. Su autenticacion usa el token de Nubefact en el header `Authorization`.
+
+Importante: define `EINVOICE_PROVIDER` una sola vez. Si aparece dos veces en `.env`, Laravel usara el ultimo valor leido.
+
+Para que un pago verificado por Izipay emita automaticamente en Nubefact, usa:
+
+```env
+EINVOICE_PROVIDER=nubefact
+EINVOICE_AUTO_SEND=true
+EINVOICE_FAKE_SEND=false
+```
+
+Para probar el flujo sin emitir un comprobante real en Nubefact/SUNAT:
+
+```env
+EINVOICE_PROVIDER=nubefact
+EINVOICE_AUTO_SEND=true
+EINVOICE_FAKE_SEND=true
+```
+
+Si `EINVOICE_AUTO_SEND=false`, el webhook de Izipay solo marcara el pago como verificado. Luego puedes emitir manualmente con el endpoint admin de Nubefact.
 
 ## Probar JWT de tu API en Postman
 

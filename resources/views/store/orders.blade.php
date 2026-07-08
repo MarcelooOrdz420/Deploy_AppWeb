@@ -7,10 +7,25 @@
         .orders-grid { display: grid; gap: 10px; }
         .order-card {
             border: 1px solid #ffd7bd;
-            border-radius: 12px;
-            padding: 12px;
-            background: linear-gradient(170deg, #fff 0%, #fff8f2 100%);
-            box-shadow: 0 8px 20px rgba(255, 111, 31, .08);
+            border-radius: 22px;
+            padding: 18px;
+            background: linear-gradient(180deg, #fffdf9 0%, #fff6ee 100%);
+            box-shadow: 0 18px 34px rgba(52, 17, 0, .07);
+            color: #25170f;
+            line-height: 1.55;
+        }
+        .order-card,
+        .order-card * {
+            color: #25170f !important;
+            text-shadow: none !important;
+        }
+        .order-card strong {
+            color: #5f3111 !important;
+            font-weight: 950;
+        }
+        .order-card a {
+            color: #f25d00 !important;
+            font-weight: 900;
         }
         .proof-box {
             margin-top: 8px;
@@ -29,6 +44,14 @@
             color: #914406;
             font-size: 12px;
             font-weight: 700;
+        }
+        .orders-grid > strong {
+            display: block;
+            padding: 18px;
+            border: 1px solid rgba(234, 182, 138, .72);
+            border-radius: 22px;
+            background: #fffdf9;
+            color: #25170f !important;
         }
         .tracker-grid { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
         .timeline-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }

@@ -25,6 +25,34 @@ class NubefactService
         }
 
         $payload = $this->buildPayload($order);
+
+        if ((bool) config('einvoice.fake_send', false)) {
+            $data = [
+                'ok' => true,
+                'fake' => true,
+                'tipo_de_comprobante' => $payload['tipo_de_comprobante'],
+                'serie' => $payload['serie'],
+                'numero' => $payload['numero'],
+                'aceptada_por_sunat' => false,
+                'sunat_description' => 'Envio simulado por EINVOICE_FAKE_SEND=true.',
+            ];
+
+            $metadata = $order->billing_metadata ?? [];
+            $metadata['einvoice'] = [
+                'provider' => 'nubefact',
+                'payload' => $payload,
+                'response' => $data,
+                'sent_at' => now()->toIso8601String(),
+                'fake' => true,
+            ];
+
+            $order->update([
+                'billing_metadata' => $metadata,
+            ]);
+
+            return $data;
+        }
+
         $response = Http::timeout((int) config('services.nubefact.timeout', 30))
             ->withHeaders([
                 'Authorization' => $this->token(),
