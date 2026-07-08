@@ -295,12 +295,12 @@
         .checkout-actions{display:grid;gap:10px;padding-bottom:8px}
         .checkout-submit{min-height:58px;font-size:16px}
         .order-feedback{min-height:22px;color:#7b3d11;font-size:14px;line-height:1.5}
-        .processing-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:#050301;z-index:90}
-        .processing-overlay::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,178,72,.16),transparent 42%);pointer-events:none}
-        .processing-card{position:relative;width:min(92vw,420px);border-radius:18px;padding:24px 20px;border:1px solid rgba(255,201,153,.5);background:#100905;box-shadow:0 22px 70px rgba(0,0,0,.55);text-align:center;display:grid;gap:12px;justify-items:center;color:#fff7ed}
-        .processing-image{width:82px;height:82px;object-fit:contain;border-radius:18px;border:1px solid rgba(255,201,153,.6);background:#fff;animation:processingPulse 1.1s ease-in-out infinite}
-        .processing-card h3{margin:0;color:#ffc45d;font-size:20px;line-height:1.2}
-        .processing-card p{margin:0;color:#fff0df;font-size:14px;line-height:1.45}
+        .processing-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:radial-gradient(circle at top left,rgba(255,157,90,.28),transparent 28%),radial-gradient(circle at bottom right,rgba(255,111,31,.18),transparent 26%),linear-gradient(180deg,#fffaf6 0%,#fff1e5 44%,#ffead8 100%);z-index:90}
+        .processing-overlay::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,111,31,.12),transparent 42%);pointer-events:none}
+        .processing-card{position:relative;width:min(92vw,420px);border-radius:28px;padding:28px 22px;border:1px solid rgba(234,182,138,.82);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,246,238,.98));box-shadow:0 26px 60px rgba(52,17,0,.13);text-align:center;display:grid;gap:12px;justify-items:center;color:#25170f}
+        .processing-image{width:86px;height:86px;object-fit:contain;border-radius:22px;border:1px solid rgba(234,182,138,.82);background:#fffdf9;animation:processingPulse 1.1s ease-in-out infinite}
+        .processing-card h3{margin:0;color:#25170f;font-size:21px;line-height:1.2}
+        .processing-card p{margin:0;color:#68432e;font-size:14px;line-height:1.45;font-weight:800}
         @keyframes processingPulse{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.06);opacity:1}}
         .checkout-shell *{min-width:0}
         .checkout-shell .title,.section-title,.hero-kpi-card strong,.cart-item-name,.pay-tile strong,.payment-brief strong{overflow-wrap:anywhere;line-height:1.12}
@@ -321,6 +321,11 @@
         @media (max-width:760px){.checkout-shell{gap:14px}.checkout-hero{padding:16px}.checkout-hero-panel,.form-grid,.extended-grid,.summary-note-grid,.lookup-row{grid-template-columns:1fr}.summary-panel-head,.cart-item-card{grid-template-columns:1fr}.cart-item-actions{justify-items:start}.choice-cluster{grid-template-columns:1fr}.pay-stage-grid{grid-template-columns:1fr}.pay-tile{grid-template-columns:auto minmax(0,1fr);min-height:auto;padding:14px}.summary-total-box strong{font-size:24px}.checkout-shell .title{font-size:clamp(28px,8vw,42px)}}
         .hero-kpi-card strong,
         .pay-tile strong{color:var(--panel-ink)}
+        .checkout-shell .surface,.checkout-shell .form-stage,.checkout-shell .summary-panel,.checkout-shell .field-card,.checkout-shell .pay-tile,.checkout-shell .payment-brief,.checkout-shell .hero-kpi-card,.checkout-shell .info-ribbon{color:#25170f!important;text-shadow:none!important}
+        .checkout-shell .surface *,.checkout-shell .form-stage *,.checkout-shell .summary-panel *,.checkout-shell .field-card *,.checkout-shell .pay-tile *,.checkout-shell .payment-brief *,.checkout-shell .hero-kpi-card *,.checkout-shell .info-ribbon *{text-shadow:none!important}
+        .checkout-shell .section-title,.checkout-shell .title,.checkout-shell .hero-kpi-card strong,.checkout-shell .pay-tile strong,.checkout-shell .payment-brief strong,.checkout-shell .cart-item-name{color:#25170f!important}
+        .checkout-shell .eyebrow,.checkout-shell .label-main,.checkout-shell .hero-kpi-label,.checkout-shell .pay-tile-kicker{color:#9b5a2c!important}
+        .checkout-shell .field-help,.checkout-shell .pay-tile small,.checkout-shell .payment-brief div,.checkout-shell .cart-item-meta{color:#68432e!important}
     </style>
 @endsection
 

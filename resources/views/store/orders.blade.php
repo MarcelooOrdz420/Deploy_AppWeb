@@ -45,6 +45,37 @@
             font-size: 12px;
             font-weight: 700;
         }
+        .einvoice-box {
+            margin-top: 10px;
+            padding: 12px 14px;
+            border: 1px solid rgba(234, 182, 138, .72);
+            border-radius: 18px;
+            background: #fffdf9;
+            display: grid;
+            gap: 8px;
+        }
+        .einvoice-box strong,
+        .einvoice-box span {
+            color: #25170f !important;
+        }
+        .einvoice-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .einvoice-links a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 9px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(234, 182, 138, .82);
+            background: rgba(255, 247, 240, .92);
+            color: #82471f !important;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 900;
+        }
         .orders-grid > strong {
             display: block;
             padding: 18px;
@@ -164,6 +195,40 @@ function getToken() { return localStorage.getItem('ed_token'); }
 function statusEs(code) { return STATUS_ES[code] || code || 'n/a'; }
 function paymentStatusEs(code) { return PAYMENT_STATUS_ES[code] || code || 'n/a'; }
 function needsDigitalProof(method) { return false; }
+function einvoiceInfo(order) {
+    const meta = order && order.billing_metadata ? order.billing_metadata : {};
+    const einvoice = meta.einvoice || {};
+    const response = einvoice.response || {};
+    const provider = einvoice.provider || '';
+    const sentAt = einvoice.sent_at || '';
+    const fake = Boolean(einvoice.fake || response.fake);
+    const pdf = response.enlace_del_pdf || (response.enlace ? `${response.enlace}.pdf` : '');
+    const xml = response.enlace_del_xml || '';
+    const cdr = response.enlace_del_cdr || '';
+
+    if (!provider && !sentAt) {
+        return `
+            <div class="einvoice-box">
+                <strong>Comprobante electronico</strong>
+                <span>Aun no enviado a Nubefact. Se emitira cuando el pago figure como verificado.</span>
+            </div>
+        `;
+    }
+
+    const links = [
+        pdf ? `<a href="${pdf}" target="_blank" rel="noopener">PDF Nubefact</a>` : '',
+        xml ? `<a href="${xml}" target="_blank" rel="noopener">XML</a>` : '',
+        cdr ? `<a href="${cdr}" target="_blank" rel="noopener">CDR</a>` : '',
+    ].filter(Boolean).join('');
+
+    return `
+        <div class="einvoice-box">
+            <strong>Comprobante electronico: ${provider || 'nubefact'}</strong>
+            <span>${fake ? 'Simulado por EINVOICE_FAKE_SEND=true. No se envio a Nubefact/SUNAT.' : 'Enviado a Nubefact.'}</span>
+            ${links ? `<div class="einvoice-links">${links}</div>` : ''}
+        </div>
+    `;
+}
 
 async function loadPreferences() {
     const token = getToken();
@@ -301,6 +366,7 @@ async function fetchMyOrders() {
                 <div><strong>Pago:</strong> ${order.payment_method || 'n/a'} | <strong>Estado pago:</strong> ${paymentStatusEs(order.payment_status)}</div>
                 <div><strong>Operacion:</strong> ${order.payment_reference || 'sin codigo'}</div>
                 <div><strong>Comprobante:</strong> ${order.payment_proof_path ? `<a href="${order.payment_proof_path}" target="_blank">Ver archivo</a>` : 'no subido'}</div>
+                ${einvoiceInfo(order)}
                 ${needsDigitalProof(order.payment_method) ? `
                 <div class="proof-box">
                     <div><strong>Voucher digital</strong></div>
