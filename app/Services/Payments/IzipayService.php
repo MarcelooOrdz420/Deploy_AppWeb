@@ -5,6 +5,7 @@ namespace App\Services\Payments;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class IzipayService
@@ -23,6 +24,8 @@ class IzipayService
         }
 
         $order->loadMissing(['items', 'user']);
+        $ipnTargetUrl = $this->ipnTargetUrl();
+        $this->ensureValidIpnTargetUrl($ipnTargetUrl);
 
         $payload = [
             'amount' => $this->amountInCents((float) $order->total_amount),
@@ -40,7 +43,7 @@ class IzipayService
                 'order_id' => (string) $order->id,
                 'tracking_code' => (string) $order->tracking_code,
             ],
-            'ipnTargetUrl' => $this->ipnTargetUrl(),
+            'ipnTargetUrl' => $ipnTargetUrl,
             'formAction' => 'PAYMENT',
         ];
 
@@ -164,6 +167,34 @@ class IzipayService
             return $configured;
         }
 
-        return route('izipay.ipn');
+        return route('izipay.ipn.php');
+    }
+
+    private function ensureValidIpnTargetUrl(string $url): void
+    {
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new RuntimeException('La URL de notificacion de Izipay no es valida. Configura IZIPAY_IPN_URL con una URL publica HTTPS.');
+        }
+
+        $parts = parse_url($url);
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host = strtolower((string) ($parts['host'] ?? ''));
+
+        if ($scheme !== 'https') {
+            throw new RuntimeException('La URL de notificacion de Izipay debe usar HTTPS. Configura IZIPAY_IPN_URL con una URL publica segura.');
+        }
+
+        if ($host === '' || $this->isPrivateHost($host)) {
+            throw new RuntimeException('La URL de notificacion de Izipay debe ser publica y accesible desde Internet. Revisa APP_URL o define IZIPAY_IPN_URL.');
+        }
+    }
+
+    private function isPrivateHost(string $host): bool
+    {
+        if (in_array($host, ['localhost', '127.0.0.1', '0.0.0.0', '::1', 'host.docker.internal'], true)) {
+            return true;
+        }
+
+        return Str::endsWith($host, ['.local', '.internal', '.localhost']);
     }
 }
