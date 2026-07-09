@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class NubefactService
@@ -62,6 +63,14 @@ class NubefactService
             ->post($this->route(), $payload);
 
         $data = $response->json();
+
+        Log::info('Nubefact invoice response received.', [
+            'order_id' => $order->id,
+            'tracking_code' => $order->tracking_code,
+            'http_status' => $response->status(),
+            'provider' => 'nubefact',
+            'response_excerpt' => is_array($data) ? array_intersect_key($data, array_flip(['errors', 'mensaje', 'aceptada_por_sunat', 'serie', 'numero'])) : null,
+        ]);
 
         if ($response->failed() || ! is_array($data)) {
             throw new RuntimeException('No se pudo emitir el comprobante con Nubefact.');

@@ -11,6 +11,7 @@ use App\Services\Payments\IzipayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -30,17 +31,36 @@ class PaymentController extends Controller
     public function izipayWebhook(Request $request, IzipayService $izipayService): JsonResponse|Response
     {
         if ($request->isMethod('GET') || $request->isMethod('HEAD')) {
+            Log::info('Izipay webhook health-check request received.', [
+                'method' => $request->method(),
+                'url' => $request->fullUrl(),
+            ]);
             return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
         if (! $request->isMethod('POST')) {
+            Log::warning('Izipay webhook received unsupported method.', [
+                'method' => $request->method(),
+                'url' => $request->fullUrl(),
+            ]);
             return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
         $payload = $izipayService->notificationPayload($request);
         $trackingCode = $izipayService->trackingCodeFromPayload($payload);
 
+        Log::info('Izipay webhook payload received.', [
+            'tracking_code' => $trackingCode,
+            'headers' => $request->headers->all(),
+            'payload_keys' => array_keys($payload),
+            'order_status' => data_get($payload, 'orderStatus') ?: data_get($payload, 'answer.orderStatus'),
+            'transaction_status' => data_get($payload, 'transactionStatus') ?: data_get($payload, 'answer.transactionStatus'),
+        ]);
+
         if ($trackingCode === '') {
+            Log::warning('Izipay webhook ignored because tracking code could not be extracted.', [
+                'payload' => $payload,
+            ]);
             return response()->json([
                 'ok' => true,
                 'message' => 'Izipay endpoint ready',
@@ -49,6 +69,9 @@ class PaymentController extends Controller
         }
 
         if (! $izipayService->verifyWebhook($request)) {
+            Log::warning('Izipay webhook rejected due to invalid signature.', [
+                'tracking_code' => $trackingCode,
+            ]);
             return response()->json(['ok' => false, 'message' => 'Firma Izipay invalida.'], 401);
         }
 
@@ -57,6 +80,9 @@ class PaymentController extends Controller
             ->first();
 
         if (! $order) {
+            Log::warning('Izipay webhook could not find order by tracking code.', [
+                'tracking_code' => $trackingCode,
+            ]);
             return response()->json(['ok' => true, 'ignored' => true]);
         }
 
@@ -73,6 +99,13 @@ class PaymentController extends Controller
             'payment_status' => $paymentStatus,
             'payment_verified_at' => $paymentStatus === 'verified' ? now() : null,
         ])->save();
+
+        Log::info('Izipay webhook updated order payment state.', [
+            'order_id' => $order->id,
+            'tracking_code' => $order->tracking_code,
+            'payment_reference' => $transactionUuid,
+            'payment_status' => $paymentStatus,
+        ]);
 
         event(new OrderStatusUpdatedForUser($order->fresh(['items', 'statusHistory']), $paymentStatus));
         $this->sendOrderPaymentPush($order, $paymentStatus);
@@ -140,8 +173,20 @@ class PaymentController extends Controller
         }
 
         try {
+            Log::info('Attempting automatic electronic receipt emission.', [
+                'order_id' => $order->id,
+                'tracking_code' => $order->tracking_code,
+                'provider' => config('einvoice.provider'),
+                'receipt_type' => $order->billing_receipt_type,
+            ]);
             app(ElectronicInvoiceService::class)->sendInvoice($order);
         } catch (\Throwable $exception) {
+            Log::error('Automatic electronic receipt emission failed.', [
+                'order_id' => $order->id,
+                'tracking_code' => $order->tracking_code,
+                'provider' => config('einvoice.provider'),
+                'error' => $exception->getMessage(),
+            ]);
             report($exception);
         }
     }

@@ -5,6 +5,7 @@ namespace App\Services\Payments;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -47,6 +48,15 @@ class IzipayService
             'formAction' => 'PAYMENT',
         ];
 
+        Log::info('Izipay createPayment request prepared.', [
+            'order_id' => $order->id,
+            'tracking_code' => $order->tracking_code,
+            'amount' => $payload['amount'],
+            'currency' => $payload['currency'],
+            'ipn_target_url' => $ipnTargetUrl,
+            'mode' => config('services.izipay.mode'),
+        ]);
+
         $response = Http::withBasicAuth(
             (string) config('services.izipay.shop_id'),
             (string) config('services.izipay.rest_api_key')
@@ -56,6 +66,13 @@ class IzipayService
             ->post($this->endpoint('/Charge/CreatePayment'), $payload);
 
         $json = $response->json();
+        Log::info('Izipay createPayment response received.', [
+            'order_id' => $order->id,
+            'tracking_code' => $order->tracking_code,
+            'http_status' => $response->status(),
+            'response_excerpt' => is_array($json) ? array_intersect_key($json, array_flip(['status', 'answer', 'message'])) : null,
+        ]);
+
         if (! $response->ok() || ! is_array($json)) {
             throw new RuntimeException('No se pudo iniciar el pago con Izipay.');
         }
@@ -87,6 +104,7 @@ class IzipayService
     {
         $hmacKey = trim((string) config('services.izipay.hmac_key'));
         if ($hmacKey === '') {
+            Log::warning('Izipay webhook signature skipped because HMAC key is empty.');
             return true;
         }
 
@@ -97,13 +115,24 @@ class IzipayService
         );
 
         if ($received === '') {
+            Log::warning('Izipay webhook missing signature header.', [
+                'headers' => $request->headers->all(),
+            ]);
             return false;
         }
 
         $raw = (string) ($request->input('kr-answer') ?: $request->getContent());
         $expected = hash_hmac('sha256', $raw, $hmacKey);
+        $isValid = hash_equals(strtolower($expected), strtolower($received));
 
-        return hash_equals(strtolower($expected), strtolower($received));
+        if (! $isValid) {
+            Log::warning('Izipay webhook signature mismatch.', [
+                'received_hash' => $received,
+                'expected_hash' => $expected,
+            ]);
+        }
+
+        return $isValid;
     }
 
     public function notificationPayload(Request $request): array
@@ -142,11 +171,20 @@ class IzipayService
             ?: ''
         ));
 
-        return match ($status) {
+        $mapped = match ($status) {
             'paid', 'accepted', 'captured', 'authorised', 'authorized' => 'verified',
             'refused', 'cancelled', 'canceled', 'failed', 'error', 'unpaid' => 'rejected',
             default => 'pending',
         };
+
+        Log::info('Izipay payment status mapped.', [
+            'raw_status' => $status,
+            'mapped_status' => $mapped,
+            'order_status' => data_get($payload, 'orderStatus') ?: data_get($payload, 'answer.orderStatus'),
+            'transaction_status' => data_get($payload, 'transactionStatus') ?: data_get($payload, 'answer.transactionStatus'),
+        ]);
+
+        return $mapped;
     }
 
     private function amountInCents(float $amount): int
