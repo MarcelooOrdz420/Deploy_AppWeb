@@ -168,7 +168,7 @@ class AuthController extends Controller
 
             if ($user) {
                 $wasVerified = (bool) $user->is_verified;
-                $user->forceFill([
+                $user->forceFill($this->filterUserColumns([
                     'google_id' => $googleUser['sub'],
                     'name' => $googleUser['name'],
                     'avatar_url' => $googleUser['picture'],
@@ -177,12 +177,12 @@ class AuthController extends Controller
                     'is_active' => $user->is_active || ! $wasVerified,
                     'otp_code' => null,
                     'otp_expires_at' => null,
-                ])->save();
+                ]))->save();
 
                 return $user->fresh();
             }
 
-            return User::create([
+            return User::create($this->filterUserColumns([
                 'name' => $googleUser['name'],
                 'email' => $googleUser['email'],
                 'google_id' => $googleUser['sub'],
@@ -194,7 +194,7 @@ class AuthController extends Controller
                 'marketing_emails_enabled' => true,
                 'email_verified_at' => now(),
                 'password' => Hash::make(Str::random(40)),
-            ]);
+            ]));
         });
 
         if (! $user->is_active) {
