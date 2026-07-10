@@ -114,12 +114,4 @@ return [
         'default_sunat_product_code' => env('NUBEFACT_DEFAULT_SUNAT_PRODUCT_CODE', '10000000'),
     ],
 
-    'gcs' => [
-        'project_id' => env('GOOGLE_CLOUD_PROJECT_ID'),
-        'bucket' => env('GCS_BUCKET_NAME', 'almacenamientopollito'),
-        'key_file' => env('GOOGLE_APPLICATION_CREDENTIALS'),
-        'upload_prefix' => env('GCS_UPLOAD_PREFIX', 'uploads'),
-        'signed_url_ttl' => (int) env('GCS_SIGNED_URL_TTL', 60),
-        'public_url' => env('GCS_PUBLIC_URL', 'https://storage.googleapis.com/almacenamientopollito'),
-    ],
 ];

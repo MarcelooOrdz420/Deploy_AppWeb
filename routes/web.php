@@ -1,15 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Web\StorageWebController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/productos');
 Route::redirect('/app', '/productos');
 Route::view('/productos', 'store.products')->name('store.products');
-Route::get('/storage', [StorageWebController::class, 'index'])->name('store.storage');
-Route::post('/storage', [StorageWebController::class, 'store'])->middleware('throttle:10,1')->name('store.storage.upload');
-Route::redirect('/productos/storage', '/storage');
 Route::view('/quienes-somos', 'store.about')->name('store.about');
 Route::view('/ubicacion', 'store.location')->name('store.location');
 Route::view('/expertos', 'store.experts')->name('store.experts');
