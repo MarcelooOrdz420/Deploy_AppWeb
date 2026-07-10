@@ -28,17 +28,15 @@
         </form>
 
         @if ($uploaded)
+            @php($viewUrl = $uploaded['download_url'] ?? $uploaded['signed_url'] ?? $uploaded['public_url'] ?? null)
             <div class="storage-gcs-result">
                 <h2>Archivo subido exitosamente</h2>
-                <p>Tu archivo fue subido al bucket <strong>{{ $bucketName }}</strong>.</p>
-                <div class="storage-gcs-actions">
-                    @if (!empty($uploaded['signed_url']))
-                        <a href="{{ $uploaded['signed_url'] }}" target="_blank" rel="noopener noreferrer">Abrir URL firmada</a>
-                    @endif
-                    @if (!empty($uploaded['public_url']))
-                        <a href="{{ $uploaded['public_url'] }}" target="_blank" rel="noopener noreferrer">Abrir en bucket</a>
-                    @endif
-                </div>
+                <p>Tu archivo ha sido subido a Google Cloud Storage. Puedes descargarlo usando este enlace firmado (valido por 1 hora):</p>
+                @if ($viewUrl)
+                    <div class="storage-gcs-actions">
+                        <a href="{{ $viewUrl }}" download>Ver archivo <span aria-hidden="true">&darr;</span></a>
+                    </div>
+                @endif
                 @if (empty($uploaded['signed_url']) && !empty($uploaded['signed_url_error']))
                     <p class="storage-gcs-warning">{{ $uploaded['signed_url_error'] }}</p>
                 @endif
@@ -51,11 +49,11 @@
     .storage-gcs-panel {
         min-height: 680px;
         overflow: hidden;
-        border: 1px solid rgba(255, 215, 0, .22);
+        border: 1px solid rgba(255, 138, 24, .38);
         border-radius: 8px;
-        background: linear-gradient(180deg, #050403 0%, #080605 50%, #110b08 100%);
+        background: radial-gradient(circle at 50% 0%, rgba(255, 138, 24, .12), transparent 34%), linear-gradient(180deg, #070504 0%, #0d0805 52%, #140b05 100%);
         color: #ffffff;
-        box-shadow: 0 28px 70px rgba(0, 0, 0, .34);
+        box-shadow: 0 28px 70px rgba(0, 0, 0, .34), inset 0 0 0 1px rgba(255, 138, 24, .08);
     }
 
     .storage-gcs-hero {
@@ -65,11 +63,11 @@
 
     .storage-gcs-eyebrow {
         display: inline-flex;
-        border: 1px solid rgba(255, 215, 0, .28);
+        border: 1px solid rgba(255, 138, 24, .45);
         border-radius: 999px;
-        background: rgba(255, 215, 0, .10);
+        background: rgba(255, 138, 24, .13);
         padding: 6px 14px;
-        color: #ffe38a;
+        color: #ffca8a;
         font-size: 11px;
         font-weight: 900;
         letter-spacing: .22em;
@@ -94,7 +92,7 @@
 
     .storage-gcs-divider {
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255, 215, 0, .28), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255, 138, 24, .34), transparent);
     }
 
     .storage-gcs-form-wrap {
@@ -132,8 +130,8 @@
         margin-right: 12px;
         border: 0;
         border-radius: 4px;
-        background: #ffffff;
-        color: #111111;
+        background: #fffaf4;
+        color: #21140d;
         padding: 8px 12px;
         font-weight: 800;
         cursor: pointer;
@@ -148,7 +146,7 @@
         border: 0;
         border-radius: 999px;
         padding: 0 24px;
-        background: linear-gradient(135deg, #7c3f18, #4b2a61);
+        background: linear-gradient(135deg, #ff8a18, #ff6f1f);
         color: #ffffff;
         font-size: 13px;
         font-weight: 900;
@@ -176,23 +174,28 @@
     }
 
     .storage-gcs-result {
-        width: min(720px, 100%);
-        margin: 44px auto 0;
-        border: 1px solid rgba(74, 222, 128, .35);
+        width: min(980px, 100%);
+        margin: 96px auto 0;
+        border: 2px solid #22c55e;
         border-radius: 8px;
         background: rgba(34, 197, 94, .10);
-        padding: 28px;
+        padding: 38px 28px;
         text-align: center;
     }
 
     .storage-gcs-result h2 {
         margin: 0;
-        color: #bbf7d0;
-        font-size: 22px;
+        color: #22e06f;
+        font-size: 20px;
+        font-weight: 900;
     }
 
     .storage-gcs-result p {
-        color: rgba(255, 248, 226, .88);
+        margin: 10px auto 0;
+        max-width: 820px;
+        color: #ffffff;
+        font-size: 16px;
+        line-height: 1.55;
     }
 
     .storage-gcs-actions {
@@ -200,7 +203,20 @@
         flex-wrap: wrap;
         justify-content: center;
         gap: 12px;
-        margin-top: 22px;
+        margin-top: 20px;
+    }
+
+    .storage-gcs-result .storage-gcs-actions a {
+        min-width: 164px;
+        min-height: 46px;
+        background: #fffaf4;
+        color: #21140d;
+        box-shadow: none;
+    }
+
+    .storage-gcs-result .storage-gcs-actions a:hover {
+        background: #ffffff;
+        filter: none;
     }
 
     .storage-gcs-warning {

@@ -7,6 +7,8 @@ use App\Services\GoogleCloudStorageService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\URL;
 use Throwable;
 
 class StorageWebController extends Controller
@@ -35,6 +37,11 @@ class StorageWebController extends Controller
 
         try {
             $uploaded = $this->storage->upload($request->file('archivo'));
+            $uploaded['download_url'] = URL::temporarySignedRoute(
+                'store.storage.download',
+                now()->addMinutes((int) config('services.gcs.signed_url_ttl', 60)),
+                ['object' => $uploaded['object']]
+            );
         } catch (Throwable $exception) {
             return back()
                 ->withInput($request->except('archivo'))
@@ -44,5 +51,24 @@ class StorageWebController extends Controller
         return back()
             ->with('success', 'Archivo subido correctamente a Google Cloud Storage.')
             ->with('gcs_uploaded', $uploaded);
+    }
+
+    public function download(Request $request): Response|RedirectResponse
+    {
+        try {
+            $download = $this->storage->download((string) $request->query('object', ''));
+        } catch (Throwable $exception) {
+            return redirect()
+                ->route('store.storage')
+                ->with('error', 'No se pudo descargar el archivo: '.$exception->getMessage());
+        }
+
+        $filename = str_replace('"', '', (string) $download['filename']);
+
+        return response($download['contents'], 200, [
+            'Content-Type' => (string) $download['content_type'],
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"; filename*=UTF-8\'\''.rawurlencode($filename),
+            'Content-Length' => (string) strlen((string) $download['contents']),
+        ]);
     }
 }
