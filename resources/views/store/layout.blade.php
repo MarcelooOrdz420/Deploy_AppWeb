@@ -790,6 +790,9 @@
                             <a href="{{ route('store.about') }}" class="{{ request()->routeIs('store.about') ? 'active' : '' }}">
                                 <span class="nav-index">&#8962;</span> Nosotros
                             </a>
+                            <a href="{{ route('store.storage') }}" class="{{ request()->routeIs('store.storage') ? 'active' : '' }}">
+                                <span class="nav-index">&#8682;</span> Storage
+                            </a>
                             <a href="{{ route('store.location') }}" class="{{ request()->routeIs('store.location') ? 'active' : '' }}">
                                 <span class="nav-index">&#8982;</span> Ubicacion
                             </a>
