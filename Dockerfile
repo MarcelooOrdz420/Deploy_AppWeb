@@ -35,7 +35,6 @@ RUN composer install \
     --no-scripts
 
 COPY . .
-COPY docker/php.ini /usr/local/etc/php/php.ini
 COPY unit.json /docker-entrypoint.d/unit.json
 COPY docker/00-app-setup.sh /docker-entrypoint.d/00-app-setup.sh
 

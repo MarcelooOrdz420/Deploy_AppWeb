@@ -28,11 +28,11 @@ class StorageWebController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'archivo' => ['required', 'file', 'max:51200'],
+            'archivo' => ['required', 'file', 'max:10240'],
         ], [
             'archivo.required' => 'Selecciona un archivo para subir.',
-            'archivo.uploaded' => 'No se pudo recibir el archivo. Revisa que no supere los 50 MB y vuelve a intentarlo.',
-            'archivo.max' => 'El archivo no debe superar los 50 MB.',
+            'archivo.uploaded' => 'No se pudo recibir el archivo. Revisa que no supere los 10 MB y vuelve a intentarlo.',
+            'archivo.max' => 'El archivo no debe superar los 10 MB.',
         ]);
 
         try {
