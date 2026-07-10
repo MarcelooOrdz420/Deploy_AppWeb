@@ -9,7 +9,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class StorageWebController extends Controller
@@ -44,12 +43,6 @@ class StorageWebController extends Controller
                 ['object' => $uploaded['object']]
             );
         } catch (Throwable $exception) {
-            Log::error('No se pudo subir el archivo a Google Cloud Storage.', [
-                'message' => $exception->getMessage(),
-                'bucket' => config('services.gcs.bucket'),
-                'project_id' => config('services.gcs.project_id'),
-            ]);
-
             return back()
                 ->withInput($request->except('archivo'))
                 ->with('error', 'No se pudo subir el archivo a Google Cloud Storage: '.$exception->getMessage());

@@ -26,19 +26,7 @@
 
             <button type="submit">Subir archivo</button>
         </form>
-        @if (session('error'))
-            <div class="storage-gcs-alert storage-gcs-alert-error">
-                <strong>No se pudo subir el archivo.</strong>
-                <span>{{ session('error') }}</span>
-            </div>
-        @endif
 
-        @if (session('success') && ! $uploaded)
-            <div class="storage-gcs-alert storage-gcs-alert-success">
-                <strong>Solicitud recibida.</strong>
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
         @if ($uploaded)
             @php($viewUrl = $uploaded['download_url'] ?? $uploaded['signed_url'] ?? $uploaded['public_url'] ?? null)
             <div class="storage-gcs-result">
@@ -185,38 +173,6 @@
         font-weight: 800;
     }
 
-
-    .storage-gcs-alert {
-        width: min(760px, 100%);
-        margin: 28px auto 0;
-        border-radius: 8px;
-        padding: 18px 20px;
-        text-align: center;
-        line-height: 1.5;
-    }
-
-    .storage-gcs-alert strong,
-    .storage-gcs-alert span {
-        display: block;
-    }
-
-    .storage-gcs-alert strong {
-        margin-bottom: 6px;
-        font-size: 16px;
-        font-weight: 900;
-    }
-
-    .storage-gcs-alert-error {
-        border: 1px solid rgba(248, 113, 113, .85);
-        background: rgba(127, 29, 29, .35);
-        color: #fee2e2;
-    }
-
-    .storage-gcs-alert-success {
-        border: 1px solid rgba(34, 197, 94, .8);
-        background: rgba(20, 83, 45, .28);
-        color: #dcfce7;
-    }
     .storage-gcs-result {
         width: min(980px, 100%);
         margin: 96px auto 0;
