@@ -51,6 +51,16 @@ class PaymentController extends Controller
             return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
+        // Izipay probes the notification URL with an empty POST before sending
+        // signed payment data. Treat that probe as a health check.
+        if (trim((string) $request->getContent()) === '') {
+            Log::info('Izipay webhook empty POST health-check received.', [
+                'url' => $request->fullUrl(),
+            ]);
+
+            return response('OK', 200)->header('Content-Type', 'text/plain');
+        }
+
         Log::info('Izipay notification received.', ['url' => $request->fullUrl()]);
         if (! $izipayService->verifyWebhook($request)) {
             Log::warning('Izipay notification rejected because its signature is invalid or missing.');

@@ -10,7 +10,7 @@ Agrega estas variables en `.env` local y en Coolify/produccion:
 IZIPAY_ENABLED=true
 IZIPAY_MODE=production
 IZIPAY_API_BASE_URL=https://api.micuentaweb.pe/api-payment/V4
-IZIPAY_IPN_URL=https://tu-dominio.com/izipay-ipn.php
+IZIPAY_IPN_URL=https://tu-dominio.com/pagos/izipay/ipn
 IZIPAY_SHOP_ID=
 IZIPAY_REST_API_KEY=
 IZIPAY_PUBLIC_KEY=
@@ -32,7 +32,7 @@ Usa tus claves REST solo en `IZIPAY_REST_API_KEY`. Usa tu clave cliente JavaScri
 Para tu dominio actual, configura:
 
 ```text
-https://pollos.saborcentral.com/izipay-ipn.php
+https://pollos.saborcentral.com/pagos/izipay/ipn
 ```
 
 Si prefieres usar una ruta Laravel sin extension, tambien queda disponible:
@@ -49,7 +49,7 @@ Si el Back Office sigue rechazando la regla aunque `/izipay-ipn.php` responda 20
 https://pollos.saborcentral.com/izipay-validate.php
 ```
 
-Esa URL solo confirma localizacion del servidor. Para pagos reales, deja `IZIPAY_IPN_URL=https://pollos.saborcentral.com/izipay-ipn.php`, porque esa es la URL que Laravel envia a Izipay en cada `CreatePayment`.
+Esa URL solo confirma localizacion del servidor. Para pagos reales, deja `IZIPAY_IPN_URL=https://pollos.saborcentral.com/pagos/izipay/ipn`, porque esa es la URL que Laravel envia a Izipay en cada `CreatePayment`.
 
 ## Flujo implementado
 

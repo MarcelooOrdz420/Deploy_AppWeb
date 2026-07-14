@@ -25,7 +25,8 @@ class IzipayWebhookTest extends TestCase
     public function test_health_check_is_available_but_unsigned_post_cannot_confirm_payment(): void
     {
         $this->get('/pagos/izipay/ipn')->assertOk()->assertSee('OK');
-        $this->post('/pagos/izipay/ipn', ['kr-answer' => '{}'])->assertStatus(422);
+        $this->post('/pagos/izipay/ipn')->assertOk()->assertSee('OK');
+        $this->post('/pagos/izipay/ipn', ['kr-answer' => '{}'])->assertUnauthorized();
     }
 
     public function test_form_token_is_created_from_backend_amount_and_stored_encrypted(): void
