@@ -84,7 +84,7 @@ return [
     ],
 
     'izipay' => [
-        'enabled' => (bool) env('IZIPAY_ENABLED', false),
+        'enabled' => filter_var(env('IZIPAY_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
         'mode' => env('IZIPAY_MODE', 'test'),
         'api_base_url' => rtrim((string) env('IZIPAY_API_BASE_URL', 'https://api.micuentaweb.pe/api-payment/V4'), '/'),
         'ipn_url' => env('IZIPAY_IPN_URL'),
@@ -92,6 +92,7 @@ return [
         'rest_api_key' => env('IZIPAY_REST_API_KEY'),
         'public_key' => env('IZIPAY_PUBLIC_KEY'),
         'hmac_key' => env('IZIPAY_HMAC_KEY'),
+        'timeout' => (int) env('IZIPAY_TIMEOUT', 15),
         'js_url' => env('IZIPAY_JS_URL', 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js'),
         'css_url' => env('IZIPAY_CSS_URL', 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/classic.css'),
     ],

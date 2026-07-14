@@ -109,6 +109,9 @@
             font-weight: 800;
         }
         .toast.show { opacity: 1; transform: translateY(0); }
+        .payment-message { margin-top:10px; padding:12px; border-radius:14px; background:#fff; border:1px solid #f0d7c3; }
+        .payment-message[data-state="verified"] { background:#ebfff3; border-color:#22a35a; }
+        .payment-message[data-state="rejected"], .payment-message[data-state="error"] { background:#fff0ee; border-color:#d94b3d; }
     </style>
     <h1 class="title">Mis pedidos y seguimiento</h1>
 
@@ -167,7 +170,18 @@ const PAYMENT_STATUS_ES = {
     reported: 'Reportado',
     verified: 'Verificado',
     rejected: 'Rechazado',
+    error: 'Error',
 };
+function paymentMessage(status) {
+    const messages = {
+        verified: ['Pago realizado exitosamente', 'Izipay confirmo correctamente el pago de tu pedido.'],
+        pending: ['Pago pendiente de confirmacion', 'Estamos verificando el resultado de la transaccion.'],
+        rejected: ['El pago fue rechazado', 'Revisa los datos ingresados o intenta con otro medio de pago.'],
+        error: ['No se pudo verificar el pago', 'No se realizo ningun cargo confirmado. Intenta nuevamente.'],
+    };
+    const item = messages[status] || messages.pending;
+    return `<div class="payment-message" data-state="${status}"><strong>${item[0]}</strong><br><span>${item[1]}</span></div>`;
+}
 const ordersList = document.getElementById('ordersList');
 const trackInput = document.getElementById('trackInput');
 const trackBtn = document.getElementById('trackBtn');
@@ -365,6 +379,7 @@ async function fetchMyOrders() {
                 <div><strong>Total:</strong> S/ ${Number(order.total_amount).toFixed(2)}</div>
                 <div><strong>Pago:</strong> ${order.payment_method || 'n/a'} | <strong>Estado pago:</strong> ${paymentStatusEs(order.payment_status)}</div>
                 <div><strong>Operacion:</strong> ${order.payment_reference || 'sin codigo'}</div>
+                ${String(order.payment_method || '').toLowerCase() === 'izipay' ? paymentMessage(String(order.payment_status || 'pending').toLowerCase()) : ''}
                 <div><strong>Comprobante:</strong> ${order.payment_proof_path ? `<a href="${order.payment_proof_path}" target="_blank">Ver archivo</a>` : 'no subido'}</div>
                 ${einvoiceInfo(order)}
                 ${needsDigitalProof(order.payment_method) ? `
@@ -380,7 +395,9 @@ async function fetchMyOrders() {
                 </div>` : ''}
                 <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
                     <button data-track="${order.tracking_code}" class="btn-soft">Ver seguimiento</button>
-                    ${String(order.payment_method || '').toLowerCase() === 'izipay' && String(order.payment_status || '').toLowerCase() === 'pending'
+                    ${String(order.payment_method || '').toLowerCase() === 'izipay'
+                        && ['pending', 'rejected'].includes(String(order.payment_status || '').toLowerCase())
+                        && String(order.status || '').toLowerCase() !== 'cancelled'
                         ? `<button data-izipay-checkout="${order.id}" class="btn-soft">Pagar ahora</button>`
                         : ''}
                     <button data-view-receipt="${order.id}" class="btn-soft">Ver boleta</button>
@@ -472,6 +489,9 @@ async function uploadProof(orderId) {
 
 async function openIzipayCheckout(orderId) {
     const token = getToken();
+    const button = document.querySelector(`[data-izipay-checkout="${orderId}"]`);
+    if (button?.disabled) return;
+    if (button) { button.disabled = true; button.textContent = 'Abriendo Izipay...'; }
     try {
         const res = await fetch(`/api/v1/orders/${orderId}/payments/izipay-checkout`, {
             headers: { 'Authorization': `Bearer ${token}` },
@@ -489,6 +509,8 @@ async function openIzipayCheckout(orderId) {
         window.open(target, '_blank', 'noopener');
     } catch {
         alert('Error de conexion al abrir Izipay.');
+    } finally {
+        if (button) { button.disabled = false; button.textContent = 'Pagar ahora'; }
     }
 }
 

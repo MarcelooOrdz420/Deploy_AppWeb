@@ -70,4 +70,12 @@ class OrderApiService {
       throw Exception('No se pudo iniciar Izipay');
     }
   }
+
+  Future<Map<String, dynamic>> getOrder({required String token, required int orderId}) async {
+    final res = await ApiClient.get<Map<String, dynamic>>(
+      '/orders/$orderId',
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    return (res.data ?? <String, dynamic>{}).cast<String, dynamic>();
+  }
 }

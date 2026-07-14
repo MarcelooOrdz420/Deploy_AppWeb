@@ -3,118 +3,83 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\PaymentTransaction;
 use App\Services\Payments\IzipayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-use RuntimeException;
 use Tests\TestCase;
 
 class IzipayWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_izipay_notification_url_accepts_validation_requests(): void
+    protected function setUp(): void
     {
-        $this->get('/izipay-ipn')->assertOk()->assertSee('OK');
-        $this->head('/izipay-ipn')->assertOk();
-        $this->post('/izipay-ipn', ['validation' => 'ping'])
-            ->assertOk()
-            ->assertJson([
-                'ok' => true,
-                'ignored' => true,
-            ]);
+        parent::setUp();
+        config(['services.izipay.enabled' => true, 'services.izipay.shop_id' => 'shop-id', 'services.izipay.rest_api_key' => 'rest-key',
+            'services.izipay.public_key' => 'public-key', 'services.izipay.hmac_key' => 'hmac-secret',
+            'services.izipay.ipn_url' => 'https://pollos.example/pagos/izipay/ipn']);
     }
 
-    public function test_izipay_payment_uses_configured_ipn_url(): void
+    public function test_health_check_is_available_but_unsigned_post_cannot_confirm_payment(): void
     {
-        config([
-            'services.izipay.ipn_url' => 'https://pollos.saborcentral.com/izipay-ipn.php',
-            'services.izipay.shop_id' => 'shop-id',
-            'services.izipay.rest_api_key' => 'rest-key',
-            'services.izipay.public_key' => 'public-key',
-        ]);
-
-        Http::fake([
-            'api.micuentaweb.pe/*' => Http::response([
-                'answer' => [
-                    'formToken' => 'test-form-token',
-                ],
-            ]),
-        ]);
-
-        $order = Order::query()->create([
-            'tracking_code' => 'ED-TEST01',
-            'customer_name' => 'Cliente Test',
-            'customer_phone' => '999888777',
-            'delivery_type' => 'pickup',
-            'status' => Order::STATUS_PENDING,
-            'total_amount' => 25.50,
-            'payment_method' => 'izipay',
-            'payment_status' => 'pending',
-        ]);
-
-        app(IzipayService::class)->createPayment($order);
-
-        Http::assertSent(fn ($request): bool => $request['ipnTargetUrl'] === 'https://pollos.saborcentral.com/izipay-ipn.php');
+        $this->get('/pagos/izipay/ipn')->assertOk()->assertSee('OK');
+        $this->post('/pagos/izipay/ipn', ['kr-answer' => '{}'])->assertStatus(422);
     }
 
-    public function test_izipay_payment_uses_php_webhook_route_when_ipn_url_is_not_configured(): void
+    public function test_form_token_is_created_from_backend_amount_and_stored_encrypted(): void
     {
-        config([
-            'app.url' => 'https://pollos.saborcentral.com',
-            'services.izipay.ipn_url' => null,
-            'services.izipay.shop_id' => 'shop-id',
-            'services.izipay.rest_api_key' => 'rest-key',
-            'services.izipay.public_key' => 'public-key',
-        ]);
-
-        Http::fake([
-            'api.micuentaweb.pe/*' => Http::response([
-                'answer' => [
-                    'formToken' => 'test-form-token',
-                ],
-            ]),
-        ]);
-
-        $order = Order::query()->create([
-            'tracking_code' => 'ED-TEST02',
-            'customer_name' => 'Cliente Test',
-            'customer_phone' => '999888777',
-            'delivery_type' => 'pickup',
-            'status' => Order::STATUS_PENDING,
-            'total_amount' => 25.50,
-            'payment_method' => 'izipay',
-            'payment_status' => 'pending',
-        ]);
-
-        app(IzipayService::class)->createPayment($order);
-
-        Http::assertSent(fn ($request): bool => $request['ipnTargetUrl'] === 'https://pollos.saborcentral.com/izipay-ipn.php');
+        Http::fake(['api.micuentaweb.pe/*' => Http::response(['answer' => ['formToken' => 'secret-token']])]);
+        $order = $this->order();
+        $result = app(IzipayService::class)->createPayment($order);
+        $this->assertSame('ED-TEST01', $result['orderId']);
+        $this->assertStringNotContainsString('form_token=', $result['payment_url']);
+        Http::assertSent(fn ($request): bool => $request['amount'] === 2550 && $request['currency'] === 'PEN');
+        $this->assertDatabaseHas('payment_transactions', ['order_id' => $order->id, 'amount' => 25.50, 'status' => 'pending']);
     }
 
-    public function test_izipay_payment_requires_public_https_ipn_url(): void
+    public function test_valid_approved_notification_is_idempotent(): void
     {
-        config([
-            'services.izipay.ipn_url' => 'http://localhost/izipay-ipn.php',
-            'services.izipay.shop_id' => 'shop-id',
-            'services.izipay.rest_api_key' => 'rest-key',
-            'services.izipay.public_key' => 'public-key',
-        ]);
+        $order = $this->order();
+        PaymentTransaction::create(['order_id' => $order->id, 'provider' => 'izipay', 'status' => 'pending',
+            'amount' => 25.50, 'currency' => 'PEN', 'merchant_order_id' => $order->tracking_code]);
+        $answer = json_encode(['shopId' => 'shop-id', 'orderStatus' => 'PAID',
+            'orderDetails' => ['orderId' => $order->tracking_code, 'amount' => 2550, 'currency' => 'PEN'],
+            'transactions' => [['uuid' => 'tx-unique-1', 'status' => 'PAID', 'detailedStatus' => 'AUTHORISED']]], JSON_THROW_ON_ERROR);
+        $hash = hash_hmac('sha256', $answer, 'hmac-secret');
+        $payload = ['kr-answer' => $answer, 'kr-hash' => $hash, 'kr-hash-algorithm' => 'HMAC-SHA-256'];
+        $this->post('/pagos/izipay/ipn', $payload)->assertOk()->assertJson(['status' => 'verified', 'duplicate' => false]);
+        $this->post('/pagos/izipay/ipn', $payload)->assertOk()->assertJson(['status' => 'verified', 'duplicate' => true]);
+        $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'verified', 'payment_reference' => 'tx-unique-1']);
+    }
 
-        $order = Order::query()->create([
-            'tracking_code' => 'ED-TEST03',
-            'customer_name' => 'Cliente Test',
-            'customer_phone' => '999888777',
-            'delivery_type' => 'pickup',
-            'status' => Order::STATUS_PENDING,
-            'total_amount' => 25.50,
-            'payment_method' => 'izipay',
-            'payment_status' => 'pending',
-        ]);
+    public function test_wrong_amount_or_currency_does_not_mark_order_paid(): void
+    {
+        $order = $this->order();
+        PaymentTransaction::create(['order_id' => $order->id, 'amount' => 25.50, 'currency' => 'PEN',
+            'merchant_order_id' => $order->tracking_code]);
+        $answer = json_encode(['shopId' => 'shop-id', 'orderStatus' => 'PAID',
+            'orderDetails' => ['orderId' => $order->tracking_code, 'amount' => 1, 'currency' => 'USD'],
+            'transactions' => [['uuid' => 'tx-bad']]], JSON_THROW_ON_ERROR);
+        $this->post('/pagos/izipay/ipn', ['kr-answer' => $answer,
+            'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'), 'kr-hash-algorithm' => 'HMAC-SHA-256'])
+            ->assertStatus(422);
+        $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'pending']);
+    }
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('La URL de notificacion de Izipay debe usar HTTPS.');
+    public function test_orders_view_uses_stored_status_messages(): void
+    {
+        $this->get('/mis-pedidos')->assertOk()->assertSee('Pago realizado exitosamente')->assertSee('Pago pendiente de confirmacion');
+    }
 
-        app(IzipayService::class)->createPayment($order);
+    private function order(): Order
+    {
+        $order = Order::create(['tracking_code' => 'ED-TEST01', 'customer_name' => 'Cliente Test',
+            'customer_phone' => '999888777', 'delivery_type' => 'pickup', 'status' => Order::STATUS_PENDING,
+            'total_amount' => 25.50, 'payment_method' => 'izipay', 'payment_gateway' => 'izipay', 'payment_status' => 'pending']);
+        OrderItem::create(['order_id' => $order->id, 'product_name' => 'Pollo', 'unit_price' => 25.50,
+            'quantity' => 1, 'line_total' => 25.50]);
+        return $order;
     }
 }

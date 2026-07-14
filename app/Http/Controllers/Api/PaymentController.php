@@ -25,7 +25,12 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Este pedido no usa Izipay.'], 422);
         }
 
-        return response()->json($izipayService->createPayment($order));
+        try {
+            return response()->json($izipayService->createPayment($order));
+        } catch (\RuntimeException $exception) {
+            Log::warning('Izipay checkout rejected.', ['order_id' => $order->id, 'error' => $exception->getMessage()]);
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
     }
 
     public function izipayWebhook(Request $request, IzipayService $izipayService): JsonResponse|Response
@@ -46,72 +51,41 @@ class PaymentController extends Controller
             return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
-        $payload = $izipayService->notificationPayload($request);
-        $trackingCode = $izipayService->trackingCodeFromPayload($payload);
-
-        Log::info('Izipay webhook payload received.', [
-            'tracking_code' => $trackingCode,
-            'headers' => $request->headers->all(),
-            'payload_keys' => array_keys($payload),
-            'order_status' => data_get($payload, 'orderStatus') ?: data_get($payload, 'answer.orderStatus'),
-            'transaction_status' => data_get($payload, 'transactionStatus') ?: data_get($payload, 'answer.transactionStatus'),
-        ]);
-
-        if ($trackingCode === '') {
-            Log::warning('Izipay webhook ignored because tracking code could not be extracted.', [
-                'payload' => $payload,
-            ]);
-            return response()->json([
-                'ok' => true,
-                'message' => 'Izipay endpoint ready',
-                'ignored' => true,
-            ]);
-        }
-
+        Log::info('Izipay notification received.', ['url' => $request->fullUrl()]);
         if (! $izipayService->verifyWebhook($request)) {
-            Log::warning('Izipay webhook rejected due to invalid signature.', [
-                'tracking_code' => $trackingCode,
-            ]);
+            Log::warning('Izipay notification rejected because its signature is invalid or missing.');
             return response()->json(['ok' => false, 'message' => 'Firma Izipay invalida.'], 401);
         }
-
-        $order = Order::query()
-            ->where('tracking_code', $trackingCode)
-            ->first();
-
-        if (! $order) {
-            Log::warning('Izipay webhook could not find order by tracking code.', [
-                'tracking_code' => $trackingCode,
-            ]);
-            return response()->json(['ok' => true, 'ignored' => true]);
+        try {
+            $result = $izipayService->processNotification($request);
+        } catch (\RuntimeException $exception) {
+            Log::warning('Izipay notification rejected.', ['error' => $exception->getMessage()]);
+            return response()->json(['ok' => false, 'message' => $exception->getMessage()], 422);
         }
+        $order = $result['order'];
+        if ($result['transitioned']) {
+            event(new OrderStatusUpdatedForUser($order, $result['status']));
+            $this->sendOrderPaymentPush($order, $result['status']);
+            $this->trySendElectronicReceipt($order);
+        }
+        return response()->json(['ok' => true, 'status' => $result['status'], 'duplicate' => $result['duplicate']]);
+    }
 
-        $paymentStatus = $izipayService->paymentStatusFromPayload($payload);
-        $transactionUuid = (string) (
-            data_get($payload, 'transactions.0.uuid')
-            ?: data_get($payload, 'answer.transactions.0.uuid')
-            ?: data_get($payload, 'uuid')
-            ?: $order->payment_reference
-        );
-
-        $order->forceFill([
-            'payment_reference' => $transactionUuid,
-            'payment_status' => $paymentStatus,
-            'payment_verified_at' => $paymentStatus === 'verified' ? now() : null,
-        ])->save();
-
-        Log::info('Izipay webhook updated order payment state.', [
-            'order_id' => $order->id,
-            'tracking_code' => $order->tracking_code,
-            'payment_reference' => $transactionUuid,
-            'payment_status' => $paymentStatus,
+    public function izipayResult(Request $request, Order $order): \Illuminate\View\View
+    {
+        abort_unless($request->hasValidSignature(), 403);
+        return view('payments.izipay-result', [
+            'order' => $order,
+            'statusUrl' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                'izipay.status', now()->addMinutes(30), ['order' => $order->id]
+            ),
         ]);
+    }
 
-        event(new OrderStatusUpdatedForUser($order->fresh(['items', 'statusHistory']), $paymentStatus));
-        $this->sendOrderPaymentPush($order, $paymentStatus);
-        $this->trySendElectronicReceipt($order->fresh(['items']));
-
-        return response()->json(['ok' => true]);
+    public function izipayStatus(Request $request, Order $order): JsonResponse
+    {
+        abort_unless($request->hasValidSignature(), 403);
+        return response()->json(['payment_status' => $order->payment_status]);
     }
 
     private function usesIzipay(Order $order): bool

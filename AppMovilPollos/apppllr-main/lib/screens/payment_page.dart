@@ -431,6 +431,15 @@ class _PaymentPageState extends State<PaymentPage> {
             );
           }
         }
+
+        if (!mounted) return;
+        final verified = await _showPaymentStatusDialog(
+          token: token,
+          orderId: orderId,
+          trackingCode: trackingCode,
+          checkoutUrl: checkoutUrl,
+        );
+        if (!verified) return;
       }
 
       if (!mounted) return;
@@ -452,6 +461,59 @@ class _PaymentPageState extends State<PaymentPage> {
         setState(() => _submitting = false);
       }
     }
+  }
+
+  Future<bool> _showPaymentStatusDialog({
+    required String token,
+    required int orderId,
+    required String trackingCode,
+    required String checkoutUrl,
+  }) async {
+    var status = 'pending';
+    var checking = false;
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => StatefulBuilder(
+            builder: (context, setDialogState) => AlertDialog(
+              title: Text(status == 'verified'
+                  ? 'Pago confirmado'
+                  : status == 'rejected' ? 'Pago rechazado' : 'Pedido creado'),
+              content: Text(status == 'verified'
+                  ? 'Izipay confirmo el pago del pedido $trackingCode.'
+                  : status == 'rejected'
+                      ? 'Izipay rechazo el pago. Puedes volver a abrir el checkout.'
+                      : 'El pedido $trackingCode fue creado. El pago sigue pendiente hasta que Izipay lo confirme.'),
+              actions: [
+                if (status != 'verified' && checkoutUrl.isNotEmpty)
+                  TextButton(
+                    onPressed: () => launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.externalApplication),
+                    child: const Text('Abrir Izipay'),
+                  ),
+                if (status != 'verified')
+                  TextButton(
+                    onPressed: checking ? null : () async {
+                      setDialogState(() => checking = true);
+                      try {
+                        final order = await _orderApiService.getOrder(token: token, orderId: orderId);
+                        setDialogState(() {
+                          status = (order['payment_status'] ?? 'pending').toString();
+                          checking = false;
+                        });
+                      } catch (_) {
+                        setDialogState(() => checking = false);
+                      }
+                    },
+                    child: Text(checking ? 'Verificando...' : 'Verificar pago'),
+                  ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, status == 'verified'),
+                  child: Text(status == 'verified' ? 'Continuar' : 'Revisar despues'),
+                ),
+              ],
+            ),
+          ),
+        ) ?? false;
   }
 
   @override

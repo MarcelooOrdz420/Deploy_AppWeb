@@ -23,7 +23,7 @@ Usa tus claves REST solo en `IZIPAY_REST_API_KEY`. Usa tu clave cliente JavaScri
 
 ## URLs que debes registrar en Izipay
 
-- URL de notificacion/IPN recomendada para Back Office: `https://tu-dominio.com/izipay-ipn.php`
+- URL de notificacion/IPN recomendada para Back Office: `https://tu-dominio.com/pagos/izipay/ipn`
 - URL alternativa compatible: `https://tu-dominio.com/izipay-ipn`
 - URL API interna compatible: `https://tu-dominio.com/api/v1/payments/izipay/webhook`
 - URL solo para validar Back Office si la regla se pone roja: `https://tu-dominio.com/izipay-validate.php`
@@ -57,7 +57,10 @@ Esa URL solo confirma localizacion del servidor. Para pagos reales, deja `IZIPAY
 2. Laravel llama a Izipay REST y obtiene `formToken`.
 3. Laravel devuelve `payment_url`.
 4. Web redirige a `payment_url`; Flutter abre esa URL en navegador externo.
-5. Izipay confirma el pago por webhook y Laravel marca el pedido como `verified`, `pending` o `rejected`.
+5. Izipay firma la respuesta con HMAC; Laravel compara comercio, referencia, monto, moneda y transaccion antes de marcar el pedido como `verified`, `pending` o `rejected`.
+6. La tabla `payment_transactions` registra cada intento e impide reutilizar `transaction_uuid`, haciendo idempotentes las notificaciones repetidas.
+
+Ejecuta `php artisan migrate` despues de desplegar esta version. `IZIPAY_HMAC_KEY` es obligatorio: sin ella ningun callback puede confirmar un pago.
 
 Despues de cambiar variables en produccion, ejecuta:
 

@@ -29,23 +29,37 @@ Route::get('/descargar-apk', function () {
     return response()->download($path, 'AppMovilPollos.apk');
 })->name('apk.download');
 
-Route::match(['get', 'head', 'post'], '/izipay-ipn', [PaymentController::class, 'izipayWebhook'])
+Route::match(['get', 'head', 'post'], '/pagos/izipay/ipn', [PaymentController::class, 'izipayWebhook'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
     ->name('izipay.ipn');
+
+Route::match(['get', 'head', 'post'], '/izipay-ipn', [PaymentController::class, 'izipayWebhook'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
 
 Route::match(['get', 'head', 'post'], '/izipay-ipn.php', [PaymentController::class, 'izipayWebhook'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
     ->name('izipay.ipn.php');
 
+Route::match(['get', 'post'], '/pago/izipay/{order}/resultado', [PaymentController::class, 'izipayResult'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->name('izipay.result');
+Route::get('/pago/izipay/{order}/estado', [PaymentController::class, 'izipayStatus'])
+    ->name('izipay.status');
+
 Route::get('/pago/izipay/{order}', function (\App\Models\Order $order, \Illuminate\Http\Request $request) {
     abort_if((string) $order->payment_gateway !== 'izipay' && (string) $order->payment_method !== 'izipay', 404);
-    abort_if(trim((string) $request->query('form_token')) === '', 404);
+    abort_unless($request->hasValidSignature(), 403);
+    $payment = $order->paymentTransactions()->latest('id')->first();
+    abort_if(! $payment || trim((string) $payment->form_token_reference) === '', 404);
 
     return view('payments.izipay-checkout', [
         'order' => $order,
-        'formToken' => (string) $request->query('form_token'),
+        'formToken' => (string) $payment->form_token_reference,
         'publicKey' => config('services.izipay.public_key'),
         'jsUrl' => config('services.izipay.js_url'),
         'cssUrl' => config('services.izipay.css_url'),
+        'resultUrl' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'izipay.result', now()->addMinutes(30), ['order' => $order->id]
+        ),
     ]);
 })->name('izipay.checkout');

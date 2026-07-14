@@ -60,7 +60,8 @@
             Total: S/ {{ number_format((float) $order->total_amount, 2) }}
         </p>
 
-        <div class="kr-embedded" kr-form-token="{{ $formToken }}"></div>
+        <div class="kr-smart-form" kr-form-token="{{ $formToken }}"></div>
+        <div class="kr-form-error" aria-live="polite"></div>
 
         <div class="actions">
             <a href="{{ route('store.orders') }}">Volver a mis pedidos</a>
@@ -70,7 +71,8 @@
     <script
         src="{{ $jsUrl }}"
         kr-public-key="{{ $publicKey }}"
-        kr-post-url-success="{{ route('store.orders') }}"
+        kr-post-url-success="{{ $resultUrl }}"
+        kr-post-url-refused="{{ $resultUrl }}"
         kr-language="es-ES"></script>
 </body>
 </html>
