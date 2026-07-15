@@ -50,9 +50,23 @@ class IzipayWebhookTest extends TestCase
             'transactions' => [['uuid' => 'tx-unique-1', 'status' => 'PAID', 'detailedStatus' => 'AUTHORISED']]], JSON_THROW_ON_ERROR);
         $hash = hash_hmac('sha256', $answer, 'hmac-secret');
         $payload = ['kr-answer' => $answer, 'kr-hash' => $hash, 'kr-hash-algorithm' => 'HMAC-SHA-256'];
-        $this->post('/pagos/izipay/ipn', $payload)->assertOk()->assertJson(['status' => 'verified', 'duplicate' => false]);
-        $this->post('/pagos/izipay/ipn', $payload)->assertOk()->assertJson(['status' => 'verified', 'duplicate' => true]);
+        $this->post('/pagos/izipay/ipn', $payload)->assertOk()->assertSeeText('OK');
+        $this->post('/pagos/izipay/ipn', $payload)->assertOk()->assertSeeText('OK');
         $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'verified', 'payment_reference' => 'tx-unique-1']);
+    }
+
+    public function test_hash_can_be_received_in_izipay_header(): void
+    {
+        $order = $this->order();
+        PaymentTransaction::create(['order_id' => $order->id, 'provider' => 'izipay', 'status' => 'pending',
+            'amount' => 25.50, 'currency' => 'PEN', 'merchant_order_id' => $order->tracking_code]);
+        $answer = json_encode(['shopId' => 'shop-id', 'orderStatus' => 'PAID',
+            'orderDetails' => ['orderId' => $order->tracking_code, 'amount' => 2550, 'currency' => 'PEN'],
+            'transactions' => [['uuid' => 'tx-header-1', 'status' => 'PAID']]], JSON_THROW_ON_ERROR);
+
+        $this->withHeader('X-KR-HASH', hash_hmac('sha256', $answer, 'hmac-secret'))
+            ->post('/pagos/izipay/ipn', ['kr-answer' => $answer])
+            ->assertOk()->assertSeeText('OK');
     }
 
     public function test_wrong_amount_or_currency_does_not_mark_order_paid(): void
@@ -65,7 +79,7 @@ class IzipayWebhookTest extends TestCase
             'transactions' => [['uuid' => 'tx-bad']]], JSON_THROW_ON_ERROR);
         $this->post('/pagos/izipay/ipn', ['kr-answer' => $answer,
             'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'), 'kr-hash-algorithm' => 'HMAC-SHA-256'])
-            ->assertStatus(422);
+            ->assertBadRequest();
         $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'pending']);
     }
 

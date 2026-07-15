@@ -93,9 +93,17 @@ class IzipayService
     public function verifyWebhook(Request $request): bool
     {
         $key = trim((string) config('services.izipay.hmac_key'));
-        $received = trim((string) ($request->input('kr-hash') ?: $request->header('kr-hash', '')));
-        $algorithm = strtoupper(trim((string) ($request->input('kr-hash-algorithm') ?: $request->header('kr-hash-algorithm', 'HMAC-SHA-256'))));
-        $raw = (string) $request->input('kr-answer', '');
+        $received = trim((string) (
+            $request->request->get('kr-hash')
+            ?: $request->header('X-KR-HASH')
+            ?: $request->header('kr-hash', '')
+        ));
+        $algorithm = strtoupper(trim((string) (
+            $request->request->get('kr-hash-algorithm')
+            ?: $request->header('X-KR-HASH-ALGORITHM')
+            ?: $request->header('kr-hash-algorithm', 'HMAC-SHA-256')
+        )));
+        $raw = (string) $request->request->get('kr-answer', '');
         if ($key === '' || $received === '' || $raw === '' || ! in_array($algorithm, ['HMAC-SHA-256', 'SHA256_HMAC'], true)) {
             return false;
         }
@@ -104,7 +112,7 @@ class IzipayService
 
     public function notificationPayload(Request $request): array
     {
-        $answer = $request->input('kr-answer');
+        $answer = $request->request->get('kr-answer');
         $decoded = is_string($answer) ? json_decode($answer, true) : null;
         return is_array($decoded) ? $decoded : [];
     }
@@ -124,6 +132,9 @@ class IzipayService
             $order = Order::query()->where('tracking_code', $reference)->lockForUpdate()->first();
             if (! $order || ! $this->usesIzipay($order)) {
                 throw new RuntimeException('Pedido Izipay no encontrado.');
+            }
+            if ($order->status === Order::STATUS_CANCELLED) {
+                throw new RuntimeException('El pedido Izipay esta cancelado.');
             }
             $payment = PaymentTransaction::query()->where('merchant_order_id', $reference)
                 ->latest('id')->lockForUpdate()->first();
@@ -161,6 +172,7 @@ class IzipayService
                 'response_message' => (string) (data_get($payload, 'transactions.0.errorMessage') ?: data_get($payload, 'orderStatus')),
                 'raw_response' => $this->sanitizePayload($payload), 'processed_at' => now()]);
             $order->forceFill(['payment_reference' => $transactionId, 'payment_status' => $effectiveStatus,
+                'payment_reported_at' => $order->payment_reported_at ?: now(),
                 'payment_verified_at' => $effectiveStatus === 'verified' ? ($order->payment_verified_at ?: now()) : null])->save();
             Log::info('Izipay notification processed.', ['order_id' => $order->id, 'status' => $status, 'transaction_id' => $transactionId]);
             return ['order' => $order->fresh(['items', 'statusHistory']), 'status' => $effectiveStatus,

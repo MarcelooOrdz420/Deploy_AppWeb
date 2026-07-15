@@ -35,6 +35,8 @@ class PaymentController extends Controller
 
     public function izipayWebhook(Request $request, IzipayService $izipayService): JsonResponse|Response
     {
+        $startedAt = microtime(true);
+
         if ($request->isMethod('GET') || $request->isMethod('HEAD')) {
             Log::info('Izipay webhook health-check request received.', [
                 'method' => $request->method(),
@@ -53,7 +55,7 @@ class PaymentController extends Controller
 
         // Izipay probes the notification URL with an empty POST before sending
         // signed payment data. Treat that probe as a health check.
-        if (trim((string) $request->getContent()) === '') {
+        if (trim((string) $request->getContent()) === '' && $request->request->count() === 0) {
             Log::info('Izipay webhook empty POST health-check received.', [
                 'url' => $request->fullUrl(),
             ]);
@@ -61,24 +63,60 @@ class PaymentController extends Controller
             return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
-        Log::info('Izipay notification received.', ['url' => $request->fullUrl()]);
+        Log::info('Izipay IPN received.', ['url' => $request->fullUrl()]);
         if (! $izipayService->verifyWebhook($request)) {
-            Log::warning('Izipay notification rejected because its signature is invalid or missing.');
-            return response()->json(['ok' => false, 'message' => 'Firma Izipay invalida.'], 401);
+            Log::warning('Izipay signature invalid.', [
+                'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
+            ]);
+
+            return response('Invalid signature', 401)->header('Content-Type', 'text/plain');
         }
+
+        Log::info('Izipay signature valid.');
+
+        if ($izipayService->notificationPayload($request) === []) {
+            Log::warning('Izipay payload is not valid JSON.');
+
+            return response('Invalid payload', 400)->header('Content-Type', 'text/plain');
+        }
+
         try {
             $result = $izipayService->processNotification($request);
         } catch (\RuntimeException $exception) {
-            Log::warning('Izipay notification rejected.', ['error' => $exception->getMessage()]);
-            return response()->json(['ok' => false, 'message' => $exception->getMessage()], 422);
+            Log::warning('Izipay IPN rejected.', [
+                'error' => $exception->getMessage(),
+                'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
+            ]);
+
+            return response('Invalid payload', 400)->header('Content-Type', 'text/plain');
+        } catch (\Throwable $exception) {
+            Log::error('Izipay IPN exception.', [
+                'error' => $exception->getMessage(),
+                'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
+            ]);
+            report($exception);
+
+            return response('Internal error', 500)->header('Content-Type', 'text/plain');
         }
+
         $order = $result['order'];
         if ($result['transitioned']) {
-            event(new OrderStatusUpdatedForUser($order, $result['status']));
-            $this->sendOrderPaymentPush($order, $result['status']);
-            $this->trySendElectronicReceipt($order);
+            app()->terminating(function () use ($order, $result): void {
+                event(new OrderStatusUpdatedForUser($order, $result['status']));
+                $this->sendOrderPaymentPush($order, $result['status']);
+                $this->trySendElectronicReceipt($order);
+            });
         }
-        return response()->json(['ok' => true, 'status' => $result['status'], 'duplicate' => $result['duplicate']]);
+
+        Log::info('Izipay IPN processed.', [
+            'order_id' => $order->id,
+            'tracking_code' => $order->tracking_code,
+            'status' => $result['status'],
+            'duplicate' => $result['duplicate'],
+            'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
+        ]);
+
+        return response('OK', 200)->header('Content-Type', 'text/plain');
     }
 
     public function izipayResult(Request $request, Order $order): \Illuminate\View\View
