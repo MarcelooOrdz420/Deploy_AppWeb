@@ -92,28 +92,26 @@ class IzipayService
 
     public function verifyWebhook(Request $request): bool
     {
+        $fields = $this->webhookFields($request);
         $key = trim((string) config('services.izipay.hmac_key'));
-        $received = trim((string) (
-            $request->request->get('kr-hash')
-            ?: $request->header('X-KR-HASH')
-            ?: $request->header('kr-hash', '')
-        ));
-        $algorithm = strtoupper(trim((string) (
-            $request->request->get('kr-hash-algorithm')
-            ?: $request->header('X-KR-HASH-ALGORITHM')
-            ?: $request->header('kr-hash-algorithm', 'HMAC-SHA-256')
-        )));
-        $raw = (string) $request->request->get('kr-answer', '');
+        $received = trim($fields['hash']);
+        $algorithm = strtoupper(trim($fields['algorithm']));
+        $raw = $fields['answer'];
         if ($key === '' || $received === '' || $raw === '' || ! in_array($algorithm, ['HMAC-SHA-256', 'SHA256_HMAC'], true)) {
             return false;
         }
         return hash_equals(strtolower(hash_hmac('sha256', $raw, $key)), strtolower($received));
     }
 
+    public function hasWebhookAnswer(Request $request): bool
+    {
+        return $this->webhookFields($request)['answer'] !== '';
+    }
+
     public function notificationPayload(Request $request): array
     {
-        $answer = $request->request->get('kr-answer');
-        $decoded = is_string($answer) ? json_decode($answer, true) : null;
+        $answer = $this->webhookFields($request)['answer'];
+        $decoded = json_decode($answer, true);
         return is_array($decoded) ? $decoded : [];
     }
 
@@ -136,7 +134,8 @@ class IzipayService
             if ($order->status === Order::STATUS_CANCELLED) {
                 throw new RuntimeException('El pedido Izipay esta cancelado.');
             }
-            $payment = PaymentTransaction::query()->where('merchant_order_id', $reference)
+            $payment = PaymentTransaction::query()->where('order_id', $order->id)
+                ->where('provider', 'izipay')->where('merchant_order_id', $reference)
                 ->latest('id')->lockForUpdate()->first();
             if (! $payment) {
                 throw new RuntimeException('Intento de pago no encontrado.');
@@ -145,11 +144,9 @@ class IzipayService
             $amount = data_get($payload, 'orderDetails.amount') ?? data_get($payload, 'amount');
             $currency = strtoupper(trim((string) (data_get($payload, 'orderDetails.currency') ?: data_get($payload, 'currency'))));
             $transactionId = trim((string) (data_get($payload, 'transactions.0.uuid') ?: data_get($payload, 'transactionDetails.cardDetails.legacyTransId') ?: data_get($payload, 'uuid')));
-            if ($shopId !== (string) config('services.izipay.shop_id') || ! is_numeric($amount)
+            if ($shopId !== trim((string) config('services.izipay.shop_id')) || ! is_numeric($amount)
                 || (int) $amount !== $this->decimalToCents((string) $order->total_amount)
-                || $currency !== $payment->currency || $transactionId === '') {
-                $payment->update(['status' => 'rejected', 'response_message' => 'Monto, moneda, comercio o UUID invalido',
-                    'raw_response' => $this->sanitizePayload($payload), 'processed_at' => now()]);
+                || $currency !== 'PEN' || strtoupper((string) $payment->currency) !== 'PEN' || $transactionId === '') {
                 throw new RuntimeException('Los datos de la transaccion no coinciden con el pedido.');
             }
             $existing = PaymentTransaction::query()->where('transaction_uuid', $transactionId)->lockForUpdate()->first();
@@ -166,14 +163,16 @@ class IzipayService
             }
             $wasVerified = $order->payment_status === 'verified';
             $effectiveStatus = $wasVerified ? 'verified' : $status;
-            $payment->update(['status' => $status, 'transaction_uuid' => $transactionId,
+            $paymentStatus = $payment->status === 'verified' ? 'verified' : $status;
+            $payment->update(['status' => $paymentStatus, 'transaction_uuid' => $transactionId,
                 'authorization_number' => data_get($payload, 'transactions.0.transactionDetails.cardDetails.authorizationResponse.authorizationResult'),
-                'response_code' => (string) (data_get($payload, 'transactions.0.detailedStatus') ?: data_get($payload, 'orderStatus')),
-                'response_message' => (string) (data_get($payload, 'transactions.0.errorMessage') ?: data_get($payload, 'orderStatus')),
+                'response_code' => (string) (data_get($payload, 'transactions.0.responseCode') ?: data_get($payload, 'transactions.0.detailedStatus') ?: data_get($payload, 'orderStatus')),
+                'response_message' => (string) (data_get($payload, 'transactions.0.responseMessage') ?: data_get($payload, 'transactions.0.errorMessage') ?: data_get($payload, 'orderStatus')),
                 'raw_response' => $this->sanitizePayload($payload), 'processed_at' => now()]);
-            $order->forceFill(['payment_reference' => $transactionId, 'payment_status' => $effectiveStatus,
+            $order->forceFill(['payment_gateway' => $order->payment_gateway ?: 'izipay',
+                'payment_reference' => $transactionId, 'payment_status' => $effectiveStatus,
                 'payment_reported_at' => $order->payment_reported_at ?: now(),
-                'payment_verified_at' => $effectiveStatus === 'verified' ? ($order->payment_verified_at ?: now()) : null])->save();
+                'payment_verified_at' => $effectiveStatus === 'verified' ? ($order->payment_verified_at ?: now()) : $order->payment_verified_at])->save();
             Log::info('Izipay notification processed.', ['order_id' => $order->id, 'status' => $status, 'transaction_id' => $transactionId]);
             return ['order' => $order->fresh(['items', 'statusHistory']), 'status' => $effectiveStatus,
                 'duplicate' => false, 'transitioned' => ! $wasVerified && $effectiveStatus === 'verified'];
@@ -197,10 +196,27 @@ class IzipayService
 
     private function sanitizePayload(array $payload): array
     {
-        foreach (['card', 'cardNumber', 'pan', 'cvv', 'formToken'] as $key) {
-            data_forget($payload, $key); data_forget($payload, "transactions.0.transactionDetails.cardDetails.{$key}");
+        $sensitive = ['card', 'cardnumber', 'pan', 'cvv', 'formtoken', 'expirydate', 'expirationdate'];
+        foreach ($payload as $key => $value) {
+            $normalizedKey = strtolower(str_replace(['-', '_'], '', (string) $key));
+            if (in_array($normalizedKey, $sensitive, true)) {
+                unset($payload[$key]);
+            } elseif (is_array($value)) {
+                $payload[$key] = $this->sanitizePayload($value);
+            }
         }
+
         return $payload;
+    }
+
+    /** @return array{answer:string,hash:string,algorithm:string} */
+    private function webhookFields(Request $request): array
+    {
+        return [
+            'answer' => (string) ($request->request->get('kr-answer') ?? $request->header('X-KR-ANSWER') ?? $request->header('kr-answer', '')),
+            'hash' => (string) ($request->request->get('kr-hash') ?? $request->header('X-KR-HASH') ?? $request->header('kr-hash', '')),
+            'algorithm' => (string) ($request->request->get('kr-hash-algorithm') ?? $request->header('X-KR-HASH-ALGORITHM') ?? $request->header('kr-hash-algorithm', '')),
+        ];
     }
 
     private function usesIzipay(Order $order): bool { return $order->payment_gateway === 'izipay' || $order->payment_method === 'izipay'; }
@@ -212,7 +228,7 @@ class IzipayService
         return ((int) $whole * 100) + (int) str_pad($decimal, 2, '0');
     }
     private function endpoint(string $path): string { return rtrim((string) config('services.izipay.api_base_url'), '/').'/'.ltrim($path, '/'); }
-    private function ipnTargetUrl(): string { return trim((string) config('services.izipay.ipn_url')) ?: route('izipay.ipn'); }
+    public function ipnTargetUrl(): string { return trim((string) config('services.izipay.ipn_url')) ?: route('izipay.ipn'); }
     private function ensureValidIpnTargetUrl(string $url): void
     {
         $parts = parse_url($url); $host = strtolower((string) ($parts['host'] ?? ''));

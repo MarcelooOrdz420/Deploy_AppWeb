@@ -34,8 +34,6 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
     Route::get('/settings/public', PublicSettingsController::class);
-    Route::match(['get', 'head', 'post'], '/payments/izipay/webhook', [PaymentController::class, 'izipayWebhook']);
-
     Route::get('/orders/track/{trackingCode}', [OrderController::class, 'track']);
 
     Route::post('/chatbot/message', [ChatbotController::class, 'message']);

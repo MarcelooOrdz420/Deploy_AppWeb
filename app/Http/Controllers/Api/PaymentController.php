@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\OrderStatusUpdatedForUser;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Services\ElectronicInvoiceService;
-use App\Services\Fcm\FcmClient;
 use App\Services\Payments\IzipayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,7 +52,9 @@ class PaymentController extends Controller
 
         // Izipay probes the notification URL with an empty POST before sending
         // signed payment data. Treat that probe as a health check.
-        if (trim((string) $request->getContent()) === '' && $request->request->count() === 0) {
+        if (trim((string) $request->getContent()) === ''
+            && $request->request->count() === 0
+            && ! $izipayService->hasWebhookAnswer($request)) {
             Log::info('Izipay webhook empty POST health-check received.', [
                 'url' => $request->fullUrl(),
             ]);
@@ -63,16 +62,21 @@ class PaymentController extends Controller
             return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
-        Log::info('Izipay IPN received.', ['url' => $request->fullUrl()]);
+        Log::info('Izipay IPN received.', [
+            'method' => $request->method(),
+            'url' => $request->fullUrl(),
+            'has_kr_answer' => $izipayService->hasWebhookAnswer($request),
+        ]);
         if (! $izipayService->verifyWebhook($request)) {
             Log::warning('Izipay signature invalid.', [
+                'hmac_valid' => false,
                 'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
             ]);
 
             return response('Invalid signature', 401)->header('Content-Type', 'text/plain');
         }
 
-        Log::info('Izipay signature valid.');
+        Log::info('Izipay signature valid.', ['hmac_valid' => true]);
 
         if ($izipayService->notificationPayload($request) === []) {
             Log::warning('Izipay payload is not valid JSON.');
@@ -100,13 +104,6 @@ class PaymentController extends Controller
         }
 
         $order = $result['order'];
-        if ($result['transitioned']) {
-            app()->terminating(function () use ($order, $result): void {
-                event(new OrderStatusUpdatedForUser($order, $result['status']));
-                $this->sendOrderPaymentPush($order, $result['status']);
-                $this->trySendElectronicReceipt($order);
-            });
-        }
 
         Log::info('Izipay IPN processed.', [
             'order_id' => $order->id,
@@ -142,74 +139,4 @@ class PaymentController extends Controller
             || (string) $order->payment_method === 'izipay';
     }
 
-    private function sendOrderPaymentPush(Order $order, string $paymentStatus): void
-    {
-        try {
-            $userId = (int) $order->user_id;
-            if ($userId <= 0) {
-                return;
-            }
-
-            /** @var FcmClient $client */
-            $client = app(FcmClient::class);
-            if (! $client->isConfigured()) {
-                return;
-            }
-
-            $tracking = (string) ($order->tracking_code ?? '');
-            $status = (string) ($order->status ?? '');
-            $body = $tracking !== ''
-                ? "Pedido {$tracking}: {$status} | Pago: {$paymentStatus}"
-                : "Pago actualizado: {$paymentStatus}";
-
-            $client->sendToTopic(
-                topic: "orders_user_{$userId}",
-                notification: [
-                    'title' => 'Actualizacion de pedido',
-                    'body' => $body,
-                ],
-                data: [
-                    'route' => '/orders',
-                    'tracking_code' => $tracking,
-                    'status' => $status,
-                    'payment_status' => $paymentStatus,
-                ],
-            );
-        } catch (\Throwable) {
-            // No romper webhook por falla de push.
-        }
-    }
-
-    private function trySendElectronicReceipt(Order $order): void
-    {
-        if ((string) $order->payment_status !== 'verified') {
-            return;
-        }
-
-        if (! (bool) config('einvoice.auto_send', false)) {
-            return;
-        }
-
-        if (! in_array((string) $order->billing_receipt_type, ['boleta', 'factura'], true)) {
-            return;
-        }
-
-        try {
-            Log::info('Attempting automatic electronic receipt emission.', [
-                'order_id' => $order->id,
-                'tracking_code' => $order->tracking_code,
-                'provider' => config('einvoice.provider'),
-                'receipt_type' => $order->billing_receipt_type,
-            ]);
-            app(ElectronicInvoiceService::class)->sendInvoice($order);
-        } catch (\Throwable $exception) {
-            Log::error('Automatic electronic receipt emission failed.', [
-                'order_id' => $order->id,
-                'tracking_code' => $order->tracking_code,
-                'provider' => config('einvoice.provider'),
-                'error' => $exception->getMessage(),
-            ]);
-            report($exception);
-        }
-    }
 }
