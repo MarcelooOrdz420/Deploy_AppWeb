@@ -29,17 +29,6 @@ Route::get('/descargar-apk', function () {
     return response()->download($path, 'AppMovilPollos.apk');
 })->name('apk.download');
 
-Route::match(['get', 'head', 'post'], '/pagos/izipay/ipn', [PaymentController::class, 'izipayWebhook'])
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
-    ->name('izipay.ipn');
-
-Route::match(['get', 'head', 'post'], '/izipay-ipn', [PaymentController::class, 'izipayWebhook'])
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
-
-Route::match(['get', 'head', 'post'], '/izipay-ipn.php', [PaymentController::class, 'izipayWebhook'])
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
-    ->name('izipay.ipn.php');
-
 Route::match(['get', 'post'], '/pago/izipay/{order}/resultado', [PaymentController::class, 'izipayResult'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
     ->name('izipay.result');
