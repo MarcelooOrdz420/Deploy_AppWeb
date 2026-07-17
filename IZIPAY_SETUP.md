@@ -10,7 +10,9 @@ Agrega estas variables en `.env` local y en Coolify/produccion:
 IZIPAY_ENABLED=true
 IZIPAY_MODE=test
 IZIPAY_API_BASE_URL=https://api.micuentaweb.pe/api-payment/V4
-IZIPAY_IPN_URL=https://pollos.saborcentral.com/pagos/izipay/ipn
+IZIPAY_IPN_URL=https://NOMBRE-DEL-WORKER.workers.dev
+IZIPAY_REQUIRE_RELAY=true
+IZIPAY_RELAY_SECRET=
 IZIPAY_SHOP_ID=
 IZIPAY_REST_API_KEY=
 IZIPAY_PUBLIC_KEY=
@@ -22,14 +24,27 @@ IZIPAY_CSS_URL=https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/c
 
 Usa tus claves REST solo en `IZIPAY_REST_API_KEY`. Usa tu clave cliente JavaScript en `IZIPAY_PUBLIC_KEY`.
 
+## Relay de Cloudflare Worker
+
+El Worker completo está en `cloudflare-worker/izipay-relay-worker.mjs`. Para desplegarlo desde el panel:
+
+1. En Cloudflare abre **Workers & Pages**, pulsa **Create**, luego **Create Worker**.
+2. Abre **Edit code**, reemplaza todo por el contenido del archivo del repositorio y pulsa **Deploy**.
+3. En **Settings > Variables and Secrets**, agrega `RELAY_SECRET` como **Secret**. Usa un valor aleatorio largo, por ejemplo el resultado local de `openssl rand -hex 32`.
+4. Coloca exactamente el mismo valor en `IZIPAY_RELAY_SECRET` del entorno Laravel y ejecuta `php artisan optimize:clear`.
+5. Define `IZIPAY_REQUIRE_RELAY=true` y `IZIPAY_IPN_URL=https://NOMBRE-DEL-WORKER.workers.dev`.
+6. Registra esa URL `workers.dev` como URL de notificación en Izipay. No registres como IPN la URL canónica de Laravel.
+
+El secreto del relay autentica al Worker ante Laravel, pero no sustituye `IZIPAY_HMAC_KEY`: Laravel valida ambas capas. El Worker no registra ni transforma `kr-answer`.
+
 ## URLs que debes registrar en Izipay
 
-- URL de notificacion/IPN recomendada para Back Office: `https://tu-dominio.com/pagos/izipay/ipn`
+- URL de notificacion/IPN: `https://NOMBRE-DEL-WORKER.workers.dev`
 - Alias temporal compatible: `https://tu-dominio.com/izipay-ipn`
 - Alias temporal compatible: `https://tu-dominio.com/izipay-ipn.php`
 - Retorno exitoso: `https://tu-dominio.com/mis-pedidos`
 
-Para tu dominio actual, configura:
+El Worker reenvía internamente hacia:
 
 ```text
 https://pollos.saborcentral.com/pagos/izipay/ipn
@@ -63,14 +78,20 @@ php artisan config:show services
 php artisan route:list | grep izipay
 ```
 
-Comprueba desde fuera de Coolify:
+Comprueba el Worker y la protección del origen:
 
 ```sh
-curl -i https://pollos.saborcentral.com/pagos/izipay/ipn
-curl -I https://pollos.saborcentral.com/pagos/izipay/ipn
-curl -i -X POST https://pollos.saborcentral.com/pagos/izipay/ipn
+curl -i https://NOMBRE-DEL-WORKER.workers.dev
+curl -I https://NOMBRE-DEL-WORKER.workers.dev
+curl -i -X POST https://NOMBRE-DEL-WORKER.workers.dev
+curl -i -X POST https://pollos.saborcentral.com/pagos/izipay/ipn -H "X-Relay-Secret: incorrecto"
+curl -i -X POST https://pollos.saborcentral.com/pagos/izipay/ipn -H "X-Relay-Secret: TU_SECRETO"
 ```
 
-Los tres comandos deben llegar directamente al mismo contenedor, sin puerto `7000` en la URL, sin redireccion a login, HTTP, `www` u otro dominio, y devolver texto plano `OK`. Verifica tambien el certificado HTTPS, el proxy de dominio de Coolify y que Cloudflare, firewall o WAF permitan POST.
+GET y HEAD del Worker deben devolver 200. Un POST vacío reenviado con el secreto correcto debe devolver 200; el secreto incorrecto en el origen debe devolver 401. Una notificación real solo confirma el pago si además contiene el HMAC y los datos comerciales válidos.
+
+Ejecuta las pruebas unitarias del Worker con `npm run test:izipay-worker` y las de Laravel con `php artisan test --filter=IzipayWebhookTest`.
+
+Estas comprobaciones locales no demuestran el flujo productivo. La confirmación final requiere ejecutar un pago real de prueba desde Izipay y revisar los estados HTTP del Worker y Laravel sin registrar el contenido sensible.
 
 NGINX Unit escucha internamente en `7000`; su `fallback` envia las rutas que no son archivos a `public/index.php`. No debe publicarse un archivo PHP estatico ni existir una regla especial para `.php`. Puedes revisar la configuracion efectiva sin revelar claves con `php artisan izipay:diagnose` en entorno local.

@@ -3,6 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
+        "test:izipay-worker": "node --test cloudflare-worker/izipay-relay-worker.test.mjs",
         "build": "vite build",
         "dev": "vite"
     },

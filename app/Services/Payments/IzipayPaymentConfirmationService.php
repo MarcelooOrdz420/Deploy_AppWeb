@@ -1,0 +1,141 @@
+<?php
+
+namespace App\Services\Payments;
+
+use App\Models\Order;
+use App\Models\PaymentTransaction;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
+
+class IzipayPaymentConfirmationService
+{
+    public function confirm(string $krAnswerOriginal, string $hash, string $algorithm, ?int $expectedOrderId = null): array
+    {
+        $key = trim((string) config('services.izipay.hmac_key'));
+        $algorithm = strtoupper(trim($algorithm));
+        if ($key === '' || trim($hash) === '' || $krAnswerOriginal === ''
+            || ! in_array($algorithm, ['HMAC-SHA-256', 'SHA256_HMAC'], true)
+            || ! hash_equals(strtolower(hash_hmac('sha256', $krAnswerOriginal, $key)), strtolower(trim($hash)))) {
+            throw new RuntimeException('Firma Izipay invalida.');
+        }
+
+        $payload = json_decode($krAnswerOriginal, true);
+        if (! is_array($payload)) {
+            throw new RuntimeException('Respuesta Izipay invalida.');
+        }
+        $reference = trim((string) (data_get($payload, 'orderDetails.orderId')
+            ?: data_get($payload, 'orderId') ?: data_get($payload, 'metadata.tracking_code')));
+        if ($reference === '') {
+            throw new RuntimeException('Referencia Izipay ausente.');
+        }
+
+        return DB::transaction(function () use ($payload, $reference, $expectedOrderId): array {
+            $order = Order::query()->where('tracking_code', $reference)->lockForUpdate()->first();
+            if (! $order || ! $this->usesIzipay($order)) {
+                throw new RuntimeException('Pedido Izipay no encontrado.');
+            }
+            if ($expectedOrderId !== null && $order->id !== $expectedOrderId) {
+                throw new RuntimeException('El resultado no corresponde al pedido solicitado.');
+            }
+            if ($order->status === Order::STATUS_CANCELLED) {
+                throw new RuntimeException('El pedido Izipay esta cancelado.');
+            }
+            $payment = PaymentTransaction::query()->where('order_id', $order->id)
+                ->where('provider', 'izipay')->where('merchant_order_id', $reference)
+                ->latest('id')->lockForUpdate()->first();
+            if (! $payment) {
+                throw new RuntimeException('Intento de pago no encontrado.');
+            }
+
+            $shopId = trim((string) (data_get($payload, 'shopId') ?: data_get($payload, 'orderDetails.shopId')));
+            $amount = data_get($payload, 'orderDetails.amount') ?? data_get($payload, 'amount');
+            $currency = strtoupper(trim((string) (data_get($payload, 'orderDetails.currency') ?: data_get($payload, 'currency'))));
+            $transactionId = trim((string) (data_get($payload, 'transactions.0.uuid')
+                ?: data_get($payload, 'transactionDetails.cardDetails.legacyTransId') ?: data_get($payload, 'uuid')));
+            if ($shopId !== trim((string) config('services.izipay.shop_id')) || ! is_numeric($amount)
+                || (int) $amount !== $this->decimalToCents((string) $order->total_amount)
+                || $currency !== 'PEN' || strtoupper((string) $payment->currency) !== 'PEN' || $transactionId === '') {
+                throw new RuntimeException('Los datos de la transaccion no coinciden con el pedido.');
+            }
+
+            $existing = PaymentTransaction::query()->where('transaction_uuid', $transactionId)->lockForUpdate()->first();
+            if ($existing && $existing->id !== $payment->id) {
+                if ($existing->order_id === $order->id && $existing->status === 'verified') {
+                    return ['order' => $order, 'status' => 'verified', 'duplicate' => true, 'transitioned' => false];
+                }
+                throw new RuntimeException('La transaccion ya pertenece a otro intento o pedido.');
+            }
+
+            $status = $this->paymentStatus($payload);
+            if ($payment->status === 'verified' && $order->payment_status === 'verified') {
+                return ['order' => $order, 'status' => 'verified', 'duplicate' => true, 'transitioned' => false];
+            }
+            $wasVerified = $order->payment_status === 'verified';
+            $effectiveStatus = $wasVerified ? 'verified' : $status;
+            $paymentStatus = $payment->status === 'verified' ? 'verified' : $status;
+            $payment->update([
+                'status' => $paymentStatus,
+                'transaction_uuid' => $transactionId,
+                'authorization_number' => data_get($payload, 'transactions.0.transactionDetails.cardDetails.authorizationResponse.authorizationResult'),
+                'response_code' => (string) (data_get($payload, 'transactions.0.responseCode') ?: data_get($payload, 'transactions.0.detailedStatus') ?: data_get($payload, 'orderStatus')),
+                'response_message' => (string) (data_get($payload, 'transactions.0.responseMessage') ?: data_get($payload, 'transactions.0.errorMessage') ?: data_get($payload, 'orderStatus')),
+                'raw_response' => $this->sanitize($payload),
+                'processed_at' => now(),
+            ]);
+            $order->forceFill([
+                'payment_gateway' => $order->payment_gateway ?: 'izipay',
+                'payment_reference' => $transactionId,
+                'payment_status' => $effectiveStatus,
+                'payment_reported_at' => $order->payment_reported_at ?: now(),
+                'payment_verified_at' => $effectiveStatus === 'verified' ? ($order->payment_verified_at ?: now()) : $order->payment_verified_at,
+            ])->save();
+            Log::info('Izipay payment confirmation processed.', [
+                'order_id' => $order->id, 'status' => $effectiveStatus, 'duplicate' => false,
+            ]);
+
+            return ['order' => $order->fresh(['items', 'statusHistory']), 'status' => $effectiveStatus,
+                'duplicate' => false, 'transitioned' => ! $wasVerified && $effectiveStatus === 'verified'];
+        });
+    }
+
+    private function paymentStatus(array $payload): string
+    {
+        $status = strtoupper((string) (data_get($payload, 'orderStatus') ?: data_get($payload, 'transactions.0.status')
+            ?: data_get($payload, 'transactions.0.detailedStatus')));
+        return match ($status) {
+            'PAID', 'ACCEPTED', 'CAPTURED', 'AUTHORISED', 'AUTHORIZED' => 'verified',
+            'REFUSED', 'CANCELLED', 'CANCELED', 'FAILED', 'ERROR', 'UNPAID' => 'rejected',
+            default => 'pending',
+        };
+    }
+
+    private function sanitize(array $payload): array
+    {
+        $sensitive = ['card', 'cardnumber', 'pan', 'cvv', 'formtoken', 'expirydate', 'expirationdate', 'token'];
+        foreach ($payload as $key => $value) {
+            $normalized = strtolower(str_replace(['-', '_'], '', (string) $key));
+            if (in_array($normalized, $sensitive, true)) {
+                unset($payload[$key]);
+            } elseif (is_array($value)) {
+                $payload[$key] = $this->sanitize($value);
+            }
+        }
+        return $payload;
+    }
+
+    private function usesIzipay(Order $order): bool
+    {
+        return $order->payment_gateway === 'izipay' || $order->payment_method === 'izipay';
+    }
+
+    private function decimalToCents(string $amount): int
+    {
+        $normalized = str_replace(',', '.', trim($amount));
+        if (! preg_match('/^\d+(?:\.\d{1,2})?$/', $normalized)) {
+            return 0;
+        }
+        [$whole, $decimal] = array_pad(explode('.', $normalized, 2), 2, '');
+        return ((int) $whole * 100) + (int) str_pad($decimal, 2, '0');
+    }
+}

@@ -210,7 +210,7 @@ class IzipayService
     }
 
     /** @return array{answer:string,hash:string,algorithm:string} */
-    private function webhookFields(Request $request): array
+    public function webhookFields(Request $request): array
     {
         return [
             'answer' => (string) ($request->request->get('kr-answer') ?? $request->header('X-KR-ANSWER') ?? $request->header('kr-answer', '')),

@@ -9,7 +9,7 @@
         a{display:inline-block;margin-top:18px;color:#b84d09;font-weight:800}
     </style>
 </head>
-<body><main><h1 id="title">Verificando pago</h1><p id="message">Estamos consultando la confirmacion autentica enviada por Izipay.</p><a href="{{ route('store.orders') }}">Volver a Mis pedidos</a></main>
+<body><main><h1 id="title">Verificando pago</h1><p id="message">{{ $confirmationError ?: 'Estamos consultando la confirmacion autentica enviada por Izipay.' }}</p><a href="{{ route('store.orders') }}">Volver a Mis pedidos</a></main>
 <script>
 const title=document.getElementById('title'),message=document.getElementById('message');let attempts=0;
 async function check(){attempts++;try{const response=await fetch(@json($statusUrl),{cache:'no-store'}),data=await response.json(),status=String(data.payment_status||'pending');if(status==='verified'){title.textContent='Pago realizado exitosamente';message.textContent='Izipay confirmo correctamente el pago de tu pedido.';return}if(status==='rejected'){title.textContent='Pago rechazado';message.textContent='Revisa los datos ingresados o intenta nuevamente.';return}}catch{}if(attempts<20)setTimeout(check,3000);else message.textContent='El pago sigue pendiente de confirmacion. Puedes revisarlo en Mis pedidos.'}check();

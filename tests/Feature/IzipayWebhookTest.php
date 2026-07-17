@@ -8,6 +8,7 @@ use App\Models\PaymentTransaction;
 use App\Services\Payments\IzipayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class IzipayWebhookTest extends TestCase
@@ -42,6 +43,68 @@ class IzipayWebhookTest extends TestCase
             'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'),
             'kr-hash-algorithm' => 'HMAC-SHA-256',
         ])->assertBadRequest();
+    }
+
+    public function test_relay_secret_is_required_when_enabled(): void
+    {
+        config(['services.izipay.require_relay' => true, 'services.izipay.relay_secret' => 'relay-secret']);
+
+        $this->withHeader('X-Relay-Secret', 'wrong')->post('/pagos/izipay/ipn')->assertUnauthorized();
+        $this->withHeader('X-Relay-Secret', 'relay-secret')->post('/pagos/izipay/ipn')->assertOk();
+    }
+
+    public function test_signed_browser_return_confirms_payment_and_later_ipn_is_idempotent(): void
+    {
+        $order = $this->orderWithAttempt();
+        $answer = json_encode([
+            'shopId' => 'shop-id', 'orderStatus' => 'PAID',
+            'orderDetails' => ['orderId' => $order->tracking_code, 'amount' => 2550, 'currency' => 'PEN'],
+            'transactions' => [['uuid' => 'tx-browser-first', 'status' => 'PAID']],
+        ], JSON_THROW_ON_ERROR);
+        $payload = ['kr-answer' => $answer, 'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'),
+            'kr-hash-algorithm' => 'HMAC-SHA-256'];
+        $returnUrl = URL::temporarySignedRoute('izipay.result', now()->addMinutes(5), ['order' => $order->id]);
+
+        $this->post($returnUrl, $payload)->assertOk();
+        $this->post('/pagos/izipay/ipn', $payload)->assertOk();
+
+        $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'verified']);
+        $this->assertSame(1, PaymentTransaction::where('transaction_uuid', 'tx-browser-first')->count());
+    }
+
+    public function test_invalid_browser_return_signature_does_not_modify_order(): void
+    {
+        $order = $this->orderWithAttempt();
+        $answer = json_encode([
+            'shopId' => 'shop-id', 'orderStatus' => 'PAID',
+            'orderDetails' => ['orderId' => $order->tracking_code, 'amount' => 2550, 'currency' => 'PEN'],
+            'transactions' => [['uuid' => 'tx-invalid-browser', 'status' => 'PAID']],
+        ], JSON_THROW_ON_ERROR);
+        $returnUrl = URL::temporarySignedRoute('izipay.result', now()->addMinutes(5), ['order' => $order->id]);
+
+        $this->post($returnUrl, ['kr-answer' => $answer, 'kr-hash' => 'invalid',
+            'kr-hash-algorithm' => 'HMAC-SHA-256'])->assertOk();
+
+        $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'pending']);
+    }
+
+    public function test_ipn_first_and_browser_return_afterwards_do_not_duplicate_records(): void
+    {
+        $order = $this->orderWithAttempt();
+        $answer = json_encode([
+            'shopId' => 'shop-id', 'orderStatus' => 'PAID',
+            'orderDetails' => ['orderId' => $order->tracking_code, 'amount' => 2550, 'currency' => 'PEN'],
+            'transactions' => [['uuid' => 'tx-ipn-first', 'status' => 'PAID']],
+        ], JSON_THROW_ON_ERROR);
+        $payload = ['kr-answer' => $answer, 'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'),
+            'kr-hash-algorithm' => 'HMAC-SHA-256'];
+
+        $this->post('/pagos/izipay/ipn', $payload)->assertOk();
+        $this->post(URL::temporarySignedRoute('izipay.result', now()->addMinutes(5), ['order' => $order->id]), $payload)
+            ->assertOk();
+
+        $this->assertSame(1, PaymentTransaction::where('transaction_uuid', 'tx-ipn-first')->count());
+        $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'verified']);
     }
 
     public function test_form_token_is_created_from_backend_amount_and_stored_encrypted(): void

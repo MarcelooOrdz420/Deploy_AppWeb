@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Payments\IzipayService;
+use App\Services\Payments\IzipayPaymentConfirmationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -30,7 +31,11 @@ class PaymentController extends Controller
         }
     }
 
-    public function izipayWebhook(Request $request, IzipayService $izipayService): JsonResponse|Response
+    public function izipayWebhook(
+        Request $request,
+        IzipayService $izipayService,
+        IzipayPaymentConfirmationService $confirmationService
+    ): JsonResponse|Response
     {
         $startedAt = microtime(true);
 
@@ -50,6 +55,17 @@ class PaymentController extends Controller
             return response('OK', 200)->header('Content-Type', 'text/plain');
         }
 
+        if (config('services.izipay.require_relay')) {
+            $expectedSecret = (string) config('services.izipay.relay_secret');
+            $receivedSecret = (string) $request->header('X-Relay-Secret', '');
+            if ($expectedSecret === '' || $receivedSecret === '' || ! hash_equals($expectedSecret, $receivedSecret)) {
+                Log::warning('Izipay relay authentication rejected.', [
+                    'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
+                ]);
+                return response('Unauthorized relay', 401)->header('Content-Type', 'text/plain');
+            }
+        }
+
         // Izipay probes the notification URL with an empty POST before sending
         // signed payment data. Treat that probe as a health check.
         if (trim((string) $request->getContent()) === ''
@@ -67,32 +83,18 @@ class PaymentController extends Controller
             'url' => $request->fullUrl(),
             'has_kr_answer' => $izipayService->hasWebhookAnswer($request),
         ]);
-        if (! $izipayService->verifyWebhook($request)) {
-            Log::warning('Izipay signature invalid.', [
-                'hmac_valid' => false,
-                'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
-            ]);
-
-            return response('Invalid signature', 401)->header('Content-Type', 'text/plain');
-        }
-
-        Log::info('Izipay signature valid.', ['hmac_valid' => true]);
-
-        if ($izipayService->notificationPayload($request) === []) {
-            Log::warning('Izipay payload is not valid JSON.');
-
-            return response('Invalid payload', 400)->header('Content-Type', 'text/plain');
-        }
-
         try {
-            $result = $izipayService->processNotification($request);
+            $fields = $izipayService->webhookFields($request);
+            $result = $confirmationService->confirm($fields['answer'], $fields['hash'], $fields['algorithm']);
         } catch (\RuntimeException $exception) {
             Log::warning('Izipay IPN rejected.', [
                 'error' => $exception->getMessage(),
                 'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
             ]);
 
-            return response('Invalid payload', 400)->header('Content-Type', 'text/plain');
+            $invalidSignature = $exception->getMessage() === 'Firma Izipay invalida.';
+            return response($invalidSignature ? 'Invalid signature' : 'Invalid payload', $invalidSignature ? 401 : 400)
+                ->header('Content-Type', 'text/plain');
         } catch (\Throwable $exception) {
             Log::error('Izipay IPN exception.', [
                 'error' => $exception->getMessage(),
@@ -116,11 +118,30 @@ class PaymentController extends Controller
         return response('OK', 200)->header('Content-Type', 'text/plain');
     }
 
-    public function izipayResult(Request $request, Order $order): \Illuminate\View\View
+    public function izipayResult(
+        Request $request,
+        Order $order,
+        IzipayService $izipayService,
+        IzipayPaymentConfirmationService $confirmationService
+    ): \Illuminate\View\View
     {
         abort_unless($request->hasValidSignature(), 403);
+        $confirmationError = null;
+        if ($request->isMethod('POST') && $izipayService->hasWebhookAnswer($request)) {
+            try {
+                $fields = $izipayService->webhookFields($request);
+                $result = $confirmationService->confirm(
+                    $fields['answer'], $fields['hash'], $fields['algorithm'], $order->id
+                );
+                $order->refresh();
+            } catch (\RuntimeException $exception) {
+                $confirmationError = 'No se pudo validar la respuesta firmada de Izipay.';
+                Log::warning('Izipay browser return rejected.', ['order_id' => $order->id, 'error' => $exception->getMessage()]);
+            }
+        }
         return view('payments.izipay-result', [
             'order' => $order,
+            'confirmationError' => $confirmationError,
             'statusUrl' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
                 'izipay.status', now()->addMinutes(30), ['order' => $order->id]
             ),

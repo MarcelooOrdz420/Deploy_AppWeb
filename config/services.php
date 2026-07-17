@@ -92,6 +92,8 @@ return [
         'rest_api_key' => env('IZIPAY_REST_API_KEY'),
         'public_key' => env('IZIPAY_PUBLIC_KEY'),
         'hmac_key' => env('IZIPAY_HMAC_KEY'),
+        'require_relay' => filter_var(env('IZIPAY_REQUIRE_RELAY', false), FILTER_VALIDATE_BOOLEAN),
+        'relay_secret' => env('IZIPAY_RELAY_SECRET'),
         'timeout' => (int) env('IZIPAY_TIMEOUT', 15),
         'js_url' => env('IZIPAY_JS_URL', 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js'),
         'css_url' => env('IZIPAY_CSS_URL', 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/classic.css'),
