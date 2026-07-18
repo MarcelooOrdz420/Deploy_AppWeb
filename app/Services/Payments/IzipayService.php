@@ -93,11 +93,12 @@ class IzipayService
     public function verifyWebhook(Request $request): bool
     {
         $fields = $this->webhookFields($request);
-        $key = trim((string) config('services.izipay.hmac_key'));
+        $key = (string) config('services.izipay.hmac_key');
         $received = trim($fields['hash']);
-        $algorithm = strtoupper(trim($fields['algorithm']));
         $raw = $fields['answer'];
-        if ($key === '' || $received === '' || $raw === '' || ! in_array($algorithm, ['HMAC-SHA-256', 'SHA256_HMAC'], true)) {
+        if ($key === '' || $received === '' || $raw === ''
+            || strcasecmp($fields['algorithm'], 'sha256_hmac') !== 0
+            || ! in_array(strtolower($fields['hash_key']), ['sha256_hmac', 'hmac-sha-256'], true)) {
             return false;
         }
         return hash_equals(strtolower(hash_hmac('sha256', $raw, $key)), strtolower($received));
@@ -209,13 +210,14 @@ class IzipayService
         return $payload;
     }
 
-    /** @return array{answer:string,hash:string,algorithm:string} */
+    /** @return array{answer:string,hash:string,algorithm:string,hash_key:string} */
     public function webhookFields(Request $request): array
     {
         return [
             'answer' => (string) ($request->request->get('kr-answer') ?? $request->header('X-KR-ANSWER') ?? $request->header('kr-answer', '')),
             'hash' => (string) ($request->request->get('kr-hash') ?? $request->header('X-KR-HASH') ?? $request->header('kr-hash', '')),
             'algorithm' => (string) ($request->request->get('kr-hash-algorithm') ?? $request->header('X-KR-HASH-ALGORITHM') ?? $request->header('kr-hash-algorithm', '')),
+            'hash_key' => (string) ($request->request->get('kr-hash-key') ?? $request->header('X-KR-HASH-KEY') ?? $request->header('kr-hash-key', '')),
         ];
     }
 

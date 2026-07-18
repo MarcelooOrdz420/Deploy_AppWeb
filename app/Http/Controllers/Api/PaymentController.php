@@ -85,7 +85,10 @@ class PaymentController extends Controller
         ]);
         try {
             $fields = $izipayService->webhookFields($request);
-            $result = $confirmationService->confirm($fields['answer'], $fields['hash'], $fields['algorithm']);
+            $this->logIzipaySignatureMetadata($request, $fields, 'ipn');
+            $result = $confirmationService->confirm(
+                $fields['answer'], $fields['hash'], $fields['algorithm'], null, $fields['hash_key'], 'ipn'
+            );
         } catch (\RuntimeException $exception) {
             Log::warning('Izipay IPN rejected.', [
                 'error' => $exception->getMessage(),
@@ -130,8 +133,10 @@ class PaymentController extends Controller
         if ($request->isMethod('POST') && $izipayService->hasWebhookAnswer($request)) {
             try {
                 $fields = $izipayService->webhookFields($request);
+                $this->logIzipaySignatureMetadata($request, $fields, 'browser_return');
                 $result = $confirmationService->confirm(
-                    $fields['answer'], $fields['hash'], $fields['algorithm'], $order->id
+                    $fields['answer'], $fields['hash'], $fields['algorithm'], $order->id,
+                    $fields['hash_key'], 'browser_return'
                 );
                 $order->refresh();
             } catch (\RuntimeException $exception) {
@@ -158,6 +163,20 @@ class PaymentController extends Controller
     {
         return (string) $order->payment_gateway === 'izipay'
             || (string) $order->payment_method === 'izipay';
+    }
+
+    /** @param array{answer:string,hash:string,algorithm:string,hash_key:string} $fields */
+    private function logIzipaySignatureMetadata(Request $request, array $fields, string $source): void
+    {
+        Log::info('Izipay signature metadata', [
+            'source' => $source,
+            'algorithm' => $fields['algorithm'],
+            'hash_key' => $fields['hash_key'],
+            'kr_answer_length' => strlen($fields['answer']),
+            'kr_hash_length' => strlen($fields['hash']),
+            'hmac_key_length' => strlen((string) config('services.izipay.hmac_key')),
+            'content_type' => $request->header('Content-Type'),
+        ]);
     }
 
 }
