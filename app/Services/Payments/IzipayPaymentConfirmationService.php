@@ -11,9 +11,9 @@ use RuntimeException;
 class IzipayPaymentConfirmationService
 {
     public function confirm(string $krAnswerOriginal, string $hash, string $algorithm, ?int $expectedOrderId = null,
-        string $hashKey = '', string $source = 'unknown'): array
+        string $hashKey = '', string $source = 'unknown', array $diagnostics = []): array
     {
-        $key = (string) config('services.izipay.hmac_key');
+        [$selectedKeyType, $key] = $this->signatureKey($hashKey);
         $calculatedHash = hash_hmac('sha256', $krAnswerOriginal, $key);
         $originalMatches = $hash !== '' && hash_equals(strtolower($calculatedHash), strtolower(trim($hash)));
         $rawurldecodedMatches = $hash !== '' && hash_equals(
@@ -23,19 +23,34 @@ class IzipayPaymentConfirmationService
             'source' => $source,
             'original_matches' => $originalMatches,
             'rawurldecoded_matches' => $rawurldecodedMatches,
+            'form_value_matches_raw_body' => $diagnostics['form_value_matches_raw_body'] ?? false,
+            'relay_received' => $diagnostics['relay_received'] ?? false,
+        ]);
+
+        Log::info('Izipay signature validation metadata', [
+            'source' => $source,
+            'algorithm' => $algorithm,
+            'hash_key' => $hashKey,
+            'content_type' => $diagnostics['content_type'] ?? null,
+            'kr_answer_length' => strlen($krAnswerOriginal),
+            'received_hash_length' => strlen($hash),
+            'calculated_hash_length' => strlen($calculatedHash),
+            'selected_key_type' => $selectedKeyType,
+            'selected_key_configured' => $key !== '',
+            'selected_key_length' => strlen($key),
         ]);
 
         $algorithmMatches = strcasecmp($algorithm, 'sha256_hmac') === 0;
-        $hashKeyMatches = in_array(strtolower($hashKey), ['sha256_hmac', 'hmac-sha-256'], true);
+        $keyHasOuterWhitespace = $key !== trim($key);
         if ($key === '' || $hash === '' || $krAnswerOriginal === ''
-            || ! $algorithmMatches || ! $hashKeyMatches || ! $originalMatches) {
+            || ! $algorithmMatches || $selectedKeyType === 'unknown' || $keyHasOuterWhitespace || ! $originalMatches) {
             Log::warning('Izipay signature validation failed', [
                 'algorithm' => $algorithm,
                 'hash_key' => $hashKey,
                 'kr_answer_length' => strlen($krAnswerOriginal),
                 'received_hash_length' => strlen($hash),
                 'calculated_hash_length' => strlen($calculatedHash),
-                'hmac_key_configured' => $key !== '',
+                'selected_key_configured' => $key !== '',
             ]);
             throw new RuntimeException('Firma Izipay invalida.');
         }
@@ -62,29 +77,42 @@ class IzipayPaymentConfirmationService
                 throw new RuntimeException('El pedido Izipay esta cancelado.');
             }
             $payment = PaymentTransaction::query()->where('order_id', $order->id)
-                ->where('provider', 'izipay')->where('merchant_order_id', $reference)
-                ->latest('id')->lockForUpdate()->first();
+                ->where('provider', 'izipay')->latest('id')->lockForUpdate()->first();
             if (! $payment) {
+                Log::warning('Izipay transaction data mismatch', [
+                    'shop_matches' => false, 'amount_matches' => false, 'currency_matches' => false,
+                    'reference_matches' => $reference === (string) $order->tracking_code,
+                    'merchant_order_matches' => false, 'transaction_matches' => false,
+                    'payment_transaction_found' => false,
+                ]);
                 throw new RuntimeException('Intento de pago no encontrado.');
             }
 
             $shopId = trim((string) (data_get($payload, 'shopId') ?: data_get($payload, 'orderDetails.shopId')));
-            $amount = data_get($payload, 'orderDetails.amount') ?? data_get($payload, 'amount');
-            $currency = strtoupper(trim((string) (data_get($payload, 'orderDetails.currency') ?: data_get($payload, 'currency'))));
+            $amount = data_get($payload, 'orderDetails.orderTotalAmount')
+                ?? data_get($payload, 'orderDetails.amount') ?? data_get($payload, 'amount');
+            $currency = strtoupper(trim((string) (data_get($payload, 'orderDetails.orderCurrency')
+                ?: data_get($payload, 'orderDetails.currency') ?: data_get($payload, 'currency'))));
             $transactionId = trim((string) (data_get($payload, 'transactions.0.uuid')
                 ?: data_get($payload, 'transactionDetails.cardDetails.legacyTransId') ?: data_get($payload, 'uuid')));
             $shopMatches = $shopId === trim((string) config('services.izipay.shop_id'));
-            $amountMatches = is_numeric($amount) && (int) $amount === $this->decimalToCents((string) $order->total_amount);
+            $expectedAmount = (int) round((float) $order->total_amount * 100, 0, PHP_ROUND_HALF_UP);
+            $amountMatches = is_numeric($amount) && (int) $amount === $expectedAmount;
             $currencyMatches = $currency === 'PEN' && strtoupper((string) $payment->currency) === 'PEN';
-            $referenceMatches = $reference === (string) $payment->merchant_order_id;
-            $transactionMatches = $transactionId !== '';
-            if (! $shopMatches || ! $amountMatches || ! $currencyMatches || ! $referenceMatches || ! $transactionMatches) {
+            $referenceMatches = $reference === (string) $order->tracking_code;
+            $merchantOrderMatches = $reference === (string) $payment->merchant_order_id;
+            $transactionMatches = $transactionId !== '' && (trim((string) $payment->transaction_uuid) === ''
+                || hash_equals((string) $payment->transaction_uuid, $transactionId));
+            if (! $shopMatches || ! $amountMatches || ! $currencyMatches || ! $referenceMatches
+                || ! $merchantOrderMatches || ! $transactionMatches) {
                 Log::warning('Izipay transaction data mismatch', [
                     'shop_matches' => $shopMatches,
                     'amount_matches' => $amountMatches,
                     'currency_matches' => $currencyMatches,
                     'reference_matches' => $referenceMatches,
+                    'merchant_order_matches' => $merchantOrderMatches,
                     'transaction_matches' => $transactionMatches,
+                    'payment_transaction_found' => true,
                 ]);
                 throw new RuntimeException('Los datos de la transaccion no coinciden con el pedido.');
             }
@@ -137,6 +165,16 @@ class IzipayPaymentConfirmationService
             'PAID', 'ACCEPTED', 'CAPTURED', 'AUTHORISED', 'AUTHORIZED' => 'verified',
             'REFUSED', 'CANCELLED', 'CANCELED', 'FAILED', 'ERROR', 'UNPAID' => 'rejected',
             default => 'pending',
+        };
+    }
+
+    /** @return array{0:string,1:string} */
+    private function signatureKey(string $hashKey): array
+    {
+        return match (strtolower($hashKey)) {
+            'sha256_hmac', 'hmac-sha-256' => ['hmac_key', (string) config('services.izipay.hmac_key')],
+            'password' => ['password', (string) config('services.izipay.rest_api_key')],
+            default => ['unknown', ''],
         };
     }
 

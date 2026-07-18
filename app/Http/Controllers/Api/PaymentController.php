@@ -87,7 +87,8 @@ class PaymentController extends Controller
             $fields = $izipayService->webhookFields($request);
             $this->logIzipaySignatureMetadata($request, $fields, 'ipn');
             $result = $confirmationService->confirm(
-                $fields['answer'], $fields['hash'], $fields['algorithm'], null, $fields['hash_key'], 'ipn'
+                $fields['answer'], $fields['hash'], $fields['algorithm'], null, $fields['hash_key'], 'ipn',
+                $this->signatureDiagnostics($request, $fields)
             );
         } catch (\RuntimeException $exception) {
             Log::warning('Izipay IPN rejected.', [
@@ -136,7 +137,7 @@ class PaymentController extends Controller
                 $this->logIzipaySignatureMetadata($request, $fields, 'browser_return');
                 $result = $confirmationService->confirm(
                     $fields['answer'], $fields['hash'], $fields['algorithm'], $order->id,
-                    $fields['hash_key'], 'browser_return'
+                    $fields['hash_key'], 'browser_return', $this->signatureDiagnostics($request, $fields)
                 );
                 $order->refresh();
             } catch (\RuntimeException $exception) {
@@ -177,6 +178,21 @@ class PaymentController extends Controller
             'hmac_key_length' => strlen((string) config('services.izipay.hmac_key')),
             'content_type' => $request->header('Content-Type'),
         ]);
+    }
+
+    /** @param array{answer:string,hash:string,algorithm:string,hash_key:string} $fields */
+    private function signatureDiagnostics(Request $request, array $fields): array
+    {
+        $rawFields = [];
+        parse_str((string) $request->getContent(), $rawFields);
+
+        return [
+            'content_type' => $request->header('Content-Type'),
+            'form_value_matches_raw_body' => array_key_exists('kr-answer', $rawFields)
+                && is_string($rawFields['kr-answer'])
+                && hash_equals($fields['answer'], $rawFields['kr-answer']),
+            'relay_received' => $request->hasHeader('X-Izipay-Relay'),
+        ];
     }
 
 }

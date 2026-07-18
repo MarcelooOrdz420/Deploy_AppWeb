@@ -93,12 +93,16 @@ class IzipayService
     public function verifyWebhook(Request $request): bool
     {
         $fields = $this->webhookFields($request);
-        $key = (string) config('services.izipay.hmac_key');
+        $key = match (strtolower($fields['hash_key'])) {
+            'sha256_hmac', 'hmac-sha-256' => (string) config('services.izipay.hmac_key'),
+            'password' => (string) config('services.izipay.rest_api_key'),
+            default => '',
+        };
         $received = trim($fields['hash']);
         $raw = $fields['answer'];
         if ($key === '' || $received === '' || $raw === ''
             || strcasecmp($fields['algorithm'], 'sha256_hmac') !== 0
-            || ! in_array(strtolower($fields['hash_key']), ['sha256_hmac', 'hmac-sha-256'], true)) {
+            || $key !== trim($key)) {
             return false;
         }
         return hash_equals(strtolower(hash_hmac('sha256', $raw, $key)), strtolower($received));

@@ -28,3 +28,17 @@ test('POST preserves bytes and content type and sends secret', async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test('POST returns 502 when Laravel returns non-2xx', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response('Invalid signature', { status: 401 });
+  try {
+    const response = await worker.fetch(new Request('https://relay.test', {
+      method: 'POST', body: 'kr-answer=%7B%7D',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    }), { RELAY_SECRET: 'relay-test-secret' });
+    assert.equal(response.status, 502);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

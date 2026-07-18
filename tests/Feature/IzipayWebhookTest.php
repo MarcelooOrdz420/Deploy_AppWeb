@@ -8,6 +8,7 @@ use App\Models\PaymentTransaction;
 use App\Services\Payments\IzipayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
@@ -34,14 +35,15 @@ class IzipayWebhookTest extends TestCase
     public function test_invalid_hmac_and_invalid_json_are_rejected(): void
     {
         $this->post('/pagos/izipay/ipn', [
-            'kr-answer' => '{}', 'kr-hash' => 'invalid', 'kr-hash-algorithm' => 'HMAC-SHA-256',
+            'kr-answer' => '{}', 'kr-hash' => 'invalid', 'kr-hash-algorithm' => 'sha256_hmac',
+            'kr-hash-key' => 'sha256_hmac',
         ])->assertUnauthorized();
 
         $answer = '{invalid';
         $this->post('/pagos/izipay/ipn', [
             'kr-answer' => $answer,
             'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'),
-            'kr-hash-algorithm' => 'HMAC-SHA-256',
+            'kr-hash-algorithm' => 'sha256_hmac', 'kr-hash-key' => 'sha256_hmac',
         ])->assertBadRequest();
     }
 
@@ -62,7 +64,7 @@ class IzipayWebhookTest extends TestCase
             'transactions' => [['uuid' => 'tx-browser-first', 'status' => 'PAID']],
         ], JSON_THROW_ON_ERROR);
         $payload = ['kr-answer' => $answer, 'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'),
-            'kr-hash-algorithm' => 'HMAC-SHA-256'];
+            'kr-hash-algorithm' => 'sha256_hmac', 'kr-hash-key' => 'sha256_hmac'];
         $returnUrl = URL::temporarySignedRoute('izipay.result', now()->addMinutes(5), ['order' => $order->id]);
 
         $this->post($returnUrl, $payload)->assertOk();
@@ -83,7 +85,7 @@ class IzipayWebhookTest extends TestCase
         $returnUrl = URL::temporarySignedRoute('izipay.result', now()->addMinutes(5), ['order' => $order->id]);
 
         $this->post($returnUrl, ['kr-answer' => $answer, 'kr-hash' => 'invalid',
-            'kr-hash-algorithm' => 'HMAC-SHA-256'])->assertOk();
+            'kr-hash-algorithm' => 'sha256_hmac', 'kr-hash-key' => 'sha256_hmac'])->assertOk();
 
         $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'pending']);
     }
@@ -97,7 +99,7 @@ class IzipayWebhookTest extends TestCase
             'transactions' => [['uuid' => 'tx-ipn-first', 'status' => 'PAID']],
         ], JSON_THROW_ON_ERROR);
         $payload = ['kr-answer' => $answer, 'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'),
-            'kr-hash-algorithm' => 'HMAC-SHA-256'];
+            'kr-hash-algorithm' => 'sha256_hmac', 'kr-hash-key' => 'sha256_hmac'];
 
         $this->post('/pagos/izipay/ipn', $payload)->assertOk();
         $this->post(URL::temporarySignedRoute('izipay.result', now()->addMinutes(5), ['order' => $order->id]), $payload)
@@ -127,7 +129,8 @@ class IzipayWebhookTest extends TestCase
             'orderDetails' => ['orderId' => $order->tracking_code, 'amount' => 2550, 'currency' => 'PEN'],
             'transactions' => [['uuid' => 'tx-unique-1', 'status' => 'PAID', 'detailedStatus' => 'AUTHORISED']]], JSON_THROW_ON_ERROR);
         $hash = hash_hmac('sha256', $answer, 'hmac-secret');
-        $payload = ['kr-answer' => $answer, 'kr-hash' => $hash, 'kr-hash-algorithm' => 'HMAC-SHA-256'];
+        $payload = ['kr-answer' => $answer, 'kr-hash' => $hash, 'kr-hash-algorithm' => 'sha256_hmac',
+            'kr-hash-key' => 'sha256_hmac'];
         $this->post('/pagos/izipay/ipn', $payload)->assertOk()->assertSeeText('OK');
         $this->post('/pagos/izipay/ipn', $payload)->assertOk()->assertSeeText('OK');
         $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'verified', 'payment_reference' => 'tx-unique-1']);
@@ -166,7 +169,8 @@ class IzipayWebhookTest extends TestCase
             'transactions' => [['uuid' => 'tx-header-1', 'status' => 'PAID']]], JSON_THROW_ON_ERROR);
 
         $this->withHeader('X-KR-HASH', hash_hmac('sha256', $answer, 'hmac-secret'))
-            ->withHeader('X-KR-HASH-ALGORITHM', 'HMAC-SHA-256')
+            ->withHeader('X-KR-HASH-ALGORITHM', 'sha256_hmac')
+            ->withHeader('X-KR-HASH-KEY', 'sha256_hmac')
             ->post('/pagos/izipay/ipn', ['kr-answer' => $answer])
             ->assertOk()->assertSeeText('OK');
     }
@@ -180,7 +184,8 @@ class IzipayWebhookTest extends TestCase
             'orderDetails' => ['orderId' => $order->tracking_code, 'amount' => 1, 'currency' => 'PEN'],
             'transactions' => [['uuid' => 'tx-bad']]], JSON_THROW_ON_ERROR);
         $this->post('/pagos/izipay/ipn', ['kr-answer' => $answer,
-            'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'), 'kr-hash-algorithm' => 'HMAC-SHA-256'])
+            'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'), 'kr-hash-algorithm' => 'sha256_hmac',
+            'kr-hash-key' => 'sha256_hmac'])
             ->assertBadRequest();
         $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'pending']);
     }
@@ -199,6 +204,58 @@ class IzipayWebhookTest extends TestCase
         $this->sendNotification($order, 'PAID', 'tx-currency', ['orderDetails.currency' => 'USD'])
             ->assertBadRequest();
         $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'pending']);
+    }
+
+    public function test_password_hash_key_uses_rest_password(): void
+    {
+        $order = $this->orderWithAttempt();
+        $answer = json_encode(['shopId' => 'shop-id', 'orderStatus' => 'PAID',
+            'orderDetails' => ['orderId' => $order->tracking_code, 'orderTotalAmount' => 2550,
+                'orderCurrency' => 'PEN'],
+            'transactions' => [['uuid' => 'tx-password-key', 'status' => 'PAID']]], JSON_THROW_ON_ERROR);
+
+        $this->post('/pagos/izipay/ipn', ['kr-answer' => $answer,
+            'kr-hash' => hash_hmac('sha256', $answer, 'rest-key'),
+            'kr-hash-algorithm' => 'SHA256_HMAC', 'kr-hash-key' => 'PASSWORD'])
+            ->assertOk();
+    }
+
+    public function test_unknown_algorithm_and_hash_key_are_rejected(): void
+    {
+        $answer = '{}';
+        $hash = hash_hmac('sha256', $answer, 'hmac-secret');
+        $this->post('/pagos/izipay/ipn', ['kr-answer' => $answer, 'kr-hash' => $hash,
+            'kr-hash-algorithm' => 'sha512_hmac', 'kr-hash-key' => 'sha256_hmac'])->assertUnauthorized();
+        $this->post('/pagos/izipay/ipn', ['kr-answer' => $answer, 'kr-hash' => $hash,
+            'kr-hash-algorithm' => 'sha256_hmac', 'kr-hash-key' => 'unknown'])->assertUnauthorized();
+    }
+
+    public function test_urlencoded_escaped_answer_is_signed_after_single_form_decode(): void
+    {
+        $order = $this->orderWithAttempt();
+        $answer = json_encode(['shopId' => 'shop-id', 'orderStatus' => 'PAID',
+            'orderDetails' => ['orderId' => $order->tracking_code, 'orderTotalAmount' => 2550,
+                'orderCurrency' => 'PEN'], 'metadata' => ['note' => 'A+B & C/D'],
+            'transactions' => [['uuid' => 'tx-urlencoded', 'status' => 'PAID']]], JSON_THROW_ON_ERROR);
+        $body = http_build_query(['kr-answer' => $answer,
+            'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'),
+            'kr-hash-algorithm' => 'sha256_hmac', 'kr-hash-key' => 'sha256_hmac']);
+
+        $this->call('POST', '/pagos/izipay/ipn', [], [], [],
+            ['CONTENT_TYPE' => 'application/x-www-form-urlencoded'], $body)->assertOk();
+    }
+
+    public function test_transaction_mismatch_log_identifies_failed_boolean(): void
+    {
+        Log::spy();
+        $order = $this->orderWithAttempt();
+        $this->sendNotification($order, 'PAID', 'tx-log-mismatch', ['orderDetails.amount' => 1])
+            ->assertBadRequest();
+
+        Log::shouldHaveReceived('warning')->with('Izipay transaction data mismatch', \Mockery::on(
+            fn (array $context): bool => $context['amount_matches'] === false
+                && $context['payment_transaction_found'] === true
+        ));
     }
 
     public function test_orders_view_uses_stored_status_messages(): void
@@ -243,7 +300,8 @@ class IzipayWebhookTest extends TestCase
         return $this->post('/pagos/izipay/ipn', [
             'kr-answer' => $answer,
             'kr-hash' => hash_hmac('sha256', $answer, 'hmac-secret'),
-            'kr-hash-algorithm' => 'HMAC-SHA-256',
+            'kr-hash-algorithm' => 'sha256_hmac',
+            'kr-hash-key' => 'sha256_hmac',
         ]);
     }
 }
