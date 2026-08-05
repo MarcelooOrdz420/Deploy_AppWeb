@@ -12,6 +12,7 @@ Route::get('/promociones/{offer}', function (\App\Models\MarketingOffer $offer) 
 })->name('store.promotion');
 Route::view('/quienes-somos', 'store.about')->name('store.about');
 Route::view('/ubicacion', 'store.location')->name('store.location');
+Route::view('/seguimiento', 'store.tracking')->name('store.tracking');
 Route::view('/expertos', 'store.experts')->name('store.experts');
 Route::get('/carrito', fn () => response()
     ->view('store.cart')

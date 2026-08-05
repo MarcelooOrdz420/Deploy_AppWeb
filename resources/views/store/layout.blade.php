@@ -82,24 +82,25 @@
             position:relative;
             z-index:2;
             padding:42px 30px 28px;
-            background:linear-gradient(135deg,#3b0b08 0%,#65100c 58%,#7a170e 100%);
+            background:linear-gradient(135deg,#27130b 0%,#4f1d0d 48%,#8b330d 100%);
             color:#fff8ef;
         }
         .store-footer-grid { display:grid; grid-template-columns:1.15fr 1fr 1fr 1.15fr; gap:34px; }
         .footer-brand { display:grid; align-content:start; gap:16px; }
         .footer-logo { display:flex; align-items:center; gap:12px; text-decoration:none; }
         .footer-logo img { width:62px; height:62px; padding:5px; border-radius:14px; object-fit:contain; background:#fff; }
-        .footer-logo strong { font-size:22px; line-height:1.05; }
+        .footer-logo strong { font-size:22px; line-height:1.05; color:#ff7a18!important; }
         .footer-socials { display:flex; flex-wrap:wrap; gap:9px; }
         .footer-socials a { display:grid; place-items:center; min-width:42px; height:42px; padding:0 10px; border:1px solid rgba(255,255,255,.4); border-radius:50px; color:#fff; text-decoration:none; font-weight:900; transition:.2s ease; }
         .footer-socials a:hover { transform:translateY(-3px); background:#ff7a18; border-color:#ffb06e; }
-        .footer-column h2 { margin:0 0 14px; color:#fff; font-size:16px; text-transform:uppercase; letter-spacing:.03em; }
+        .footer-socials svg,.footer-whatsapp svg { width:22px; height:22px; fill:currentColor; }
+        .footer-column h2,.store-footer h2 { margin:0 0 14px; color:#fff!important; font-size:16px; text-transform:uppercase; letter-spacing:.03em; }
         .footer-links { display:grid; gap:10px; }
         .footer-links a,.footer-contact span { color:rgba(255,248,239,.88); text-decoration:none; font-size:14px; line-height:1.45; }
         .footer-links a:hover { color:#ffc20e; transform:translateX(3px); }
         .footer-contact { display:grid; gap:8px; }
         .footer-copy { margin:20px 0 0; color:rgba(255,255,255,.68); font-size:12px; }
-        .footer-whatsapp { position:absolute; right:24px; bottom:20px; display:grid; place-items:center; width:58px; height:58px; border-radius:50%; background:#079b71; color:#fff; text-decoration:none; font-size:26px; border:4px solid rgba(255,255,255,.9); box-shadow:0 12px 28px rgba(0,0,0,.25); }
+        .footer-whatsapp { position:fixed; left:18px; bottom:18px; z-index:1200; display:grid; place-items:center; width:58px; height:58px; border-radius:50%; background:#079b71; color:#fff; text-decoration:none; font-size:26px; border:4px solid rgba(255,255,255,.9); box-shadow:0 12px 28px rgba(0,0,0,.25); }
 
         .scroll-reveal { opacity:0; transform:translateY(30px); transition:opacity .72s ease,transform .72s cubic-bezier(.2,.7,.2,1); }
         .scroll-reveal.reveal-left { transform:translateX(-34px); }
@@ -112,7 +113,7 @@
         @media (max-width:600px) {
             .store-footer { padding:32px 20px 88px; }
             .store-footer-grid { grid-template-columns:1fr; gap:28px; }
-            .footer-whatsapp { right:20px; bottom:20px; }
+            .footer-whatsapp { left:20px; right:auto; bottom:20px; }
         }
         @media (prefers-reduced-motion:reduce) {
             .scroll-reveal { opacity:1 !important; transform:none !important; transition:none !important; }
@@ -848,10 +849,9 @@
                             <strong>El Dorado<br>Pollos y Parrillas</strong>
                         </a>
                         <div class="footer-socials" aria-label="Redes sociales">
-                            <a href="#" aria-label="Facebook">f</a>
-                            <a href="#" aria-label="Instagram">IG</a>
-                            <a href="#" aria-label="TikTok">TT</a>
-                            <a id="footerWhatsappSocial" href="#" aria-label="WhatsApp">WA</a>
+                            <a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8h3V4h-3c-3.3 0-5 2-5 5v2H6v4h3v9h4v-9h3.3l.7-4H13V9c0-.7.3-1 1-1Z"/></svg></a>
+                            <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm10.5 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg></a>
+                            <a href="#" aria-label="TikTok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3c.4 2.2 1.6 3.5 4 3.8v3.1a8 8 0 0 1-4-1.2v7.1a6.2 6.2 0 1 1-5.4-6.1v3.2a3.1 3.1 0 1 0 2.3 3V3H15Z"/></svg></a>
                         </div>
                         <p class="footer-copy">&copy; {{ date('Y') }} Pollos y Parrillas El Dorado. Todos los derechos reservados.</p>
                     </section>
@@ -859,7 +859,8 @@
                         <h2>Atención al cliente</h2>
                         <nav class="footer-links">
                             <a href="{{ route('store.products') }}">Ayuda para comprar</a>
-                            <a href="{{ route('store.orders') }}">Seguimiento de pedidos</a>
+                            <a href="{{ route('store.orders') }}">Mis pedidos automáticos</a>
+                            <a href="{{ route('store.tracking') }}">Seguimiento por código</a>
                             <a href="{{ route('store.cart') }}">Delivery y formas de pago</a>
                             <a href="#">Preguntas frecuentes</a>
                             <a href="#">Libro de reclamaciones</a>
@@ -885,7 +886,7 @@
                         </div>
                     </section>
                 </div>
-                <a id="footerWhatsapp" class="footer-whatsapp" href="#" aria-label="Contactar por WhatsApp">WA</a>
+                <a id="footerWhatsapp" class="footer-whatsapp" href="#" aria-label="Contactar por WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.6 4.1 1.6 5.9L.2 24l6.5-1.7a12 12 0 0 0 5.4 1.4h.1c6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.5-8.4Zm-8.4 18.2c-1.7 0-3.5-.5-5-1.4l-.4-.2-3.8 1 1-3.7-.2-.4a9.8 9.8 0 1 1 8.4 4.7Zm5.4-7.3c-.3-.1-1.8-.9-2.1-1-.3-.1-.5-.1-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-1.8-.9-3-1.6-4.2-3.7-.3-.5.3-.5.9-1.7.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.4 3.7 5.9 5.2 2.2.9 3.1 1 4.2.8.7-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4-.2-.3-.4-.4-.7-.5Z"/></svg></a>
             </footer>
         </div>
     </div>
@@ -2292,7 +2293,7 @@ initClientSession();
             const phone = String(data.support_phone || '').replace(/\D/g, '');
             if (phone) {
                 const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent('Hola, deseo información sobre Pollos y Parrillas El Dorado.')}`;
-                ['footerWhatsapp', 'footerWhatsappSocial'].forEach(id => {
+                ['footerWhatsapp'].forEach(id => {
                     const link = document.getElementById(id);
                     if (link) {
                         link.href = whatsappUrl;

@@ -112,6 +112,15 @@
         .payment-message { margin-top:10px; padding:12px; border-radius:14px; background:#fff; border:1px solid #f0d7c3; }
         .payment-message[data-state="verified"] { background:#ebfff3; border-color:#22a35a; }
         .payment-message[data-state="rejected"], .payment-message[data-state="error"] { background:#fff0ee; border-color:#d94b3d; }
+        .order-accordion { border:1px solid #f3b27f; border-radius:18px; overflow:hidden; background:#fffaf5; }
+        .order-accordion summary { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; padding:16px 18px; cursor:pointer; list-style:none; color:#25170f; background:#fff3e7; }
+        .order-accordion summary::-webkit-details-marker { display:none; }
+        .order-accordion summary::after { content:'\25BC'; color:#d95200; font-size:18px; transition:transform .2s ease; }
+        .order-accordion[open] summary::after { transform:rotate(180deg); }
+        .order-summary-main { display:grid; gap:3px; }
+        .order-summary-meta { color:#784322; font-size:13px; }
+        .order-accordion .order-card { border:0; border-top:1px solid #f3c8a7; border-radius:0; box-shadow:none; }
+        .order-products { margin:10px 0; padding:10px 14px; border-radius:12px; background:#fff; }
     </style>
     <h1 class="title">Mis pedidos y seguimiento</h1>
 
@@ -127,28 +136,6 @@
             <div id="prefMsg" style="font-size:13px; color:#6a3a1a;"></div>
         </div>
         <div id="ordersList" class="orders-grid">Cargando pedidos...</div>
-    </section>
-
-    <section class="panel">
-        <h3 style="margin-top:0;">Buscar por codigo</h3>
-        <div class="tracker-grid">
-            <div>
-                <label for="trackInput">Codigo de seguimiento</label>
-                <input id="trackInput" type="text" placeholder="ED-XXXXXXXX">
-            </div>
-            <button id="trackBtn" type="button" class="btn-main">
-                Buscar
-            </button>
-        </div>
-        <div id="trackMsg" style="font-size:13px; opacity:.8; margin-top:8px;"></div>
-        <ul id="timeline" class="timeline-list">
-            <li data-status="pending">Pendiente</li>
-            <li data-status="confirmed">Confirmado</li>
-            <li data-status="preparing">Preparando</li>
-            <li data-status="on_the_way">En camino</li>
-            <li data-status="delivered">Entregado</li>
-            <li data-status="cancelled">Cancelado</li>
-        </ul>
     </section>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -183,10 +170,6 @@ function paymentMessage(status) {
     return `<div class="payment-message" data-state="${status}"><strong>${item[0]}</strong><br><span>${item[1]}</span></div>`;
 }
 const ordersList = document.getElementById('ordersList');
-const trackInput = document.getElementById('trackInput');
-const trackBtn = document.getElementById('trackBtn');
-const trackMsg = document.getElementById('trackMsg');
-const timeline = document.getElementById('timeline');
 const toastEl = document.getElementById('toast');
 const marketingEmailsEnabled = document.getElementById('marketingEmailsEnabled');
 const prefMsg = document.getElementById('prefMsg');
@@ -213,32 +196,31 @@ function einvoiceInfo(order) {
     const meta = order && order.billing_metadata ? order.billing_metadata : {};
     const einvoice = meta.einvoice || {};
     const response = einvoice.response || {};
-    const provider = einvoice.provider || '';
     const sentAt = einvoice.sent_at || '';
     const fake = Boolean(einvoice.fake || response.fake);
     const pdf = response.enlace_del_pdf || (response.enlace ? `${response.enlace}.pdf` : '');
     const xml = response.enlace_del_xml || '';
     const cdr = response.enlace_del_cdr || '';
 
-    if (!provider && !sentAt) {
+    if (!sentAt) {
         return `
             <div class="einvoice-box">
                 <strong>Comprobante electronico</strong>
-                <span>Aun no enviado a Nubefact. Se emitira cuando el pago figure como verificado.</span>
+                <span>Se emitirá cuando el pago figure como verificado.</span>
             </div>
         `;
     }
 
     const links = [
-        pdf ? `<a href="${pdf}" target="_blank" rel="noopener">PDF Nubefact</a>` : '',
+        pdf ? `<a href="${pdf}" target="_blank" rel="noopener">Ver PDF</a>` : '',
         xml ? `<a href="${xml}" target="_blank" rel="noopener">XML</a>` : '',
         cdr ? `<a href="${cdr}" target="_blank" rel="noopener">CDR</a>` : '',
     ].filter(Boolean).join('');
 
     return `
         <div class="einvoice-box">
-            <strong>Comprobante electronico: ${provider || 'nubefact'}</strong>
-            <span>${fake ? 'Simulado por EINVOICE_FAKE_SEND=true. No se envio a Nubefact/SUNAT.' : 'Enviado a Nubefact.'}</span>
+            <strong>Comprobante electrónico emitido</strong>
+            <span>${fake ? 'Comprobante de prueba.' : 'Tu comprobante está disponible.'}</span>
             ${links ? `<div class="einvoice-links">${links}</div>` : ''}
         </div>
     `;
@@ -302,37 +284,9 @@ async function savePreferences() {
     }
 }
 
-function paintTimeline(status) {
-    const normalized = String(status || '').toLowerCase();
-    const currentIdx = statusOrder.indexOf(normalized);
-    timeline.querySelectorAll('li').forEach(item => {
-        const itemStatus = item.getAttribute('data-status');
-        item.style.opacity = '.55';
-        item.style.borderColor = '#f0d7c3';
-        item.style.background = '#fff8f2';
-
-        if (normalized === 'cancelled') {
-            if (itemStatus === 'cancelled') {
-                item.style.opacity = '1';
-                item.style.borderColor = '#ff6f1f';
-                item.style.background = '#fff1e5';
-            }
-            return;
-        }
-
-        const idx = statusOrder.indexOf(itemStatus);
-        if (idx === -1) return;
-        if (idx < currentIdx) {
-            item.style.opacity = '1';
-            item.style.borderColor = '#22a35a';
-            item.style.background = '#ebfff3';
-        }
-        if (idx === currentIdx) {
-            item.style.opacity = '1';
-            item.style.borderColor = '#ff6f1f';
-            item.style.background = '#fff1e5';
-        }
-    });
+function orderTimelineHtml(status) {
+    const normalized=String(status||'').toLowerCase(),current=statusOrder.indexOf(normalized),rows=[...statusOrder,'cancelled'];
+    return `<ul class="timeline-list">${rows.map((code,index)=>{const active=normalized==='cancelled'?code==='cancelled':index<=current&&code!=='cancelled';const currentStep=code===normalized;const style=active?`opacity:1;border-color:${currentStep?'#ff6f1f':'#22a35a'};background:${currentStep?'#fff1e5':'#ebfff3'}`:'';return `<li style="${style}">${statusEs(code)}</li>`}).join('')}</ul>`;
 }
 
 async function fetchMyOrders() {
@@ -371,14 +325,17 @@ async function fetchMyOrders() {
         });
         saveLastStatuses(next);
 
-        ordersList.innerHTML = data.map(order => `
-            <article class="order-card">
+        ordersList.innerHTML = data.map((order,index) => `
+            <details class="order-accordion" ${index===0?'open':''}>
+              <summary><span class="order-summary-main"><strong>Pedido ${order.tracking_code}</strong><span class="order-summary-meta">${new Date(order.created_at).toLocaleString()} · ${statusEs(order.status)} · S/ ${Number(order.total_amount).toFixed(2)}</span></span></summary>
+              <article class="order-card">
                 <div><strong>Codigo:</strong> ${order.tracking_code}</div>
                 <div><strong>Fecha/Hora:</strong> ${new Date(order.created_at).toLocaleString()}</div>
                 <div><strong>Estado:</strong> ${statusEs(order.status)}</div>
                 <div><strong>Total:</strong> S/ ${Number(order.total_amount).toFixed(2)}</div>
                 <div><strong>Pago:</strong> ${order.payment_method || 'n/a'} | <strong>Estado pago:</strong> ${paymentStatusEs(order.payment_status)}</div>
                 <div><strong>Operacion:</strong> ${order.payment_reference || 'sin codigo'}</div>
+                <div class="order-products"><strong>Productos comprados</strong>${Array.isArray(order.items)&&order.items.length?order.items.map(item=>`<div>${item.quantity} × ${item.product_name} · S/ ${Number(item.line_total).toFixed(2)}</div>`).join(''):'<div>Detalle no disponible</div>'}</div>
                 ${String(order.payment_method || '').toLowerCase() === 'izipay' ? paymentMessage(String(order.payment_status || 'pending').toLowerCase()) : ''}
                 <div><strong>Comprobante:</strong> ${order.payment_proof_path ? `<a href="${order.payment_proof_path}" target="_blank">Ver archivo</a>` : 'no subido'}</div>
                 ${einvoiceInfo(order)}
@@ -394,7 +351,6 @@ async function fetchMyOrders() {
                     </div>
                 </div>` : ''}
                 <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-                    <button data-track="${order.tracking_code}" class="btn-soft">Ver seguimiento</button>
                     ${String(order.payment_method || '').toLowerCase() === 'izipay'
                         && ['pending', 'rejected'].includes(String(order.payment_status || '').toLowerCase())
                         && String(order.status || '').toLowerCase() !== 'cancelled'
@@ -403,15 +359,10 @@ async function fetchMyOrders() {
                     <button data-view-receipt="${order.id}" class="btn-soft">Ver boleta</button>
                     <button data-download="${order.id}" class="btn-soft">Descargar boleta</button>
                 </div>
-            </article>
+                <div><strong>Estado de tu compra</strong>${orderTimelineHtml(order.status)}</div>
+              </article>
+            </details>
         `).join('');
-
-        ordersList.querySelectorAll('[data-track]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                trackInput.value = btn.getAttribute('data-track');
-                searchTracking();
-            });
-        });
         ordersList.querySelectorAll('[data-download]').forEach(btn => {
             btn.addEventListener('click', () => downloadReceipt(Number(btn.getAttribute('data-download'))));
         });
@@ -425,35 +376,8 @@ async function fetchMyOrders() {
             btn.addEventListener('click', () => openIzipayCheckout(Number(btn.getAttribute('data-izipay-checkout'))));
         });
 
-        const last = localStorage.getItem('ed_last_tracking');
-        if (last) {
-            trackInput.value = last;
-            searchTracking();
-        }
     } catch {
         ordersList.innerHTML = '<strong>Error de conexion al cargar pedidos.</strong>';
-    }
-}
-
-async function searchTracking() {
-    const code = trackInput.value.trim().toUpperCase();
-    if (!code) {
-        trackMsg.textContent = 'Ingresa un codigo de seguimiento.';
-        return;
-    }
-    trackMsg.textContent = 'Buscando...';
-    try {
-        const res = await fetch(`/api/v1/orders/track/${encodeURIComponent(code)}`);
-        const data = await res.json();
-        if (!res.ok) {
-            trackMsg.textContent = data.message || 'Pedido no encontrado.';
-            paintTimeline('');
-            return;
-        }
-        trackMsg.textContent = `Estado: ${statusEs(data.status)} | Pago: ${data.payment_method || 'n/a'} | Pago estado: ${paymentStatusEs(data.payment_status)} | Operacion: ${data.payment_reference || 'sin codigo'}`;
-        paintTimeline(data.status);
-    } catch {
-        trackMsg.textContent = 'No se pudo conectar al servidor.';
     }
 }
 
@@ -564,12 +488,10 @@ function viewReceipt(orderId) {
     }).catch(() => alert('Error de conexion al abrir boleta'));
 }
 
-trackBtn.addEventListener('click', searchTracking);
 marketingEmailsEnabled?.addEventListener('change', savePreferences);
 window.addEventListener('ed:order-status-updated', () => {
     fetchMyOrders();
 });
-paintTimeline('');
 fetchMyOrders();
 loadPreferences();
 setInterval(fetchMyOrders, 45000);
