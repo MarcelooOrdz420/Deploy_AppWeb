@@ -1523,11 +1523,50 @@ initClientSession();
             `<h3>Paso 4 · Tus datos</h3><label>Nombre completo<input data-guided="customerName" maxlength="120" value="${escapeHtml(d.customerName||'')}"></label><label>Teléfono<input data-guided="phone" inputmode="tel" maxlength="30" value="${escapeHtml(d.phone||'')}"></label><label>Correo<input data-guided="email" type="email" maxlength="120" value="${escapeHtml(d.email||'')}"></label>`,
             `<h3>Resumen</h3><div class="pollia-product-summary"><strong>${escapeHtml(product?.name||'Plato pendiente')} × ${Number(d.qty)||1}</strong>${side?`<span>${escapeHtml(side.name)}</span>`:''}${drink?`<span>${escapeHtml(drink.name)} × ${Number(d.drinkQty)||1}</span>`:''}<span>${d.deliveryType==='delivery'?'Delivery':'Recojo en local'}</span><strong>Subtotal: S/ ${((Number(product?.price||0)*Number(d.qty||1))+Number(side?.price||0)+(Number(drink?.price||0)*Number(d.drinkQty||1))).toFixed(2)}</strong></div>`,
         ];
-        purchaseFlow.innerHTML = `<div class="pollia-purchase-card">${steps[guided.step]}<div class="pollia-purchase-actions">${guided.step?'<button type="button" data-guided-back>Anterior</button>':''}${guided.step<4?'<button type="button" class="primary" data-guided-next>Continuar</button>':'<button type="button" class="primary" data-guided-confirm>Agregar al carrito</button>'}<button type="button" data-guided-cancel>Cancelar</button></div></div>`;
+        const isAuthenticated = Boolean(localStorage.getItem('ed_token'));
+        const confirmLabel = isAuthenticated ? 'Agregar al carrito' : 'Continuar para iniciar sesión';
+        purchaseFlow.innerHTML = `<div class="pollia-purchase-card">${steps[guided.step]}<div class="pollia-purchase-actions">${guided.step?'<button type="button" data-guided-back>Anterior</button>':''}${guided.step<4?'<button type="button" class="primary" data-guided-next>Continuar</button>':`<button type="button" class="primary" data-guided-confirm>${confirmLabel}</button>`}<button type="button" data-guided-cancel>Cancelar</button></div></div>`;
         purchaseFlow.querySelector('[data-guided-back]')?.addEventListener('click',()=>{captureGuidedFields();guided.step--;renderGuidedPurchase()});
         purchaseFlow.querySelector('[data-guided-next]')?.addEventListener('click',()=>{captureGuidedFields();if(guided.step===0&&!d.productId)return alert('Selecciona un plato.');if(guided.step===2&&d.deliveryType==='delivery'&&!d.address)return alert('Ingresa la dirección.');if(guided.step===3&&(!d.customerName||!/^\+?[0-9\s-]{7,30}$/.test(d.phone||'')||!/^\S+@\S+\.\S+$/.test(d.email||'')))return alert('Completa nombre, teléfono y correo válidos.');guided.step++;renderGuidedPurchase()});
         purchaseFlow.querySelector('[data-guided-cancel]')?.addEventListener('click',()=>closeGuided(true));
-        purchaseFlow.querySelector('[data-guided-confirm]')?.addEventListener('click',()=>{captureGuidedFields();const main=guided.products.find(item=>String(item.id)===String(d.productId));if(!main)return;const items=[{...main,qty:Math.max(1,Number(d.qty)||1)}];if(side)items.push({...side,qty:1});if(drink)items.push({...drink,qty:Math.max(1,Number(d.drinkQty)||1)});mergeIntoCart(items);localStorage.setItem(checkoutPrefillKey,JSON.stringify({customer_name:d.customerName,phone:d.phone,email:d.email,delivery_type:d.deliveryType,address:d.deliveryType==='delivery'?d.address:'',reference:d.reference,salad_type:d.salad}));sessionStorage.setItem('ed_guided_order_note',String(d.notes||'').slice(0,120));closeGuided();window.location.href='/carrito'});
+        purchaseFlow.querySelector('[data-guided-confirm]')?.addEventListener('click', () => {
+            captureGuidedFields();
+            const main = guided.products.find(item => String(item.id) === String(d.productId));
+            if (!main) return;
+
+            const items = [{ ...main, qty: Math.max(1, Number(d.qty) || 1) }];
+            if (side) items.push({ ...side, qty: 1 });
+            if (drink) items.push({ ...drink, qty: Math.max(1, Number(d.drinkQty) || 1) });
+
+            mergeIntoCart(items);
+            localStorage.setItem(checkoutPrefillKey, JSON.stringify({
+                customer_name: d.customerName,
+                phone: d.phone,
+                email: d.email,
+                delivery_type: d.deliveryType,
+                address: d.deliveryType === 'delivery' ? d.address : '',
+                reference: d.reference,
+                salad_type: d.salad,
+            }));
+            sessionStorage.setItem('ed_guided_order_note', String(d.notes || '').slice(0, 120));
+
+            if (localStorage.getItem('ed_token')) {
+                closeGuided();
+                window.location.href = '/carrito';
+                return;
+            }
+
+            const email = encodeURIComponent(String(d.email || '').trim());
+            const next = encodeURIComponent('/carrito');
+            purchaseFlow.innerHTML = `<div class="pollia-purchase-card"><h3>Tu pedido está guardado</h3><div class="pollia-product-summary"><strong>Inicia sesión para continuar</strong><span>Conservaremos los productos, cantidades, dirección y especificaciones que ingresaste.</span><span>Tu correo ya aparecerá escrito en el formulario.</span></div><div class="pollia-purchase-actions"><button type="button" class="primary" data-guided-login>Iniciar sesión</button><button type="button" data-guided-register>Crear cuenta</button><button type="button" data-guided-cancel>Cancelar</button></div></div>`;
+            purchaseFlow.querySelector('[data-guided-login]')?.addEventListener('click', () => {
+                window.location.href = `/login?email=${email}&next=${next}`;
+            });
+            purchaseFlow.querySelector('[data-guided-register]')?.addEventListener('click', () => {
+                window.location.href = `/register?email=${email}&next=${next}`;
+            });
+            purchaseFlow.querySelector('[data-guided-cancel]')?.addEventListener('click', () => closeGuided());
+        });
     }
 
     function pendingCart() {
