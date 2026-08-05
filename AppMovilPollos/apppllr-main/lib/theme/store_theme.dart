@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
 class StoreTheme {
-  static const Color primary = Color(0xFFF26419);
-  static const Color primaryDark = Color(0xFFD94F0D);
-  static const Color primarySoft = Color(0xFFFFF0E5);
-  static const Color accent = Color(0xFFF7B801);
-  static const Color accentDark = Color(0xFFDFA500);
-  static const Color accentSoft = Color(0xFFFFF7D6);
+  static const Color primary = Color(0xFFFF6F1F);
+  static const Color primaryDark = Color(0xFFF25D00);
+  static const Color primarySoft = Color(0xFFFFF1E3);
+  static const Color accent = Color(0xFFFF9D5A);
+  static const Color accentDark = Color(0xFFF25D00);
+  static const Color accentSoft = Color(0xFFFFF4EB);
   static const Color background = Color(0xFFFFF8F2);
-  static const Color backgroundAlt = Color(0xFFFFF1E6);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceSoft = Color(0xFFFFF9F5);
-  static const Color textPrimary = Color(0xFF26170F);
-  static const Color textSecondary = Color(0xFF674633);
-  static const Color textMuted = Color(0xFF765846);
-  static const Color border = Color(0xFFE9B98F);
-  static const Color borderSoft = Color(0xFFF2D4BC);
+  static const Color backgroundAlt = Color(0xFFFFF1E3);
+  static const Color surface = Color(0xFFFFFDF9);
+  static const Color surfaceSoft = Color(0xFFFFF6EE);
+  static const Color textPrimary = Color(0xFF25170F);
+  static const Color textSecondary = Color(0xFF68432E);
+  static const Color textMuted = Color(0xFF7B4A2A);
+  static const Color border = Color(0xFFF0C9AA);
+  static const Color borderSoft = Color(0xFFF0CFB3);
   static const Color success = Color(0xFF17683A);
   static const Color danger = Color(0xFFA1261A);
   static const Color warning = Color(0xFF805100);
