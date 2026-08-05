@@ -905,6 +905,10 @@
             box-shadow: 0 12px 26px rgba(37,23,15,.08) !important;
         }
         .panel h2, .panel h3, .product-card-title, .product-card-price, .label { color: #25170F !important; }
+        #adminOrderToast>div { background:linear-gradient(145deg,#3a160c,#7a2b0c)!important; border:1px solid #ff9d5a!important; box-shadow:0 22px 50px rgba(31,12,4,.34)!important; }
+        #adminOrderToast>div>div:first-child { background:#ff7a18!important; border:0!important; }
+        #adminOrderToastTitle,#adminOrderToastMessage { color:#fff!important; }
+        #adminOrderToastBody { color:#ffe4ce!important; }
         .section-subtitle, .helper-text, .muted { color: #68432E !important; }
         input, select, textarea { background: #FFF4EB !important; color: #25170F !important; border-color: #EAB68A !important; }
         .dashboard-pies { grid-column: 1 / -1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
@@ -956,6 +960,7 @@
             <button class="menu-tab" type="button" data-target="sec-dashboard"><span class="tab-icon">&#10022;</span>Dashboard</button>
             <button class="menu-tab" type="button" data-target="sec-offers"><span class="tab-icon">&#9993;</span>Promos</button>
             <button class="menu-tab" type="button" data-target="sec-company"><span class="tab-icon">&#8962;</span>Negocio</button>
+            <button class="menu-tab" type="button" data-target="sec-jobs"><span class="tab-icon">&#9733;</span>Vacantes</button>
             <button class="menu-tab" type="button" data-target="sec-products"><span class="tab-icon">&#9638;</span>Productos</button>
             <button class="menu-tab" type="button" data-target="sec-orders"><span class="tab-icon">&#8811;</span>Pedidos</button>
             <button class="menu-tab" type="button" data-target="sec-cash-closure"><span class="tab-icon">&#164;</span>Caja</button>
@@ -1165,6 +1170,13 @@
                     <div id="companyProfileMsg" class="msg"></div>
                 </form>
             </div>
+        </section>
+
+        <section id="sec-jobs" class="panel">
+            <h2>Vacantes laborales</h2>
+            <p class="section-subtitle">Publica puestos como lavandero, delivery, cocina o atención. El cliente podrá postular por WhatsApp.</p>
+            <form id="jobForm"><div class="row"><label>Puesto<input name="title" required maxlength="120" placeholder="Ej: Se necesita lavandero"></label><label>Descripción<input name="description" maxlength="500" placeholder="Horario, experiencia o requisitos"></label></div><button class="btn-main" type="submit">Publicar vacante</button><div id="jobMsg" class="msg"></div></form>
+            <div id="adminJobsList" class="list" style="margin-top:14px"></div>
         </section>
 
         <section id="sec-products" class="panel">
@@ -1423,6 +1435,7 @@ const adminSections = [
     document.getElementById('sec-dashboard'),
     document.getElementById('sec-offers'),
     document.getElementById('sec-company'),
+    document.getElementById('sec-jobs'),
     document.getElementById('sec-products'),
     document.getElementById('sec-orders'),
     document.getElementById('sec-cash-closure'),
@@ -1479,6 +1492,10 @@ async function loadAdminTabData(targetId) {
 
         if (targetId === 'sec-company') {
             await fetchCompanyProfile();
+            return;
+        }
+        if (targetId === 'sec-jobs') {
+            await fetchJobs();
         }
     } catch (error) {
         console.error('No se pudo cargar la pestaña admin', targetId, error);
@@ -1501,6 +1518,9 @@ const productImagePreview = document.getElementById('productImagePreview');
 const removeProductImageBtn = document.getElementById('removeProductImageBtn');
 
 const offerForm = document.getElementById('offerForm');
+const jobForm = document.getElementById('jobForm');
+const jobMsg = document.getElementById('jobMsg');
+const adminJobsList = document.getElementById('adminJobsList');
 const offerMsg = document.getElementById('offerMsg');
 const inactiveDaysInput = document.getElementById('inactiveDaysInput');
 const abandonedHoursInput = document.getElementById('abandonedHoursInput');
@@ -2693,6 +2713,20 @@ async function deleteUser(userId) {
     await fetchUsers();
 }
 
+async function fetchJobs() {
+    if (!adminJobsList) return;
+    const res=await fetch('/api/v1/admin/jobs',{headers:{'Authorization':`Bearer ${getToken()}`}}),jobs=await res.json();
+    if(!res.ok){adminJobsList.textContent=jobs.message||'No se pudieron cargar las vacantes.';return}
+    adminJobsList.innerHTML=jobs.length?jobs.map(job=>`<article class="card"><strong>${escapeHtml(job.title)}</strong><div class="muted">${escapeHtml(job.description||'Sin descripción')}</div><button type="button" data-delete-job="${job.id}">Eliminar</button></article>`).join(''):'<div class="card">No hay vacantes publicadas.</div>';
+    adminJobsList.querySelectorAll('[data-delete-job]').forEach(button=>button.onclick=async()=>{if(!confirm('Eliminar esta vacante?'))return;await fetch(`/api/v1/admin/jobs/${button.dataset.deleteJob}`,{method:'DELETE',headers:{'Authorization':`Bearer ${getToken()}`}});fetchJobs()});
+}
+
+async function saveJob(event) {
+    event.preventDefault();jobMsg.textContent='Publicando...';
+    const res=await fetch('/api/v1/admin/jobs',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${getToken()}`},body:JSON.stringify({title:jobForm.title.value.trim(),description:jobForm.description.value.trim()||null,is_active:true})}),data=await res.json();
+    if(!res.ok){jobMsg.textContent=data.message||'No se pudo publicar.';return}jobForm.reset();jobMsg.textContent='Vacante publicada.';fetchJobs();
+}
+
 async function updateOrderStatus(e) {
     e.preventDefault();
     const token = getToken();
@@ -2810,6 +2844,7 @@ async function boot() {
         fetchCashClosureHistory(),
         fetchUsers(),
         fetchCompanyProfile(),
+        fetchJobs(),
     ]);
 
     refreshTimer = setInterval(async () => {
@@ -2842,6 +2877,12 @@ if (offerForm) {
     };
     offerDiscountPercent?.addEventListener('input', calculateOfferPrice);
     offerProductSelect?.addEventListener('change', calculateOfferPrice);
+    offerPromoPrice?.addEventListener('input', () => {
+        const product=productsCache.find(item=>Number(item.id)===Number(offerProductSelect?.value)),price=Number(offerPromoPrice.value||0);
+        if(!product||price<=0)return;
+        const effective=(1-price/Number(product.price))*100,announced=Number(offerDiscountPercent?.value||0),expected=Number(product.price)*(1-announced/100),allowed=Math.max(1,Number(product.price)*.02),valid=!announced||Math.abs(price-expected)<=allowed;
+        if(offerPriceHelp){offerPriceHelp.textContent=`Descuento real: ${effective.toFixed(2)}% · precio calculado S/ ${expected.toFixed(2)}${valid?' · ajuste permitido':' · ajuste demasiado grande'}`;offerPriceHelp.style.color=valid?'#166534':'#b42318'}
+    });
     offerForm.addEventListener('submit', (event) => {
         event.preventDefault();
         const formData = new FormData();
@@ -2860,6 +2901,7 @@ if (offerForm) {
         sendOffer(formData, offerForm.target.value);
     });
 }
+jobForm?.addEventListener('submit',saveJob);
 if (runRecoveryCampaignBtn) {
     runRecoveryCampaignBtn.addEventListener('click', runRecoveryCampaigns);
 }

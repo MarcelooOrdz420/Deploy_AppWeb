@@ -13,6 +13,9 @@ Route::get('/promociones/{offer}', function (\App\Models\MarketingOffer $offer) 
 Route::view('/quienes-somos', 'store.about')->name('store.about');
 Route::view('/ubicacion', 'store.location')->name('store.location');
 Route::view('/seguimiento', 'store.tracking')->name('store.tracking');
+Route::view('/preguntas-frecuentes', 'store.faq')->name('store.faq');
+Route::view('/libro-reclamaciones', 'store.complaints')->name('store.complaints');
+Route::view('/trabaja-con-nosotros', 'store.careers')->name('store.careers');
 Route::view('/expertos', 'store.experts')->name('store.experts');
 Route::get('/carrito', fn () => response()
     ->view('store.cart')

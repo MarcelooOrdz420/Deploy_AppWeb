@@ -1,0 +1,6 @@
+@extends('store.layout')
+@section('title','El Dorado - Libro de reclamaciones')
+@section('content')
+<section class="panel"><p class="eyebrow">Atención al cliente</p><h1 class="title">Libro de reclamaciones</h1><p class="muted-main">Completa tus datos y abriremos WhatsApp con el mensaje preparado para que el administrador atienda tu caso.</p><form id="claimForm" class="form-grid"><label>Nombre<input name="name" required maxlength="120"></label><label>Pedido (opcional)<input name="order" maxlength="30"></label><label style="grid-column:1/-1">Detalle<textarea name="detail" required maxlength="500" rows="5"></textarea></label><button class="btn-main" type="submit">Enviar reclamo por WhatsApp</button></form></section>
+@endsection
+@section('scripts')<script>(()=>{let phone='';fetch('/api/v1/settings/public').then(r=>r.json()).then(d=>phone=String(d.support_phone||'').replace(/\D/g,''));document.getElementById('claimForm').addEventListener('submit',e=>{e.preventDefault();const f=e.currentTarget,msg=`Libro de reclamaciones - El Dorado\nNombre: ${f.name.value}\nPedido: ${f.order.value||'No indicado'}\nDetalle: ${f.detail.value}`;if(phone)window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,'_blank','noopener')})})();</script>@endsection

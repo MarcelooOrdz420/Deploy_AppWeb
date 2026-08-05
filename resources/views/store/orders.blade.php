@@ -192,40 +192,6 @@ function getToken() { return localStorage.getItem('ed_token'); }
 function statusEs(code) { return STATUS_ES[code] || code || 'n/a'; }
 function paymentStatusEs(code) { return PAYMENT_STATUS_ES[code] || code || 'n/a'; }
 function needsDigitalProof(method) { return false; }
-function einvoiceInfo(order) {
-    const meta = order && order.billing_metadata ? order.billing_metadata : {};
-    const einvoice = meta.einvoice || {};
-    const response = einvoice.response || {};
-    const sentAt = einvoice.sent_at || '';
-    const fake = Boolean(einvoice.fake || response.fake);
-    const pdf = response.enlace_del_pdf || (response.enlace ? `${response.enlace}.pdf` : '');
-    const xml = response.enlace_del_xml || '';
-    const cdr = response.enlace_del_cdr || '';
-
-    if (!sentAt) {
-        return `
-            <div class="einvoice-box">
-                <strong>Comprobante electronico</strong>
-                <span>Se emitirá cuando el pago figure como verificado.</span>
-            </div>
-        `;
-    }
-
-    const links = [
-        pdf ? `<a href="${pdf}" target="_blank" rel="noopener">Ver PDF</a>` : '',
-        xml ? `<a href="${xml}" target="_blank" rel="noopener">XML</a>` : '',
-        cdr ? `<a href="${cdr}" target="_blank" rel="noopener">CDR</a>` : '',
-    ].filter(Boolean).join('');
-
-    return `
-        <div class="einvoice-box">
-            <strong>Comprobante electrónico emitido</strong>
-            <span>${fake ? 'Comprobante de prueba.' : 'Tu comprobante está disponible.'}</span>
-            ${links ? `<div class="einvoice-links">${links}</div>` : ''}
-        </div>
-    `;
-}
-
 async function loadPreferences() {
     const token = getToken();
     if (!token) {
@@ -337,8 +303,6 @@ async function fetchMyOrders() {
                 <div><strong>Operacion:</strong> ${order.payment_reference || 'sin codigo'}</div>
                 <div class="order-products"><strong>Productos comprados</strong>${Array.isArray(order.items)&&order.items.length?order.items.map(item=>`<div>${item.quantity} × ${item.product_name} · S/ ${Number(item.line_total).toFixed(2)}</div>`).join(''):'<div>Detalle no disponible</div>'}</div>
                 ${String(order.payment_method || '').toLowerCase() === 'izipay' ? paymentMessage(String(order.payment_status || 'pending').toLowerCase()) : ''}
-                <div><strong>Comprobante:</strong> ${order.payment_proof_path ? `<a href="${order.payment_proof_path}" target="_blank">Ver archivo</a>` : 'no subido'}</div>
-                ${einvoiceInfo(order)}
                 ${needsDigitalProof(order.payment_method) ? `
                 <div class="proof-box">
                     <div><strong>Voucher digital</strong></div>
@@ -356,19 +320,11 @@ async function fetchMyOrders() {
                         && String(order.status || '').toLowerCase() !== 'cancelled'
                         ? `<button data-izipay-checkout="${order.id}" class="btn-soft">Pagar ahora</button>`
                         : ''}
-                    <button data-view-receipt="${order.id}" class="btn-soft">Ver boleta</button>
-                    <button data-download="${order.id}" class="btn-soft">Descargar boleta</button>
                 </div>
                 <div><strong>Estado de tu compra</strong>${orderTimelineHtml(order.status)}</div>
               </article>
             </details>
         `).join('');
-        ordersList.querySelectorAll('[data-download]').forEach(btn => {
-            btn.addEventListener('click', () => downloadReceipt(Number(btn.getAttribute('data-download'))));
-        });
-        ordersList.querySelectorAll('[data-view-receipt]').forEach(btn => {
-            btn.addEventListener('click', () => viewReceipt(Number(btn.getAttribute('data-view-receipt'))));
-        });
         ordersList.querySelectorAll('[data-proof-upload]').forEach(btn => {
             btn.addEventListener('click', () => uploadProof(Number(btn.getAttribute('data-proof-upload'))));
         });

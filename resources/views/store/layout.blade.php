@@ -862,8 +862,8 @@
                             <a href="{{ route('store.orders') }}">Mis pedidos automáticos</a>
                             <a href="{{ route('store.tracking') }}">Seguimiento por código</a>
                             <a href="{{ route('store.cart') }}">Delivery y formas de pago</a>
-                            <a href="#">Preguntas frecuentes</a>
-                            <a href="#">Libro de reclamaciones</a>
+                            <a href="{{ route('store.faq') }}">Preguntas frecuentes</a>
+                            <a href="{{ route('store.complaints') }}">Libro de reclamaciones</a>
                         </nav>
                     </section>
                     <section class="footer-column">
@@ -872,8 +872,7 @@
                             <a href="{{ route('store.about') }}">Nosotros</a>
                             <a href="{{ route('store.location') }}">Ubicación</a>
                             <a href="{{ route('store.experts') }}">Expertos</a>
-                            <a href="{{ route('store.products') }}">Nuestro menú</a>
-                            <a href="#">Trabaja con nosotros</a>
+                            <a href="{{ route('store.careers') }}">Trabaja con nosotros</a>
                         </nav>
                     </section>
                     <section class="footer-column">
@@ -1149,6 +1148,11 @@ initClientSession();
     #promoToastTitle,#promoToastMessage { color:#fff!important; }
     #promoOverlay .promo-copy { background:linear-gradient(145deg,#49100c,#77180f)!important; }
     #promoOverlay .promo-media { background:linear-gradient(145deg,#ff9b30,#ff6d0b)!important; }
+    #orderToast>div { background:linear-gradient(145deg,#3a160c,#7a2b0c)!important; border:1px solid #ff9d5a!important; box-shadow:0 22px 50px rgba(31,12,4,.34)!important; }
+    #orderToast>div>div:first-child { background:#ff7a18!important; border:0!important; }
+    #orderToastTitle,#orderToastMessage { color:#fff!important; }
+    #orderToastBody { color:#ffe4ce!important; }
+    #orderToastCloseBtn { background:#fff!important; color:#7a2b0c!important; border-color:#fff!important; }
 
     @media (max-width: 720px) {
         #promoOverlay {
@@ -2193,9 +2197,11 @@ initClientSession();
 
     function showOrderUpdate(payload) {
         if (!orderToast) return;
+        const statusLabels={pending:'pendiente',confirmed:'confirmado',preparing:'en preparación',on_the_way:'en camino',delivered:'entregado',cancelled:'cancelado'};
+        const translate=value=>Object.entries(statusLabels).reduce((text,[code,label])=>String(text||'').replace(new RegExp(`\\b${code}\\b`,'gi'),label),String(value||''));
         orderToastTitle.textContent = (payload?.title || 'Pedido actualizado').toString();
-        orderToastMessage.textContent = (payload?.message || 'Tu pedido tiene novedades.').toString();
-        orderToastBody.textContent = (payload?.body || '').toString();
+        orderToastMessage.textContent = translate(payload?.message || 'Tu pedido tiene novedades.');
+        orderToastBody.textContent = translate(payload?.body || '');
         orderToast.style.display = 'block';
         if (typeof getClientAlertCount === 'function' && typeof setClientAlertCount === 'function') {
             setClientAlertCount(getClientAlertCount() + 1);

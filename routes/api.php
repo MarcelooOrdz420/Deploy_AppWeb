@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\PublicSettingsController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileAddressController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\JobOpeningController;
 use App\Events\ChatbotReplySent;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +35,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
     Route::get('/settings/public', PublicSettingsController::class);
+    Route::get('/jobs', [JobOpeningController::class, 'index']);
     Route::get('/orders/track/{trackingCode}', [OrderController::class, 'track']);
 
     Route::post('/chatbot/message', [ChatbotController::class, 'message']);
@@ -68,6 +70,9 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/products', [ProductController::class, 'store']);
             Route::put('/products/{product}', [ProductController::class, 'update']);
             Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+            Route::get('/admin/jobs', [JobOpeningController::class, 'adminIndex']);
+            Route::post('/admin/jobs', [JobOpeningController::class, 'store']);
+            Route::delete('/admin/jobs/{jobOpening}', [JobOpeningController::class, 'destroy']);
 
             Route::get('/admin/orders', [OrderController::class, 'index']);
             Route::get('/admin/orders/stats', [OrderController::class, 'stats']);

@@ -1,0 +1,6 @@
+@extends('store.layout')
+@section('title','El Dorado - Preguntas frecuentes')
+@section('content')
+<style>.faq-list{display:grid;gap:10px}.faq-list details{border:1px solid #efb98d;border-radius:16px;background:#fff8f1;color:#25170f;overflow:hidden}.faq-list summary{padding:16px;font-weight:900;cursor:pointer}.faq-list p{margin:0;padding:0 16px 16px;color:#68432e}</style>
+<section class="panel"><p class="eyebrow">Atención al cliente</p><h1 class="title">Preguntas frecuentes</h1><div class="faq-list"><details><summary>¿Cómo hago un pedido?</summary><p>Elige tus productos, agrégalos al carrito, inicia sesión y completa entrega y pago.</p></details><details><summary>¿Dónde veo el estado?</summary><p>Tus compras aparecen automáticamente en Mis pedidos con su estado actualizado.</p></details><details><summary>¿Puedo pedir delivery?</summary><p>Sí. Puedes escribir tu dirección o utilizar la ubicación GPS durante la compra.</p></details><details><summary>¿Cómo recibo mi comprobante?</summary><p>El comprobante se envía automáticamente al correo registrado.</p></details><details><summary>¿Cómo funcionan las promociones?</summary><p>El precio promocional aparece en la ficha y el servidor lo valida antes de cobrar.</p></details></div></section>
+@endsection

@@ -1720,7 +1720,8 @@ function renderFloatCart() {
 
     floatCartCountEl.textContent = String(count);
     document.body.classList.toggle('cart-has-items', count > 0);
-    setFloatCartVisible(true);
+    setFloatCartVisible(count > 0);
+    if (count <= 0) setCartOpen(false);
 
     if (!cart.length) {
         floatCartBodyEl.innerHTML = `<div class="muted-main" style="line-height:1.5;"><strong>Aun no agregaste productos.</strong><br>Agrega un platillo y tu carrito flotante se ira actualizando.</div>`;

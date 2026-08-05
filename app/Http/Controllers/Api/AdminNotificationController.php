@@ -51,6 +51,15 @@ class AdminNotificationController extends Controller
         $promoPrice = isset($data['promo_price'])
             ? round((float) $data['promo_price'], 2)
             : round($normalPrice * (1 - ((float) ($data['discount_percent'] ?? 0) / 100)), 2);
+        if (isset($data['promo_price'], $data['discount_percent'])) {
+            $calculatedPrice = round($normalPrice * (1 - ((float) $data['discount_percent'] / 100)), 2);
+            $allowedAdjustment = max(1.00, round($normalPrice * 0.02, 2));
+            if (abs($promoPrice - $calculatedPrice) > $allowedAdjustment) {
+                return response()->json([
+                    'message' => "El {$data['discount_percent']}% da S/ ".number_format($calculatedPrice, 2).". Solo puedes ajustar hasta S/ ".number_format($allowedAdjustment, 2).' para evitar una promoción engañosa.',
+                ], 422);
+            }
+        }
         if ($promoPrice >= $normalPrice) {
             return response()->json(['message' => 'El precio promocional debe ser menor que el precio normal del platillo.'], 422);
         }
