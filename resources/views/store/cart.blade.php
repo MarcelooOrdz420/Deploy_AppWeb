@@ -44,6 +44,7 @@
 
             <section class="checkout-flow">
                 <form id="orderForm" class="checkout-form">
+                    <input type="hidden" name="drink_note" value="">
                     <input type="hidden" name="latitude">
                     <input type="hidden" name="longitude">
 
@@ -402,7 +403,7 @@ orderForm.addEventListener('submit', async e => {
         billing_address: optionalTrim(orderForm.billing_address),
         billing_metadata: billingMeta,
         salad_type: orderForm.salad_type ? (orderForm.salad_type.value || null) : null,
-        drink_note: null,
+        drink_note: orderForm.drink_note.value.trim() || null,
         address: orderForm.address.value.trim() || null,
         reference: orderForm.reference.value.trim() || null,
         latitude: optionalTrim(orderForm.latitude),
@@ -474,5 +475,12 @@ orderForm.addEventListener('submit', async e => {
     }
 });
  renderCart();billingReceiptType.addEventListener('change',updateBillingUi);deliveryType.addEventListener('change',updateDeliveryUi);billingDocumentNumber.addEventListener('input',()=>{billingDocumentNumber.value=digits(billingDocumentNumber.value).slice(0,currentDocumentLength());const needed=currentDocumentLength(),current=billingDocumentNumber.value.length;if(currentReceiptType())billingLookupBox.textContent=current<needed?`Faltan ${needed-current} digitos para consultar el ${billingDocumentType.value.toUpperCase()}.`:billingLookupBox.textContent;if(current===needed&&billingDocumentNumber.value!==lastLookupValue)lookupDocument()});lookupDocumentBtn.addEventListener('click',()=>lookupDocument());if(paymentProofFile)paymentProofFile.addEventListener('change',()=>{const file=paymentProofFile.files?.[0];paymentProofPreview.textContent=file?`Archivo listo: ${file.name} (${Math.round(file.size/1024)} KB)`:'Aun no seleccionaste archivo.';updateHeroStatus(getCart())});updateBillingUi();if(isLoggedIn())applyPolliaCheckoutPrefill();else resetCheckoutAfterLogout();updateDeliveryUi();loadCompanySettings().finally(()=>{updatePaymentInfo();updateReceiptDeliveryUi();if(isLoggedIn())showLastOrder();updateHeroStatus(getCart())});
+</script>
+<script>
+const guidedOrderNote = sessionStorage.getItem('ed_guided_order_note') || '';
+if (document.getElementById('orderForm')?.drink_note) {
+    document.getElementById('orderForm').drink_note.value = guidedOrderNote.slice(0, 120);
+}
+sessionStorage.removeItem('ed_guided_order_note');
 </script>
 @endsection

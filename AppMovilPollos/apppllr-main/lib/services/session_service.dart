@@ -22,6 +22,11 @@ class SessionService {
     return (prefs.getString('user_email') ?? '').trim();
   }
 
+  Future<String> getUserPhone() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getString('user_phone') ?? '').trim();
+  }
+
   Future<String> getUserRole() async {
     final prefs = await SharedPreferences.getInstance();
     return (prefs.getString('user_role') ?? 'customer').trim();

@@ -7,6 +7,9 @@ import '../config/pusher_config.dart';
 import '../services/chatbot_api_service.dart';
 import '../services/pusher_service.dart';
 import '../services/session_service.dart';
+import '../services/productos_service.dart';
+import '../models/producto.dart';
+import '../state/cart_controller.dart';
 
 class ChatBotPage extends StatefulWidget {
   const ChatBotPage({super.key});
@@ -24,7 +27,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
       role: _ChatRole.bot,
       text:
           'Hola, soy POLL-IA. Puedo ayudarte con dudas sobre productos, pedidos, pagos y delivery. ¿En qué puedo ayudarte hoy?',
-      suggestions: ['Productos', 'Pedidos', 'Pagos', 'Delivery'],
+      suggestions: ['Ayúdame a comprar', 'Productos', 'Pedidos', 'Delivery'],
     ),
   ];
 
@@ -124,6 +127,12 @@ class _ChatBotPageState extends State<ChatBotPage> {
   Future<void> _sendText([String? preset]) async {
     final text = (preset ?? _controller.text).trim();
     if (text.isEmpty) return;
+    final normalized = text.toLowerCase().trim();
+    if (['ayúdame a comprar', 'ayudame a comprar', 'quiero hacer un pedido', 'quiero comprar', 'ayúdame con mi pedido', 'deseo ordenar', 'quiero pedir comida'].contains(normalized)) {
+      _controller.clear();
+      await showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => const _GuidedPurchaseSheet());
+      return;
+    }
 
     setState(() {
       _messages.add(_ChatMessage(role: _ChatRole.user, text: text));
@@ -218,7 +227,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('POLL-IA'),
+        title: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('POLL-IA'), Text('Chat con El Dorado · Asistente de compras', style: TextStyle(fontSize: 12))]),
         backgroundColor: Colors.orange,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -363,6 +372,40 @@ class _ChatBotPageState extends State<ChatBotPage> {
       ),
     );
   }
+}
+
+class _GuidedPurchaseSheet extends StatefulWidget {
+  const _GuidedPurchaseSheet();
+  @override State<_GuidedPurchaseSheet> createState() => _GuidedPurchaseSheetState();
+}
+
+class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _name = TextEditingController(), _phone = TextEditingController(), _email = TextEditingController(), _address = TextEditingController(), _reference = TextEditingController(), _notes = TextEditingController();
+  late final Future<List<Producto>> _products = ProductosService().listar();
+  int _step = 0, _qty = 1, _drinkQty = 1;
+  Producto? _dish, _drink, _side;
+  String _salad = '', _delivery = 'delivery';
+  @override void initState() { super.initState(); _prefillCustomer(); }
+  Future<void> _prefillCustomer() async { final session=SessionService(); final values=await Future.wait([session.getUserName(),session.getUserPhone(),session.getUserEmail()]); if(!mounted)return; setState((){_name.text=values[0]=='Invitado'?'':values[0];_phone.text=values[1];_email.text=values[2];}); }
+  @override void dispose() { for (final controller in [_name,_phone,_email,_address,_reference,_notes]) { controller.dispose(); } super.dispose(); }
+  bool _drinkProduct(Producto p) => RegExp(r'bebida|gaseosa|agua|chicha|limonada|coca|inca|sprite', caseSensitive:false).hasMatch('${p.categoria} ${p.name}');
+  bool _sideProduct(Producto p) => RegExp(r'acompa|guarnici|papas|arroz|camote|yuca', caseSensitive:false).hasMatch('${p.categoria} ${p.name}');
+  InputDecoration _decor(String label) => InputDecoration(labelText: label, filled:true, fillColor:Colors.white, border:OutlineInputBorder(borderRadius:BorderRadius.circular(12)));
+  @override Widget build(BuildContext context) => FractionallySizedBox(heightFactor:.9, child: FutureBuilder<List<Producto>>(future:_products,builder:(context,snap){
+    if (snap.connectionState != ConnectionState.done) return const Center(child:CircularProgressIndicator());
+    if (snap.hasError) return const Center(child:Text('No se pudo cargar el catálogo.'));
+    final all=snap.data??const <Producto>[]; final drinks=all.where(_drinkProduct).toList(); final sides=all.where(_sideProduct).toList(); final dishes=all.where((p)=>!_drinkProduct(p)&&!_sideProduct(p)&&!p.categoria.toLowerCase().contains('ensalada')).toList();
+    if(all.isEmpty) return const Center(child:Text('No hay productos disponibles.'));
+    final pages=<Widget>[
+      Column(children:[DropdownButtonFormField<Producto>(value:_dish,decoration:_decor('¿Qué plato deseas pedir?'),items:dishes.map((p)=>DropdownMenuItem(value:p,child:Text('${p.name} · S/ ${p.price.toStringAsFixed(2)}'))).toList(),onChanged:(v)=>setState(()=>_dish=v),validator:(v)=>v==null?'Selecciona un plato':null),const SizedBox(height:12),Row(children:[IconButton(onPressed:_qty>1?()=>setState(()=>_qty--):null,icon:const Icon(Icons.remove)),Text('$_qty',style:const TextStyle(fontWeight:FontWeight.bold)),IconButton(onPressed:()=>setState(()=>_qty++),icon:const Icon(Icons.add))])]),
+      Column(children:[if(sides.isNotEmpty) DropdownButtonFormField<Producto>(value:_side,decoration:_decor('Acompañamiento'),items:[const DropdownMenuItem(value:null,child:Text('Sin acompañamiento')),...sides.map((p)=>DropdownMenuItem(value:p,child:Text(p.name)))],onChanged:(v)=>setState(()=>_side=v)),const SizedBox(height:12),DropdownButtonFormField<String>(value:_salad,decoration:_decor('Ensalada'),items:const [DropdownMenuItem(value:'',child:Text('Sin ensalada')),DropdownMenuItem(value:'dulce',child:Text('Dulce')),DropdownMenuItem(value:'salada',child:Text('Salada'))],onChanged:(v)=>setState(()=>_salad=v??'')),const SizedBox(height:12),if(drinks.isNotEmpty) DropdownButtonFormField<Producto>(value:_drink,decoration:_decor('Bebida'),items:[const DropdownMenuItem(value:null,child:Text('Sin bebida')),...drinks.map((p)=>DropdownMenuItem(value:p,child:Text('${p.name} · S/ ${p.price.toStringAsFixed(2)}')))],onChanged:(v)=>setState(()=>_drink=v)),const SizedBox(height:12),TextFormField(controller:_notes,maxLength:255,maxLines:2,decoration:_decor('Indicaciones para preparar tu pedido'))]),
+      Column(children:[DropdownButtonFormField<String>(value:_delivery,decoration:_decor('Modalidad'),items:const [DropdownMenuItem(value:'delivery',child:Text('Delivery')),DropdownMenuItem(value:'pickup',child:Text('Recojo en local'))],onChanged:(v)=>setState(()=>_delivery=v??'delivery')),const SizedBox(height:12),if(_delivery=='delivery') TextFormField(controller:_address,decoration:_decor('Dirección'),validator:(v)=>_delivery=='delivery'&&(v??'').trim().isEmpty?'Dirección obligatoria':null),const SizedBox(height:12),TextFormField(controller:_reference,decoration:_decor('Referencia'))]),
+      Column(children:[TextFormField(controller:_name,decoration:_decor('Nombre completo'),validator:(v)=>(v??'').trim().isEmpty?'Nombre obligatorio':null),const SizedBox(height:12),TextFormField(controller:_phone,keyboardType:TextInputType.phone,decoration:_decor('Teléfono'),validator:(v)=>RegExp(r'^\+?[0-9\s-]{7,30}$').hasMatch((v??'').trim())?null:'Teléfono inválido'),const SizedBox(height:12),TextFormField(controller:_email,keyboardType:TextInputType.emailAddress,decoration:_decor('Correo electrónico'),validator:(v)=>RegExp(r'^\S+@\S+\.\S+$').hasMatch((v??'').trim())?null:'Correo inválido')]),
+      Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('${_dish?.name??'Plato'} × $_qty',style:const TextStyle(fontWeight:FontWeight.bold)),if(_side!=null)Text(_side!.name),if(_drink!=null)Text('${_drink!.name} × $_drinkQty'),Text(_delivery=='delivery'?'Delivery':'Recojo en local'),const SizedBox(height:12),Text('Subtotal de productos: S/ ${((_dish?.price??0)*_qty+(_side?.price??0)+(_drink?.price??0)*_drinkQty).toStringAsFixed(2)}')]),
+    ];
+    return SafeArea(child:Padding(padding:EdgeInsets.fromLTRB(16,16,16,MediaQuery.viewInsetsOf(context).bottom+16),child:Form(key:_formKey,child:Column(children:[const Text('Compra guiada · El Dorado',style:TextStyle(fontSize:20,fontWeight:FontWeight.w900)),const SizedBox(height:12),Expanded(child:SingleChildScrollView(child:pages[_step])),Row(children:[if(_step>0)TextButton(onPressed:()=>setState(()=>_step--),child:const Text('Anterior')),const Spacer(),TextButton(onPressed:()=>Navigator.pop(context),child:const Text('Cancelar')),FilledButton(onPressed:(){if(!_formKey.currentState!.validate())return;if(_step<4){setState(()=>_step++);return;}final cart=CartScope.of(context);for(var i=0;i<_qty;i++)cart.add(_dish!);if(_side!=null)cart.add(_side!);if(_drink!=null)for(var i=0;i<_drinkQty;i++)cart.add(_drink!);cart.setDeliveryType(_delivery=='delivery');if(_delivery=='delivery')cart.setAddress(addressValue:_address.text.trim(),referenceValue:_reference.text.trim());cart.setGuidedCheckout(name:_name.text.trim(),phone:_phone.text.trim(),email:_email.text.trim(),note:_notes.text.trim(),salad:_salad);Navigator.pop(context);context.go('/app');},child:Text(_step<4?'Continuar':'Agregar al carrito'))])]))));
+  }));
 }
 
 enum _ChatRole { user, bot }

@@ -19,6 +19,11 @@ class CartController extends ChangeNotifier {
   String deliveryWindowLabel = '';
   String address = '';
   String reference = '';
+  String customerName = '';
+  String customerPhone = '';
+  String customerEmail = '';
+  String orderNote = '';
+  String saladType = '';
   double? latitude;
   double? longitude;
 
@@ -76,6 +81,11 @@ class CartController extends ChangeNotifier {
     deliveryWindowLabel = '';
     address = '';
     reference = '';
+    customerName = '';
+    customerPhone = '';
+    customerEmail = '';
+    orderNote = '';
+    saladType = '';
     latitude = null;
     longitude = null;
     notifyListeners();
@@ -112,6 +122,15 @@ class CartController extends ChangeNotifier {
     reference = referenceValue ?? reference;
     latitude = latitudeValue ?? latitude;
     longitude = longitudeValue ?? longitude;
+    notifyListeners();
+  }
+
+  void setGuidedCheckout({required String name, required String phone, required String email, required String note, required String salad}) {
+    customerName = name;
+    customerPhone = phone;
+    customerEmail = email;
+    orderNote = note.length > 120 ? note.substring(0, 120) : note;
+    saladType = salad;
     notifyListeners();
   }
 }

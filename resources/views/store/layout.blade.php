@@ -926,7 +926,7 @@ function clearCustomerSessionData() {
         'ed_pending_order',
         CLIENT_ALERTS_KEY,
     ].forEach(key => localStorage.removeItem(key));
-    ['ed_receipt_preview', 'ed_checkout_draft', 'ed_izipay_data', 'ed_pending_order']
+    ['ed_receipt_preview', 'ed_checkout_draft', 'ed_izipay_data', 'ed_pending_order', 'ed_guided_order_note']
         .forEach(key => sessionStorage.removeItem(key));
     clearTimeout(cartSyncTimer);
     document.body.classList.remove('cart-open', 'cart-panel-open', 'cart-has-items');
@@ -1051,6 +1051,17 @@ initClientSession();
 </script>
 
 <style>
+    .pollia-purchase-flow { overflow-y:auto; overflow-x:hidden; padding:12px; background:#FFF8F2; }
+    .pollia-purchase-card { display:grid; gap:12px; padding:14px; border:1px solid #F0C9AA; border-radius:14px; background:#FFFDF9; color:#25170F; }
+    .pollia-purchase-card h3 { margin:0; color:#25170F; font-size:17px; }
+    .pollia-purchase-card label { display:grid; gap:6px; color:#68432E; font-size:12px; font-weight:800; }
+    .pollia-purchase-card input,.pollia-purchase-card select,.pollia-purchase-card textarea { width:100%; min-height:44px; padding:10px 12px; border:1px solid #EAB68A; border-radius:12px; background:#fff; color:#25170F; }
+    .pollia-purchase-card textarea { min-height:78px; resize:vertical; }
+    .pollia-purchase-actions { display:flex; flex-wrap:wrap; gap:8px; position:sticky; bottom:0; padding-top:4px; background:#FFFDF9; }
+    .pollia-purchase-actions button { min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid #EAB68A; background:#fff; color:#25170F; font-weight:900; }
+    .pollia-purchase-actions .primary { background:#FF6F1F; color:#fff; border-color:#C94700; }
+    .pollia-product-summary { display:grid; gap:6px; padding:10px; border-radius:12px; background:#FFF1E3; color:#25170F; }
+
     @media (max-width: 720px) {
         #promoOverlay {
             overflow-y: auto;
@@ -1328,7 +1339,7 @@ initClientSession();
             right: 10px;
             bottom: 78px;
             width: calc(100vw - 20px);
-            height: min(560px, calc(100vh - 96px));
+            height: min(85vh, calc(100vh - 96px));
         }
     }
 </style>
@@ -1342,12 +1353,13 @@ initClientSession();
             <img src="/images/ico-pollo.jpg" alt="El Dorado" class="pollia-avatar">
             <div class="pollia-title">
                 <strong>POLL-IA</strong>
-                <span id="polliaStatus">Asistente de Pollos y Parrillas El Dorado</span>
+                <span id="polliaStatus">Chat con El Dorado · Asistente de compras</span>
             </div>
         </div>
         <button id="polliaClose" type="button" class="pollia-close" aria-label="Cerrar">X</button>
     </div>
     <div id="polliaLog" class="pollia-log"></div>
+    <div id="polliaPurchaseFlow" class="pollia-purchase-flow" hidden></div>
     <form id="polliaForm" class="pollia-form">
         <input id="polliaInput" type="text" maxlength="1200" autocomplete="off" placeholder="Escribe tu consulta..." aria-label="Mensaje para POLL-IA">
         <button id="polliaSend" type="submit" aria-label="Enviar">></button>
@@ -1364,6 +1376,7 @@ initClientSession();
     const log = document.getElementById('polliaLog');
     const statusEl = document.getElementById('polliaStatus');
     const sendBtn = document.getElementById('polliaSend');
+    const purchaseFlow = document.getElementById('polliaPurchaseFlow');
 
     if (!launcher || !widget || !form || !input || !log) return;
 
@@ -1470,6 +1483,51 @@ initClientSession();
             productsCache = [];
         }
         return productsCache;
+    }
+
+    const guided = { step: 0, products: [], data: {} };
+    function isGuidedPurchaseIntent(value) {
+        return /^(ayudame a comprar|quiero hacer un pedido|quiero comprar|ayudame con mi pedido|deseo ordenar|quiero pedir comida)[.!\s]*$/i.test(normalizeProductName(value));
+    }
+    function categoryText(product) { return normalizeProductName(`${product.category || ''} ${product.name || ''}`); }
+    function optionsFor(rows, selected = '') {
+        return rows.map(product => `<option value="${Number(product.id)}" ${String(product.id)===String(selected)?'selected':''}>${escapeHtml(product.name)} · S/ ${Number(product.price).toFixed(2)}</option>`).join('');
+    }
+    function captureGuidedFields() {
+        purchaseFlow.querySelectorAll('[data-guided]').forEach(field => { guided.data[field.dataset.guided] = field.type === 'number' ? Number(field.value || 0) : field.value.trim(); });
+    }
+    function closeGuided(cancelled = false) {
+        purchaseFlow.hidden = true; purchaseFlow.innerHTML = ''; guided.step = 0; guided.data = {};
+        log.style.display = 'flex'; form.style.display = 'flex';
+        if (cancelled) addMessage('bot', 'Compra guiada cancelada. Puedes seguir consultándome normalmente.');
+    }
+    async function openGuidedPurchase() {
+        guided.products = (await publicProducts()).filter(product => product && product.can_sell !== false && !product.is_sold_out && product.is_available !== false);
+        if (!guided.products.length) { addMessage('bot', 'No hay productos disponibles en este momento.'); return; }
+        const user = typeof parseUser === 'function' ? parseUser() : null;
+        guided.data = { qty:1, drinkQty:1, deliveryType:'delivery', customerName:user?.name||'', phone:user?.phone||'', email:user?.email||'' };
+        guided.step = 0; log.style.display = 'none'; form.style.display = 'none'; purchaseFlow.hidden = false; renderGuidedPurchase();
+    }
+    function renderGuidedPurchase() {
+        const d = guided.data;
+        const drinks = guided.products.filter(product => /(bebida|gaseosa|refresco|agua|chicha|limonada|coca|inca|sprite)/.test(categoryText(product)));
+        const sides = guided.products.filter(product => /(acompanamiento|guarnicion|papas|arroz|camote|yuca)/.test(categoryText(product)));
+        const dishes = guided.products.filter(product => !drinks.includes(product) && !sides.includes(product) && !/ensalada/.test(categoryText(product)));
+        const product = guided.products.find(item => String(item.id)===String(d.productId));
+        const side = guided.products.find(item => String(item.id)===String(d.sideId));
+        const drink = guided.products.find(item => String(item.id)===String(d.drinkId));
+        const steps = [
+            `<h3>Paso 1 · Plato y cantidad</h3><label>¿Qué plato deseas pedir?<select data-guided="productId"><option value="">Selecciona</option>${optionsFor(dishes,d.productId)}</select></label><label>Cantidad<input data-guided="qty" type="number" min="1" max="20" value="${Number(d.qty)||1}"></label>`,
+            `<h3>Paso 2 · Complementos</h3>${sides.length?`<label>Acompañamiento<select data-guided="sideId"><option value="">Sin acompañamiento</option>${optionsFor(sides,d.sideId)}</select></label>`:''}<label>Ensalada<select data-guided="salad"><option value="">Sin ensalada</option><option value="dulce" ${d.salad==='dulce'?'selected':''}>Dulce</option><option value="salada" ${d.salad==='salada'?'selected':''}>Salada</option></select></label>${drinks.length?`<label>Bebida<select data-guided="drinkId"><option value="">Sin bebida</option>${optionsFor(drinks,d.drinkId)}</select></label><label>Cantidad bebida<input data-guided="drinkQty" type="number" min="1" max="20" value="${Number(d.drinkQty)||1}"></label>`:''}<label>Indicaciones<textarea data-guided="notes" maxlength="255" placeholder="Sin ají, papas bien doradas...">${escapeHtml(d.notes||'')}</textarea></label>`,
+            `<h3>Paso 3 · Entrega</h3><label>Modalidad<select data-guided="deliveryType"><option value="delivery" ${d.deliveryType==='delivery'?'selected':''}>Delivery</option><option value="pickup" ${d.deliveryType==='pickup'?'selected':''}>Recojo en local</option></select></label><label>Dirección<input data-guided="address" maxlength="255" value="${escapeHtml(d.address||'')}"></label><label>Referencia<input data-guided="reference" maxlength="255" value="${escapeHtml(d.reference||'')}"></label>`,
+            `<h3>Paso 4 · Tus datos</h3><label>Nombre completo<input data-guided="customerName" maxlength="120" value="${escapeHtml(d.customerName||'')}"></label><label>Teléfono<input data-guided="phone" inputmode="tel" maxlength="30" value="${escapeHtml(d.phone||'')}"></label><label>Correo<input data-guided="email" type="email" maxlength="120" value="${escapeHtml(d.email||'')}"></label>`,
+            `<h3>Resumen</h3><div class="pollia-product-summary"><strong>${escapeHtml(product?.name||'Plato pendiente')} × ${Number(d.qty)||1}</strong>${side?`<span>${escapeHtml(side.name)}</span>`:''}${drink?`<span>${escapeHtml(drink.name)} × ${Number(d.drinkQty)||1}</span>`:''}<span>${d.deliveryType==='delivery'?'Delivery':'Recojo en local'}</span><strong>Subtotal: S/ ${((Number(product?.price||0)*Number(d.qty||1))+Number(side?.price||0)+(Number(drink?.price||0)*Number(d.drinkQty||1))).toFixed(2)}</strong></div>`,
+        ];
+        purchaseFlow.innerHTML = `<div class="pollia-purchase-card">${steps[guided.step]}<div class="pollia-purchase-actions">${guided.step?'<button type="button" data-guided-back>Anterior</button>':''}${guided.step<4?'<button type="button" class="primary" data-guided-next>Continuar</button>':'<button type="button" class="primary" data-guided-confirm>Agregar al carrito</button>'}<button type="button" data-guided-cancel>Cancelar</button></div></div>`;
+        purchaseFlow.querySelector('[data-guided-back]')?.addEventListener('click',()=>{captureGuidedFields();guided.step--;renderGuidedPurchase()});
+        purchaseFlow.querySelector('[data-guided-next]')?.addEventListener('click',()=>{captureGuidedFields();if(guided.step===0&&!d.productId)return alert('Selecciona un plato.');if(guided.step===2&&d.deliveryType==='delivery'&&!d.address)return alert('Ingresa la dirección.');if(guided.step===3&&(!d.customerName||!/^\+?[0-9\s-]{7,30}$/.test(d.phone||'')||!/^\S+@\S+\.\S+$/.test(d.email||'')))return alert('Completa nombre, teléfono y correo válidos.');guided.step++;renderGuidedPurchase()});
+        purchaseFlow.querySelector('[data-guided-cancel]')?.addEventListener('click',()=>closeGuided(true));
+        purchaseFlow.querySelector('[data-guided-confirm]')?.addEventListener('click',()=>{captureGuidedFields();const main=guided.products.find(item=>String(item.id)===String(d.productId));if(!main)return;const items=[{...main,qty:Math.max(1,Number(d.qty)||1)}];if(side)items.push({...side,qty:1});if(drink)items.push({...drink,qty:Math.max(1,Number(d.drinkQty)||1)});mergeIntoCart(items);localStorage.setItem(checkoutPrefillKey,JSON.stringify({customer_name:d.customerName,phone:d.phone,email:d.email,delivery_type:d.deliveryType,address:d.deliveryType==='delivery'?d.address:'',reference:d.reference,salad_type:d.salad}));sessionStorage.setItem('ed_guided_order_note',String(d.notes||'').slice(0,120));closeGuided();window.location.href='/carrito'});
     }
 
     function pendingCart() {
@@ -1658,12 +1716,10 @@ initClientSession();
             const res = await fetch('/api/v1/chatbot/status', { headers: { 'Accept': 'application/json' } });
             const data = await res.json();
             if (statusEl) {
-                const provider = (data.provider || 'ia').toString().toUpperCase();
-                const model = (data.model || '').toString();
-                statusEl.textContent = data.ok ? `${provider}${model ? ` - ${model}` : ''}` : 'Modo respuesta local';
+                statusEl.textContent = data.ok ? 'Chat con El Dorado · Asistente de compras' : 'Chat con El Dorado · Asistente disponible';
             }
         } catch {
-            if (statusEl) statusEl.textContent = 'Modo respuesta local';
+            if (statusEl) statusEl.textContent = 'Chat con El Dorado · Asistente disponible';
         }
     }
 
@@ -1672,7 +1728,7 @@ initClientSession();
         launcher.style.display = 'none';
         if (!booted) {
             booted = true;
-            addMessage('bot', 'Hola, soy POLL-IA. Puedo ayudarte con productos, pedidos, pagos, horarios, delivery y ubicacion.');
+            addMessage('bot', 'Hola, soy POLL-IA. Estás en Chat con El Dorado. Escribe “Ayúdame a comprar” para iniciar una compra guiada.');
             checkStatus();
         }
         setTimeout(() => input.focus(), 80);
@@ -1686,6 +1742,12 @@ initClientSession();
     async function sendMessage(raw) {
         const message = (raw || '').trim();
         if (!message || sending) return;
+        if (isGuidedPurchaseIntent(message)) {
+            addMessage('user', message);
+            input.value = '';
+            await openGuidedPurchase();
+            return;
+        }
 
         sending = true;
         sendBtn.disabled = true;
@@ -1748,6 +1810,15 @@ initClientSession();
     form.addEventListener('submit', (event) => {
         event.preventDefault();
         sendMessage(input.value);
+    });
+    window.addEventListener('ed:customer-session-cleared', () => {
+        purchaseFlow.hidden = true;
+        purchaseFlow.innerHTML = '';
+        purchaseFlow._draft = null;
+        log.innerHTML = '';
+        log.style.display = 'flex';
+        form.style.display = 'flex';
+        booted = false;
     });
 })();
 </script>

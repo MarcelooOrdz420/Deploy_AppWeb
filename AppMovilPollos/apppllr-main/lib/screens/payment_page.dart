@@ -120,6 +120,10 @@ class _PaymentPageState extends State<PaymentPage> {
       _deliveryType = cart.isDelivery ? DeliveryType.delivery : DeliveryType.pickup;
       _addressCtrl.text = cart.address;
       _referenceCtrl.text = cart.reference;
+      if (_nameCtrl.text.trim().isEmpty) _nameCtrl.text = cart.customerName;
+      if (_phoneCtrl.text.trim().isEmpty) _phoneCtrl.text = cart.customerPhone;
+      if (_customerEmailCtrl.text.trim().isEmpty) _customerEmailCtrl.text = cart.customerEmail;
+      if (cart.saladType.isNotEmpty) _saladType = cart.saladType;
       _selectedAddressValue = null;
       if (cart.latitude != null) {
         _latitudeCtrl.text = cart.latitude!.toStringAsFixed(6);
@@ -378,7 +382,7 @@ class _PaymentPageState extends State<PaymentPage> {
           'billing_address': _billingAddressCtrl.text.trim().isEmpty ? null : _billingAddressCtrl.text.trim(),
           'billing_metadata': _billingMetadata,
           'salad_type': hasChicken ? _saladType : null,
-          'drink_note': null,
+          'drink_note': cart.orderNote.trim().isEmpty ? null : cart.orderNote.trim(),
           'address': address.isEmpty ? null : address,
           'reference': _referenceCtrl.text.trim().isEmpty ? null : _referenceCtrl.text.trim(),
           'latitude': _parseCoordinate(_latitudeCtrl),
