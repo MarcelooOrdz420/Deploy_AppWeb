@@ -903,15 +903,23 @@ window.edSyncCartDraft = function (forceCart = null) {
     }, 350);
 }
 
-function clearClientSession() {
-    localStorage.removeItem('ed_token');
-    localStorage.removeItem('ed_user');
-    localStorage.removeItem('ed_session');
-    localStorage.removeItem('ed_cart');
-    localStorage.removeItem('ed_last_tracking');
-    localStorage.removeItem('ed_recent_trackings');
-    localStorage.removeItem(CLIENT_ALERTS_KEY);
+function clearCustomerSessionData() {
+    [
+        'ed_token',
+        'ed_user',
+        'ed_session',
+        'ed_cart',
+        'ed_last_tracking',
+        'ed_recent_trackings',
+        'ed_order_statuses',
+        'ed_pollia_checkout_prefill_v1',
+        CLIENT_ALERTS_KEY,
+    ].forEach(key => localStorage.removeItem(key));
+    sessionStorage.removeItem('ed_receipt_preview');
+    sessionStorage.removeItem('ed_checkout_draft');
+    clearTimeout(cartSyncTimer);
 }
+window.clearCustomerSessionData = clearCustomerSessionData;
 
 async function validateSessionWithServer() {
     const token = localStorage.getItem('ed_token');
@@ -954,7 +962,7 @@ async function initClientSession() {
     const token = localStorage.getItem('ed_token');
     const user = parseUser();
     if (!token || !user) {
-        clearClientSession();
+        clearCustomerSessionData();
         updateTopBar();
         return;
     }
@@ -966,7 +974,7 @@ async function initClientSession() {
     }
 
     if (Date.now() > Number(session.expiresAt || 0)) {
-        clearClientSession();
+        clearCustomerSessionData();
         updateTopBar();
         if (!window.location.pathname.startsWith('/login')) window.location.href = '/login';
         return;
@@ -974,7 +982,7 @@ async function initClientSession() {
 
     const valid = await validateSessionWithServer();
     if (!valid) {
-        clearClientSession();
+        clearCustomerSessionData();
         updateTopBar();
         if (!window.location.pathname.startsWith('/login')) window.location.href = '/login';
         return;
@@ -997,9 +1005,9 @@ clientAlertsBtn?.addEventListener('click', () => {
 });
 
 clientLogoutBtn.addEventListener('click', () => {
-    clearClientSession();
+    clearCustomerSessionData();
     updateTopBar();
-    window.location.href = '/login';
+    window.location.replace('/login');
 });
 ['click', 'keydown', 'mousemove', 'touchstart', 'scroll'].forEach(evt => {
     window.addEventListener(evt, touchSessionActivity, { passive: true });
@@ -1009,9 +1017,9 @@ setInterval(() => {
     const session = parseSession();
     if (!session) return;
     if (Date.now() > Number(session.expiresAt || 0)) {
-        clearClientSession();
+        clearCustomerSessionData();
         updateTopBar();
-        window.location.href = '/login';
+        window.location.replace('/login');
     }
 }, 15000);
 

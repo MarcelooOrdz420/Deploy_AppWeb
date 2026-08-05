@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -17,10 +19,13 @@ class HomeTab extends StatefulWidget {
   State<HomeTab> createState() => _HomeTabState();
 }
 
-class _HomeTabState extends State<HomeTab> {
+class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   late Future<List<Producto>> _future;
   final TextEditingController _searchCtrl = TextEditingController();
   final TextEditingController _maxPriceCtrl = TextEditingController();
+  final PageController _heroController = PageController();
+  Timer? _heroTimer;
+  int _heroPage = 0;
 
   String _userName = 'Invitado';
   String _selectedCategory = '';
@@ -31,6 +36,8 @@ class _HomeTabState extends State<HomeTab> {
     super.initState();
     _future = ProductosService().listar();
     _loadSession();
+    WidgetsBinding.instance.addObserver(this);
+    _startHeroTimer();
   }
 
   Future<void> _loadSession() async {
@@ -45,9 +52,34 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _heroTimer?.cancel();
+    _heroController.dispose();
     _searchCtrl.dispose();
     _maxPriceCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startHeroTimer();
+    } else {
+      _heroTimer?.cancel();
+    }
+  }
+
+  void _startHeroTimer() {
+    _heroTimer?.cancel();
+    _heroTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted || !_heroController.hasClients) return;
+      final next = (_heroPage + 1) % 3;
+      _heroController.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   List<Producto> _filteredProducts(List<Producto> products) {
@@ -234,16 +266,14 @@ class _HomeTabState extends State<HomeTab> {
             children: [
               _buildTopBar(context),
               const SizedBox(height: 16),
-              _buildHeroSection(
+              _buildHeroCarousel(
                 pollos: pollos,
                 bebidas: bebidas,
               ),
               const SizedBox(height: 16),
               _buildFilterSection(filtered.length),
               const SizedBox(height: 16),
-              if (_searchCtrl.text.trim().isEmpty &&
-                  _selectedCategory.isEmpty &&
-                  _maxPriceCtrl.text.trim().isEmpty)
+              if (filtered.isEmpty)
                 const StoreSurface(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,35 +290,19 @@ class _HomeTabState extends State<HomeTab> {
                     ],
                   ),
                 )
-              else if (filtered.isEmpty)
-                const StoreSurface(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Sin coincidencias',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Prueba con otro nombre, otra categoria o un precio mas alto.',
-                        style: TextStyle(color: StoreTheme.inkSoft, height: 1.5),
-                      ),
-                    ],
-                  ),
-                )
               else
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final isWide = constraints.maxWidth >= 720;
+                    final isNarrow = constraints.maxWidth < 420;
                     return GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: isWide ? 3 : 2,
+                        crossAxisCount: isWide ? 3 : (isNarrow ? 1 : 2),
                         crossAxisSpacing: 14,
                         mainAxisSpacing: 14,
-                        mainAxisExtent: isWide ? 400 : 440,
+                        mainAxisExtent: isWide ? 400 : (isNarrow ? 420 : 440),
                       ),
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
@@ -681,6 +695,89 @@ class _HomeTabState extends State<HomeTab> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHeroCarousel({
+    required List<Producto> pollos,
+    required List<Producto> bebidas,
+  }) {
+    final products = <Producto?>[
+      pollos.isNotEmpty ? pollos.first : null,
+      pollos.length > 1 ? pollos[1] : (pollos.isNotEmpty ? pollos.first : null),
+      bebidas.isNotEmpty ? bebidas.first : (pollos.isNotEmpty ? pollos.last : null),
+    ];
+    const fallbackTitles = ['Brasa protagonista', 'Combos para compartir', 'Bebidas El Dorado'];
+    const fallbackSubtitles = [
+      'Pollo dorado, crocante y listo para pedir.',
+      'Porciones pensadas para disfrutar en familia.',
+      'El acompañamiento ideal para completar tu pedido.',
+    ];
+
+    return Semantics(
+      label: 'Promociones de Pollos y Parrillas El Dorado',
+      child: StoreSurface(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(4, 2, 4, 12),
+              child: Text('Promociones destacadas', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+            ),
+            SizedBox(
+              height: 330,
+              child: PageView.builder(
+                controller: _heroController,
+                itemCount: products.length,
+                onPageChanged: (value) => setState(() => _heroPage = value),
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: _HeroCard(
+                      title: product?.name ?? fallbackTitles[index],
+                      subtitle: product?.description.isNotEmpty == true
+                          ? product!.description
+                          : fallbackSubtitles[index],
+                      product: product,
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(products.length, (index) {
+                final selected = index == _heroPage;
+                return Semantics(
+                  button: true,
+                  selected: selected,
+                  label: 'Mostrar promoción ${index + 1}',
+                  child: GestureDetector(
+                    onTap: () => _heroController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 320),
+                      curve: Curves.easeOutCubic,
+                    ),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      width: selected ? 24 : 9,
+                      height: 9,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: selected ? StoreTheme.orange : StoreTheme.border,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }

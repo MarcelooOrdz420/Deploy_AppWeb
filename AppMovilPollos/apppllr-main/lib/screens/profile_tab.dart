@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../services/profile_data_service.dart';
 import '../services/session_service.dart';
+import '../state/app_shell_controller.dart';
+import '../state/cart_controller.dart';
+import '../state/orders_controller.dart';
 import '../theme/store_theme.dart';
 
 class ProfileTab extends StatefulWidget {
@@ -56,8 +59,19 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   Future<void> _logout() async {
+    final cart = CartScope.of(context);
+    final orders = OrdersScope.of(context);
+    cart.clear();
+    await orders.clear();
     await AuthService().logout();
     if (!mounted) return;
+    setState(() {
+      _logged = false;
+      _name = 'Invitado';
+      _email = '';
+      _addresses = const [];
+    });
+    AppShellController.instance.goTo(0);
     context.go('/');
   }
 

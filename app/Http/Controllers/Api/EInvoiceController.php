@@ -31,7 +31,7 @@ class EInvoiceController extends Controller
         }
 
         try {
-            return response()->json($service->sendInvoice($order));
+            return response()->json($service->sendInvoice($order, force: true));
         } catch (RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         }

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Services\ElectronicInvoiceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -66,6 +67,26 @@ class NubefactInvoiceTest extends TestCase
             && $request['tipo_de_comprobante'] === 1);
     }
 
+    public function test_automatic_send_is_idempotent_after_verified_payment(): void
+    {
+        config([
+            'einvoice.auto_send' => true,
+            'einvoice.fake_send' => true,
+            'einvoice.provider' => 'nubefact',
+            'services.nubefact.route' => 'https://api.nubefact.test/api/v1/demo',
+            'services.nubefact.token' => 'nubefact-token',
+        ]);
+
+        $order = $this->orderWithItem('boleta', 'dni', '12345678', 23.60);
+
+        $first = app(ElectronicInvoiceService::class)->sendIfEligible($order);
+        $second = app(ElectronicInvoiceService::class)->sendIfEligible($order->fresh('items'));
+
+        $this->assertTrue($first['ok']);
+        $this->assertTrue($second['already_sent']);
+        $this->assertNotEmpty($order->fresh()->billing_metadata['einvoice']['sent_at']);
+    }
+
     private function orderWithItem(string $receiptType, string $documentType, string $documentNumber, float $total): Order
     {
         $order = Order::query()->create([
@@ -80,6 +101,7 @@ class NubefactInvoiceTest extends TestCase
             'payment_gateway' => 'izipay',
             'payment_status' => 'verified',
             'payment_verified_at' => now(),
+            'payment_reference' => 'IZIPAY-TEST-001',
             'billing_document_type' => $documentType,
             'billing_document_number' => $documentNumber,
             'billing_name' => 'Cliente Nubefact SAC',
@@ -88,9 +110,18 @@ class NubefactInvoiceTest extends TestCase
             'billing_receipt_type' => $receiptType,
         ]);
 
+        $product = Product::query()->create([
+            'name' => 'Producto de prueba',
+            'category' => 'pollos',
+            'description' => 'Producto para pruebas de comprobante.',
+            'price' => $total,
+            'is_available' => true,
+            'stock' => 10,
+        ]);
+
         OrderItem::query()->create([
             'order_id' => $order->id,
-            'product_id' => 1,
+            'product_id' => $product->id,
             'product_name' => 'Producto de prueba',
             'unit_price' => $total,
             'quantity' => 1,

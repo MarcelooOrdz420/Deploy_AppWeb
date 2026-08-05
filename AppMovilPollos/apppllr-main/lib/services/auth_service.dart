@@ -228,12 +228,25 @@ class AuthService {
 
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token');
-    await prefs.remove('user_id');
-    await prefs.remove('user_name');
-    await prefs.remove('user_email');
-    await prefs.remove('user_phone');
-    await prefs.remove('user_role');
+    const privateKeys = <String>[
+      'token',
+      'refresh_token',
+      'user_id',
+      'user_name',
+      'user_email',
+      'user_phone',
+      'user_role',
+      'orders_v1',
+      'order_statuses_v1',
+      'checkout_draft',
+      'delivery_address',
+      'payment_selection',
+      'receipt_preview',
+      'guest_session',
+    ];
+    for (final key in privateKeys) {
+      await prefs.remove(key);
+    }
     await PushNotificationsService.instance.syncOrderTopics();
   }
 }

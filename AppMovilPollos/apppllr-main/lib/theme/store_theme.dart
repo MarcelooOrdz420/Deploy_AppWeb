@@ -1,38 +1,45 @@
 import 'package:flutter/material.dart';
 
 class StoreTheme {
-  static const Color primary = Color(0xFFFF6F1F);
-  static const Color primaryDark = Color(0xFFF25D00);
-  static const Color primarySoft = Color(0xFFFFF1E3);
-  static const Color accent = Color(0xFFFF9D5A);
-  static const Color accentDark = Color(0xFFF25D00);
-  static const Color accentSoft = Color(0xFFFFF4EB);
-  static const Color background = Color(0xFFFFF8F2);
-  static const Color backgroundAlt = Color(0xFFFFF1E3);
-  static const Color surface = Color(0xFFFFFDF9);
+  static const Color orange = Color(0xFFFF6F1F);
+  static const Color orangeHover = Color(0xFFE95C0D);
+  static const Color orangeDark = Color(0xFFC94700);
+  static const Color orangeSoft = Color(0xFFFF9D5A);
+  static const Color gold = Color(0xFFF7B801);
+  static const Color goldDark = Color(0xFFDFA500);
+  static const Color goldSoft = Color(0xFFFFF7D6);
+  static const Color cream = Color(0xFFFFF8F2);
+  static const Color creamStrong = Color(0xFFFFF1E3);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceWarm = Color(0xFFFFFDF9);
   static const Color surfaceSoft = Color(0xFFFFF6EE);
+  static const Color field = Color(0xFFFFF4EB);
   static const Color textPrimary = Color(0xFF25170F);
+  static const Color textDark = Color(0xFF24160F);
   static const Color textSecondary = Color(0xFF68432E);
-  static const Color textMuted = Color(0xFF7B4A2A);
-  static const Color border = Color(0xFFF0C9AA);
-  static const Color borderSoft = Color(0xFFF0CFB3);
+  static const Color textMuted = Color(0xFF765744);
+  static const Color border = Color(0xFFEAB68A);
+  static const Color borderSoft = Color(0xFFF0C9AA);
+  static const Color borderLight = Color(0xFFF0CFB3);
   static const Color success = Color(0xFF17683A);
   static const Color danger = Color(0xFFA1261A);
   static const Color warning = Color(0xFF805100);
   static const Color info = Color(0xFF205A84);
 
-  // Compatibility aliases keep existing widgets unchanged while all colors
-  // resolve to the single global palette above.
-  static const Color orange = primary;
-  static const Color orangeSoft = accent;
-  static const Color orangeDeep = primaryDark;
-  static const Color cream = background;
-  static const Color creamStrong = backgroundAlt;
-  static const Color paper = surface;
+  static const Color primary = orange;
+  static const Color primaryDark = orangeDark;
+  static const Color primarySoft = creamStrong;
+  static const Color accent = gold;
+  static const Color accentDark = goldDark;
+  static const Color accentSoft = goldSoft;
+  static const Color background = cream;
+  static const Color backgroundAlt = creamStrong;
+  static const Color paper = surfaceWarm;
   static const Color paperSoft = surfaceSoft;
   static const Color ink = textPrimary;
   static const Color inkSoft = textSecondary;
   static const Color lineStrong = border;
+  static const Color orangeDeep = orangeDark;
 
   static ThemeData theme() {
     final base = ThemeData(
@@ -47,7 +54,17 @@ class StoreTheme {
     );
 
     return base.copyWith(
-      textTheme: base.textTheme.apply(bodyColor: ink, displayColor: ink),
+      textTheme: base.textTheme.copyWith(
+        displayLarge: const TextStyle(color: textPrimary, fontSize: 48, fontWeight: FontWeight.w800),
+        headlineLarge: const TextStyle(color: textPrimary, fontSize: 34, fontWeight: FontWeight.w800),
+        headlineMedium: const TextStyle(color: textPrimary, fontSize: 28, fontWeight: FontWeight.w800),
+        titleLarge: const TextStyle(color: textPrimary, fontSize: 22, fontWeight: FontWeight.w700),
+        titleMedium: const TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+        bodyLarge: const TextStyle(color: textPrimary, fontSize: 16, height: 1.45),
+        bodyMedium: const TextStyle(color: textPrimary, fontSize: 14, height: 1.45),
+        bodySmall: const TextStyle(color: textSecondary, fontSize: 12, height: 1.4),
+        labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+      ),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: ink,
@@ -55,20 +72,20 @@ class StoreTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: paper,
-        hintStyle: const TextStyle(color: inkSoft),
+        fillColor: surface,
+        hintStyle: const TextStyle(color: textMuted),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: lineStrong),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: lineStrong),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: orangeSoft, width: 1.4),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: orange, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -86,7 +103,16 @@ class StoreTheme {
           foregroundColor: Colors.white,
           disabledBackgroundColor: borderSoft,
           disabledForegroundColor: textMuted,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          backgroundColor: orange,
+          foregroundColor: Colors.white,
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -97,8 +123,25 @@ class StoreTheme {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          foregroundColor: orangeDark,
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          foregroundColor: textSecondary,
+        ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: orange,
+        foregroundColor: Colors.white,
+      ),
       cardTheme: CardThemeData(
-        color: surface,
+        color: surfaceWarm,
         elevation: 1,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
@@ -108,7 +151,7 @@ class StoreTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
-        selectedItemColor: orangeDeep,
+        selectedItemColor: orangeDark,
         unselectedItemColor: inkSoft,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
@@ -170,37 +213,19 @@ class StoreTheme {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: <Color>[
-      Color(0xFFFFFBF6),
-      Color(0xFFFFF1E5),
-      Color(0xFFFFEAD8),
+      cream,
+      creamStrong,
+      surfaceSoft,
     ],
   );
 
   static BoxDecoration frameDecoration() {
-    return BoxDecoration(
-      borderRadius: BorderRadius.circular(32),
-      border: Border.all(color: lineStrong.withOpacity(.72)),
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: <Color>[
-          Colors.white.withOpacity(.84),
-          cream.withOpacity(.94),
-        ],
-      ),
-      boxShadow: const <BoxShadow>[
-        BoxShadow(
-          color: Color.fromRGBO(52, 17, 0, .13),
-          blurRadius: 40,
-          offset: Offset(0, 18),
-        ),
-      ],
-    );
+    return const BoxDecoration(color: cream);
   }
 
   static BoxDecoration surfaceDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(16),
       border: Border.all(color: lineStrong.withOpacity(.74)),
       gradient: const LinearGradient(
         begin: Alignment.topCenter,
@@ -210,8 +235,8 @@ class StoreTheme {
       boxShadow: const <BoxShadow>[
         BoxShadow(
           color: Color.fromRGBO(52, 17, 0, .07),
-          blurRadius: 28,
-          offset: Offset(0, 14),
+          blurRadius: 14,
+          offset: Offset(0, 4),
         ),
       ],
     );
@@ -219,7 +244,7 @@ class StoreTheme {
 
   static BoxDecoration panelDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(16),
       border: Border.all(color: lineStrong.withOpacity(.7)),
       gradient: const LinearGradient(
         begin: Alignment.topCenter,

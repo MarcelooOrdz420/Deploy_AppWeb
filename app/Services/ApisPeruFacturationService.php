@@ -14,10 +14,10 @@ class ApisPeruFacturationService
     ) {
     }
 
-    public function sendInvoice(Order $order): array
+    public function sendInvoice(Order $order, bool $force = false): array
     {
         $existing = data_get($order->billing_metadata, 'einvoice.response');
-        if (is_array($existing) && ! empty(data_get($order->billing_metadata, 'einvoice.sent_at'))) {
+        if (! $force && is_array($existing) && ! empty(data_get($order->billing_metadata, 'einvoice.sent_at'))) {
             return [
                 'ok' => true,
                 'already_sent' => true,
@@ -46,6 +46,8 @@ class ApisPeruFacturationService
             'payload' => $payload,
             'response' => $data,
             'sent_at' => now()->toIso8601String(),
+            'last_attempt_at' => now()->toIso8601String(),
+            'status' => 'sent',
         ];
 
         $order->update([

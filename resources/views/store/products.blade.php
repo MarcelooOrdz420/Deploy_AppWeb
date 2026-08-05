@@ -52,6 +52,11 @@
                     <div class="hero-quality-chip">100% sabor dorado</div>
                 </div>
             </div>
+            <div class="hero-controls" aria-label="Controles del carrusel">
+                <button id="heroPrev" type="button" class="hero-control" aria-label="Imagen promocional anterior">&#8592;</button>
+                <div id="heroIndicators" class="hero-indicators" aria-label="Seleccionar imagen promocional"></div>
+                <button id="heroNext" type="button" class="hero-control" aria-label="Imagen promocional siguiente">&#8594;</button>
+            </div>
             </div>
         </section>
 
@@ -1442,6 +1447,152 @@
                 max-width: none;
             }
         }
+
+        /* Composicion final: tres imagenes reales y contenido legible. */
+        .hero-showcase {
+            position: relative;
+            border: 1px solid var(--border-soft) !important;
+            border-radius: var(--radius-medium) !important;
+            background: var(--surface-warm) !important;
+            box-shadow: var(--shadow-small) !important;
+        }
+
+        .hero-showcase::after,
+        .hero-plate-copy,
+        .hero-quality-chip { display: none !important; }
+
+        .hero-hours-bar {
+            background: var(--orange) !important;
+            color: #fff !important;
+        }
+
+        .catalog-hero {
+            position: relative;
+            display: block;
+            min-height: 0;
+            padding: 12px !important;
+            background: var(--surface-warm) !important;
+        }
+
+        .hero-visual-stage {
+            width: 100%;
+            display: grid !important;
+            grid-template-columns: minmax(0, 2fr) minmax(260px, .9fr) !important;
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            height: clamp(420px, 56vh, 630px);
+            min-height: 0;
+        }
+
+        .hero-stage-left {
+            grid-row: 1 / 3;
+            min-width: 0;
+            min-height: 0;
+            padding: 0 !important;
+            border-radius: var(--radius-medium);
+        }
+
+        .hero-feature-main {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            max-width: none;
+        }
+
+        .hero-feature-main::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: linear-gradient(90deg, rgba(20,10,5,.82), rgba(20,10,5,.42) 45%, rgba(20,10,5,.08) 75%);
+        }
+
+        .hero-stage-right {
+            display: grid;
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            padding: 0;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .hero-stage-right .hero-feature {
+            min-height: 0;
+            border-radius: var(--radius-medium);
+        }
+
+        .hero-copy-stack {
+            position: absolute;
+            z-index: 4;
+            left: clamp(28px, 5vw, 72px);
+            bottom: clamp(42px, 7vh, 84px);
+            max-width: min(420px, 42vw);
+            padding: 0 !important;
+            pointer-events: none;
+        }
+
+        .hero-copy-stack .hero-cta { pointer-events: auto; }
+        .hero-copy-stack .eyebrow { color: var(--gold) !important; font-size: 22px !important; }
+        .catalog-hero .title { font-size: clamp(46px, 7vw, 98px) !important; line-height: .86 !important; }
+
+        .hero-controls {
+            position: absolute;
+            right: clamp(28px, 3vw, 52px);
+            bottom: 28px;
+            z-index: 6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hero-control,
+        .hero-indicator {
+            display: inline-grid;
+            place-items: center;
+            min-width: 44px;
+            min-height: 44px;
+            border: 1px solid rgba(255,255,255,.55) !important;
+            border-radius: var(--radius-pill) !important;
+            background: rgba(37,23,15,.82) !important;
+            color: #fff !important;
+        }
+
+        .hero-indicators { display: flex; gap: 7px; }
+        .hero-indicator { min-width: 10px; min-height: 10px; width: 10px; height: 10px; padding: 0; }
+        .hero-indicator.active { background: var(--gold) !important; border-color: var(--gold) !important; }
+
+        .catalog-tools .section-title,
+        .catalog-board .section-title,
+        .tools-info { color: var(--text-primary) !important; text-shadow: none !important; }
+        .catalog-tools .muted-main,
+        .catalog-board .muted-main { color: var(--text-secondary) !important; }
+
+        .float-cart {
+            right: 20px;
+            bottom: max(20px, env(safe-area-inset-bottom));
+            width: auto;
+            min-width: 150px;
+            max-width: 200px;
+        }
+
+        .float-cart-toggle {
+            width: 100%;
+            min-height: 54px;
+            border: 1px solid var(--border) !important;
+            background: var(--surface) !important;
+            color: var(--text-primary) !important;
+            box-shadow: var(--shadow-medium) !important;
+        }
+
+        @media (max-width: 980px) {
+            .hero-visual-stage {
+                grid-template-columns: minmax(0, 1fr) !important;
+                height: clamp(360px, 62vh, 520px);
+            }
+            .hero-stage-right { display: none; }
+            .hero-copy-stack { max-width: calc(100% - 72px); }
+            .hero-controls { right: 24px; }
+        }
     </style>
 @endsection
 
@@ -1458,6 +1609,10 @@ const heroImages = [
     document.getElementById('heroImageB'),
     document.getElementById('heroImageC'),
 ];
+const heroSlider = document.getElementById('heroSlider');
+const heroPrev = document.getElementById('heroPrev');
+const heroNext = document.getElementById('heroNext');
+const heroIndicators = document.getElementById('heroIndicators');
 const productsGrid = document.getElementById('productsGrid');
 const searchInput = document.getElementById('searchInput');
 const categoryInput = document.getElementById('categoryInput');
@@ -1485,6 +1640,8 @@ const state = { products: [] };
 let slideIndex = 0;
 let searchTimer = null;
 let heroPools = HERO_FALLBACKS.map(group => [...group]);
+let heroTimer = null;
+let heroPaused = false;
 
 function getToken() { return localStorage.getItem('ed_token'); }
 function isLoggedIn() { return Boolean(getToken()); }
@@ -1651,9 +1808,9 @@ function buildHeroPools() {
             : HERO_FALLBACKS[2],
     ];
 
-    heroImages.forEach((image, index) => {
-        image.src = heroPools[index][0];
-    });
+    const preloadUrls = uniqueImages([...heroPools.flat(), ...HERO_FALLBACKS.flat()]);
+    preloadUrls.forEach(src => { const image = new Image(); image.src = src; });
+    renderHeroSlide();
 }
 
 function syncHeroMetrics() {
@@ -1664,12 +1821,63 @@ function syncHeroMetrics() {
     }
 }
 
-function nextSlide() {
-    slideIndex += 1;
+function heroSequence() {
+    return uniqueImages([...heroPools.flat(), ...HERO_FALLBACKS.flat()]);
+}
+
+function renderHeroSlide() {
+    const sequence = heroSequence();
+    if (!sequence.length) return;
     heroImages.forEach((image, index) => {
-        const pool = heroPools[index] && heroPools[index].length ? heroPools[index] : HERO_FALLBACKS[index];
-        image.src = pool[slideIndex % pool.length];
+        image.style.opacity = '0';
+        image.src = sequence[(slideIndex + index) % sequence.length];
+        requestAnimationFrame(() => { image.style.opacity = '1'; });
     });
+    heroIndicators?.querySelectorAll('.hero-indicator').forEach((indicator, index) => {
+        const active = index === (slideIndex % Math.min(3, sequence.length));
+        indicator.classList.toggle('active', active);
+        indicator.setAttribute('aria-current', active ? 'true' : 'false');
+    });
+}
+
+function goToHeroSlide(index) {
+    const sequence = heroSequence();
+    if (!sequence.length) return;
+    slideIndex = (index + sequence.length) % sequence.length;
+    renderHeroSlide();
+}
+
+function nextSlide() { goToHeroSlide(slideIndex + 1); }
+function previousSlide() { goToHeroSlide(slideIndex - 1); }
+
+function startHeroTimer() {
+    clearInterval(heroTimer);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    heroTimer = setInterval(() => {
+        if (!heroPaused && !document.hidden) nextSlide();
+    }, 5000);
+}
+
+function initHeroControls() {
+    if (heroIndicators) {
+        heroIndicators.innerHTML = [0, 1, 2].map((index) => `
+            <button type="button" class="hero-indicator ${index === 0 ? 'active' : ''}" data-hero-index="${index}" aria-label="Mostrar promoción ${index + 1}" aria-current="${index === 0 ? 'true' : 'false'}"></button>
+        `).join('');
+        heroIndicators.querySelectorAll('[data-hero-index]').forEach(button => {
+            button.addEventListener('click', () => goToHeroSlide(Number(button.dataset.heroIndex || 0)));
+        });
+    }
+    heroPrev?.addEventListener('click', previousSlide);
+    heroNext?.addEventListener('click', nextSlide);
+    heroSlider?.addEventListener('mouseenter', () => { heroPaused = true; });
+    heroSlider?.addEventListener('mouseleave', () => { heroPaused = false; });
+    heroSlider?.addEventListener('focusin', () => { heroPaused = true; });
+    heroSlider?.addEventListener('focusout', () => { heroPaused = false; });
+    heroSlider?.addEventListener('keydown', event => {
+        if (event.key === 'ArrowLeft') previousSlide();
+        if (event.key === 'ArrowRight') nextSlide();
+    });
+    startHeroTimer();
 }
 
 function showProduct(product) {
@@ -1730,7 +1938,7 @@ function filteredProducts() {
     const category = categoryInput.value.trim().toLowerCase();
     const maxPrice = maxPriceInput.value ? Number(maxPriceInput.value) : null;
 
-    if (!query && !category && maxPrice === null) return [];
+    if (!query && !category && maxPrice === null) return state.products;
 
     return state.products.filter(product => {
         const byName = !query || product.name.toLowerCase().includes(query);
@@ -1743,7 +1951,8 @@ function filteredProducts() {
 function renderProducts() {
     const list = filteredProducts();
 
-    if (!searchInput.value.trim() && !categoryInput.value && !maxPriceInput.value) {
+    /* El catálogo se muestra desde la carga inicial; los filtros solo refinan resultados. */
+    if (!state.products.length) {
         productsGrid.innerHTML = `
             <article class="surface panel">
                 <p class="eyebrow">Explora el Menu</p>
@@ -1825,7 +2034,7 @@ async function loadProducts() {
     setSearchState(false);
 }
 
-setInterval(nextSlide, 3500);
+initHeroControls();
 searchInput.addEventListener('input', queueRenderProducts);
 categoryInput.addEventListener('change', queueRenderProducts);
 maxPriceInput.addEventListener('input', queueRenderProducts);

@@ -778,20 +778,8 @@ HTML;
 
     private function trySendElectronicReceipt(Order $order): void
     {
-        if ((string) $order->payment_status !== 'verified') {
-            return;
-        }
-
-        if (! (bool) config('einvoice.auto_send', false)) {
-            return;
-        }
-
-        if (! in_array((string) $order->billing_receipt_type, ['boleta', 'factura'], true)) {
-            return;
-        }
-
         try {
-            app(ElectronicInvoiceService::class)->sendInvoice($order);
+            app(ElectronicInvoiceService::class)->sendIfEligible($order);
         } catch (\Throwable $exception) {
             report($exception);
         }
