@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Events\OfferNotificationSent;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Product;
+use App\Models\MarketingOffer;
 use App\Services\Fcm\FcmClient;
 use App\Services\Marketing\CustomerRecoveryCampaignService;
 use App\Services\Mail\CustomerLifecycleEmailService;
@@ -31,7 +33,9 @@ class AdminNotificationController extends Controller
             'image_url' => ['nullable', 'string', 'max:2048'],
             'image' => ['nullable', 'file', 'image', 'max:5120'],
             'cta_label' => ['nullable', 'string', 'max:60'],
-            'product_id' => ['nullable', 'integer', 'exists:products,id'],
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'promo_price' => ['nullable', 'numeric', 'min:0.01'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
         ]);
 
         if ($request->hasFile('image')) {
@@ -39,16 +43,45 @@ class AdminNotificationController extends Controller
             $data['image_url'] = Storage::url($path);
         }
 
+        $product = Product::query()->findOrFail($data['product_id']);
+        $normalPrice = round((float) $product->price, 2);
+        if ($normalPrice <= 0) {
+            return response()->json(['message' => 'El producto debe tener un precio normal mayor que cero para crear una promoción.'], 422);
+        }
+        $promoPrice = isset($data['promo_price'])
+            ? round((float) $data['promo_price'], 2)
+            : round($normalPrice * (1 - ((float) ($data['discount_percent'] ?? 0) / 100)), 2);
+        if ($promoPrice >= $normalPrice) {
+            return response()->json(['message' => 'El precio promocional debe ser menor que el precio normal del platillo.'], 422);
+        }
+        $discountPercent = round((1 - ($promoPrice / $normalPrice)) * 100, 2);
+        $offer = MarketingOffer::create([
+            'product_id' => $product->id,
+            'title' => $data['title'],
+            'message' => $data['message'],
+            'body' => $data['body'] ?? null,
+            'image_url' => $data['image_url'] ?? $product->image_url,
+            'original_price' => $normalPrice,
+            'promo_price' => $promoPrice,
+            'discount_percent' => $discountPercent,
+            'is_active' => true,
+        ]);
+
         $broadcastPayload = [
             'target' => (string) ($data['target'] ?? 'all'),
             'title' => $data['title'],
             'message' => $data['message'],
             'body' => $data['body'] ?? $data['message'],
-            'image_url' => $data['image_url'] ?? null,
+            'image_url' => $offer->image_url,
             'cta_label' => $data['cta_label'] ?? null,
             'product_id' => $data['product_id'] ?? null,
-            'cta_url' => ! empty($data['product_id']) ? '/productos?product='.(int) $data['product_id'] : '/productos',
+            'cta_url' => '/promociones/'.$offer->id,
+            'offer_id' => $offer->id,
+            'promo_price' => $offer->promo_price,
+            'original_price' => $offer->original_price,
+            'discount_percent' => $offer->discount_percent,
         ];
+        $data['cta_url'] = $broadcastPayload['cta_url'];
 
         $broadcast = $this->broadcastOffer($broadcastPayload);
 
@@ -82,7 +115,7 @@ class AdminNotificationController extends Controller
                             'image_url' => $data['image_url'] ?? null,
                             'cta_label' => $data['cta_label'] ?? null,
                             'product_id' => isset($data['product_id']) ? (string) $data['product_id'] : '',
-                            'cta_url' => ! empty($data['product_id']) ? '/productos?product='.(int) $data['product_id'] : '/productos',
+                            'cta_url' => $broadcastPayload['cta_url'],
                         ],
                     );
 

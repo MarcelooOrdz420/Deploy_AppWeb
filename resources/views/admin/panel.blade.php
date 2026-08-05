@@ -1055,10 +1055,22 @@
                     </div>
                     <div>
                         <label>Platillo al que dirigirá "Lo quiero"</label>
-                        <select id="offerProductSelect" name="product_id">
+                        <select id="offerProductSelect" name="product_id" required>
                             <option value="">Catálogo general</option>
                         </select>
                         <div class="helper-text">Incluye los platillos nuevos creados desde Productos.</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
+                        <label>Descuento porcentual</label>
+                        <input id="offerDiscountPercent" name="discount_percent" type="number" min="0.01" max="99.99" step="0.01" placeholder="Ej: 20">
+                        <div class="helper-text">El sistema calcula el precio normal menos este porcentaje.</div>
+                    </div>
+                    <div>
+                        <label>Precio final de promoción</label>
+                        <input id="offerPromoPrice" name="promo_price" type="number" min="0.01" step="0.01" placeholder="Ej: 39.90">
+                        <div id="offerPriceHelp" class="helper-text">Puedes indicar porcentaje o precio final.</div>
                     </div>
                 </div>
                 <div class="row">
@@ -1480,6 +1492,9 @@ const newCategoryInput = document.getElementById('newCategoryInput');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const productsList = document.getElementById('productsList');
 const offerProductSelect = document.getElementById('offerProductSelect');
+const offerDiscountPercent = document.getElementById('offerDiscountPercent');
+const offerPromoPrice = document.getElementById('offerPromoPrice');
+const offerPriceHelp = document.getElementById('offerPriceHelp');
 const productStatusText = document.getElementById('productStatusText');
 const productImageInput = document.getElementById('productImageInput');
 const productImagePreview = document.getElementById('productImagePreview');
@@ -2060,6 +2075,7 @@ function renderDashboard(stats) {
     const yearRows = stats?.buckets?.year || [];
     const payments = stats?.payments || [];
     const statuses = stats?.statuses || [];
+    const promotions = stats?.promotions || [];
     const summary = stats?.summary || {};
     const bestDay = summary.best_day;
     const worstDay = summary.worst_day;
@@ -2107,6 +2123,10 @@ function renderDashboard(stats) {
         `<div class="dashboard-pies">
             ${renderPieChart('Pedidos por estado', statuses.map(item => ({ ...item, status: statusEs(item.status) })), 'status', 'count')}
             ${renderPieChart('Ventas por metodo de pago', payments, 'method', 'count')}
+        </div>`,
+        `<div class="chart-card" style="grid-column:1/-1">
+            <div class="chart-head"><strong>Compras realizadas por promociones</strong><span class="tag">${promotions.reduce((sum,row)=>sum+Number(row.orders_count||0),0)} pedidos</span></div>
+            ${promotions.length ? promotions.map(row => `<div class="muted" style="padding:9px 0;border-bottom:1px solid #f0d5bd"><strong>${escapeHtml(row.title)}</strong> · ${row.orders_count} pedidos · ${row.units} unidades · Ventas S/ ${money(row.sales)} · Descuentos S/ ${money(row.discount_total)}</div>`).join('') : '<div class="muted">Todavía no hay compras originadas por promociones.</div>'}
         </div>`,
     ].join('');
 }
@@ -2813,6 +2833,15 @@ cancelEditBtn.addEventListener('click', clearProductForm);
 productForm.is_available.addEventListener('change', syncProductAvailabilityLabel);
 productForm.addEventListener('submit', saveProduct);
 if (offerForm) {
+    const calculateOfferPrice = () => {
+        const product = productsCache.find(item => Number(item.id) === Number(offerProductSelect?.value));
+        const percent = Number(offerDiscountPercent?.value || 0);
+        if (!product || percent <= 0 || !offerPromoPrice) return;
+        offerPromoPrice.value = (Number(product.price) * (1 - percent / 100)).toFixed(2);
+        if (offerPriceHelp) offerPriceHelp.textContent = `Precio normal S/ ${Number(product.price).toFixed(2)} · ahorro S/ ${(Number(product.price)-Number(offerPromoPrice.value)).toFixed(2)}`;
+    };
+    offerDiscountPercent?.addEventListener('input', calculateOfferPrice);
+    offerProductSelect?.addEventListener('change', calculateOfferPrice);
     offerForm.addEventListener('submit', (event) => {
         event.preventDefault();
         const formData = new FormData();
@@ -2824,6 +2853,9 @@ if (offerForm) {
         formData.append('message', offerForm.message.value.trim());
         formData.append('body', offerForm.body.value.trim() || '');
         formData.append('cta_label', offerForm.cta_label.value.trim() || '');
+        formData.append('product_id', offerForm.product_id.value);
+        if (offerForm.promo_price.value) formData.append('promo_price', offerForm.promo_price.value);
+        if (offerForm.discount_percent.value) formData.append('discount_percent', offerForm.discount_percent.value);
         if (offerImageInput?.files?.[0]) formData.append('image', offerImageInput.files[0]);
         sendOffer(formData, offerForm.target.value);
     });

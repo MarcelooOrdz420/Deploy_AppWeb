@@ -1141,6 +1141,13 @@ initClientSession();
     .pollia-purchase-actions button { min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid #EAB68A; background:#fff; color:#25170F; font-weight:900; }
     .pollia-purchase-actions .primary { background:#FF6F1F; color:#fff; border-color:#C94700; }
     .pollia-product-summary { display:grid; gap:6px; padding:10px; border-radius:12px; background:#FFF1E3; color:#25170F; }
+    #promoOverlay #promoTitle { color:#fff!important; background:transparent!important; opacity:1!important; }
+    #promoOverlay #promoMessage { color:#fff8ef!important; }
+    #promoOverlay #promoBody { color:#ffd8bd!important; }
+    #promoToast > div { background:linear-gradient(135deg,#4f100c,#8b1f13)!important; }
+    #promoToastTitle,#promoToastMessage { color:#fff!important; }
+    #promoOverlay .promo-copy { background:linear-gradient(145deg,#49100c,#77180f)!important; }
+    #promoOverlay .promo-media { background:linear-gradient(145deg,#ff9b30,#ff6d0b)!important; }
 
     @media (max-width: 720px) {
         #promoOverlay {

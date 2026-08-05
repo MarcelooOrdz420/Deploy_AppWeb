@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\Product;
+use App\Models\MarketingOffer;
 use App\Services\Fcm\FcmClient;
 use App\Services\ElectronicInvoiceService;
 use App\Services\InventoryMovementService;
@@ -153,6 +154,24 @@ class OrderController extends Controller
             ->sortByDesc('count')
             ->values();
 
+        $promotionBreakdown = OrderItem::query()
+            ->with('marketingOffer:id,title')
+            ->whereIn('order_id', $orders->pluck('id'))
+            ->whereNotNull('marketing_offer_id')
+            ->get()
+            ->groupBy('marketing_offer_id')
+            ->map(function (Collection $items): array {
+                $first = $items->first();
+                return [
+                    'offer_id' => $first->marketing_offer_id,
+                    'title' => $first->marketingOffer?->title ?? 'Promoción',
+                    'orders_count' => $items->pluck('order_id')->unique()->count(),
+                    'units' => (int) $items->sum('quantity'),
+                    'sales' => round((float) $items->sum('line_total'), 2),
+                    'discount_total' => round((float) $items->sum('discount_amount'), 2),
+                ];
+            })->sortByDesc('sales')->values();
+
         return response()->json([
             'summary' => [
                 'orders_count' => $ordersCount,
@@ -168,6 +187,7 @@ class OrderController extends Controller
             ],
             'payments' => $paymentBreakdown,
             'statuses' => $statusBreakdown,
+            'promotions' => $promotionBreakdown,
         ]);
     }
 
@@ -220,6 +240,7 @@ class OrderController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.promotion_id' => ['nullable', 'integer', 'exists:marketing_offers,id'],
         ]);
 
         if ($data['delivery_type'] === 'delivery' && empty($data['address'])) {
@@ -353,13 +374,25 @@ class OrderController extends Controller
                     ], 422));
                 }
 
-                $lineTotal = $product->price * $item['quantity'];
+                $offer = null;
+                $unitPrice = (float) $product->price;
+                if (! empty($item['promotion_id'])) {
+                    $offer = MarketingOffer::query()->lockForUpdate()->find($item['promotion_id']);
+                    if (! $offer || ! $offer->is_active || (int) $offer->product_id !== (int) $product->id) {
+                        abort(response()->json(['message' => 'La promoción seleccionada ya no está disponible para este producto.'], 422));
+                    }
+                    $unitPrice = (float) $offer->promo_price;
+                }
+                $lineTotal = $unitPrice * $item['quantity'];
 
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
                     'product_name' => $product->name,
-                    'unit_price' => $product->price,
+                    'marketing_offer_id' => $offer?->id,
+                    'unit_price' => $unitPrice,
+                    'original_unit_price' => $product->price,
+                    'discount_amount' => max(0, ((float) $product->price - $unitPrice) * (int) $item['quantity']),
                     'quantity' => $item['quantity'],
                     'line_total' => $lineTotal,
                 ]);

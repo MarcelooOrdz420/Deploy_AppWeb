@@ -12,8 +12,11 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'marketing_offer_id',
         'product_name',
         'unit_price',
+        'original_unit_price',
+        'discount_amount',
         'quantity',
         'line_total',
     ];
@@ -22,6 +25,8 @@ class OrderItem extends Model
     {
         return [
             'unit_price' => 'decimal:2',
+            'original_unit_price' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'line_total' => 'decimal:2',
         ];
     }
@@ -35,4 +40,6 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function marketingOffer() { return $this->belongsTo(MarketingOffer::class); }
 }
