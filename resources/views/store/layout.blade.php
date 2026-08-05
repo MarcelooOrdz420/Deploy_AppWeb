@@ -78,6 +78,46 @@
             pointer-events: none;
         }
 
+        .store-footer {
+            position:relative;
+            z-index:2;
+            padding:42px 30px 28px;
+            background:linear-gradient(135deg,#3b0b08 0%,#65100c 58%,#7a170e 100%);
+            color:#fff8ef;
+        }
+        .store-footer-grid { display:grid; grid-template-columns:1.15fr 1fr 1fr 1.15fr; gap:34px; }
+        .footer-brand { display:grid; align-content:start; gap:16px; }
+        .footer-logo { display:flex; align-items:center; gap:12px; text-decoration:none; }
+        .footer-logo img { width:62px; height:62px; padding:5px; border-radius:14px; object-fit:contain; background:#fff; }
+        .footer-logo strong { font-size:22px; line-height:1.05; }
+        .footer-socials { display:flex; flex-wrap:wrap; gap:9px; }
+        .footer-socials a { display:grid; place-items:center; min-width:42px; height:42px; padding:0 10px; border:1px solid rgba(255,255,255,.4); border-radius:50px; color:#fff; text-decoration:none; font-weight:900; transition:.2s ease; }
+        .footer-socials a:hover { transform:translateY(-3px); background:#ff7a18; border-color:#ffb06e; }
+        .footer-column h2 { margin:0 0 14px; color:#fff; font-size:16px; text-transform:uppercase; letter-spacing:.03em; }
+        .footer-links { display:grid; gap:10px; }
+        .footer-links a,.footer-contact span { color:rgba(255,248,239,.88); text-decoration:none; font-size:14px; line-height:1.45; }
+        .footer-links a:hover { color:#ffc20e; transform:translateX(3px); }
+        .footer-contact { display:grid; gap:8px; }
+        .footer-copy { margin:20px 0 0; color:rgba(255,255,255,.68); font-size:12px; }
+        .footer-whatsapp { position:absolute; right:24px; bottom:20px; display:grid; place-items:center; width:58px; height:58px; border-radius:50%; background:#079b71; color:#fff; text-decoration:none; font-size:26px; border:4px solid rgba(255,255,255,.9); box-shadow:0 12px 28px rgba(0,0,0,.25); }
+
+        .scroll-reveal { opacity:0; transform:translateY(30px); transition:opacity .72s ease,transform .72s cubic-bezier(.2,.7,.2,1); }
+        .scroll-reveal.reveal-left { transform:translateX(-34px); }
+        .scroll-reveal.reveal-right { transform:translateX(34px); }
+        .scroll-reveal.is-visible { opacity:1; transform:none; }
+
+        @media (max-width:900px) {
+            .store-footer-grid { grid-template-columns:1fr 1fr; }
+        }
+        @media (max-width:600px) {
+            .store-footer { padding:32px 20px 88px; }
+            .store-footer-grid { grid-template-columns:1fr; gap:28px; }
+            .footer-whatsapp { right:20px; bottom:20px; }
+        }
+        @media (prefers-reduced-motion:reduce) {
+            .scroll-reveal { opacity:1 !important; transform:none !important; transition:none !important; }
+        }
+
         .topbar {
             position: sticky;
             top: 0;
@@ -787,15 +827,6 @@
                             <a href="{{ route('store.products') }}" class="{{ request()->routeIs('store.products') ? 'active' : '' }}">
                                 <span class="nav-index">&#9638;</span> Productos
                             </a>
-                            <a href="{{ route('store.about') }}" class="{{ request()->routeIs('store.about') ? 'active' : '' }}">
-                                <span class="nav-index">&#8962;</span> Nosotros
-                            </a>
-                            <a href="{{ route('store.location') }}" class="{{ request()->routeIs('store.location') ? 'active' : '' }}">
-                                <span class="nav-index">&#8982;</span> Ubicacion
-                            </a>
-                            <a href="{{ route('store.experts') }}" class="{{ request()->routeIs('store.experts') ? 'active' : '' }}">
-                                <span class="nav-index">&#10022;</span> Expertos
-                            </a>
                             <a href="{{ route('store.orders') }}" class="{{ request()->routeIs('store.orders') ? 'active' : '' }}">
                                 <span class="nav-index">&#8811;</span> Mis pedidos
                             </a>
@@ -809,6 +840,53 @@
                     @yield('content')
                 </div>
             </main>
+            <footer class="store-footer">
+                <div class="store-footer-grid">
+                    <section class="footer-brand">
+                        <a class="footer-logo" href="{{ route('store.products') }}">
+                            <img src="/images/ico-pollo.jpg" alt="Pollos y Parrillas El Dorado">
+                            <strong>El Dorado<br>Pollos y Parrillas</strong>
+                        </a>
+                        <div class="footer-socials" aria-label="Redes sociales">
+                            <a href="#" aria-label="Facebook">f</a>
+                            <a href="#" aria-label="Instagram">IG</a>
+                            <a href="#" aria-label="TikTok">TT</a>
+                            <a id="footerWhatsappSocial" href="#" aria-label="WhatsApp">WA</a>
+                        </div>
+                        <p class="footer-copy">&copy; {{ date('Y') }} Pollos y Parrillas El Dorado. Todos los derechos reservados.</p>
+                    </section>
+                    <section class="footer-column">
+                        <h2>Atención al cliente</h2>
+                        <nav class="footer-links">
+                            <a href="{{ route('store.products') }}">Ayuda para comprar</a>
+                            <a href="{{ route('store.orders') }}">Seguimiento de pedidos</a>
+                            <a href="{{ route('store.cart') }}">Delivery y formas de pago</a>
+                            <a href="#">Preguntas frecuentes</a>
+                            <a href="#">Libro de reclamaciones</a>
+                        </nav>
+                    </section>
+                    <section class="footer-column">
+                        <h2>Conócenos</h2>
+                        <nav class="footer-links">
+                            <a href="{{ route('store.about') }}">Nosotros</a>
+                            <a href="{{ route('store.location') }}">Ubicación</a>
+                            <a href="{{ route('store.experts') }}">Expertos</a>
+                            <a href="{{ route('store.products') }}">Nuestro menú</a>
+                            <a href="#">Trabaja con nosotros</a>
+                        </nav>
+                    </section>
+                    <section class="footer-column">
+                        <h2>Contacto</h2>
+                        <div class="footer-contact">
+                            <span id="footerLocationName">Local principal El Dorado</span>
+                            <span id="footerAddress">Jr. Cuzco, Huancayo, Perú</span>
+                            <span id="footerHours">Atención continua hasta las 11:00 PM</span>
+                            <span>Celular: <span id="footerPhone">964 900 990</span></span>
+                        </div>
+                    </section>
+                </div>
+                <a id="footerWhatsapp" class="footer-whatsapp" href="#" aria-label="Contactar por WhatsApp">WA</a>
+            </footer>
         </div>
     </div>
 </div>
@@ -2153,6 +2231,73 @@ initClientSession();
     };
 
     window.edBootRealtimeClient();
+})();
+</script>
+<script>
+(() => {
+    const revealSelector = '.page-stack > section, .page-stack > article, .page-stack article, .page-stack img, .page-stack .panel, .page-stack .product-card, .store-footer-grid > section';
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let revealIndex = 0;
+    const observer = reducedMotion || !('IntersectionObserver' in window) ? null : new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -5% 0px' });
+
+    function registerRevealElements(root = document) {
+        const candidates = [];
+        if (root.nodeType === 1 && root.matches?.(revealSelector)) candidates.push(root);
+        root.querySelectorAll?.(revealSelector).forEach(element => candidates.push(element));
+        candidates.forEach(element => {
+            if (element.classList.contains('scroll-reveal')) return;
+            element.classList.add('scroll-reveal', revealIndex++ % 2 === 0 ? 'reveal-left' : 'reveal-right');
+            if (reducedMotion || !observer) element.classList.add('is-visible');
+            else observer.observe(element);
+        });
+    }
+
+    registerRevealElements();
+    const mutationObserver = new MutationObserver(mutations => {
+        mutations.forEach(mutation => mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1) registerRevealElements(node);
+        }));
+    });
+    const pageStack = document.querySelector('.page-stack');
+    if (pageStack) mutationObserver.observe(pageStack, { childList: true, subtree: true });
+
+    async function loadFooterSettings() {
+        try {
+            const response = await fetch('/api/v1/settings/public');
+            const data = await response.json();
+            if (!response.ok) return;
+            const location = data?.location || {};
+            const setText = (id, value) => {
+                const element = document.getElementById(id);
+                if (element && value) element.textContent = value;
+            };
+            setText('footerLocationName', location.location_name);
+            setText('footerAddress', location.address);
+            setText('footerHours', location.business_hours);
+            setText('footerPhone', data.support_phone);
+
+            const phone = String(data.support_phone || '').replace(/\D/g, '');
+            if (phone) {
+                const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent('Hola, deseo información sobre Pollos y Parrillas El Dorado.')}`;
+                ['footerWhatsapp', 'footerWhatsappSocial'].forEach(id => {
+                    const link = document.getElementById(id);
+                    if (link) {
+                        link.href = whatsappUrl;
+                        link.target = '_blank';
+                        link.rel = 'noreferrer';
+                    }
+                });
+            }
+        } catch {}
+    }
+
+    loadFooterSettings();
 })();
 </script>
 @yield('scripts')
