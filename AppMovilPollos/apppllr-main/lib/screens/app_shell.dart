@@ -361,10 +361,8 @@ class _AppShellState extends State<AppShell> {
                     children: _pages,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
+                DecoratedBox(
+                  decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -373,8 +371,9 @@ class _AppShellState extends State<AppShell> {
                           StoreTheme.cream.withOpacity(.94),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: StoreTheme.lineStrong.withOpacity(.72)),
+                      border: Border(
+                        top: BorderSide(color: StoreTheme.borderSoft),
+                      ),
                       boxShadow: const [
                         BoxShadow(
                           color: Color.fromRGBO(52, 17, 0, .07),
@@ -383,7 +382,7 @@ class _AppShellState extends State<AppShell> {
                         ),
                       ],
                     ),
-                    child: BottomNavigationBar(
+                  child: BottomNavigationBar(
                       currentIndex: _index,
                       onTap: (i) {
                         setState(() => _index = i);
@@ -411,7 +410,6 @@ class _AppShellState extends State<AppShell> {
                           label: 'Perfil',
                         ),
                       ],
-                    ),
                   ),
                 ),
               ],

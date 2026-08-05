@@ -1,16 +1,38 @@
 import 'package:flutter/material.dart';
 
 class StoreTheme {
-  static const Color orange = Color(0xFFFF6F1F);
-  static const Color orangeSoft = Color(0xFFFF9D5A);
-  static const Color orangeDeep = Color(0xFFF25D00);
-  static const Color cream = Color(0xFFFFF8F2);
-  static const Color creamStrong = Color(0xFFFFF1E3);
-  static const Color paper = Color(0xFFFFFDF9);
-  static const Color paperSoft = Color(0xFFFFF6EE);
-  static const Color ink = Color(0xFF25170F);
-  static const Color inkSoft = Color(0xFF68432E);
-  static const Color lineStrong = Color(0xFFEAB68A);
+  static const Color primary = Color(0xFFF26419);
+  static const Color primaryDark = Color(0xFFD94F0D);
+  static const Color primarySoft = Color(0xFFFFF0E5);
+  static const Color accent = Color(0xFFF7B801);
+  static const Color accentDark = Color(0xFFDFA500);
+  static const Color accentSoft = Color(0xFFFFF7D6);
+  static const Color background = Color(0xFFFFF8F2);
+  static const Color backgroundAlt = Color(0xFFFFF1E6);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceSoft = Color(0xFFFFF9F5);
+  static const Color textPrimary = Color(0xFF26170F);
+  static const Color textSecondary = Color(0xFF674633);
+  static const Color textMuted = Color(0xFF765846);
+  static const Color border = Color(0xFFE9B98F);
+  static const Color borderSoft = Color(0xFFF2D4BC);
+  static const Color success = Color(0xFF17683A);
+  static const Color danger = Color(0xFFA1261A);
+  static const Color warning = Color(0xFF805100);
+  static const Color info = Color(0xFF205A84);
+
+  // Compatibility aliases keep existing widgets unchanged while all colors
+  // resolve to the single global palette above.
+  static const Color orange = primary;
+  static const Color orangeSoft = accent;
+  static const Color orangeDeep = primaryDark;
+  static const Color cream = background;
+  static const Color creamStrong = backgroundAlt;
+  static const Color paper = surface;
+  static const Color paperSoft = surfaceSoft;
+  static const Color ink = textPrimary;
+  static const Color inkSoft = textSecondary;
+  static const Color lineStrong = border;
 
   static ThemeData theme() {
     final base = ThemeData(
@@ -21,8 +43,7 @@ class StoreTheme {
         secondary: orangeSoft,
         brightness: Brightness.light,
       ),
-      scaffoldBackgroundColor: Colors.transparent,
-      fontFamily: 'Trebuchet MS',
+      scaffoldBackgroundColor: background,
     );
 
     return base.copyWith(
@@ -49,6 +70,41 @@ class StoreTheme {
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: orangeSoft, width: 1.4),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: danger),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: danger, width: 2),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: borderSoft,
+          disabledForegroundColor: textMuted,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          foregroundColor: primaryDark,
+          side: const BorderSide(color: border),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: surface,
+        elevation: 1,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: borderSoft),
+        ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
@@ -69,8 +125,7 @@ class StoreTheme {
         secondary: orangeDeep,
         brightness: Brightness.dark,
       ),
-      scaffoldBackgroundColor: Colors.transparent,
-      fontFamily: 'Trebuchet MS',
+      scaffoldBackgroundColor: background,
     );
 
     return base.copyWith(
@@ -201,13 +256,7 @@ class StoreFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: padding,
-      child: DecoratedBox(
-        decoration: StoreTheme.frameDecoration(),
-        child: child,
-      ),
-    );
+    return child;
   }
 }
 
