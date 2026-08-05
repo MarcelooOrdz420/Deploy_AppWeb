@@ -1108,8 +1108,8 @@ initClientSession();
     .pollia-launcher {
         position: fixed;
         right: 18px;
-        bottom: 18px;
-        z-index: 9997;
+        bottom: calc(88px + env(safe-area-inset-bottom));
+        z-index: 1210;
         width: 58px;
         height: 58px;
         border: 0;
@@ -1134,7 +1134,7 @@ initClientSession();
         position: fixed;
         right: 18px;
         bottom: 88px;
-        z-index: 9997;
+        z-index: 1210;
         display: none;
         width: min(390px, calc(100vw - 32px));
         height: min(560px, calc(100vh - 118px));
@@ -1150,6 +1150,9 @@ initClientSession();
         display: grid;
         grid-template-rows: auto 1fr auto;
     }
+
+    body.cart-panel-open .pollia-launcher,
+    body.cart-panel-open .pollia-widget { display: none !important; }
 
     .pollia-head {
         display: flex;
@@ -1294,7 +1297,7 @@ initClientSession();
     @media (max-width: 720px) {
         .pollia-launcher {
             right: 12px;
-            bottom: 12px;
+            bottom: calc(82px + env(safe-area-inset-bottom));
         }
 
         .pollia-widget {

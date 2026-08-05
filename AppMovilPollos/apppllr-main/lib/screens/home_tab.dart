@@ -29,6 +29,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
 
   String _userName = 'Invitado';
   String _selectedCategory = '';
+  bool _hasSelection = false;
   bool _logged = false;
 
   @override
@@ -83,18 +84,36 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   }
 
   List<Producto> _filteredProducts(List<Producto> products) {
-    final query = _searchCtrl.text.trim().toLowerCase();
+    final query = _normalize(_searchCtrl.text);
     final maxPrice = double.tryParse(_maxPriceCtrl.text.trim());
 
     return products.where((product) {
       final matchesName = query.isEmpty ||
-          product.name.toLowerCase().contains(query) ||
-          product.categoria.toLowerCase().contains(query);
+          _normalize(product.name).contains(query) ||
+          _normalize(product.categoria).contains(query);
       final matchesCategory =
-          _selectedCategory.isEmpty || product.categoria.toLowerCase() == _selectedCategory;
+          _selectedCategory.isEmpty || _normalizeCategory(product.categoria) == _selectedCategory;
       final matchesPrice = maxPrice == null || product.price <= maxPrice;
       return matchesName && matchesCategory && matchesPrice;
     }).toList();
+  }
+
+  String _normalize(String value) {
+    const accented = 'áéíóúüñÁÉÍÓÚÜÑ';
+    const plain = 'aeiouunAEIOUUN';
+    var result = value.trim().toLowerCase();
+    for (var index = 0; index < accented.length; index++) {
+      result = result.replaceAll(accented[index], plain[index]);
+    }
+    return result.replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  String _normalizeCategory(String value) {
+    final normalized = _normalize(value);
+    if (normalized.contains('pollo')) return 'pollos';
+    if (normalized.contains('parrilla') || normalized.contains('anticucho')) return 'parrillas';
+    if (normalized.contains('bebida') || normalized.contains('gaseosa')) return 'bebidas';
+    return normalized;
   }
 
   Future<void> _addToCart(BuildContext context, Producto product) async {
@@ -251,8 +270,9 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
 
         final products = snap.data ?? const <Producto>[];
         final filtered = _filteredProducts(products);
-        final pollos = products.where((item) => item.categoria.toLowerCase() == 'pollos').toList();
-        final bebidas = products.where((item) => item.categoria.toLowerCase() == 'bebidas').toList();
+        final pollos = products.where((item) => _normalizeCategory(item.categoria) == 'pollos').toList();
+        final bebidas = products.where((item) => _normalizeCategory(item.categoria) == 'bebidas').toList();
+        final parrillas = products.where((item) => _normalizeCategory(item.categoria) == 'parrillas').toList();
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -269,26 +289,33 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
               _buildHeroCarousel(
                 pollos: pollos,
                 bebidas: bebidas,
+                parrillas: parrillas,
               ),
               const SizedBox(height: 16),
               _buildFilterSection(filtered.length),
               const SizedBox(height: 16),
-              if (filtered.isEmpty)
+              if (!_hasSelection)
                 const StoreSurface(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Explora el menu',
+                        'Elige una categoria para ver los productos.',
                         style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Empieza por una busqueda o una categoria para activar el catalogo, igual que en la web.',
+                        'Selecciona Pollos, Parrillas, Bebidas o Todas.',
                         style: TextStyle(color: StoreTheme.inkSoft, height: 1.5),
                       ),
                     ],
                   ),
+                )
+              else if (filtered.isEmpty)
+                const StoreAsyncState(
+                  icon: Icons.search_off_rounded,
+                  title: 'No se encontraron productos',
+                  message: 'Cambia o limpia los filtros activos.',
                 )
               else
                 LayoutBuilder(
@@ -702,17 +729,18 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   Widget _buildHeroCarousel({
     required List<Producto> pollos,
     required List<Producto> bebidas,
+    required List<Producto> parrillas,
   }) {
     final products = <Producto?>[
       pollos.isNotEmpty ? pollos.first : null,
-      pollos.length > 1 ? pollos[1] : (pollos.isNotEmpty ? pollos.first : null),
-      bebidas.isNotEmpty ? bebidas.first : (pollos.isNotEmpty ? pollos.last : null),
+      bebidas.isNotEmpty ? bebidas.first : null,
+      parrillas.isNotEmpty ? parrillas.first : null,
     ];
-    const fallbackTitles = ['Brasa protagonista', 'Combos para compartir', 'Bebidas El Dorado'];
+    const fallbackTitles = ['Pollos', 'Bebidas', 'Parrillas'];
     const fallbackSubtitles = [
       'Pollo dorado, crocante y listo para pedir.',
-      'Porciones pensadas para disfrutar en familia.',
-      'El acompañamiento ideal para completar tu pedido.',
+      'Bebidas frias para acompañar tu pedido.',
+      'Carnes y parrillas preparadas al momento.',
     ];
 
     return Semantics(
@@ -737,11 +765,16 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2),
                     child: _HeroCard(
-                      title: product?.name ?? fallbackTitles[index],
+                      title: fallbackTitles[index],
                       subtitle: product?.description.isNotEmpty == true
                           ? product!.description
                           : fallbackSubtitles[index],
                       product: product,
+                      fallbackAsset: const [
+                        'assets/pollo_entero.png',
+                        'assets/coca_cola.png',
+                        'assets/parrillada_mixta.jpg',
+                      ][index],
                     ),
                   );
                 },
@@ -818,7 +851,11 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                   border: Border.all(color: StoreTheme.lineStrong.withOpacity(.82)),
                 ),
                 child: Text(
-                  '$resultsCount resultado(s)',
+                  !_hasSelection
+                      ? 'Elige una categoria'
+                      : resultsCount == 1
+                          ? '1 producto encontrado'
+                          : '$resultsCount productos encontrados',
                   style: const TextStyle(
                     color: Color(0xFF82471F),
                     fontWeight: FontWeight.w800,
@@ -833,7 +870,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
               children: [
                 TextField(
                   controller: _searchCtrl,
-                  onChanged: (_) => setState(() {}),
+                  onChanged: (_) => setState(() => _hasSelection = true),
                   decoration: const InputDecoration(
                     labelText: 'Buscar por nombre',
                     hintText: 'Ej: pollo, parrilla, chicha...',
@@ -848,6 +885,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                     prefixIcon: Icon(Icons.tune),
                   ),
                   items: const [
+                    DropdownMenuItem(value: '', child: Text('Todas')),
                     DropdownMenuItem(value: 'pollos', child: Text('Pollos')),
                     DropdownMenuItem(value: 'parrillas', child: Text('Parrillas')),
                     DropdownMenuItem(value: 'bebidas', child: Text('Bebidas')),
@@ -855,6 +893,11 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                   onChanged: (value) {
                     setState(() {
                       _selectedCategory = value ?? '';
+                      if (_selectedCategory.isEmpty) {
+                        _searchCtrl.clear();
+                        _maxPriceCtrl.clear();
+                      }
+                      _hasSelection = true;
                     });
                   },
                 ),
@@ -862,7 +905,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                 TextField(
                   controller: _maxPriceCtrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (_) => setState(() {}),
+                  onChanged: (_) => setState(() => _hasSelection = true),
                   decoration: InputDecoration(
                     labelText: 'Precio maximo',
                     hintText: 'Ej: 40.00',
@@ -877,6 +920,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                                 _searchCtrl.clear();
                                 _maxPriceCtrl.clear();
                                 _selectedCategory = '';
+                                _hasSelection = false;
                               });
                             },
                             icon: const Icon(Icons.close),
@@ -916,11 +960,13 @@ class _HeroCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.product,
+    this.fallbackAsset,
   });
 
   final String title;
   final String subtitle;
   final Producto? product;
+  final String? fallbackAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -946,9 +992,15 @@ class _HeroCard extends StatelessWidget {
                 producto: product!,
                 width: double.infinity,
                 height: double.infinity,
+                fit: BoxFit.cover,
               )
             else
-              Container(color: const Color(0xFFFFE5CE)),
+              Image.asset(
+                fallbackAsset ?? 'assets/pollooooo.png',
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+              ),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(

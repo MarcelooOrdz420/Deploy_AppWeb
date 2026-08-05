@@ -17,7 +17,6 @@
                 <p class="muted-main hero-text">
                     Pollo, parrilla y bebidas en una vitrina mas directa, mas viva y mas facil de comprar.
                 </p>
-                <a href="#productsGrid" class="hero-cta">Ver menu</a>
                 </div>
 
             <div id="heroSlider" class="hero-visual-stage">
@@ -28,8 +27,8 @@
                     <div class="hero-tint hero-tint-soft"></div>
                 </article>
                     <div class="hero-plate-copy">
-                        <strong>Brasa protagonista</strong>
-                        <span>Textura crocante, porcion potente y compra rapida.</span>
+                        <strong>Pollos</strong>
+                        <span>Pollo a la brasa preparado con el sabor de la casa.</span>
                     </div>
                 </div>
                 <div class="hero-stage-right">
@@ -37,16 +36,16 @@
                     <img id="heroImageB" src="/images/hero/slide-2.jpg" alt="Promo El Dorado 2" class="hero-poster">
                     <div class="hero-tint hero-tint-soft"></div>
                     <div class="hero-note">
-                        <strong>Combos</strong>
-                        <span>Listos para compartir.</span>
+                        <strong>Bebidas</strong>
+                        <span>Bebidas frias para acompañar tu pedido.</span>
                     </div>
                 </article>
                 <article class="hero-feature hero-feature-side">
                     <img id="heroImageC" src="/images/hero/slide-3.jpg" alt="Promo El Dorado 3" class="hero-poster">
                     <div class="hero-tint"></div>
                     <div class="hero-note">
-                        <strong>Bebidas</strong>
-                        <span>El cierre exacto para acompañar cualquier pedido.</span>
+                        <strong>Parrillas</strong>
+                        <span>Carnes y parrillas preparadas al momento.</span>
                     </div>
                 </article>
                     <div class="hero-quality-chip">100% sabor dorado</div>
@@ -96,6 +95,7 @@
                 <button type="button" class="btn-soft" data-quick-category="bebidas">Solo bebidas</button>
                 <button type="button" class="btn-soft" data-quick-budget="25">Hasta S/ 25</button>
                 <button type="button" class="btn-soft" data-quick-budget="40">Hasta S/ 40</button>
+                <button type="button" id="clearFiltersBtn" class="btn-soft" hidden>Limpiar filtros</button>
             </div>
 
             <div id="searchState" class="search-state-panel" style="display:none;">
@@ -492,7 +492,7 @@
             position: fixed;
             right: 16px;
             bottom: 16px;
-            z-index: 9998;
+            z-index: 1200;
             display: grid;
             gap: 10px;
             width: min(380px, calc(100vw - 32px));
@@ -1458,7 +1458,6 @@
         }
 
         .hero-showcase::after,
-        .hero-plate-copy,
         .hero-quality-chip { display: none !important; }
 
         .hero-hours-bar {
@@ -1520,6 +1519,8 @@
             min-height: 0;
             border-radius: var(--radius-medium);
         }
+
+        .hero-poster { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 
         .hero-copy-stack {
             position: absolute;
@@ -1586,12 +1587,23 @@
 
         @media (max-width: 980px) {
             .hero-visual-stage {
-                grid-template-columns: minmax(0, 1fr) !important;
-                height: clamp(360px, 62vh, 520px);
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                grid-template-rows: minmax(280px, 1.35fr) minmax(180px, 1fr);
+                height: clamp(500px, 72vh, 680px);
             }
-            .hero-stage-right { display: none; }
+            .hero-stage-left { grid-column: 1 / 3; grid-row: 1; }
+            .hero-stage-right { grid-column: 1 / 3; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 1fr; }
             .hero-copy-stack { max-width: calc(100% - 72px); }
             .hero-controls { right: 24px; }
+        }
+
+        @media (max-width: 560px) {
+            .hero-visual-stage { display: flex !important; height: auto; overflow-x: auto; scroll-snap-type: x mandatory; }
+            .hero-stage-left, .hero-stage-right { display: contents; }
+            .hero-feature { flex: 0 0 86%; height: clamp(230px, 66vw, 310px); min-height: 0; scroll-snap-align: center; }
+            .hero-copy-stack { display: none; }
+            .hero-controls { position: static; justify-content: center; padding: 10px 0 2px; }
+            .float-cart { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
         }
     </style>
 @endsection
@@ -1599,9 +1611,9 @@
 @section('scripts')
 <script>
 const HERO_FALLBACKS = [
-    ['/images/hero/slide-1.jpg', '/images/hero/slide-2.jpg'],
-    ['/images/hero/slide-2.jpg', '/images/hero/slide-1.jpg'],
-    ['/images/hero/slide-3.jpg', '/images/hero/slide-2.jpg'],
+    ['/images/products/pollos/pollo_familiar.jpg', '/images/products/pollos/medio_pollo.jpg'],
+    ['/images/products/bebidas/coca-cola.jpg', '/images/products/bebidas/inca-kola.jpg'],
+    ['/images/products/parrillas/parrillada-mixta.jpg', '/images/products/parrillas/anticuchos.jpg'],
 ];
 
 const heroImages = [
@@ -1633,10 +1645,11 @@ const heroProductsMetric = document.getElementById('heroProductsMetric');
 const heroAvailableMetric = document.getElementById('heroAvailableMetric');
 const quickCategoryButtons = Array.from(document.querySelectorAll('[data-quick-category]'));
 const quickBudgetButtons = Array.from(document.querySelectorAll('[data-quick-budget]'));
+const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
 if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
 
-const state = { products: [] };
+const state = { products: [], hasSelection: false };
 let slideIndex = 0;
 let searchTimer = null;
 let heroPools = HERO_FALLBACKS.map(group => [...group]);
@@ -1675,6 +1688,7 @@ function setCartOpen(open) {
     floatCartPanel.classList.toggle('open', open);
     floatCartPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
     floatCartToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.body.classList.toggle('cart-panel-open', open);
 }
 
 function setFloatCartVisible(visible) {
@@ -1757,6 +1771,23 @@ function normalizeProductName(name) {
         .replace(/ñ/g, 'n');
 }
 
+function normalizeCategory(value) {
+    const normalized = normalizeProductName(value).replace(/\s+/g, ' ');
+    if (/\b(pollo|pollos|pollo a la brasa)\b/.test(normalized)) return 'pollos';
+    if (/\b(parrilla|parrillas|carne|anticucho)\b/.test(normalized)) return 'parrillas';
+    if (/\b(bebida|bebidas|gaseosa|gaseosas|refresco)\b/.test(normalized)) return 'bebidas';
+    return normalized;
+}
+
+function heroCategory(product) {
+    const category = normalizeCategory(product.category);
+    const name = normalizeProductName(product.name);
+    if (category === 'bebidas' || /coca|inca|sprite|agua|limonada|chicha/.test(name)) return 'bebidas';
+    if (category === 'parrillas' || /parrilla|carne|anticucho/.test(name)) return 'parrillas';
+    if (category === 'pollos' || /pollo/.test(name)) return 'pollos';
+    return category;
+}
+
 function validateCartLimits(cart) {
     const totals = {};
     let sodaTotal = 0;
@@ -1790,23 +1821,12 @@ function uniqueImages(items) {
 }
 
 function buildHeroPools() {
-    const pollos = state.products.filter(product => String(product.category || '').toLowerCase() === 'pollos');
-    const bebidas = state.products.filter(product => String(product.category || '').toLowerCase() === 'bebidas');
-
-    const personal = pollos.filter(product => /1\/4|cuarto|personal|medio|1\/2|doble|para 2|dos/i.test(product.name || ''));
-    const family = pollos.filter(product => /entero|familiar|combo|1 pollo|2 pollos|parrilla/i.test(product.name || ''));
-
-    heroPools = [
-        uniqueImages((personal.length ? personal : pollos).map(productImage)).length
-            ? uniqueImages((personal.length ? personal : pollos).map(productImage))
-            : HERO_FALLBACKS[0],
-        uniqueImages((family.length ? family : [...pollos].reverse()).map(productImage)).length
-            ? uniqueImages((family.length ? family : [...pollos].reverse()).map(productImage))
-            : HERO_FALLBACKS[1],
-        uniqueImages(bebidas.map(productImage)).length
-            ? uniqueImages(bebidas.map(productImage))
-            : HERO_FALLBACKS[2],
-    ];
+    heroPools = ['pollos', 'bebidas', 'parrillas'].map((category, index) => {
+        const images = uniqueImages(state.products
+            .filter(product => product.is_available !== false && heroCategory(product) === category)
+            .map(productImage));
+        return images.length ? images : HERO_FALLBACKS[index];
+    });
 
     const preloadUrls = uniqueImages([...heroPools.flat(), ...HERO_FALLBACKS.flat()]);
     preloadUrls.forEach(src => { const image = new Image(); image.src = src; });
@@ -1821,29 +1841,22 @@ function syncHeroMetrics() {
     }
 }
 
-function heroSequence() {
-    return uniqueImages([...heroPools.flat(), ...HERO_FALLBACKS.flat()]);
-}
-
 function renderHeroSlide() {
-    const sequence = heroSequence();
-    if (!sequence.length) return;
     heroImages.forEach((image, index) => {
+        const pool = heroPools[index].length ? heroPools[index] : HERO_FALLBACKS[index];
         image.style.opacity = '0';
-        image.src = sequence[(slideIndex + index) % sequence.length];
+        image.src = pool[slideIndex % pool.length];
         requestAnimationFrame(() => { image.style.opacity = '1'; });
     });
     heroIndicators?.querySelectorAll('.hero-indicator').forEach((indicator, index) => {
-        const active = index === (slideIndex % Math.min(3, sequence.length));
+        const active = index === (slideIndex % 3);
         indicator.classList.toggle('active', active);
         indicator.setAttribute('aria-current', active ? 'true' : 'false');
     });
 }
 
 function goToHeroSlide(index) {
-    const sequence = heroSequence();
-    if (!sequence.length) return;
-    slideIndex = (index + sequence.length) % sequence.length;
+    slideIndex = (index + 3) % 3;
     renderHeroSlide();
 }
 
@@ -1934,15 +1947,15 @@ function addToCart(product) {
 }
 
 function filteredProducts() {
-    const query = searchInput.value.trim().toLowerCase();
-    const category = categoryInput.value.trim().toLowerCase();
+    const query = normalizeProductName(searchInput.value);
+    const category = normalizeCategory(categoryInput.value);
     const maxPrice = maxPriceInput.value ? Number(maxPriceInput.value) : null;
 
     if (!query && !category && maxPrice === null) return state.products;
 
     return state.products.filter(product => {
-        const byName = !query || product.name.toLowerCase().includes(query);
-        const byCategory = !category || String(product.category || '').toLowerCase() === category;
+        const byName = !query || normalizeProductName(product.name).includes(query);
+        const byCategory = !category || normalizeCategory(product.category) === category;
         const byPrice = maxPrice === null || Number(product.price) <= maxPrice;
         return byName && byCategory && byPrice;
     });
@@ -1950,21 +1963,22 @@ function filteredProducts() {
 
 function renderProducts() {
     const list = filteredProducts();
+    const hasVisibleFilter = Boolean(searchInput.value.trim() || categoryInput.value || maxPriceInput.value);
+    clearFiltersBtn.hidden = !hasVisibleFilter;
 
-    /* El catálogo se muestra desde la carga inicial; los filtros solo refinan resultados. */
-    if (!state.products.length) {
+    if (!state.hasSelection) {
         productsGrid.innerHTML = `
             <article class="surface panel">
                 <p class="eyebrow">Explora el Menu</p>
-                <h3 class="section-title">Empieza por una busqueda o una categoria.</h3>
-                <p class="muted-main">El catalogo se activa cuando indicas qué te provoca hoy: pollo, parrilla o alguna bebida para completar el pedido.</p>
+                <h3 class="section-title">Elige una categoria para ver los productos.</h3>
+                <p class="muted-main">Selecciona Pollos, Parrillas, Bebidas o Todas.</p>
             </article>
         `;
         filterInfo.textContent = 'Escribe o selecciona una categoria para empezar.';
         return;
     }
 
-    filterInfo.textContent = `${list.length} resultado(s) encontrados`;
+    filterInfo.textContent = list.length === 1 ? '1 producto encontrado' : `${list.length} productos encontrados`;
     if (!list.length) {
         productsGrid.innerHTML = `
             <article class="surface panel">
@@ -2014,6 +2028,7 @@ function renderProducts() {
 }
 
 function queueRenderProducts() {
+    state.hasSelection = true;
     setSearchState(true);
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
@@ -2036,11 +2051,22 @@ async function loadProducts() {
 
 initHeroControls();
 searchInput.addEventListener('input', queueRenderProducts);
-categoryInput.addEventListener('change', queueRenderProducts);
+categoryInput.addEventListener('change', () => {
+    if (!categoryInput.value) {
+        searchInput.value = '';
+        maxPriceInput.value = '';
+    }
+    queueRenderProducts();
+});
 maxPriceInput.addEventListener('input', queueRenderProducts);
 quickCategoryButtons.forEach(button => {
     button.addEventListener('click', () => {
-        categoryInput.value = button.getAttribute('data-quick-category') || '';
+        const category = button.getAttribute('data-quick-category') || '';
+        categoryInput.value = category;
+        if (!category) {
+            searchInput.value = '';
+            maxPriceInput.value = '';
+        }
         queueRenderProducts();
     });
 });
@@ -2049,6 +2075,13 @@ quickBudgetButtons.forEach(button => {
         maxPriceInput.value = button.getAttribute('data-quick-budget') || '';
         queueRenderProducts();
     });
+});
+clearFiltersBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    categoryInput.value = '';
+    maxPriceInput.value = '';
+    state.hasSelection = false;
+    renderProducts();
 });
 document.getElementById('closeModalBtn').addEventListener('click', () => { modal.style.display = 'none'; });
 modal.addEventListener('click', (event) => { if (event.target === modal) modal.style.display = 'none'; });
