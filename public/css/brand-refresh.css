@@ -1650,30 +1650,54 @@ h3,
  * without wrapping an entire screen in a card.
  */
 :root {
-    --color-primary: #F26419;
-    --color-primary-hover: #D94F0D;
-    --color-primary-soft: #FFF0E5;
-    --color-accent: #F7B801;
-    --color-accent-hover: #DFA500;
-    --color-accent-soft: #FFF7D6;
-    --color-background: #FFF8F2;
-    --color-background-alt: #FFF1E6;
-    --color-surface: #FFFFFF;
-    --color-surface-soft: #FFF9F5;
-    --color-text: #26170F;
-    --color-text-secondary: #674633;
-    --color-text-muted: #765846;
-    --color-border: #E9B98F;
-    --color-border-soft: #F2D4BC;
-    --color-success: #17683A;
-    --color-danger: #A1261A;
-    --color-warning: #805100;
-    --color-info: #205A84;
-    --shadow-small: 0 4px 14px rgba(38, 23, 15, .08);
-    --shadow-medium: 0 12px 28px rgba(38, 23, 15, .12);
-    --radius-small: 8px;
-    --radius-medium: 14px;
-    --radius-large: 20px;
+    --orange: #ff6f1f;
+    --orange-soft: #ff9d5a;
+    --orange-deep: #f25d00;
+    --cream: #fff8f2;
+    --cream-strong: #fff1e3;
+    --paper: #fffdf9;
+    --paper-soft: #fff6ee;
+    --field: #fff4eb;
+    --ink: #25170f;
+    --ink-dark: #24160f;
+    --ink-soft: #68432e;
+    --ink-muted: #7b4a2a;
+    --line: #f0c9aa;
+    --line-strong: #eab68a;
+    --line-light: #f0cfb3;
+    --success: #17683a;
+    --success-soft: #eaf8f0;
+    --warning: #805100;
+    --warning-soft: #fff4d6;
+    --danger: #a1261a;
+    --danger-dark: #801d14;
+    --danger-soft: #fde9e7;
+    --info: #205a84;
+    --info-soft: #eaf4fb;
+    --shadow-soft: 0 18px 40px rgba(52, 17, 0, .08);
+    --shadow-medium: 0 20px 46px rgba(52, 17, 0, .11);
+    --shadow-strong: 0 26px 60px rgba(52, 17, 0, .13);
+    --radius-xl: 28px;
+    --radius-lg: 22px;
+    --radius-md: 16px;
+    --radius-sm: 10px;
+    --radius-pill: 999px;
+    --color-primary: var(--orange);
+    --color-primary-hover: var(--orange-deep);
+    --color-primary-soft: var(--cream-strong);
+    --color-background: var(--cream);
+    --color-background-alt: var(--cream-strong);
+    --color-surface: var(--paper);
+    --color-surface-soft: var(--paper-soft);
+    --color-text: var(--ink);
+    --color-text-secondary: var(--ink-soft);
+    --color-text-muted: var(--ink-muted);
+    --color-border: var(--line);
+    --color-border-soft: var(--line-light);
+    --shadow-small: var(--shadow-soft);
+    --radius-small: var(--radius-sm);
+    --radius-medium: var(--radius-md);
+    --radius-large: var(--radius-lg);
 }
 
 html,
@@ -1685,7 +1709,7 @@ body {
 
 body,
 body[data-theme="dark"] {
-    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif !important;
+    font-family: "Trebuchet MS", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
     color: var(--color-text) !important;
     background: var(--color-background) !important;
 }
@@ -1795,7 +1819,7 @@ a:not([class]) {
 }
 
 :focus-visible {
-    outline: 3px solid rgba(242, 100, 25, .35) !important;
+    outline: 3px solid rgba(255, 111, 31, .35) !important;
     outline-offset: 3px !important;
 }
 

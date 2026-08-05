@@ -74,7 +74,7 @@
         }
         a { color: #8a3f0a; font-weight: 800; text-decoration: none; }
     </style>
-    <link rel="stylesheet" href="/css/brand-refresh.css?v=20260618-presentable">
+    <link rel="stylesheet" href="/css/brand-refresh.css?v=20260804-fullwidth">
 </head>
 <body>
 <main class="card">

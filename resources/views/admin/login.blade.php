@@ -190,7 +190,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="/css/brand-refresh.css?v=20260618-presentable">
+    <link rel="stylesheet" href="/css/brand-refresh.css?v=20260804-fullwidth">
 </head>
 <body>
 <main class="login-shell">
