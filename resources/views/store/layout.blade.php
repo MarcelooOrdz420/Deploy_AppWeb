@@ -1057,6 +1057,8 @@ initClientSession();
     .pollia-purchase-card label { display:grid; gap:6px; color:#68432E; font-size:12px; font-weight:800; }
     .pollia-purchase-card input,.pollia-purchase-card select,.pollia-purchase-card textarea { width:100%; min-height:44px; padding:10px 12px; border:1px solid #EAB68A; border-radius:12px; background:#fff; color:#25170F; }
     .pollia-purchase-card textarea { min-height:78px; resize:vertical; }
+    .pollia-purchase-card [data-guided-location] { min-height:44px; padding:10px 14px; border:1px solid #C94700; border-radius:12px; background:#FFF1E8; color:#9D3500; font-weight:900; cursor:pointer; }
+    .pollia-purchase-card [data-guided-location-status] { color:#68432E; font-size:12px; line-height:1.45; }
     .pollia-purchase-actions { display:flex; flex-wrap:wrap; gap:8px; position:sticky; bottom:0; padding-top:4px; background:#FFFDF9; }
     .pollia-purchase-actions button { min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid #EAB68A; background:#fff; color:#25170F; font-weight:900; }
     .pollia-purchase-actions .primary { background:#FF6F1F; color:#fff; border-color:#C94700; }
@@ -1496,6 +1498,69 @@ initClientSession();
     function captureGuidedFields() {
         purchaseFlow.querySelectorAll('[data-guided]').forEach(field => { guided.data[field.dataset.guided] = field.type === 'number' ? Number(field.value || 0) : field.value.trim(); });
     }
+    async function guidedReverseGeocode(latitude, longitude) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=18&addressdetails=1`;
+        try {
+            const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: controller.signal });
+            if (!response.ok) throw new Error('No se pudo identificar la calle.');
+            return response.json();
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+    function requestGuidedLocation() {
+        const status = purchaseFlow.querySelector('[data-guided-location-status]');
+        if (!navigator.geolocation) {
+            if (status) status.textContent = 'Tu navegador no soporta geolocalización. Escribe tu dirección manualmente.';
+            return;
+        }
+
+        if (status) status.textContent = 'Solicitando permiso y detectando tu ubicación...';
+        navigator.geolocation.getCurrentPosition(async position => {
+            const latitude = position.coords.latitude.toFixed(7);
+            const longitude = position.coords.longitude.toFixed(7);
+            guided.data.latitude = latitude;
+            guided.data.longitude = longitude;
+
+            const latitudeField = purchaseFlow.querySelector('[data-guided="latitude"]');
+            const longitudeField = purchaseFlow.querySelector('[data-guided="longitude"]');
+            if (latitudeField) latitudeField.value = latitude;
+            if (longitudeField) longitudeField.value = longitude;
+
+            try {
+                const data = await guidedReverseGeocode(latitude, longitude);
+                const address = data.address || {};
+                const road = address.road || address.pedestrian || address.residential || address.cycleway || address.avenue || '';
+                const houseNumber = address.house_number || '';
+                const suburb = address.suburb || address.neighbourhood || address.city_district || '';
+                const city = address.city || address.town || address.village || address.county || '';
+                const amenity = address.amenity || address.shop || address.tourism || '';
+                const exactPlace = [road, houseNumber].filter(Boolean).join(' ').trim() || data.name || data.display_name || 'Ubicación detectada';
+                const nearbyReference = [amenity ? `Cerca de ${amenity}` : '', suburb ? `Zona ${suburb}` : '', city ? `Distrito/Ciudad ${city}` : ''].filter(Boolean).join(' | ');
+                guided.data.address = exactPlace;
+                guided.data.reference = nearbyReference || 'Ubicación obtenida desde GPS';
+                const addressField = purchaseFlow.querySelector('[data-guided="address"]');
+                const referenceField = purchaseFlow.querySelector('[data-guided="reference"]');
+                if (addressField) addressField.value = guided.data.address;
+                if (referenceField) referenceField.value = guided.data.reference;
+                if (status) status.textContent = `Ubicación detectada: ${exactPlace}${nearbyReference ? ` | ${nearbyReference}` : ''}`;
+            } catch {
+                guided.data.address = guided.data.address || 'Ubicación detectada desde GPS';
+                const addressField = purchaseFlow.querySelector('[data-guided="address"]');
+                if (addressField && !addressField.value.trim()) addressField.value = guided.data.address;
+                if (status) status.textContent = 'GPS activado. No pudimos identificar la calle; completa la dirección o referencia manualmente.';
+            }
+        }, error => {
+            const messages = {
+                1: 'Permiso de ubicación denegado. Actívalo en el navegador o escribe tu dirección.',
+                2: 'No pudimos detectar tu ubicación. Revisa que el GPS esté activado.',
+                3: 'La ubicación tardó demasiado. Intenta nuevamente.',
+            };
+            if (status) status.textContent = messages[error.code] || 'No se pudo obtener tu ubicación.';
+        }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+    }
     function closeGuided(cancelled = false) {
         purchaseFlow.hidden = true; purchaseFlow.innerHTML = ''; guided.step = 0; guided.data = {};
         log.style.display = 'flex'; form.style.display = 'flex';
@@ -1519,7 +1584,7 @@ initClientSession();
         const steps = [
             `<h3>Paso 1 · Plato y cantidad</h3><label>¿Qué plato deseas pedir?<select data-guided="productId"><option value="">Selecciona</option>${optionsFor(dishes,d.productId)}</select></label><label>Cantidad<input data-guided="qty" type="number" min="1" max="20" value="${Number(d.qty)||1}"></label>`,
             `<h3>Paso 2 · Complementos</h3>${sides.length?`<label>Acompañamiento<select data-guided="sideId"><option value="">Sin acompañamiento</option>${optionsFor(sides,d.sideId)}</select></label>`:''}<label>Ensalada<select data-guided="salad"><option value="">Sin ensalada</option><option value="dulce" ${d.salad==='dulce'?'selected':''}>Dulce</option><option value="salada" ${d.salad==='salada'?'selected':''}>Salada</option></select></label>${drinks.length?`<label>Bebida<select data-guided="drinkId"><option value="">Sin bebida</option>${optionsFor(drinks,d.drinkId)}</select></label><label>Cantidad bebida<input data-guided="drinkQty" type="number" min="1" max="20" value="${Number(d.drinkQty)||1}"></label>`:''}<label>Indicaciones<textarea data-guided="notes" maxlength="255" placeholder="Sin ají, papas bien doradas...">${escapeHtml(d.notes||'')}</textarea></label>`,
-            `<h3>Paso 3 · Entrega</h3><label>Modalidad<select data-guided="deliveryType"><option value="delivery" ${d.deliveryType==='delivery'?'selected':''}>Delivery</option><option value="pickup" ${d.deliveryType==='pickup'?'selected':''}>Recojo en local</option></select></label><label>Dirección<input data-guided="address" maxlength="255" value="${escapeHtml(d.address||'')}"></label><label>Referencia<input data-guided="reference" maxlength="255" value="${escapeHtml(d.reference||'')}"></label>`,
+            `<h3>Paso 3 · Entrega</h3><label>Modalidad<select data-guided="deliveryType"><option value="delivery" ${d.deliveryType==='delivery'?'selected':''}>Delivery</option><option value="pickup" ${d.deliveryType==='pickup'?'selected':''}>Recojo en local</option></select></label><button type="button" data-guided-location>Usar mi ubicación actual</button><span data-guided-location-status>${d.latitude&&d.longitude?'Ubicación GPS guardada. Debajo puedes corregir la dirección.':'El navegador te pedirá permiso para acceder al GPS.'}</span><input data-guided="latitude" type="hidden" value="${escapeHtml(d.latitude||'')}"><input data-guided="longitude" type="hidden" value="${escapeHtml(d.longitude||'')}"><label>Dirección<input data-guided="address" maxlength="255" value="${escapeHtml(d.address||'')}"></label><label>Referencia<input data-guided="reference" maxlength="255" value="${escapeHtml(d.reference||'')}"></label>`,
             `<h3>Paso 4 · Tus datos</h3><label>Nombre completo<input data-guided="customerName" maxlength="120" value="${escapeHtml(d.customerName||'')}"></label><label>Teléfono<input data-guided="phone" inputmode="tel" maxlength="30" value="${escapeHtml(d.phone||'')}"></label><label>Correo<input data-guided="email" type="email" maxlength="120" value="${escapeHtml(d.email||'')}"></label>`,
             `<h3>Resumen</h3><div class="pollia-product-summary"><strong>${escapeHtml(product?.name||'Plato pendiente')} × ${Number(d.qty)||1}</strong>${side?`<span>${escapeHtml(side.name)}</span>`:''}${drink?`<span>${escapeHtml(drink.name)} × ${Number(d.drinkQty)||1}</span>`:''}<span>${d.deliveryType==='delivery'?'Delivery':'Recojo en local'}</span><strong>Subtotal: S/ ${((Number(product?.price||0)*Number(d.qty||1))+Number(side?.price||0)+(Number(drink?.price||0)*Number(d.drinkQty||1))).toFixed(2)}</strong></div>`,
         ];
@@ -1527,6 +1592,7 @@ initClientSession();
         const confirmLabel = isAuthenticated ? 'Agregar al carrito' : 'Continuar para iniciar sesión';
         purchaseFlow.innerHTML = `<div class="pollia-purchase-card">${steps[guided.step]}<div class="pollia-purchase-actions">${guided.step?'<button type="button" data-guided-back>Anterior</button>':''}${guided.step<4?'<button type="button" class="primary" data-guided-next>Continuar</button>':`<button type="button" class="primary" data-guided-confirm>${confirmLabel}</button>`}<button type="button" data-guided-cancel>Cancelar</button></div></div>`;
         purchaseFlow.querySelector('[data-guided-back]')?.addEventListener('click',()=>{captureGuidedFields();guided.step--;renderGuidedPurchase()});
+        purchaseFlow.querySelector('[data-guided-location]')?.addEventListener('click', requestGuidedLocation);
         purchaseFlow.querySelector('[data-guided-next]')?.addEventListener('click',()=>{captureGuidedFields();if(guided.step===0&&!d.productId)return alert('Selecciona un plato.');if(guided.step===2&&d.deliveryType==='delivery'&&!d.address)return alert('Ingresa la dirección.');if(guided.step===3&&(!d.customerName||!/^\+?[0-9\s-]{7,30}$/.test(d.phone||'')||!/^\S+@\S+\.\S+$/.test(d.email||'')))return alert('Completa nombre, teléfono y correo válidos.');guided.step++;renderGuidedPurchase()});
         purchaseFlow.querySelector('[data-guided-cancel]')?.addEventListener('click',()=>closeGuided(true));
         purchaseFlow.querySelector('[data-guided-confirm]')?.addEventListener('click', () => {
@@ -1547,6 +1613,8 @@ initClientSession();
                 address: d.deliveryType === 'delivery' ? d.address : '',
                 reference: d.reference,
                 salad_type: d.salad,
+                latitude: d.latitude,
+                longitude: d.longitude,
             }));
             sessionStorage.setItem('ed_guided_order_note', String(d.notes || '').slice(0, 120));
 
