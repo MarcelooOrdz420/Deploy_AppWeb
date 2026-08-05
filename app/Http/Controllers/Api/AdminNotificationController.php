@@ -31,11 +31,12 @@ class AdminNotificationController extends Controller
             'image_url' => ['nullable', 'string', 'max:2048'],
             'image' => ['nullable', 'file', 'image', 'max:5120'],
             'cta_label' => ['nullable', 'string', 'max:60'],
+            'product_id' => ['nullable', 'integer', 'exists:products,id'],
         ]);
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('offers/admin', 'public');
-            $data['image_url'] = url(Storage::url($path));
+            $data['image_url'] = Storage::url($path);
         }
 
         $broadcastPayload = [
@@ -45,6 +46,8 @@ class AdminNotificationController extends Controller
             'body' => $data['body'] ?? $data['message'],
             'image_url' => $data['image_url'] ?? null,
             'cta_label' => $data['cta_label'] ?? null,
+            'product_id' => $data['product_id'] ?? null,
+            'cta_url' => ! empty($data['product_id']) ? '/productos?product='.(int) $data['product_id'] : '/productos',
         ];
 
         $broadcast = $this->broadcastOffer($broadcastPayload);
@@ -78,6 +81,8 @@ class AdminNotificationController extends Controller
                             'body' => $data['body'] ?? $data['message'],
                             'image_url' => $data['image_url'] ?? null,
                             'cta_label' => $data['cta_label'] ?? null,
+                            'product_id' => isset($data['product_id']) ? (string) $data['product_id'] : '',
+                            'cta_url' => ! empty($data['product_id']) ? '/productos?product='.(int) $data['product_id'] : '/productos',
                         ],
                     );
 
@@ -194,6 +199,8 @@ class AdminNotificationController extends Controller
                     body: $payload['body'] ?? null,
                     imageUrl: $payload['image_url'] ?? null,
                     ctaLabel: $payload['cta_label'] ?? null,
+                    productId: isset($payload['product_id']) ? (int) $payload['product_id'] : null,
+                    ctaUrl: $payload['cta_url'] ?? null,
                 ));
             } else {
                 event(new OfferNotificationSent(

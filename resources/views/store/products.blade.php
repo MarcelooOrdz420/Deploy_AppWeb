@@ -2056,6 +2056,15 @@ async function loadProducts() {
     const res = await fetch('/api/v1/products');
     const data = await res.json();
     state.products = Array.isArray(data) ? data : [];
+    try {
+        const productId = Number(new URLSearchParams(window.location.search).get('product'));
+        const requestedProduct = productId > 0 ? state.products.find(product => Number(product.id) === productId) : null;
+        if (requestedProduct) {
+            state.hasSelection = true;
+            showProduct(requestedProduct);
+            setTimeout(() => modal?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
+        }
+    } catch {}
     buildHeroPools();
     syncHeroMetrics();
     renderProducts();

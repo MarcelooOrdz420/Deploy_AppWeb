@@ -1067,11 +1067,14 @@ initClientSession();
     @media (max-width: 720px) {
         #promoOverlay {
             overflow-y: auto;
+            padding:10px !important;
         }
 
         #promoOverlay > div {
-            margin-top: 3vh !important;
+            margin: 2vh auto !important;
             border-radius: 22px !important;
+            max-height:96vh;
+            overflow-y:auto !important;
         }
 
         #promoOverlay > div > div:nth-child(2) {
@@ -1079,13 +1082,21 @@ initClientSession();
         }
 
         #promoMessage {
-            font-size: 30px !important;
+            font-size: clamp(24px, 8vw, 32px) !important;
+            line-height:1.02 !important;
         }
 
         #promoImage {
-            height: 220px !important;
+            height: min(260px, 34vh) !important;
             border-radius: 18px !important;
         }
+
+        #promoOverlay .promo-copy { padding:20px 18px !important; }
+        #promoOverlay .promo-media { padding:12px !important; }
+        #promoOverlay .promo-actions { display:grid !important; grid-template-columns:1fr 1fr; }
+        #promoOverlay .promo-actions button { width:100%; margin:0; }
+        #promoToast .promo-toast-actions { display:grid !important; grid-template-columns:1fr 1fr; }
+        #promoToast .promo-toast-actions button { width:100%; margin:0; }
     }
 </style>
 
@@ -1096,16 +1107,16 @@ initClientSession();
             <button id="promoCloseBtn" type="button" class="pill-btn" style="padding:8px 12px; background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">Cerrar</button>
         </div>
         <div style="display:grid; grid-template-columns:1.05fr .95fr; gap:0;">
-            <div style="padding:26px 24px; color:#fff7ed; background:radial-gradient(circle at top left, rgba(255,255,255,.08), transparent 22%), linear-gradient(135deg,#201712 0%,#160f0c 48%,#2b1a14 100%);">
+            <div class="promo-copy" style="padding:26px 24px; color:#fff7ed; background:radial-gradient(circle at top left, rgba(255,255,255,.08), transparent 22%), linear-gradient(135deg,#201712 0%,#160f0c 48%,#2b1a14 100%);">
                 <div style="font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.56); margin-bottom:10px;">Promo del dia</div>
                 <div id="promoMessage" style="font-size:38px; line-height:.92; font-weight:900; text-transform:uppercase; text-shadow:0 8px 18px rgba(0,0,0,.28);">Nueva promo</div>
                 <div id="promoBody" style="margin-top:12px; color:rgba(255,247,237,.82); line-height:1.6; max-width:280px;"></div>
-                <div style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;">
+                <div class="promo-actions" style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;">
                     <button id="promoAcceptBtn" type="button" class="pill-btn primary-link" style="padding:12px 18px;">Ver</button>
                     <button id="promoRejectBtn" type="button" class="pill-btn" style="padding:12px 18px; background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">Cerrar</button>
                 </div>
             </div>
-            <div style="padding:18px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, rgba(255,255,255,.18), transparent 44%), linear-gradient(135deg,#ff7c18 0%,#ff931f 100%);">
+            <div class="promo-media" style="padding:18px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, rgba(255,255,255,.18), transparent 44%), linear-gradient(135deg,#ff7c18 0%,#ff931f 100%);">
                 <img id="promoImage" alt="" style="display:none; width:100%; height:320px; object-fit:cover; border-radius:28px; border:4px solid rgba(255,255,255,.34); box-shadow:0 22px 38px rgba(84,32,0,.22);">
             </div>
         </div>
@@ -1120,7 +1131,7 @@ initClientSession();
         </div>
         <div style="padding:14px;">
             <div id="promoToastMessage" style="color:#fff7ed; line-height:1.24; font-size:22px; font-weight:900; text-transform:uppercase;"></div>
-            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap;">
+            <div class="promo-toast-actions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap;">
                 <button id="promoToastRejectBtn" type="button" class="pill-btn" style="background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">Cerrar</button>
                 <button id="promoToastAcceptBtn" type="button" class="pill-btn primary-link">Ver</button>
             </div>
@@ -1968,7 +1979,13 @@ initClientSession();
     function resolveImage(url) {
         const v = (url || '').toString().trim();
         if (!v) return '';
-        if (v.startsWith('http://') || v.startsWith('https://')) return v;
+        if (v.startsWith('http://') || v.startsWith('https://')) {
+            try {
+                const parsed = new URL(v);
+                if (parsed.host === window.location.host) return `${window.location.origin}${parsed.pathname}${parsed.search}`;
+            } catch {}
+            return v;
+        }
         if (v.startsWith('/')) return `${window.location.origin}${v}`;
         return `${window.location.origin}/${v}`;
     }
@@ -2016,6 +2033,10 @@ initClientSession();
             const img = resolveImage(p?.image_url || p?.imageUrl || '');
             if (img) {
                 imageEl.src = img;
+                imageEl.onerror = () => {
+                    imageEl.onerror = null;
+                    imageEl.src = '/images/products/default.svg';
+                };
                 imageEl.style.display = 'block';
             } else {
                 imageEl.removeAttribute('src');
@@ -2023,7 +2044,17 @@ initClientSession();
             }
 
             acceptBtn.textContent = (p?.cta_label || 'Ver').toString();
-            acceptBtn.onclick = () => showOverlay();
+            acceptBtn.onclick = () => {
+                const destination = (p?.cta_url || (p?.product_id ? `/productos?product=${encodeURIComponent(p.product_id)}` : '/productos')).toString();
+                if (destination.startsWith('/') && !destination.startsWith('//')) {
+                    window.location.href = destination;
+                    return;
+                }
+                try {
+                    const target = new URL(destination, window.location.origin);
+                    if (target.protocol === 'http:' || target.protocol === 'https:') window.location.href = target.href;
+                } catch {}
+            };
 
             hideToast();
             showOverlay();

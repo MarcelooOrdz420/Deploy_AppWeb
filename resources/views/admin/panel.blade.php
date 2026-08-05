@@ -1053,6 +1053,13 @@
                         <label>Asunto del correo (opcional)</label>
                         <input name="email_subject" placeholder="Ej: Promo de hoy en El Dorado">
                     </div>
+                    <div>
+                        <label>Platillo al que dirigirá "Lo quiero"</label>
+                        <select id="offerProductSelect" name="product_id">
+                            <option value="">Catálogo general</option>
+                        </select>
+                        <div class="helper-text">Incluye los platillos nuevos creados desde Productos.</div>
+                    </div>
                 </div>
                 <div class="row">
                     <div>
@@ -1472,6 +1479,7 @@ const categorySelect = document.getElementById('categorySelect');
 const newCategoryInput = document.getElementById('newCategoryInput');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const productsList = document.getElementById('productsList');
+const offerProductSelect = document.getElementById('offerProductSelect');
 const productStatusText = document.getElementById('productStatusText');
 const productImageInput = document.getElementById('productImageInput');
 const productImagePreview = document.getElementById('productImagePreview');
@@ -2130,6 +2138,11 @@ async function fetchProducts() {
     });
     const data = await res.json();
     productsCache = Array.isArray(data) ? data : [];
+    if (offerProductSelect) {
+        const selected = offerProductSelect.value;
+        offerProductSelect.innerHTML = '<option value="">Catálogo general</option>' + productsCache.map(product => `<option value="${Number(product.id)}">${escapeHtml(product.name || 'Producto')}</option>`).join('');
+        if ([...offerProductSelect.options].some(option => option.value === selected)) offerProductSelect.value = selected;
+    }
     upsertCategoryOptions();
     syncDashboardMetrics();
     renderProducts();

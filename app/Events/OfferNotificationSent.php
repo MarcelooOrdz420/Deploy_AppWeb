@@ -18,6 +18,8 @@ class OfferNotificationSent implements ShouldBroadcastNow
         public ?string $body = null,
         public ?string $imageUrl = null,
         public ?string $ctaLabel = null,
+        public ?int $productId = null,
+        public ?string $ctaUrl = null,
     ) {
     }
 
@@ -40,6 +42,8 @@ class OfferNotificationSent implements ShouldBroadcastNow
             'body' => $this->body ?? $this->message,
             'image_url' => $this->imageUrl,
             'cta_label' => $this->ctaLabel,
+            'product_id' => $this->productId,
+            'cta_url' => $this->ctaUrl,
         ];
     }
 }
