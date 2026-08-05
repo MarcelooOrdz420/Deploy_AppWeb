@@ -7,7 +7,7 @@
         <section class="hero-showcase surface">
             <div class="hero-hours-bar">Horario de atencion · Lunes a Viernes 12:00 pm a 8:00 pm · Sabado 11:00 am a 9:00 pm · Domingo 11:00 am a 7:00 pm</div>
             <div class="catalog-hero">
-                <div class="hero-copy-stack">
+                <div class="hero-copy-stack" aria-hidden="true">
                 <div class="hero-logo-lockup">
                     <div class="hero-logo-badge"><img src="/images/ico-pollo.jpg" alt="El Dorado"></div>
                     <div class="hero-logo-copy"><span>Pollos y Parrillas</span><strong>El Dorado</strong></div>
@@ -22,7 +22,7 @@
             <div id="heroSlider" class="hero-visual-stage">
                 <div class="hero-stage-left">
                     <div class="hero-stage-rays"></div>
-                <article class="hero-feature hero-feature-main">
+                <article class="hero-feature hero-feature-main hero-media--cover">
                     <img id="heroImageA" src="/images/hero/slide-1.jpg" alt="Promo El Dorado 1" class="hero-poster">
                     <div class="hero-tint hero-tint-soft"></div>
                 </article>
@@ -32,7 +32,7 @@
                     </div>
                 </div>
                 <div class="hero-stage-right">
-                <article class="hero-feature hero-feature-side">
+                <article class="hero-feature hero-feature-side hero-media--contain">
                     <img id="heroImageB" src="/images/hero/slide-2.jpg" alt="Promo El Dorado 2" class="hero-poster">
                     <div class="hero-tint hero-tint-soft"></div>
                     <div class="hero-note">
@@ -40,7 +40,7 @@
                         <span>Bebidas frias para acompañar tu pedido.</span>
                     </div>
                 </article>
-                <article class="hero-feature hero-feature-side">
+                <article class="hero-feature hero-feature-side hero-media--cover">
                     <img id="heroImageC" src="/images/hero/slide-3.jpg" alt="Promo El Dorado 3" class="hero-poster">
                     <div class="hero-tint"></div>
                     <div class="hero-note">
@@ -1521,6 +1521,9 @@
         }
 
         .hero-poster { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+        .hero-media--contain { background: #fff; }
+        .hero-media--contain .hero-poster { object-fit: contain; }
+        .hero-media--cover .hero-poster { object-fit: cover; }
 
         .hero-copy-stack {
             position: absolute;
@@ -1530,6 +1533,7 @@
             max-width: min(420px, 42vw);
             padding: 0 !important;
             pointer-events: none;
+            display: none !important;
         }
 
         .hero-copy-stack .hero-cta { pointer-events: auto; }
@@ -1571,10 +1575,17 @@
         .float-cart {
             right: 20px;
             bottom: max(20px, env(safe-area-inset-bottom));
-            width: auto;
-            min-width: 150px;
-            max-width: 200px;
+            width: min(380px, calc(100vw - 32px));
+            max-width: 420px;
         }
+
+        .float-cart-panel { max-height: min(620px, calc(100vh - 150px)); overflow: hidden; }
+        .float-cart-panel.open { display: flex; flex-direction: column; }
+        .float-cart-body { overflow-x: hidden; overflow-y: auto; padding: 12px 16px; }
+        .float-cart-row { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 12px; }
+        .float-cart-name { white-space: normal; overflow: visible; text-overflow: clip; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+        .float-cart-price { white-space: nowrap; color: var(--orange-dark); }
+        .float-cart-actions a { min-height: 44px; }
 
         .float-cart-toggle {
             width: 100%;
@@ -1603,7 +1614,9 @@
             .hero-feature { flex: 0 0 86%; height: clamp(230px, 66vw, 310px); min-height: 0; scroll-snap-align: center; }
             .hero-copy-stack { display: none; }
             .hero-controls { position: static; justify-content: center; padding: 10px 0 2px; }
-            .float-cart { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
+            .float-cart { left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); width: auto; max-width: none; }
+            .float-cart-panel { max-height: 82vh; border-radius: 20px 20px 14px 14px; }
+            .float-cart-actions { grid-template-columns: 1fr; }
         }
     </style>
 @endsection
@@ -1689,6 +1702,8 @@ function setCartOpen(open) {
     floatCartPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
     floatCartToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     document.body.classList.toggle('cart-panel-open', open);
+    document.body.classList.toggle('cart-open', open);
+    floatCartEl?.classList.toggle('panel-open', open);
 }
 
 function setFloatCartVisible(visible) {
@@ -1704,9 +1719,8 @@ function renderFloatCart() {
     const total = cart.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 0)), 0);
 
     floatCartCountEl.textContent = String(count);
-    // Mostrar siempre si hay productos; si no, mostrar solo cuando el usuario ya hizo scroll.
-    const scrolledEnough = (window.scrollY || 0) > 120;
-    setFloatCartVisible(count > 0 || scrolledEnough);
+    document.body.classList.toggle('cart-has-items', count > 0);
+    setFloatCartVisible(true);
 
     if (!cart.length) {
         floatCartBodyEl.innerHTML = `<div class="muted-main" style="line-height:1.5;"><strong>Aun no agregaste productos.</strong><br>Agrega un platillo y tu carrito flotante se ira actualizando.</div>`;

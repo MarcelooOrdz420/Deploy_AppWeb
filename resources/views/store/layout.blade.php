@@ -913,11 +913,25 @@ function clearCustomerSessionData() {
         'ed_recent_trackings',
         'ed_order_statuses',
         'ed_pollia_checkout_prefill_v1',
+        'ed_pollia_pending_cart_v1',
+        'ed_pollia_guest_session',
+        'ed_checkout_draft',
+        'ed_checkout_data',
+        'ed_customer_data',
+        'ed_delivery_data',
+        'ed_payment_method',
+        'ed_payment_draft',
+        'ed_order_draft',
+        'ed_izipay_data',
+        'ed_pending_order',
         CLIENT_ALERTS_KEY,
     ].forEach(key => localStorage.removeItem(key));
-    sessionStorage.removeItem('ed_receipt_preview');
-    sessionStorage.removeItem('ed_checkout_draft');
+    ['ed_receipt_preview', 'ed_checkout_draft', 'ed_izipay_data', 'ed_pending_order']
+        .forEach(key => sessionStorage.removeItem(key));
     clearTimeout(cartSyncTimer);
+    document.body.classList.remove('cart-open', 'cart-panel-open', 'cart-has-items');
+    window.dispatchEvent(new CustomEvent('ed:customer-session-cleared'));
+    window.dispatchEvent(new Event('storage'));
 }
 window.clearCustomerSessionData = clearCustomerSessionData;
 
@@ -1004,7 +1018,17 @@ clientAlertsBtn?.addEventListener('click', () => {
     }
 });
 
-clientLogoutBtn.addEventListener('click', () => {
+clientLogoutBtn.addEventListener('click', async () => {
+    const token = localStorage.getItem('ed_token');
+    if (token) {
+        try {
+            await fetch('/api/v1/auth/logout', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+                cache: 'no-store',
+            });
+        } catch {}
+    }
     clearCustomerSessionData();
     updateTopBar();
     window.location.replace('/login');

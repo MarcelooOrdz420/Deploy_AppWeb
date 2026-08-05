@@ -12,4 +12,13 @@ class StorePagesTest extends TestCase
         $this->get('/login')->assertOk();
         $this->get('/admin/login')->assertOk();
     }
+
+    public function test_sensitive_store_pages_disable_browser_cache(): void
+    {
+        foreach (['/carrito', '/mis-pedidos', '/admin/panel'] as $path) {
+            $this->get($path)
+                ->assertOk()
+                ->assertHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        }
+    }
 }

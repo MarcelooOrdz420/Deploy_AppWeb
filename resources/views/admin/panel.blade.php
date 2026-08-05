@@ -857,11 +857,68 @@
             border-color: rgba(255, 215, 0, .34) !important;
         }
 
-        @media (max-width: 860px) {
-            header {
-                background: linear-gradient(180deg, #FFC700 0%, #FFC700 58%, #FFD700 58%, #FFD700 100%) !important;
-            }}
+        /* Identidad final compartida con la tienda: el dorado queda solo como acento. */
+        body,
+        body[data-theme="dark"] {
+            --orange: #FF6F1F;
+            --orange-soft: #FF9D5A;
+            --orange-deep: #C94700;
+            --text: #25170F;
+            --panel: #FFFDF9;
+            --panel-ink: #25170F;
+            --muted-ink: #68432E;
+            background: #FFF8F2 !important;
+            color: #25170F !important;
+        }
+        header,
+        body[data-theme="dark"] header {
+            background: #FFFDF9 !important;
+            border-bottom: 1px solid #F0C9AA !important;
+        }
+        .title, .title-sub, .head-kicker { color: #25170F !important; }
+        .head-kicker { color: #C94700 !important; }
+        .admin-menu,
+        body[data-theme="dark"] .admin-menu {
+            background: #FFFDF9 !important;
+            border: 1px solid #F0C9AA !important;
+            box-shadow: 0 12px 28px rgba(37,23,15,.08) !important;
+        }
+        .menu-tab, .user, button:not(.btn-main),
+        body[data-theme="dark"] .menu-tab {
+            background: #FFFFFF !important;
+            color: #25170F !important;
+            border-color: #EAB68A !important;
+        }
+        .menu-tab:hover { background: #FF9D5A !important; color: #25170F !important; }
+        .menu-tab.active, .btn-main,
+        body[data-theme="dark"] .menu-tab.active {
+            background: #FF6F1F !important;
+            color: #FFFFFF !important;
+            border-color: #C94700 !important;
+        }
+        .tab-icon, .action-icon { background: #FFF1E3 !important; color: #C94700 !important; }
+        .menu-tab.active .tab-icon, .menu-tab.active .action-icon { background: rgba(255,255,255,.2) !important; color: #fff !important; }
+        .panel, .card, .module-summary, .metric-card, .chart-card, .toggle-row, .upload-box, .inline-note {
+            background: #FFFDF9 !important;
+            color: #25170F !important;
+            border-color: #F0C9AA !important;
+            box-shadow: 0 12px 26px rgba(37,23,15,.08) !important;
+        }
+        .panel h2, .panel h3, .product-card-title, .product-card-price, .label { color: #25170F !important; }
+        .section-subtitle, .helper-text, .muted { color: #68432E !important; }
+        input, select, textarea { background: #FFF4EB !important; color: #25170F !important; border-color: #EAB68A !important; }
+        .dashboard-pies { grid-column: 1 / -1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+        .pie-layout { display:grid; grid-template-columns:minmax(150px,210px) minmax(0,1fr); gap:18px; align-items:center; }
+        .pie-chart { width:min(210px,100%); aspect-ratio:1; border-radius:50%; margin:auto; box-shadow:inset 0 0 0 1px #F0C9AA, 0 12px 28px rgba(37,23,15,.12); }
+        .pie-legend { display:grid; gap:8px; min-width:0; }
+        .pie-legend-row { display:grid; grid-template-columns:12px minmax(0,1fr) auto; gap:8px; align-items:center; color:#68432E; }
+        .pie-dot { width:12px; height:12px; border-radius:50%; }
 
+        @media (max-width: 860px) {
+            .dashboard-pies, .pie-layout { grid-template-columns:1fr; }
+            header {
+                background: #FFFDF9 !important;
+            }
             .admin-menu {
                 top: 0;
             }
@@ -1675,6 +1732,16 @@ function clearAuth() {
         'ed_recent_trackings',
         'ed_order_statuses',
         'ed_pollia_checkout_prefill_v1',
+        'ed_pollia_pending_cart_v1',
+        'ed_pollia_guest_session',
+        'ed_checkout_data',
+        'ed_customer_data',
+        'ed_delivery_data',
+        'ed_payment_method',
+        'ed_payment_draft',
+        'ed_order_draft',
+        'ed_izipay_data',
+        'ed_pending_order',
         'ed_order_alert_count',
     ].forEach(key => localStorage.removeItem(key));
     sessionStorage.removeItem('ed_receipt_preview');
@@ -1951,12 +2018,40 @@ function renderChart(title, rows) {
         </div>`;
 }
 
+function renderPieChart(title, rows, labelKey, valueKey) {
+    const palette = ['#FF6F1F', '#F7B801', '#FF9D5A', '#C94700', '#EAB68A', '#17683A', '#205A84'];
+    const cleanRows = (rows || [])
+        .map(row => ({ label: String(row[labelKey] || 'Otros'), value: Number(row[valueKey] || 0) }))
+        .filter(row => row.value > 0);
+    const total = cleanRows.reduce((sum, row) => sum + row.value, 0);
+    if (!total) {
+        return `<div class="chart-card"><div class="chart-head"><strong>${title}</strong><span class="tag">0</span></div><div class="muted">Sin datos para mostrar.</div></div>`;
+    }
+    let cursor = 0;
+    const stops = cleanRows.map((row, index) => {
+        const start = cursor;
+        cursor += (row.value / total) * 360;
+        return `${palette[index % palette.length]} ${start.toFixed(2)}deg ${cursor.toFixed(2)}deg`;
+    });
+    return `<div class="chart-card">
+        <div class="chart-head"><strong>${title}</strong><span class="tag">${total}</span></div>
+        <div class="pie-layout">
+            <div class="pie-chart" role="img" aria-label="${escapeHtml(title)}" style="background:conic-gradient(${stops.join(',')})"></div>
+            <div class="pie-legend">${cleanRows.map((row, index) => {
+                const percentage = ((row.value / total) * 100).toFixed(1);
+                return `<div class="pie-legend-row" title="${escapeHtml(row.label)}: ${row.value} (${percentage}%)"><span class="pie-dot" style="background:${palette[index % palette.length]}"></span><span>${escapeHtml(row.label)}</span><strong>${row.value} · ${percentage}%</strong></div>`;
+            }).join('')}</div>
+        </div>
+    </div>`;
+}
+
 function renderDashboard(stats) {
     if (!salesDashboard) return;
     const dayRows = stats?.buckets?.day || [];
     const monthRows = stats?.buckets?.month || [];
     const yearRows = stats?.buckets?.year || [];
     const payments = stats?.payments || [];
+    const statuses = stats?.statuses || [];
     const summary = stats?.summary || {};
     const bestDay = summary.best_day;
     const worstDay = summary.worst_day;
@@ -2000,6 +2095,10 @@ function renderDashboard(stats) {
                     <br>Verificados: ${payment.verified_count} | Reportados: ${payment.reported_count} | Pendientes: ${payment.pending_count}
                 </div>
             `).join('') : '<div class="muted">Sin datos de pago.</div>'}
+        </div>`,
+        `<div class="dashboard-pies">
+            ${renderPieChart('Pedidos por estado', statuses.map(item => ({ ...item, status: statusEs(item.status) })), 'status', 'count')}
+            ${renderPieChart('Ventas por metodo de pago', payments, 'method', 'count')}
         </div>`,
     ].join('');
 }
@@ -2763,7 +2862,17 @@ if (adminUnreadBtn) {
 proofModal.addEventListener('click', (event) => {
     if (event.target === proofModal) closeProofModal();
 });
-adminLogoutBtn.addEventListener('click', () => {
+adminLogoutBtn.addEventListener('click', async () => {
+    const token = getToken();
+    if (token) {
+        try {
+            await fetch('/api/v1/auth/logout', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+                cache: 'no-store',
+            });
+        } catch {}
+    }
     clearAuth();
     window.location.replace('/admin/login');
 });

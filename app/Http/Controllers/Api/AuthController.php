@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -231,6 +232,25 @@ class AuthController extends Controller
         return response()->json([
             'user' => $request->user(),
         ]);
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        Auth::guard('web')->logout();
+
+        if ($request->hasSession()) {
+            $request->session()->forget([
+                'cart', 'carrito', 'cart_items', 'cart_total', 'checkout',
+                'checkout_data', 'customer_data', 'delivery_data', 'address',
+                'payment_method', 'payment_draft', 'order_draft', 'izipay_data',
+                'pending_order',
+            ]);
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return response()->json(['message' => 'Sesion cerrada.'])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     }
 
     private function filterUserColumns(array $data): array

@@ -9,8 +9,13 @@ Route::view('/productos', 'store.products')->name('store.products');
 Route::view('/quienes-somos', 'store.about')->name('store.about');
 Route::view('/ubicacion', 'store.location')->name('store.location');
 Route::view('/expertos', 'store.experts')->name('store.experts');
-Route::view('/carrito', 'store.cart')->name('store.cart');
-Route::match(['get', 'head', 'post'], '/mis-pedidos', fn () => view('store.orders'))
+Route::get('/carrito', fn () => response()
+    ->view('store.cart')
+    ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private'))
+    ->name('store.cart');
+Route::match(['get', 'head', 'post'], '/mis-pedidos', fn () => response()
+    ->view('store.orders')
+    ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private'))
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
     ->name('store.orders');
 Route::view('/login', 'auth.login')->name('login');
@@ -20,7 +25,10 @@ Route::view('/reset-password', 'auth.reset-password')->name('password.reset');
 Route::redirect('/admin/dashboard', '/admin/panel');
 Route::redirect('/admin', '/admin/login');
 Route::view('/admin/login', 'admin.login')->name('admin.login');
-Route::view('/admin/panel', 'admin.panel')->name('admin.panel');
+Route::get('/admin/panel', fn () => response()
+    ->view('admin.panel')
+    ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private'))
+    ->name('admin.panel');
 
 Route::get('/descargar-apk', function () {
     $path = public_path('downloads/AppMovilPollos.apk');

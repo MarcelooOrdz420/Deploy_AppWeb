@@ -775,6 +775,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                         'assets/coca_cola.png',
                         'assets/parrillada_mixta.jpg',
                       ][index],
+                      imageFit: index == 1 ? BoxFit.contain : BoxFit.cover,
                     ),
                   );
                 },
@@ -961,17 +962,20 @@ class _HeroCard extends StatelessWidget {
     required this.subtitle,
     required this.product,
     this.fallbackAsset,
+    this.imageFit = BoxFit.cover,
   });
 
   final String title;
   final String subtitle;
   final Producto? product;
   final String? fallbackAsset;
+  final BoxFit imageFit;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
+        color: imageFit == BoxFit.contain ? Colors.white : null,
         borderRadius: BorderRadius.circular(26),
         border: Border.all(color: Colors.white.withOpacity(.24)),
         boxShadow: const [
@@ -992,14 +996,14 @@ class _HeroCard extends StatelessWidget {
                 producto: product!,
                 width: double.infinity,
                 height: double.infinity,
-                fit: BoxFit.cover,
+                fit: imageFit,
               )
             else
               Image.asset(
                 fallbackAsset ?? 'assets/pollooooo.png',
                 width: double.infinity,
                 height: double.infinity,
-                fit: BoxFit.cover,
+                fit: imageFit,
               ),
             DecoratedBox(
               decoration: BoxDecoration(
