@@ -138,6 +138,39 @@ class IzipayWebhookTest extends TestCase
         $this->assertDatabaseHas('payment_transactions', ['order_id' => $order->id, 'status' => 'verified']);
     }
 
+    public function test_approved_ipn_automatically_issues_nubefact_receipt_for_customer(): void
+    {
+        config([
+            'einvoice.provider' => 'nubefact',
+            'einvoice.auto_send' => true,
+            'services.nubefact.route' => 'https://api.nubefact.test/api/v1/demo',
+            'services.nubefact.token' => 'nubefact-token',
+            'services.nubefact.send_to_customer' => true,
+        ]);
+        Http::fake(['api.nubefact.test/*' => Http::response([
+            'aceptada_por_sunat' => true,
+            'enlace_del_pdf' => 'https://nubefact.test/paid.pdf',
+        ])]);
+        $order = $this->orderWithAttempt();
+        $order->update([
+            'billing_receipt_type' => 'boleta',
+            'billing_document_type' => 'dni',
+            'billing_document_number' => '12345678',
+            'billing_name' => 'Cliente Test',
+            'billing_email' => 'cliente@example.com',
+        ]);
+
+        $this->sendNotification($order, 'PAID', 'tx-auto-receipt')->assertOk();
+
+        $fresh = $order->fresh();
+        $this->assertSame('verified', $fresh->payment_status);
+        $this->assertSame('nubefact', data_get($fresh->billing_metadata, 'einvoice.provider'));
+        $this->assertSame('requested', data_get($fresh->billing_metadata, 'einvoice.delivery.status'));
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.nubefact.test/api/v1/demo'
+            && $request['cliente_email'] === 'cliente@example.com'
+            && $request['enviar_automaticamente_al_cliente'] === true);
+    }
+
     public function test_rejected_notification_updates_order_and_transaction(): void
     {
         $order = $this->orderWithAttempt();

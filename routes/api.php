@@ -85,6 +85,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/admin/cash-closures', [AdminCashClosureController::class, 'store']);
             Route::get('/admin/orders/{order}/einvoice/preview', [EInvoiceController::class, 'preview']);
             Route::post('/admin/orders/{order}/einvoice/send', [EInvoiceController::class, 'send']);
+            Route::post('/admin/orders/{order}/einvoice/send-customer-copy', [EInvoiceController::class, 'sendCustomerCopy']);
             Route::patch('/admin/orders/{order}/status', [OrderController::class, 'updateStatus']);
             Route::patch('/admin/orders/{order}/payment-status', [OrderController::class, 'updatePaymentStatus']);
             Route::delete('/admin/orders/{order}', [OrderController::class, 'destroy']);

@@ -2337,6 +2337,7 @@ async function fetchOrders() {
                 <div class="muted">Operacion: ${order.payment_reference || 'sin codigo'}</div>
                 <div class="muted">Tributario: ${order.billing_receipt_type ? `${order.billing_receipt_type} ${order.billing_document_number || ''}` : 'sin boleta/factura'}</div>
                 ${order.billing_receipt_type ? `<div class="muted">Envio: ${escapeHtml(order.billing_metadata?.einvoice?.status || 'pending')} · Ultimo intento: ${escapeHtml(order.billing_metadata?.einvoice?.last_attempt_at || 'sin intentos')}</div>` : ''}
+                ${order.billing_metadata?.einvoice?.delivery ? `<div class="muted">Correo comprobante: ${order.billing_metadata.einvoice.delivery.status || 'sin estado'}${order.billing_metadata.einvoice.delivery.recipient ? ` (${order.billing_metadata.einvoice.delivery.recipient})` : ''}</div>` : ''}
                 <div class="order-proof-box">
                     <div class="muted">Comprobante: ${order.payment_proof_path ? `<a href="${order.payment_proof_path}" target="_blank">Ver archivo</a>` : 'no subido'}</div>
                     ${order.payment_proof_path && isImageProof(order.payment_proof_path)
@@ -2347,7 +2348,7 @@ async function fetchOrders() {
                 <div style="display:flex; gap:8px; margin-top:8px;">
                     <button data-fill="${order.id}">Usar en actualizar estado</button>
                     ${order.payment_proof_path ? `<button data-proof-modal="${order.id}">Ver comprobante</button>` : ''}
-                    ${order.billing_receipt_type ? `<button data-einvoice-preview="${order.id}">Preview SUNAT</button><button data-einvoice-send="${order.id}">${order.billing_metadata?.einvoice?.sent_at ? 'Reenviar comprobante' : order.billing_metadata?.einvoice?.status === 'failed' ? 'Reintentar envio' : 'Enviar comprobante'}</button>` : ''}
+                    ${order.billing_receipt_type ? `<button data-einvoice-preview="${order.id}">Preview SUNAT</button><button data-einvoice-send="${order.id}">${order.billing_metadata?.einvoice?.sent_at ? 'Reenviar comprobante' : order.billing_metadata?.einvoice?.status === 'failed' ? 'Reintentar envio' : 'Enviar comprobante'}</button>${order.payment_status === 'verified' ? `<button data-einvoice-email="${order.id}">Reenviar correo</button>` : ''}` : ''}
                     <button data-delete-order="${order.id}" style="border-color:#ffc1b5; color:#a53216;">Eliminar pedido</button>
                 </div>
             </article>
@@ -2374,6 +2375,9 @@ async function fetchOrders() {
     });
     ordersList.querySelectorAll('[data-einvoice-send]').forEach(btn => {
         btn.addEventListener('click', () => sendEinvoice(Number(btn.getAttribute('data-einvoice-send')), btn));
+    });
+    ordersList.querySelectorAll('[data-einvoice-email]').forEach(btn => {
+        btn.addEventListener('click', () => sendEinvoiceEmail(Number(btn.getAttribute('data-einvoice-email'))));
     });
     ordersList.querySelectorAll('[data-delete-order]').forEach(btn => {
         btn.addEventListener('click', () => deleteOrder(Number(btn.getAttribute('data-delete-order'))));
@@ -2429,6 +2433,21 @@ async function sendEinvoice(orderId, button = null) {
             button.removeAttribute('aria-busy');
         }
     }
+}
+
+async function sendEinvoiceEmail(orderId) {
+    if (!confirm(`Reenviar el comprobante por correo para el pedido ID ${orderId}?`)) return;
+    const token = getToken();
+    paymentMsg.textContent = `Enviando correo del comprobante para pedido ${orderId}...`;
+    const res = await fetch(`/api/v1/admin/orders/${orderId}/einvoice/send-customer-copy`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json();
+    paymentMsg.textContent = res.ok
+        ? `${data.message} Destino: ${data.recipient}`
+        : (data.message || 'No se pudo enviar el correo del comprobante.');
+    if (res.ok) await fetchOrders();
 }
 
 async function exportCsv() {

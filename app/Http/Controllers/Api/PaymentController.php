@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Payments\IzipayService;
 use App\Services\Payments\IzipayPaymentConfirmationService;
-use App\Services\ElectronicInvoiceService;
+use App\Services\ElectronicReceiptDeliveryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -35,7 +35,8 @@ class PaymentController extends Controller
     public function izipayWebhook(
         Request $request,
         IzipayService $izipayService,
-        IzipayPaymentConfirmationService $confirmationService
+        IzipayPaymentConfirmationService $confirmationService,
+        ElectronicReceiptDeliveryService $receiptDeliveryService
     ): JsonResponse|Response
     {
         $startedAt = microtime(true);
@@ -111,7 +112,9 @@ class PaymentController extends Controller
         }
 
         $order = $result['order'];
-        $this->trySendElectronicReceipt($order);
+        if ($result['status'] === 'verified') {
+            $receiptDeliveryService->issueAfterVerifiedPayment($order);
+        }
 
         Log::info('Izipay IPN processed.', [
             'order_id' => $order->id,
@@ -128,7 +131,8 @@ class PaymentController extends Controller
         Request $request,
         Order $order,
         IzipayService $izipayService,
-        IzipayPaymentConfirmationService $confirmationService
+        IzipayPaymentConfirmationService $confirmationService,
+        ElectronicReceiptDeliveryService $receiptDeliveryService
     ): \Illuminate\View\View
     {
         abort_unless($request->hasValidSignature(), 403);
@@ -141,8 +145,10 @@ class PaymentController extends Controller
                     $fields['answer'], $fields['hash'], $fields['algorithm'], $order->id,
                     $fields['hash_key'], 'browser_return', $this->signatureDiagnostics($request, $fields)
                 );
+                if ($result['status'] === 'verified') {
+                    $receiptDeliveryService->issueAfterVerifiedPayment($result['order']);
+                }
                 $order->refresh();
-                $this->trySendElectronicReceipt($order);
             } catch (\RuntimeException $exception) {
                 $confirmationError = 'No se pudo validar la respuesta firmada de Izipay.';
                 Log::warning('Izipay browser return rejected.', ['order_id' => $order->id, 'error' => $exception->getMessage()]);
@@ -167,15 +173,6 @@ class PaymentController extends Controller
     {
         return (string) $order->payment_gateway === 'izipay'
             || (string) $order->payment_method === 'izipay';
-    }
-
-    private function trySendElectronicReceipt(Order $order): void
-    {
-        try {
-            app(ElectronicInvoiceService::class)->sendIfEligible($order->fresh(['items']));
-        } catch (\Throwable $exception) {
-            report($exception);
-        }
     }
 
     /** @param array{answer:string,hash:string,algorithm:string,hash_key:string} $fields */

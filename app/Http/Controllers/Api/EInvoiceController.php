@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\ElectronicInvoiceService;
+use App\Services\ElectronicReceiptDeliveryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -32,6 +33,22 @@ class EInvoiceController extends Controller
 
         try {
             return response()->json($service->sendInvoice($order, force: true));
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+    }
+
+    public function sendCustomerCopy(
+        Request $request,
+        Order $order,
+        ElectronicReceiptDeliveryService $deliveryService
+    ): JsonResponse {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        try {
+            return response()->json($deliveryService->sendCustomerCopy($order));
         } catch (RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         }

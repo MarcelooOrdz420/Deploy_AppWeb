@@ -3,7 +3,7 @@
 return [
     'provider' => env('EINVOICE_PROVIDER', 'apisperu'),
     'environment' => env('EINVOICE_ENVIRONMENT', 'beta'),
-    'auto_send' => filter_var(env('EINVOICE_AUTO_SEND', false), FILTER_VALIDATE_BOOLEAN),
+    'auto_send' => filter_var(env('EINVOICE_AUTO_SEND', true), FILTER_VALIDATE_BOOLEAN),
     'fake_send' => filter_var(env('EINVOICE_FAKE_SEND', false), FILTER_VALIDATE_BOOLEAN),
     'currency' => env('EINVOICE_CURRENCY', 'PEN'),
     'boleta_series' => env('EINVOICE_BOLETA_SERIES', 'B001'),

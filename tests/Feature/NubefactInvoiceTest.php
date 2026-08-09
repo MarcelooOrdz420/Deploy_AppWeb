@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Services\ElectronicInvoiceService;
+use App\Services\ElectronicReceiptDeliveryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -85,6 +86,60 @@ class NubefactInvoiceTest extends TestCase
         $this->assertTrue($first['ok']);
         $this->assertTrue($second['already_sent']);
         $this->assertNotEmpty($order->fresh()->billing_metadata['einvoice']['sent_at']);
+    }
+
+    public function test_verified_payment_automatically_issues_and_requests_customer_delivery(): void
+    {
+        config([
+            'einvoice.provider' => 'nubefact',
+            'einvoice.auto_send' => true,
+            'services.nubefact.route' => 'https://api.nubefact.test/api/v1/demo',
+            'services.nubefact.token' => 'nubefact-token',
+            'services.nubefact.send_to_customer' => true,
+        ]);
+        Http::fake(['api.nubefact.test/*' => Http::response([
+            'aceptada_por_sunat' => true,
+            'enlace_del_pdf' => 'https://nubefact.test/auto.pdf',
+        ])]);
+
+        $order = $this->orderWithItem('boleta', 'dni', '12345678', 23.60);
+        $result = app(ElectronicReceiptDeliveryService::class)->issueAfterVerifiedPayment($order);
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame('requested', data_get($order->fresh()->billing_metadata, 'einvoice.delivery.status'));
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.nubefact.test/api/v1/demo'
+            && $request['enviar_automaticamente_al_cliente'] === true);
+    }
+
+    public function test_admin_retry_emails_a_copy_without_issuing_a_second_invoice(): void
+    {
+        config([
+            'einvoice.provider' => 'nubefact',
+            'services.nubefact.route' => 'https://api.nubefact.test/api/v1/demo',
+            'services.nubefact.token' => 'nubefact-token',
+            'services.resend.key' => 'resend-key',
+            'services.resend.from_address' => 'ventas@example.com',
+            'services.resend.from_name' => 'El Dorado',
+        ]);
+        Http::fake([
+            'api.nubefact.test/*' => Http::response([
+                'aceptada_por_sunat' => true,
+                'enlace_del_pdf' => 'https://nubefact.test/manual.pdf',
+            ]),
+            'api.resend.com/*' => Http::response(['id' => 'email-1'], 200),
+        ]);
+
+        $order = $this->orderWithItem('factura', 'ruc', '20600695771', 118.00);
+        app(ElectronicInvoiceService::class)->sendInvoice($order);
+        $result = app(ElectronicReceiptDeliveryService::class)->sendCustomerCopy($order->fresh());
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame('cliente@example.com', $result['recipient']);
+        $this->assertSame('sent', data_get($order->fresh()->billing_metadata, 'einvoice.delivery.status'));
+        Http::assertSentCount(2);
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.resend.com/emails'
+            && $request['to'] === ['cliente@example.com']
+            && ! empty($request['attachments'][0]['content']));
     }
 
     private function orderWithItem(string $receiptType, string $documentType, string $documentNumber, float $total): Order
