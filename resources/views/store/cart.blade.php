@@ -391,7 +391,7 @@ orderForm.addEventListener('submit', async e => {
     const payload = {
         customer_name: orderForm.customer_name.value.trim(),
         customer_phone: orderForm.customer_phone.value.trim(),
-        customer_email: null,
+        customer_email: (typeof window.parseUser === 'function' ? window.parseUser()?.email : null) || null,
         delivery_type: orderForm.delivery_type.value,
         payment_method: paymentMethod(),
         payment_reference: orderForm.payment_reference.value.trim() || null,

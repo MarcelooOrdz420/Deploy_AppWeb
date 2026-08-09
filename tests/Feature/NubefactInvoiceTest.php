@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\User;
 use App\Services\ElectronicInvoiceService;
 use App\Services\ElectronicReceiptDeliveryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -111,6 +112,34 @@ class NubefactInvoiceTest extends TestCase
             && $request['enviar_automaticamente_al_cliente'] === true);
     }
 
+    public function test_automatic_delivery_uses_registered_user_email_as_fallback(): void
+    {
+        config([
+            'einvoice.provider' => 'nubefact',
+            'einvoice.auto_send' => true,
+            'services.nubefact.route' => 'https://api.nubefact.test/api/v1/demo',
+            'services.nubefact.token' => 'nubefact-token',
+            'services.nubefact.send_to_customer' => true,
+        ]);
+        Http::fake(['api.nubefact.test/*' => Http::response([
+            'aceptada_por_sunat' => true,
+            'enlace_del_pdf' => 'https://nubefact.test/user-email.pdf',
+        ])]);
+        $user = User::factory()->create(['email' => 'registrado@example.com']);
+        $order = $this->orderWithItem('boleta', 'dni', '12345678', 23.60);
+        $order->update([
+            'user_id' => $user->id,
+            'customer_email' => null,
+            'billing_email' => null,
+        ]);
+
+        $result = app(ElectronicReceiptDeliveryService::class)->issueAfterVerifiedPayment($order->fresh('items'));
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame('registrado@example.com', data_get($order->fresh()->billing_metadata, 'einvoice.delivery.recipient'));
+        Http::assertSent(fn ($request): bool => $request['cliente_email'] === 'registrado@example.com');
+    }
+
     public function test_admin_retry_emails_a_copy_without_issuing_a_second_invoice(): void
     {
         config([
@@ -122,6 +151,9 @@ class NubefactInvoiceTest extends TestCase
             'services.resend.from_name' => 'El Dorado',
         ]);
         Http::fake([
+            'https://nubefact.test/manual.pdf' => Http::response('%PDF-1.4 official nubefact', 200, [
+                'Content-Type' => 'application/pdf',
+            ]),
             'api.nubefact.test/*' => Http::response([
                 'aceptada_por_sunat' => true,
                 'enlace_del_pdf' => 'https://nubefact.test/manual.pdf',
@@ -136,10 +168,10 @@ class NubefactInvoiceTest extends TestCase
         $this->assertTrue($result['ok']);
         $this->assertSame('cliente@example.com', $result['recipient']);
         $this->assertSame('sent', data_get($order->fresh()->billing_metadata, 'einvoice.delivery.status'));
-        Http::assertSentCount(2);
+        Http::assertSentCount(3);
         Http::assertSent(fn ($request): bool => $request->url() === 'https://api.resend.com/emails'
             && $request['to'] === ['cliente@example.com']
-            && ! empty($request['attachments'][0]['content']));
+            && $request['attachments'][0]['content'] === base64_encode('%PDF-1.4 official nubefact'));
     }
 
     private function orderWithItem(string $receiptType, string $documentType, string $documentNumber, float $total): Order

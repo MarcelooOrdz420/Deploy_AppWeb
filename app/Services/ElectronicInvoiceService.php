@@ -23,6 +23,8 @@ class ElectronicInvoiceService
 
     public function sendIfEligible(Order $order): array
     {
+        $order->loadMissing('user');
+
         if (! (bool) config('einvoice.auto_send', false)) {
             return ['ok' => false, 'eligible' => false, 'reason' => 'automatic_send_disabled'];
         }
@@ -38,7 +40,7 @@ class ElectronicInvoiceService
         if (! in_array((string) $order->billing_receipt_type, ['boleta', 'factura'], true)) {
             return ['ok' => false, 'eligible' => false, 'reason' => 'receipt_not_requested'];
         }
-        if (trim((string) ($order->billing_email ?: $order->customer_email)) === '') {
+        if (trim((string) ($order->billing_email ?: $order->customer_email ?: $order->user?->email)) === '') {
             return ['ok' => false, 'eligible' => false, 'reason' => 'missing_recipient'];
         }
 

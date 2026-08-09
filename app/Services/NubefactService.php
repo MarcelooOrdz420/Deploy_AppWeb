@@ -113,7 +113,7 @@ class NubefactService
 
         $this->ensureCanInvoice();
 
-        $order->loadMissing('items');
+        $order->loadMissing(['items', 'user']);
 
         $series = $receiptType === 'factura'
             ? (string) config('einvoice.factura_series', 'F001')
@@ -136,7 +136,7 @@ class NubefactService
             'cliente_numero_de_documento' => (string) $order->billing_document_number,
             'cliente_denominacion' => (string) ($order->billing_name ?: $order->customer_name),
             'cliente_direccion' => (string) ($order->billing_address ?: $order->address ?: '-'),
-            'cliente_email' => (string) ($order->billing_email ?: $order->customer_email ?: ''),
+            'cliente_email' => (string) ($order->billing_email ?: $order->customer_email ?: $order->user?->email ?: ''),
             'cliente_email_1' => '',
             'cliente_email_2' => '',
             'fecha_de_emision' => optional($order->created_at ?: now())->setTimezone('America/Lima')->format('d-m-Y'),

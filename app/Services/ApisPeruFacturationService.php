@@ -99,6 +99,8 @@ class ApisPeruFacturationService
 
     private function buildPayload(Order $order): array
     {
+        $order->loadMissing(['items', 'user']);
+
         $receiptType = $order->billing_receipt_type;
         if (! in_array($receiptType, ['boleta', 'factura'], true)) {
             throw new RuntimeException('El pedido no tiene un tipo de comprobante valido.');
@@ -157,7 +159,7 @@ class ApisPeruFacturationService
                 'tipoDoc' => $clientDocType,
                 'numDoc' => $order->billing_document_number,
                 'rznSocial' => $order->billing_name ?: $order->customer_name,
-                'email' => $order->billing_email ?: $order->customer_email,
+                'email' => $order->billing_email ?: $order->customer_email ?: $order->user?->email,
                 'telephone' => $order->customer_phone,
                 'address' => [
                     'direccion' => $order->billing_address ?: $order->address ?: '-',

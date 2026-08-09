@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Services\Mail\ResendEmailService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use RuntimeException;
@@ -13,7 +14,6 @@ class ElectronicReceiptDeliveryService
 {
     public function __construct(
         private readonly ElectronicInvoiceService $invoiceService,
-        private readonly SimplePdfReceiptService $pdfReceiptService,
         private readonly ResendEmailService $resendEmailService,
     ) {
     }
@@ -90,6 +90,9 @@ class ElectronicReceiptDeliveryService
         $tracking = (string) ($order->tracking_code ?: $order->id);
         $subject = "{$type} de tu pedido {$tracking}";
         $pdfUrl = $this->providerPdfUrl($order);
+        if ($pdfUrl === '') {
+            throw new RuntimeException('Nubefact no devolvio el enlace del PDF oficial. Revisa el estado de emision del pedido.');
+        }
         $safeName = e((string) ($order->billing_name ?: $order->customer_name ?: 'cliente'));
         $safeUrl = e($pdfUrl);
         $link = $pdfUrl !== ''
@@ -102,7 +105,7 @@ class ElectronicReceiptDeliveryService
         $text = "Hola {$order->billing_name}, tu {$type} del pedido {$tracking} esta lista."
             .($pdfUrl !== '' ? "\n\nAbrir comprobante: {$pdfUrl}" : '');
         $filename = strtolower($type).'-'.$tracking.'.pdf';
-        $pdf = $this->pdfReceiptService->generate($order);
+        $pdf = $this->downloadOfficialPdf($pdfUrl);
 
         try {
             if ($this->resendEmailService->enabled()) {
@@ -160,6 +163,22 @@ class ElectronicReceiptDeliveryService
         }
 
         return '';
+    }
+
+    private function downloadOfficialPdf(string $url): string
+    {
+        try {
+            $response = Http::timeout(20)->accept('application/pdf')->get($url);
+        } catch (Throwable $exception) {
+            throw new RuntimeException('No se pudo descargar el PDF oficial de Nubefact.', previous: $exception);
+        }
+
+        $content = $response->body();
+        if (! $response->successful() || $content === '' || ! str_starts_with($content, '%PDF')) {
+            throw new RuntimeException('Nubefact no devolvio un PDF oficial valido.');
+        }
+
+        return $content;
     }
 
     private function storeDeliveryStatus(Order $order, array $status): void
