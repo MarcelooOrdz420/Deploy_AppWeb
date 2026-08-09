@@ -1708,6 +1708,7 @@ async function fetchCompanyProfile() {
     companyProfileForm.delivery_notes.value = location.delivery_notes || '';
     companyProfileForm.pickup_notes.value = location.pickup_notes || '';
     companyProfileMsg.textContent = 'Configuracion cargada.';
+    companyProfileMsg.classList.remove('error');
 }
 
 async function saveCompanyProfile(event) {
@@ -1715,6 +1716,7 @@ async function saveCompanyProfile(event) {
     if (!companyProfileForm) return;
     const token = getToken();
     companyProfileMsg.textContent = 'Guardando configuracion...';
+    companyProfileMsg.classList.remove('error');
 
     const payload = {
         location_name: companyProfileForm.location_name.value.trim() || null,
@@ -1739,11 +1741,16 @@ async function saveCompanyProfile(event) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
         const validationErrors = data.errors ? Object.values(data.errors).flat().join(' | ') : '';
-        companyProfileMsg.textContent = validationErrors || data.message || 'No se pudo guardar la configuracion.';
+        const migrationHelp = data.requires_migration
+            ? ` Ejecuta en el hosting: ${data.command || 'php artisan migrate --force'}.`
+            : '';
+        companyProfileMsg.textContent = (validationErrors || data.message || 'No se pudo guardar la configuracion.') + migrationHelp;
+        companyProfileMsg.classList.add('error');
         return;
     }
 
     companyProfileMsg.textContent = data.message || 'Configuracion actualizada.';
+    companyProfileMsg.classList.remove('error');
     await fetchCompanyProfile();
 }
 

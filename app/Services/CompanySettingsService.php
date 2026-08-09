@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CompanyProfile;
 use Illuminate\Support\Facades\Schema;
+use RuntimeException;
 
 class CompanySettingsService
 {
@@ -33,22 +34,22 @@ class CompanySettingsService
         $profile ??= $this->profile();
 
         return [
-            'location_name' => $profile?->location_name ?: config('company.location.location_name', 'Local principal'),
-            'address' => $profile?->address ?: config('company.location.address', 'Jr. Cuzco, Huancayo, Peru'),
-            'reference' => $profile?->reference ?: config('company.location.reference', 'Zona comercial cercana a Rock and Pop'),
-            'google_maps_url' => $profile?->google_maps_url ?: config('company.location.google_maps_url', 'https://maps.google.com/?q=Jr.%20Cuzco%20Huancayo%20Peru'),
-            'google_maps_embed_url' => $profile?->google_maps_embed_url ?: config('company.location.google_maps_embed_url', 'https://maps.google.com/maps?q=Jr.%20Cuzco%20Huancayo%20Peru&t=&z=16&ie=UTF8&iwloc=&output=embed'),
-            'business_hours' => $profile?->business_hours ?: config('company.location.business_hours', 'Atencion continua hasta las 11:00 PM'),
-            'service_modes' => $profile?->service_modes ?: config('company.location.service_modes', 'Atencion en local, recojo y delivery'),
-            'delivery_notes' => $profile?->delivery_notes ?: config('company.location.delivery_notes', 'Envia una referencia visible como color de puerta, piso o negocio cercano.'),
-            'pickup_notes' => $profile?->pickup_notes ?: config('company.location.pickup_notes', 'Programa la hora si buscas evitar espera en hora pico.'),
+            'location_name' => $profile?->location_name ?? config('company.location.location_name', 'Local principal'),
+            'address' => $profile?->address ?? config('company.location.address', 'Jr. Cuzco, Huancayo, Peru'),
+            'reference' => $profile?->reference ?? config('company.location.reference', 'Zona comercial cercana a Rock and Pop'),
+            'google_maps_url' => $profile?->google_maps_url ?? config('company.location.google_maps_url', 'https://maps.google.com/?q=Jr.%20Cuzco%20Huancayo%20Peru'),
+            'google_maps_embed_url' => $profile?->google_maps_embed_url ?? config('company.location.google_maps_embed_url', 'https://maps.google.com/maps?q=Jr.%20Cuzco%20Huancayo%20Peru&t=&z=16&ie=UTF8&iwloc=&output=embed'),
+            'business_hours' => $profile?->business_hours ?? config('company.location.business_hours', 'Atencion continua hasta las 11:00 PM'),
+            'service_modes' => $profile?->service_modes ?? config('company.location.service_modes', 'Atencion en local, recojo y delivery'),
+            'delivery_notes' => $profile?->delivery_notes ?? config('company.location.delivery_notes', 'Envia una referencia visible como color de puerta, piso o negocio cercano.'),
+            'pickup_notes' => $profile?->pickup_notes ?? config('company.location.pickup_notes', 'Programa la hora si buscas evitar espera en hora pico.'),
         ];
     }
 
-    public function updateLocationSettings(array $data): ?CompanyProfile
+    public function updateLocationSettings(array $data): CompanyProfile
     {
         if (! $this->profileTableExists()) {
-            return null;
+            throw new RuntimeException('La tabla company_profiles no existe. Ejecuta las migraciones antes de guardar la configuracion.');
         }
 
         $profile = CompanyProfile::query()->first() ?? new CompanyProfile();
