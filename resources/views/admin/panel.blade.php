@@ -2345,12 +2345,6 @@ async function fetchOrders() {
                 <div class="muted">Tributario: ${order.billing_receipt_type ? `${order.billing_receipt_type} ${order.billing_document_number || ''}` : 'sin boleta/factura'}</div>
                 ${order.billing_receipt_type ? `<div class="muted">Envio: ${escapeHtml(order.billing_metadata?.einvoice?.status || 'pending')} · Ultimo intento: ${escapeHtml(order.billing_metadata?.einvoice?.last_attempt_at || 'sin intentos')}</div>` : ''}
                 ${order.billing_metadata?.einvoice?.delivery ? `<div class="muted">Correo comprobante: ${order.billing_metadata.einvoice.delivery.status || 'sin estado'}${order.billing_metadata.einvoice.delivery.recipient ? ` (${order.billing_metadata.einvoice.delivery.recipient})` : ''}</div>` : ''}
-                <div class="order-proof-box">
-                    <div class="muted">Comprobante: ${order.payment_proof_path ? `<a href="${order.payment_proof_path}" target="_blank">Ver archivo</a>` : 'no subido'}</div>
-                    ${order.payment_proof_path && isImageProof(order.payment_proof_path)
-                        ? `<img src="${order.payment_proof_path}" alt="Comprobante ${order.tracking_code}" class="order-proof-preview">`
-                        : ''}
-                </div>
                 <div style="margin-top:6px;">Total: <strong>S/ ${Number(order.total_amount).toFixed(2)}</strong></div>
                 <div style="display:flex; gap:8px; margin-top:8px;">
                     <button data-fill="${order.id}">Usar en actualizar estado</button>
