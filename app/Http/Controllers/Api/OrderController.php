@@ -5,23 +5,24 @@ namespace App\Http\Controllers\Api;
 use App\Events\OrderCreatedAlertSent;
 use App\Events\OrderStatusUpdatedForUser;
 use App\Http\Controllers\Controller;
+use App\Models\MarketingOffer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\Product;
-use App\Models\MarketingOffer;
-use App\Services\Fcm\FcmClient;
+use App\Services\CartRecoveryService;
+use App\Services\Chatbot\ChatOrderDraftService;
 use App\Services\ElectronicInvoiceService;
+use App\Services\ElectronicReceiptDeliveryService;
+use App\Services\Fcm\FcmClient;
 use App\Services\InventoryMovementService;
 use App\Services\Realtime\PusherNotifier;
 use App\Services\SimplePdfReceiptService;
-use App\Services\CartRecoveryService;
-use App\Services\Chatbot\ChatOrderDraftService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -162,6 +163,7 @@ class OrderController extends Controller
             ->groupBy('marketing_offer_id')
             ->map(function (Collection $items): array {
                 $first = $items->first();
+
                 return [
                     'offer_id' => $first->marketing_offer_id,
                     'title' => $first->marketingOffer?->title ?? 'Promoción',
@@ -487,6 +489,13 @@ class OrderController extends Controller
             return $order->fresh(['items', 'statusHistory']);
         });
 
+        if ((string) $order->payment_method === 'cod'
+            && (string) $order->payment_status === 'verified'
+            && (string) $order->status === Order::STATUS_DELIVERED) {
+            app(ElectronicReceiptDeliveryService::class)->issueAfterVerifiedPayment($order);
+            $order->refresh();
+        }
+
         $this->sendOrderStatusPush($order);
 
         return response()->json($order);
@@ -501,11 +510,15 @@ class OrderController extends Controller
                 event($statusEvent);
             }
             $userId = (int) $order->user_id;
-            if ($userId <= 0) return;
+            if ($userId <= 0) {
+                return;
+            }
 
             /** @var FcmClient $client */
             $client = app(FcmClient::class);
-            if (! $client->isConfigured()) return;
+            if (! $client->isConfigured()) {
+                return;
+            }
 
             $status = (string) ($order->status ?? '');
             $tracking = (string) ($order->tracking_code ?? '');
@@ -968,5 +981,4 @@ HTML;
             }
         }
     }
-
 }

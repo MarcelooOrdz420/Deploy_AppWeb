@@ -15,15 +15,15 @@ class ElectronicReceiptDeliveryService
     public function __construct(
         private readonly ElectronicInvoiceService $invoiceService,
         private readonly ResendEmailService $resendEmailService,
-    ) {
-    }
+    ) {}
 
     public function issueAfterVerifiedPayment(Order $order): array
     {
         $order->loadMissing(['items', 'user']);
 
         if ((string) $order->payment_status !== 'verified'
-            || (string) $order->payment_method !== 'izipay'
+            || ! in_array((string) $order->payment_method, ['izipay', 'cod'], true)
+            || ((string) $order->payment_method === 'cod' && (string) $order->status !== Order::STATUS_DELIVERED)
             || ! in_array((string) $order->billing_receipt_type, ['boleta', 'factura'], true)
             || ! (bool) config('einvoice.auto_send', false)) {
             return ['attempted' => false];

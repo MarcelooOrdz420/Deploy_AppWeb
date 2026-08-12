@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
@@ -404,10 +407,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
         if (checkoutUrl.isNotEmpty && mounted) {
           await Clipboard.setData(ClipboardData(text: checkoutUrl));
-          final opened = await launchUrl(
-            Uri.parse(checkoutUrl),
-            mode: LaunchMode.externalApplication,
-          );
+          final opened = await _openIzipay(checkoutUrl);
           if (!opened && mounted) {
             await showDialog<void>(
               context: context,
@@ -467,51 +467,25 @@ class _PaymentPageState extends State<PaymentPage> {
     required String trackingCode,
     required String checkoutUrl,
   }) async {
-    var status = 'pending';
-    var checking = false;
     return await showDialog<bool>(
           context: context,
           barrierDismissible: false,
-          builder: (dialogContext) => StatefulBuilder(
-            builder: (context, setDialogState) => AlertDialog(
-              title: Text(status == 'verified'
-                  ? 'Pago confirmado'
-                  : status == 'rejected' ? 'Pago rechazado' : 'Pedido creado'),
-              content: Text(status == 'verified'
-                  ? 'Izipay confirmo el pago del pedido $trackingCode.'
-                  : status == 'rejected'
-                      ? 'Izipay rechazo el pago. Puedes volver a abrir el checkout.'
-                      : 'El pedido $trackingCode fue creado. El pago sigue pendiente hasta que Izipay lo confirme.'),
-              actions: [
-                if (status != 'verified' && checkoutUrl.isNotEmpty)
-                  TextButton(
-                    onPressed: () => launchUrl(Uri.parse(checkoutUrl), mode: LaunchMode.externalApplication),
-                    child: const Text('Abrir Izipay'),
-                  ),
-                if (status != 'verified')
-                  TextButton(
-                    onPressed: checking ? null : () async {
-                      setDialogState(() => checking = true);
-                      try {
-                        final order = await _orderApiService.getOrder(token: token, orderId: orderId);
-                        setDialogState(() {
-                          status = (order['payment_status'] ?? 'pending').toString();
-                          checking = false;
-                        });
-                      } catch (_) {
-                        setDialogState(() => checking = false);
-                      }
-                    },
-                    child: Text(checking ? 'Verificando...' : 'Verificar pago'),
-                  ),
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, status == 'verified'),
-                  child: Text(status == 'verified' ? 'Continuar' : 'Revisar despues'),
-                ),
-              ],
-            ),
+          builder: (_) => _PaymentStatusDialog(
+            orderApiService: _orderApiService,
+            token: token,
+            orderId: orderId,
+            trackingCode: trackingCode,
+            checkoutUrl: checkoutUrl,
           ),
         ) ?? false;
+  }
+
+  Future<bool> _openIzipay(String checkoutUrl) {
+    return launchUrl(
+      Uri.parse(checkoutUrl),
+      mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.inAppBrowserView,
+      webOnlyWindowName: kIsWeb ? '_self' : null,
+    );
   }
 
   @override
@@ -988,5 +962,89 @@ class _PaymentPageState extends State<PaymentPage> {
     final suffix = value.hour >= 12 ? 'PM' : 'AM';
     final minutes = value.minute.toString().padLeft(2, '0');
     return '$hour:$minutes $suffix';
+  }
+}
+
+class _PaymentStatusDialog extends StatefulWidget {
+  const _PaymentStatusDialog({
+    required this.orderApiService,
+    required this.token,
+    required this.orderId,
+    required this.trackingCode,
+    required this.checkoutUrl,
+  });
+
+  final OrderApiService orderApiService;
+  final String token;
+  final int orderId;
+  final String trackingCode;
+  final String checkoutUrl;
+
+  @override
+  State<_PaymentStatusDialog> createState() => _PaymentStatusDialogState();
+}
+
+class _PaymentStatusDialogState extends State<_PaymentStatusDialog> {
+  Timer? _timer;
+  String _status = 'pending';
+  bool _checking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPayment();
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) => _checkPayment());
+  }
+
+  Future<void> _checkPayment() async {
+    if (_checking || !mounted) return;
+    setState(() => _checking = true);
+    try {
+      final order = await widget.orderApiService.getOrder(token: widget.token, orderId: widget.orderId);
+      if (!mounted) return;
+      final status = (order['payment_status'] ?? 'pending').toString();
+      if (status == 'verified') {
+        _timer?.cancel();
+        Navigator.pop(context, true);
+        return;
+      }
+      setState(() => _status = status);
+    } catch (_) {
+      // Se reintenta automaticamente ante errores temporales de conexion.
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rejected = _status == 'rejected';
+    return AlertDialog(
+      title: Text(rejected ? 'Pago rechazado' : 'Verificando pago'),
+      content: Text(rejected
+          ? 'Izipay rechazo el pago. Puedes volver a abrir el checkout.'
+          : 'Estamos verificando automaticamente el pago del pedido ${widget.trackingCode}.'),
+      actions: [
+        if (widget.checkoutUrl.isNotEmpty)
+          TextButton(
+            onPressed: () => launchUrl(
+              Uri.parse(widget.checkoutUrl),
+              mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.inAppBrowserView,
+              webOnlyWindowName: kIsWeb ? '_self' : null,
+            ),
+            child: Text(rejected ? 'Reintentar pago' : 'Volver a Izipay'),
+          ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Revisar despues'),
+        ),
+      ],
+    );
   }
 }

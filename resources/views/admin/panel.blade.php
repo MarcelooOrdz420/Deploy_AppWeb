@@ -1029,11 +1029,11 @@
                     <div>
                         <label>Destino</label>
                         <select name="target" required>
+                            <option value="all" selected>Web + App movil</option>
                             <option value="web">Solo Web</option>
-                            <option value="all">Web + App movil</option>
                             <option value="mobile">Solo App movil</option>
                         </select>
-                        <div class="helper-text">Mientras la app movil sigue en desarrollo, lo recomendado es usar Solo Web.</div>
+                        <div class="helper-text">Web + App movil envia la promocion a ambos canales.</div>
                     </div>
                     <div>
                         <label>Boton (opcional)</label>

@@ -112,13 +112,19 @@ class NubefactInvoiceTest extends TestCase
             && $request['enviar_automaticamente_al_cliente'] === true);
     }
 
-    public function test_cash_on_delivery_does_not_issue_automatically(): void
+    public function test_delivered_cash_on_delivery_issues_automatically(): void
     {
         config([
             'einvoice.provider' => 'nubefact',
             'einvoice.auto_send' => true,
+            'services.nubefact.route' => 'https://api.nubefact.test/api/v1/demo',
+            'services.nubefact.token' => 'nubefact-token',
+            'services.nubefact.send_to_customer' => true,
         ]);
-        Http::fake();
+        Http::fake(['api.nubefact.test/*' => Http::response([
+            'aceptada_por_sunat' => true,
+            'enlace_del_pdf' => 'https://nubefact.test/cod.pdf',
+        ])]);
 
         $order = $this->orderWithItem('boleta', 'dni', '12345678', 23.60);
         $order->update([
@@ -129,9 +135,10 @@ class NubefactInvoiceTest extends TestCase
 
         $result = app(ElectronicReceiptDeliveryService::class)->issueAfterVerifiedPayment($order->fresh('items'));
 
-        $this->assertFalse($result['attempted']);
-        $this->assertNull(data_get($order->fresh()->billing_metadata, 'einvoice.sent_at'));
-        Http::assertNothingSent();
+        $this->assertTrue($result['attempted']);
+        $this->assertTrue($result['ok']);
+        $this->assertNotNull(data_get($order->fresh()->billing_metadata, 'einvoice.sent_at'));
+        Http::assertSent(fn ($request): bool => $request['enviar_automaticamente_al_cliente'] === true);
     }
 
     public function test_automatic_delivery_uses_registered_user_email_as_fallback(): void

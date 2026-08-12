@@ -18,7 +18,7 @@ class IzipayService
     {
         return (bool) config('services.izipay.enabled')
             && collect(['shop_id', 'rest_api_key', 'public_key', 'hmac_key'])
-            ->every(fn (string $key): bool => trim((string) config("services.izipay.{$key}")) !== '');
+                ->every(fn (string $key): bool => trim((string) config("services.izipay.{$key}")) !== '');
     }
 
     public function createPayment(Order $order): array
@@ -105,6 +105,7 @@ class IzipayService
             || $key !== trim($key)) {
             return false;
         }
+
         return hash_equals(strtolower(hash_hmac('sha256', $raw, $key)), strtolower($received));
     }
 
@@ -117,6 +118,7 @@ class IzipayService
     {
         $answer = $this->webhookFields($request)['answer'];
         $decoded = json_decode($answer, true);
+
         return is_array($decoded) ? $decoded : [];
     }
 
@@ -164,6 +166,7 @@ class IzipayService
             $status = $this->paymentStatusFromPayload($payload);
             if ($payment->status === 'verified' && $order->payment_status === 'verified') {
                 Log::info('Duplicate Izipay notification ignored.', ['order_id' => $order->id, 'transaction_id' => $transactionId]);
+
                 return ['order' => $order, 'status' => 'verified', 'duplicate' => true, 'transitioned' => false];
             }
             $wasVerified = $order->payment_status === 'verified';
@@ -179,6 +182,7 @@ class IzipayService
                 'payment_reported_at' => $order->payment_reported_at ?: now(),
                 'payment_verified_at' => $effectiveStatus === 'verified' ? ($order->payment_verified_at ?: now()) : $order->payment_verified_at])->save();
             Log::info('Izipay notification processed.', ['order_id' => $order->id, 'status' => $status, 'transaction_id' => $transactionId]);
+
             return ['order' => $order->fresh(['items', 'statusHistory']), 'status' => $effectiveStatus,
                 'duplicate' => false, 'transitioned' => ! $wasVerified && $effectiveStatus === 'verified'];
         });
@@ -192,6 +196,7 @@ class IzipayService
     public function paymentStatusFromPayload(array $payload): string
     {
         $status = strtoupper((string) (data_get($payload, 'orderStatus') ?: data_get($payload, 'transactions.0.status') ?: data_get($payload, 'transactions.0.detailedStatus')));
+
         return match ($status) {
             'PAID', 'ACCEPTED', 'CAPTURED', 'AUTHORISED', 'AUTHORIZED' => 'verified',
             'REFUSED', 'CANCELLED', 'CANCELED', 'FAILED', 'ERROR', 'UNPAID' => 'rejected',
@@ -217,27 +222,49 @@ class IzipayService
     /** @return array{answer:string,hash:string,algorithm:string,hash_key:string} */
     public function webhookFields(Request $request): array
     {
+        $form = $request->request->all();
+        if ($form === [] && str_contains(strtolower((string) $request->header('Content-Type')), 'application/x-www-form-urlencoded')) {
+            parse_str((string) $request->getContent(), $form);
+        }
+
         return [
-            'answer' => (string) ($request->request->get('kr-answer') ?? $request->header('X-KR-ANSWER') ?? $request->header('kr-answer', '')),
-            'hash' => (string) ($request->request->get('kr-hash') ?? $request->header('X-KR-HASH') ?? $request->header('kr-hash', '')),
-            'algorithm' => (string) ($request->request->get('kr-hash-algorithm') ?? $request->header('X-KR-HASH-ALGORITHM') ?? $request->header('kr-hash-algorithm', '')),
-            'hash_key' => (string) ($request->request->get('kr-hash-key') ?? $request->header('X-KR-HASH-KEY') ?? $request->header('kr-hash-key', '')),
+            'answer' => (string) ($form['kr-answer'] ?? $request->header('X-KR-ANSWER') ?? $request->header('kr-answer', '')),
+            'hash' => (string) ($form['kr-hash'] ?? $request->header('X-KR-HASH') ?? $request->header('kr-hash', '')),
+            'algorithm' => (string) ($form['kr-hash-algorithm'] ?? $request->header('X-KR-HASH-ALGORITHM') ?? $request->header('kr-hash-algorithm', '')),
+            'hash_key' => (string) ($form['kr-hash-key'] ?? $request->header('X-KR-HASH-KEY') ?? $request->header('kr-hash-key', '')),
         ];
     }
 
-    private function usesIzipay(Order $order): bool { return $order->payment_gateway === 'izipay' || $order->payment_method === 'izipay'; }
+    private function usesIzipay(Order $order): bool
+    {
+        return $order->payment_gateway === 'izipay' || $order->payment_method === 'izipay';
+    }
+
     private function decimalToCents(string $amount): int
     {
         $normalized = str_replace(',', '.', trim($amount));
-        if (! preg_match('/^\d+(?:\.\d{1,2})?$/', $normalized)) return 0;
+        if (! preg_match('/^\d+(?:\.\d{1,2})?$/', $normalized)) {
+            return 0;
+        }
         [$whole, $decimal] = array_pad(explode('.', $normalized, 2), 2, '');
+
         return ((int) $whole * 100) + (int) str_pad($decimal, 2, '0');
     }
-    private function endpoint(string $path): string { return rtrim((string) config('services.izipay.api_base_url'), '/').'/'.ltrim($path, '/'); }
-    public function ipnTargetUrl(): string { return trim((string) config('services.izipay.ipn_url')) ?: route('izipay.ipn'); }
+
+    private function endpoint(string $path): string
+    {
+        return rtrim((string) config('services.izipay.api_base_url'), '/').'/'.ltrim($path, '/');
+    }
+
+    public function ipnTargetUrl(): string
+    {
+        return trim((string) config('services.izipay.ipn_url')) ?: route('izipay.ipn');
+    }
+
     private function ensureValidIpnTargetUrl(string $url): void
     {
-        $parts = parse_url($url); $host = strtolower((string) ($parts['host'] ?? ''));
+        $parts = parse_url($url);
+        $host = strtolower((string) ($parts['host'] ?? ''));
         if (! filter_var($url, FILTER_VALIDATE_URL) || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
             || $host === '' || in_array($host, ['localhost', '127.0.0.1', '0.0.0.0', '::1'], true)
             || Str::endsWith($host, ['.local', '.internal', '.localhost'])) {
