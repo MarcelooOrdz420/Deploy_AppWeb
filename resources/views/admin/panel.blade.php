@@ -959,7 +959,6 @@
         <div class="menu-links">
             <button class="menu-tab" type="button" data-target="sec-dashboard"><span class="tab-icon">&#10022;</span>Dashboard</button>
             <button class="menu-tab" type="button" data-target="sec-offers"><span class="tab-icon">&#9993;</span>Promos</button>
-            <button class="menu-tab" type="button" data-target="sec-company"><span class="tab-icon">&#8962;</span>Negocio</button>
             <button class="menu-tab" type="button" data-target="sec-jobs"><span class="tab-icon">&#9733;</span>Vacantes</button>
             <button class="menu-tab" type="button" data-target="sec-products"><span class="tab-icon">&#9638;</span>Productos</button>
             <button class="menu-tab" type="button" data-target="sec-orders"><span class="tab-icon">&#8811;</span>Pedidos</button>
@@ -1119,56 +1118,6 @@
                     <button type="button" id="runRecoveryCampaignBtn" class="btn-main">Ejecutar campanas</button>
                 </div>
                 <div id="recoveryCampaignMsg" class="msg"></div>
-            </div>
-        </section>
-
-        <section id="sec-company" class="panel">
-            <div class="module-shell">
-                <div class="module-hero">
-                    <div class="module-summary">
-                        <p class="head-kicker">Configuracion del Negocio</p>
-                        <h2>Ubicacion, mapa y atencion</h2>
-                        <p class="section-subtitle">Aqui controlas lo que ve el cliente en la web cuando revisa la polleria, el mapa y las notas de recojo o delivery.</p>
-                    </div>
-                    <div class="inline-note">
-                        Este bloque es seguro para hosting. Si la nueva tabla aun no fue migrada, el sistema sigue usando los valores por defecto y no rompe la web.
-                    </div>
-                </div>
-
-                <form id="companyProfileForm">
-                    <div class="section-grid-2">
-                        <div class="panel" style="padding:16px;">
-                            <h3>Datos visibles al cliente</h3>
-                            <label>Nombre del punto</label>
-                            <input name="location_name" placeholder="Ej: Local principal Huancayo">
-                            <label>Direccion</label>
-                            <input name="address" placeholder="Ej: Jr. Cuzco 123, Huancayo">
-                            <label>Referencia</label>
-                            <input name="reference" placeholder="Ej: Frente a Rock and Pop">
-                            <label>Horario</label>
-                            <input name="business_hours" placeholder="Ej: Atencion continua hasta las 11:00 PM">
-                            <label>Modalidad de atencion</label>
-                            <input name="service_modes" placeholder="Ej: Local, recojo y delivery">
-                        </div>
-
-                        <div class="panel" style="padding:16px;">
-                            <h3>Google Maps y mensajes</h3>
-                            <label>Link externo de Google Maps</label>
-                            <input name="google_maps_url" type="url" placeholder="https://maps.google.com/...">
-                            <label>Link embed de Google Maps</label>
-                            <input name="google_maps_embed_url" type="url" placeholder="https://maps.google.com/maps?...&output=embed">
-                            <label>Nota para delivery</label>
-                            <textarea name="delivery_notes" rows="3" placeholder="Indicaciones para mejorar la entrega"></textarea>
-                            <label>Nota para recojo</label>
-                            <textarea name="pickup_notes" rows="3" placeholder="Indicaciones para recoger sin espera"></textarea>
-                        </div>
-                    </div>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
-                        <button type="button" id="reloadCompanyProfileBtn">Recargar datos</button>
-                        <button type="submit" class="btn-main">Guardar configuracion</button>
-                    </div>
-                    <div id="companyProfileMsg" class="msg"></div>
-                </form>
             </div>
         </section>
 
@@ -1415,7 +1364,6 @@ const adminMenuTabs = Array.from(document.querySelectorAll('#adminMenu .menu-tab
 const adminSections = [
     document.getElementById('sec-dashboard'),
     document.getElementById('sec-offers'),
-    document.getElementById('sec-company'),
     document.getElementById('sec-jobs'),
     document.getElementById('sec-products'),
     document.getElementById('sec-orders'),
@@ -1471,10 +1419,6 @@ async function loadAdminTabData(targetId) {
             return;
         }
 
-        if (targetId === 'sec-company') {
-            await fetchCompanyProfile();
-            return;
-        }
         if (targetId === 'sec-jobs') {
             await fetchJobs();
         }
@@ -1509,9 +1453,6 @@ const runRecoveryCampaignBtn = document.getElementById('runRecoveryCampaignBtn')
 const recoveryCampaignMsg = document.getElementById('recoveryCampaignMsg');
 const offerImageInput = document.getElementById('offerImageInput');
 const offerImagePreview = document.getElementById('offerImagePreview');
-const companyProfileForm = document.getElementById('companyProfileForm');
-const companyProfileMsg = document.getElementById('companyProfileMsg');
-const reloadCompanyProfileBtn = document.getElementById('reloadCompanyProfileBtn');
 
 const statusForm = document.getElementById('statusForm');
 const statusMsg = document.getElementById('statusMsg');
@@ -1662,76 +1603,6 @@ async function runRecoveryCampaigns() {
         return;
     }
     recoveryCampaignMsg.textContent = `OK. Inactivos: ${data.inactive?.sent || 0} correos, ${data.inactive?.pushSent || 0} push. Carrito: ${data.abandoned?.sent || 0} correos, ${data.abandoned?.pushSent || 0} push.`;
-}
-
-async function fetchCompanyProfile() {
-    if (!companyProfileForm) return;
-    const token = getToken();
-    companyProfileMsg.textContent = 'Cargando configuracion...';
-    const res = await fetch('/api/v1/admin/company-profile', {
-        headers: { 'Authorization': `Bearer ${token}` },
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        companyProfileMsg.textContent = data?.message || 'No se pudo cargar la configuracion del negocio.';
-        return;
-    }
-
-    const location = data.location || {};
-    companyProfileForm.location_name.value = location.location_name || '';
-    companyProfileForm.address.value = location.address || '';
-    companyProfileForm.reference.value = location.reference || '';
-    companyProfileForm.google_maps_url.value = location.google_maps_url || '';
-    companyProfileForm.google_maps_embed_url.value = location.google_maps_embed_url || '';
-    companyProfileForm.business_hours.value = location.business_hours || '';
-    companyProfileForm.service_modes.value = location.service_modes || '';
-    companyProfileForm.delivery_notes.value = location.delivery_notes || '';
-    companyProfileForm.pickup_notes.value = location.pickup_notes || '';
-    companyProfileMsg.textContent = 'Configuracion cargada.';
-    companyProfileMsg.classList.remove('error');
-}
-
-async function saveCompanyProfile(event) {
-    event.preventDefault();
-    if (!companyProfileForm) return;
-    const token = getToken();
-    companyProfileMsg.textContent = 'Guardando configuracion...';
-    companyProfileMsg.classList.remove('error');
-
-    const payload = {
-        location_name: companyProfileForm.location_name.value.trim() || null,
-        address: companyProfileForm.address.value.trim() || null,
-        reference: companyProfileForm.reference.value.trim() || null,
-        google_maps_url: companyProfileForm.google_maps_url.value.trim() || null,
-        google_maps_embed_url: companyProfileForm.google_maps_embed_url.value.trim() || null,
-        business_hours: companyProfileForm.business_hours.value.trim() || null,
-        service_modes: companyProfileForm.service_modes.value.trim() || null,
-        delivery_notes: companyProfileForm.delivery_notes.value.trim() || null,
-        pickup_notes: companyProfileForm.pickup_notes.value.trim() || null,
-    };
-
-    const res = await fetch('/api/v1/admin/company-profile', {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        const validationErrors = data.errors ? Object.values(data.errors).flat().join(' | ') : '';
-        const migrationHelp = data.requires_migration
-            ? ` Ejecuta en el hosting: ${data.command || 'php artisan migrate --force'}.`
-            : '';
-        companyProfileMsg.textContent = (validationErrors || data.message || 'No se pudo guardar la configuracion.') + migrationHelp;
-        companyProfileMsg.classList.add('error');
-        return;
-    }
-
-    companyProfileMsg.textContent = data.message || 'Configuracion actualizada.';
-    companyProfileMsg.classList.remove('error');
-    await fetchCompanyProfile();
 }
 
 function parseSession() {
@@ -2816,7 +2687,6 @@ async function boot() {
         fetchCashClosureSummary(),
         fetchCashClosureHistory(),
         fetchUsers(),
-        fetchCompanyProfile(),
         fetchJobs(),
     ]);
 
@@ -2832,7 +2702,6 @@ async function boot() {
             fetchCashClosureSummary(),
             fetchCashClosureHistory(),
             fetchUsers(),
-            fetchCompanyProfile(),
         ]);
     }, 20000);
 }
@@ -2877,12 +2746,6 @@ if (offerForm) {
 jobForm?.addEventListener('submit',saveJob);
 if (runRecoveryCampaignBtn) {
     runRecoveryCampaignBtn.addEventListener('click', runRecoveryCampaigns);
-}
-if (companyProfileForm) {
-    companyProfileForm.addEventListener('submit', saveCompanyProfile);
-}
-if (reloadCompanyProfileBtn) {
-    reloadCompanyProfileBtn.addEventListener('click', fetchCompanyProfile);
 }
 statusForm.addEventListener('submit', updateOrderStatus);
 applyFiltersBtn.addEventListener('click', fetchOrders);

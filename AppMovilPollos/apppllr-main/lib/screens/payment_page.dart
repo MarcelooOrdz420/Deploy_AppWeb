@@ -3,9 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../models/company_settings.dart';
 import '../services/profile_data_service.dart';
-import '../services/company_settings_service.dart';
 import '../services/location_lookup_service.dart';
 import '../services/order_api_service.dart';
 import '../services/peru_lookup_service.dart';
@@ -26,7 +24,6 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   final _orderApiService = OrderApiService();
-  final _companySettingsService = CompanySettingsService();
   final _locationLookupService = LocationLookupService();
   final _profileDataService = ProfileDataService();
   final _peruLookupService = PeruLookupService();
@@ -54,7 +51,6 @@ class _PaymentPageState extends State<PaymentPage> {
   Map<String, dynamic>? _billingMetadata;
   bool _submitting = false;
   bool _lookingUpDocument = false;
-  CompanySettings _settings = CompanySettings.fallback();
   List<SavedAddress> _savedAddresses = const [];
   String? _selectedAddressValue;
 
@@ -62,7 +58,6 @@ class _PaymentPageState extends State<PaymentPage> {
   void initState() {
     super.initState();
     _prefillFromCart();
-    _loadSettings();
     _loadSavedAddresses();
   }
 
@@ -84,12 +79,6 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   bool get _needsOperationCode => false;
-
-  Future<void> _loadSettings() async {
-    final settings = await _companySettingsService.fetch();
-    if (!mounted) return;
-    setState(() => _settings = settings);
-  }
 
   Future<void> _loadSavedAddresses() async {
     final logged = await _sessionService.isLoggedIn();
@@ -697,8 +686,6 @@ class _PaymentPageState extends State<PaymentPage> {
                   decoration: _decor('Selecciona como pagaras'),
                   onChanged: (value) => setState(() => _method = value ?? PayMethod.izipay),
                 ),
-                const SizedBox(height: 10),
-                _paymentPanel(),
                 if (_needsOperationCode) ...[
                   const SizedBox(height: 10),
                   _field(_operationCtrl, 'Codigo de operacion'),
@@ -954,89 +941,6 @@ class _PaymentPageState extends State<PaymentPage> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       filled: true,
       fillColor: const Color(0xFFFFFBF8),
-    );
-  }
-
-  Widget _paymentPanel() {
-    if (_method == PayMethod.cod) {
-      return _paymentInfoCard(
-        title: 'Pago contraentrega',
-        subtitle: 'Paga al recibir tu pedido en el lugar de entrega acordado.',
-        child: const Icon(Icons.payments_outlined, size: 44, color: Colors.orange),
-      );
-    }
-
-    return _paymentInfoCard(
-      title: _settings.izipay.label,
-      subtitle: _settings.izipay.message.isEmpty
-          ? 'Te llevaremos al checkout seguro de Izipay para pagar con tarjeta.'
-          : _settings.izipay.message,
-      child: const Icon(Icons.credit_score_outlined, size: 44, color: Colors.orange),
-    );
-  }
-
-  Widget _paymentInfoCard({
-    required String title,
-    required String subtitle,
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFFFFF7EF),
-        border: Border.all(color: const Color(0xFFFFD4B1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Colors.black54, height: 1.35),
-            softWrap: true,
-          ),
-          const SizedBox(height: 10),
-          Center(child: child),
-        ],
-      ),
-    );
-  }
-
-  Widget _networkPreview(String url) {
-    if (url.trim().isEmpty) {
-      return Container(
-        width: 170,
-        height: 170,
-        color: Colors.white,
-        alignment: Alignment.center,
-        child: const Text('QR pendiente\nen backend', textAlign: TextAlign.center),
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: Image.network(
-        url,
-        width: 170,
-        height: 170,
-        fit: BoxFit.contain,
-        webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-        errorBuilder: (_, __, ___) => Container(
-          width: 170,
-          height: 170,
-          color: Colors.white,
-          alignment: Alignment.center,
-          child: const Text('Coloca tu QR\nen /public/images', textAlign: TextAlign.center),
-        ),
-      ),
     );
   }
 

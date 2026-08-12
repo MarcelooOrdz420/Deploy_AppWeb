@@ -30,14 +30,17 @@ class StorePagesTest extends TestCase
             ->assertOk()
             ->assertSee('name="payment_method"', false)
             ->assertSee('value="izipay"', false)
-            ->assertSee('value="cod"', false);
+            ->assertSee('value="cod"', false)
+            ->assertDontSee('id="paymentInfo"', false);
     }
 
     public function test_admin_panel_does_not_render_manual_payment_validation(): void
     {
         $this->get('/admin/panel')
             ->assertOk()
-            ->assertDontSee('Validar pago digital');
+            ->assertDontSee('Validar pago digital')
+            ->assertDontSee('data-target="sec-company"', false)
+            ->assertDontSee('id="sec-company"', false);
     }
 
     public function test_store_layout_hides_unconfigured_social_links_and_alert_button(): void
