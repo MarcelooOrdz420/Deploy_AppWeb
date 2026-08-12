@@ -23,6 +23,15 @@ class _OrdersTabState extends State<OrdersTab> {
   StreamSubscription<PusherMessage>? _pusherSubscription;
   Map<String, String> _lastStatuses = const {};
 
+  String _paymentLabel(dynamic method) {
+    return switch ((method ?? '').toString().toLowerCase()) {
+      'izipay' => 'Pago con tarjeta',
+      'cod' => 'Pago contraentrega',
+      final value when value.isNotEmpty => value,
+      _ => '-',
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -207,7 +216,7 @@ class _OrdersTabState extends State<OrdersTab> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Pago: ${order['payment_method'] ?? '-'}',
+            'Pago: ${_paymentLabel(order['payment_method'])}',
             style: const TextStyle(color: StoreTheme.inkSoft),
           ),
           const SizedBox(height: 12),
@@ -338,7 +347,7 @@ class _OrdersTabState extends State<OrdersTab> {
               children: [
                 Text('Cliente: ${order['customer_name'] ?? '-'}'),
                 Text('Telefono: ${order['customer_phone'] ?? '-'}'),
-                Text('Pago: ${order['payment_method'] ?? '-'}'),
+                Text('Pago: ${_paymentLabel(order['payment_method'])}'),
                 Text('Estado: ${order['status'] ?? '-'}'),
                 const SizedBox(height: 12),
                 const Text(

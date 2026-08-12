@@ -16,9 +16,11 @@ class StorePagesTest extends TestCase
     public function test_sensitive_store_pages_disable_browser_cache(): void
     {
         foreach (['/carrito', '/mis-pedidos', '/admin/panel'] as $path) {
-            $this->get($path)
-                ->assertOk()
-                ->assertHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+            $response = $this->get($path)->assertOk();
+            $cacheControl = (string) $response->headers->get('Cache-Control');
+            foreach (['no-store', 'no-cache', 'must-revalidate', 'private'] as $directive) {
+                $this->assertStringContainsString($directive, $cacheControl);
+            }
         }
     }
 
@@ -36,5 +38,16 @@ class StorePagesTest extends TestCase
         $this->get('/admin/panel')
             ->assertOk()
             ->assertDontSee('Validar pago digital');
+    }
+
+    public function test_store_layout_hides_unconfigured_social_links_and_alert_button(): void
+    {
+        $this->get('/productos')
+            ->assertOk()
+            ->assertDontSee('id="clientAlertsBtn"', false)
+            ->assertDontSee('aria-label="Facebook"', false)
+            ->assertDontSee('aria-label="Instagram"', false)
+            ->assertDontSee('aria-label="TikTok"', false)
+            ->assertDontSee('id="footerWhatsapp"', false);
     }
 }

@@ -77,7 +77,7 @@ class LocalResponder
         $lines = [];
 
         if (($payments['izipay']['enabled'] ?? false)) {
-            $label = trim((string) ($payments['izipay']['label'] ?? 'Izipay'));
+            $label = trim((string) ($payments['izipay']['label'] ?? 'Pago con tarjeta'));
             $message = trim((string) ($payments['izipay']['message'] ?? 'Paga con tarjeta desde el checkout seguro.'));
             $lines[] = "{$label}: {$message}";
         }

@@ -112,6 +112,28 @@ class NubefactInvoiceTest extends TestCase
             && $request['enviar_automaticamente_al_cliente'] === true);
     }
 
+    public function test_cash_on_delivery_does_not_issue_automatically(): void
+    {
+        config([
+            'einvoice.provider' => 'nubefact',
+            'einvoice.auto_send' => true,
+        ]);
+        Http::fake();
+
+        $order = $this->orderWithItem('boleta', 'dni', '12345678', 23.60);
+        $order->update([
+            'payment_method' => 'cod',
+            'payment_gateway' => null,
+            'payment_reference' => 'COD-'.$order->tracking_code,
+        ]);
+
+        $result = app(ElectronicReceiptDeliveryService::class)->issueAfterVerifiedPayment($order->fresh('items'));
+
+        $this->assertFalse($result['attempted']);
+        $this->assertNull(data_get($order->fresh()->billing_metadata, 'einvoice.sent_at'));
+        Http::assertNothingSent();
+    }
+
     public function test_automatic_delivery_uses_registered_user_email_as_fallback(): void
     {
         config([

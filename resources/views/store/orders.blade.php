@@ -191,6 +191,7 @@ function saveLastStatuses(map) {
 function getToken() { return localStorage.getItem('ed_token'); }
 function statusEs(code) { return STATUS_ES[code] || code || 'n/a'; }
 function paymentStatusEs(code) { return PAYMENT_STATUS_ES[code] || code || 'n/a'; }
+function paymentMethodEs(code) { return String(code || '').toLowerCase() === 'izipay' ? 'Pago con tarjeta' : String(code || '').toLowerCase() === 'cod' ? 'Pago contraentrega' : code || 'n/a'; }
 function needsDigitalProof(method) { return false; }
 async function loadPreferences() {
     const token = getToken();
@@ -299,7 +300,7 @@ async function fetchMyOrders() {
                 <div><strong>Fecha/Hora:</strong> ${new Date(order.created_at).toLocaleString()}</div>
                 <div><strong>Estado:</strong> ${statusEs(order.status)}</div>
                 <div><strong>Total:</strong> S/ ${Number(order.total_amount).toFixed(2)}</div>
-                <div><strong>Pago:</strong> ${order.payment_method || 'n/a'} | <strong>Estado pago:</strong> ${paymentStatusEs(order.payment_status)}</div>
+                <div><strong>Pago:</strong> ${paymentMethodEs(order.payment_method)} | <strong>Estado pago:</strong> ${paymentStatusEs(order.payment_status)}</div>
                 <div><strong>Operacion:</strong> ${order.payment_reference || 'sin codigo'}</div>
                 <div class="order-products"><strong>Productos comprados</strong>${Array.isArray(order.items)&&order.items.length?order.items.map(item=>`<div>${item.quantity} × ${item.product_name} · S/ ${Number(item.line_total).toFixed(2)}</div>`).join(''):'<div>Detalle no disponible</div>'}</div>
                 ${String(order.payment_method || '').toLowerCase() === 'izipay' ? paymentMessage(String(order.payment_status || 'pending').toLowerCase()) : ''}

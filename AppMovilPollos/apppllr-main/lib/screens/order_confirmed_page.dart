@@ -9,11 +9,13 @@ class OrderConfirmedPage extends StatelessWidget {
     this.trackingCode,
     this.totalPaid,
     this.itemsText,
+    this.itemCount,
   });
 
   final String? trackingCode;
   final double? totalPaid;
   final String? itemsText;
+  final int? itemCount;
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +63,7 @@ class OrderConfirmedPage extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text('Articulos: $resolvedItems', style: const TextStyle(color: Colors.black54)),
                     const SizedBox(height: 6),
-                    Text('Cantidad de Productos: ${cart.totalItemsCount}', style: const TextStyle(color: Colors.black54)),
+                    Text('Cantidad de Productos: ${itemCount ?? cart.totalItemsCount}', style: const TextStyle(color: Colors.black54)),
                     const Divider(),
                     Row(
                       children: [

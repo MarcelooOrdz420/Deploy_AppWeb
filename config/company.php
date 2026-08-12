@@ -20,7 +20,7 @@ return [
     ],
     'payments' => [
         'izipay' => [
-            'label' => env('COMPANY_IZIPAY_LABEL', 'Pago seguro con Izipay'),
+            'label' => 'Pago con tarjeta',
             'message' => env('COMPANY_IZIPAY_MESSAGE', 'Paga con tarjeta desde el checkout seguro de Izipay.'),
             'enabled' => (bool) env('IZIPAY_ENABLED', true),
         ],

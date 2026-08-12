@@ -424,7 +424,7 @@ class ChatOrderDraftService
             $missing[] = 'ensalada dulce o salada';
         }
         if (! $this->draftValue($draft, 'payment_method')) {
-            $missing[] = 'metodo de pago (Izipay o contraentrega)';
+            $missing[] = 'metodo de pago (tarjeta o contraentrega)';
         }
 
         $upsell = $this->needsComplementOffer($items, $metadata)

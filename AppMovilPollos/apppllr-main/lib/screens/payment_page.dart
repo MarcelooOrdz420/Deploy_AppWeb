@@ -404,6 +404,7 @@ class _PaymentPageState extends State<PaymentPage> {
           (cart.subtotal +
               (_deliveryType == DeliveryType.delivery ? cart.deliveryFee() : 0.0));
       final itemsText = cart.items.map((item) => item.producto.name).join(', ');
+      final itemCount = cart.totalItemsCount;
 
       if (_method == PayMethod.izipay && orderId > 0) {
         final checkout = await _orderApiService.izipayCheckout(
@@ -449,12 +450,14 @@ class _PaymentPageState extends State<PaymentPage> {
       }
 
       if (!mounted) return;
+      cart.clear();
       context.push(
         '/confirmacion',
         extra: {
           'trackingCode': trackingCode,
           'totalPaid': totalPaid,
           'itemsText': itemsText,
+          'itemCount': itemCount,
         },
       );
     } catch (e) {
@@ -684,7 +687,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   items: const [
                     DropdownMenuItem(
                       value: PayMethod.izipay,
-                      child: Text('Pago seguro con Izipay'),
+                      child: Text('Pago con tarjeta'),
                     ),
                     DropdownMenuItem(
                       value: PayMethod.cod,

@@ -10,6 +10,7 @@ use App\Models\MarketingOffer;
 use App\Services\Fcm\FcmClient;
 use App\Services\Marketing\CustomerRecoveryCampaignService;
 use App\Services\Mail\CustomerLifecycleEmailService;
+use App\Services\PromotionImageService;
 use App\Services\Realtime\PusherNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ use Throwable;
 
 class AdminNotificationController extends Controller
 {
-    public function sendOffer(Request $request): JsonResponse
+    public function sendOffer(Request $request, PromotionImageService $imageService): JsonResponse
     {
         $data = $request->validate([
             'target' => ['nullable', 'string', 'in:mobile,web,all'],
@@ -44,6 +45,7 @@ class AdminNotificationController extends Controller
         }
 
         $product = Product::query()->findOrFail($data['product_id']);
+        $data['image_url'] = $imageService->resolve($data['image_url'] ?? null, $product);
         $normalPrice = round((float) $product->price, 2);
         if ($normalPrice <= 0) {
             return response()->json(['message' => 'El producto debe tener un precio normal mayor que cero para crear una promoción.'], 422);
@@ -153,6 +155,7 @@ class AdminNotificationController extends Controller
             ],
         ]);
     }
+
 
     public function sendRecoveryCampaigns(Request $request, CustomerRecoveryCampaignService $campaignService): JsonResponse
     {

@@ -1795,6 +1795,10 @@ function paymentStatusEs(code) {
     return PAYMENT_STATUS_ES[code] || code || 'n/a';
 }
 
+function paymentMethodEs(code) {
+    return String(code || '').toLowerCase() === 'izipay' ? 'Pago con tarjeta' : String(code || '').toLowerCase() === 'cod' ? 'Pago contraentrega' : code || 'n/a';
+}
+
 function paymentStatusClass(code) {
     const normalized = String(code || '').toLowerCase();
     return {
@@ -1875,7 +1879,7 @@ function openProofModal(order) {
     if (!order?.payment_proof_path) return;
 
     proofModalTitle.textContent = `Comprobante ${order.tracking_code}`;
-    proofModalMeta.textContent = `Pedido ${order.id} | ${order.customer_name} | ${order.payment_method || 'n/a'} | ${paymentStatusEs(order.payment_status)}`;
+    proofModalMeta.textContent = `Pedido ${order.id} | ${order.customer_name} | ${paymentMethodEs(order.payment_method)} | ${paymentStatusEs(order.payment_status)}`;
 
     if (isImageProof(order.payment_proof_path)) {
         proofModalContent.innerHTML = `
@@ -2318,7 +2322,7 @@ async function fetchOrders() {
                 <div class="muted">ID: ${order.id} | ${order.customer_name}</div>
                 <div class="muted">Fecha/Hora: ${new Date(order.created_at).toLocaleString()}</div>
                 <div class="muted">
-                    Pago: ${order.payment_method || 'n/a'}
+                    Pago: ${paymentMethodEs(order.payment_method)}
                     <span class="tag ${paymentStatusClass(order.payment_status)}" style="margin-left:6px;">${paymentStatusEs(order.payment_status)}</span>
                 </div>
                 <div class="muted">Operacion: ${order.payment_reference || 'sin codigo'}</div>
@@ -2329,7 +2333,7 @@ async function fetchOrders() {
                 <div style="display:flex; gap:8px; margin-top:8px;">
                     <button data-fill="${order.id}">Usar en actualizar estado</button>
                     ${order.payment_proof_path ? `<button data-proof-modal="${order.id}">Ver comprobante</button>` : ''}
-                    ${order.billing_receipt_type ? `<button data-einvoice-preview="${order.id}">Preview SUNAT</button><button data-einvoice-send="${order.id}">${order.billing_metadata?.einvoice?.sent_at ? 'Reenviar comprobante' : order.billing_metadata?.einvoice?.status === 'failed' ? 'Reintentar envio' : 'Enviar comprobante'}</button>${order.payment_status === 'verified' ? `<button data-einvoice-email="${order.id}">Reenviar correo</button>` : ''}` : ''}
+                    ${order.billing_receipt_type ? `<button data-einvoice-preview="${order.id}">Preview SUNAT</button>${order.payment_status === 'verified' ? `<button data-einvoice-send="${order.id}">${order.billing_metadata?.einvoice?.sent_at ? 'Reenviar comprobante' : order.billing_metadata?.einvoice?.status === 'failed' ? 'Reintentar envio' : 'Enviar comprobante'}</button><button data-einvoice-email="${order.id}">Reenviar correo</button>` : ''}` : ''}
                     <button data-delete-order="${order.id}" style="border-color:#ffc1b5; color:#a53216;">Eliminar pedido</button>
                 </div>
             </article>

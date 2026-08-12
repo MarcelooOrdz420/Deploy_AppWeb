@@ -22,7 +22,7 @@ class CompanySettings {
         brandName: 'Pollos y Parrillas El Dorado',
         currency: 'PEN',
         izipay: IzipayChannel(
-          label: 'Pago seguro con Izipay',
+          label: 'Pago con tarjeta',
           message: 'Paga con tarjeta desde el checkout seguro de Izipay.',
           enabled: true,
         ),

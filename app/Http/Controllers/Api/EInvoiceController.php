@@ -30,6 +30,12 @@ class EInvoiceController extends Controller
         if ($request->user()->role !== 'admin') {
             return response()->json(['message' => 'No autorizado'], 403);
         }
+        if ((string) $order->payment_status !== 'verified') {
+            return response()->json(['message' => 'El pago debe estar verificado antes de emitir el comprobante.'], 422);
+        }
+        if ((string) $order->payment_method === 'cod' && (string) $order->status !== Order::STATUS_DELIVERED) {
+            return response()->json(['message' => 'Confirma la entrega antes de emitir un comprobante contraentrega.'], 422);
+        }
 
         try {
             return response()->json($service->sendInvoice($order, force: true));

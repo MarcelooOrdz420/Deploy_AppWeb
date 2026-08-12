@@ -23,6 +23,7 @@ class ElectronicReceiptDeliveryService
         $order->loadMissing(['items', 'user']);
 
         if ((string) $order->payment_status !== 'verified'
+            || (string) $order->payment_method !== 'izipay'
             || ! in_array((string) $order->billing_receipt_type, ['boleta', 'factura'], true)
             || ! (bool) config('einvoice.auto_send', false)) {
             return ['attempted' => false];

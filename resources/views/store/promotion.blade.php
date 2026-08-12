@@ -21,7 +21,7 @@
     @media(max-width:760px){.promo-detail{grid-template-columns:1fr}.promo-detail-media,.promo-detail-media img{min-height:280px;max-height:390px}.promo-detail-copy{padding:24px 18px}}
 </style>
 <section class="panel promo-detail">
-    <div class="promo-detail-media"><img src="{{ $offer->image_url ?: ($offer->product->image_url ?: '/images/products/default.svg') }}" onerror="this.onerror=null;this.src='/images/products/default.svg'" alt="{{ $offer->title }}"></div>
+    <div class="promo-detail-media"><img src="{{ $promotionImageUrl }}" onerror="this.onerror=null;this.src='/images/products/default.svg'" alt="{{ $offer->title }}"></div>
     <div class="promo-detail-copy">
         <span class="promo-badge">-{{ number_format((float) $offer->discount_percent, 0) }}% PROMOCIÓN</span>
         <h1>{{ $offer->title }}</h1>

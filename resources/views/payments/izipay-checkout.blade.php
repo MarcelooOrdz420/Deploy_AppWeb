@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Pago Izipay - {{ $order->tracking_code }}</title>
+    <title>Pago con tarjeta - {{ $order->tracking_code }}</title>
     <link rel="stylesheet" href="{{ $cssUrl }}">
     <style>
         body {
@@ -54,7 +54,7 @@
         <div class="brand-mark">
             <img src="/images/ico-pollo.jpg" alt="El Dorado">
         </div>
-        <h1>Pago seguro con Izipay</h1>
+        <h1>Pago con tarjeta</h1>
         <p class="meta">
             Pedido {{ $order->tracking_code }}<br>
             Total: S/ {{ number_format((float) $order->total_amount, 2) }}

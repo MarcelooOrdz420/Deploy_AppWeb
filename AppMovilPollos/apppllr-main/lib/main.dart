@@ -103,6 +103,7 @@ final GoRouter _router = GoRouter(
             trackingCode: data['trackingCode']?.toString(),
             totalPaid: (data['totalPaid'] as num?)?.toDouble(),
             itemsText: data['itemsText']?.toString(),
+            itemCount: (data['itemCount'] as num?)?.toInt(),
           );
         }
         return const OrderConfirmedPage();

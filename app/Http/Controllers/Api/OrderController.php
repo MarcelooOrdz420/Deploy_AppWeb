@@ -488,7 +488,6 @@ class OrderController extends Controller
         });
 
         $this->sendOrderStatusPush($order);
-        $this->trySendElectronicReceipt($order->fresh(['items']));
 
         return response()->json($order);
     }
