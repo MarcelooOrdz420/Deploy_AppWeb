@@ -281,6 +281,13 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _openOffer(PusherMessage message) {
+    final rawProductId = message.data['product_id'] ?? message.data['productId'] ?? message.data['id'];
+    final productId = rawProductId is num ? rawProductId.toInt() : int.tryParse(rawProductId?.toString() ?? '');
+    if (productId != null && productId > 0) {
+      context.push('/detalles/$productId');
+      return;
+    }
+
     // Si el server envía el contenido, abrimos una pantalla de detalle de promo.
     final hasPromoText = (message.data['title'] ?? '').toString().trim().isNotEmpty ||
         (message.data['message'] ?? '').toString().trim().isNotEmpty ||
@@ -295,13 +302,6 @@ class _AppShellState extends State<AppShell> {
     final route = (message.data['route'] ?? message.data['deep_link'] ?? '').toString().trim();
     if (route.isNotEmpty && route.startsWith('/')) {
       context.push(route);
-      return;
-    }
-
-    final rawProductId = message.data['product_id'] ?? message.data['productId'] ?? message.data['id'];
-    final productId = rawProductId is num ? rawProductId.toInt() : int.tryParse(rawProductId?.toString() ?? '');
-    if (productId != null && productId > 0) {
-      context.push('/detalles/$productId');
       return;
     }
 

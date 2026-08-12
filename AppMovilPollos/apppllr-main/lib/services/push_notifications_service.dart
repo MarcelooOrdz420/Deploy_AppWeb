@@ -137,6 +137,8 @@ class PushNotificationsService {
       'body': (data['body'] ?? '').toString(),
       'image_url': (data['image_url'] ?? '').toString(),
       'cta_label': (data['cta_label'] ?? '').toString(),
+      'product_id': (data['product_id'] ?? '').toString(),
+      'cta_url': (data['cta_url'] ?? '').toString(),
       'route': route,
       'target': (data['target'] ?? '').toString(),
     };

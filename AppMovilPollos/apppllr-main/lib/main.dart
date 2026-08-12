@@ -27,6 +27,11 @@ Future<void> main() async {
   await _orders.load();
   await PushNotificationsService.instance.initialize(
     onOpenPromo: (payload) {
+      final productId = int.tryParse((payload['product_id'] ?? '').toString());
+      if (productId != null && productId > 0) {
+        _router.push('/detalles/$productId');
+        return;
+      }
       _router.push('/promo', extra: payload);
     },
   );
