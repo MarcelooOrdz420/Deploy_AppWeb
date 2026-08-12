@@ -41,7 +41,18 @@ class PromotionImageTest extends TestCase
             $product,
         );
 
-        $this->assertSame('/storage/offers/admin/promo.jpg', $resolved);
+        $this->assertSame('/media/promotions/offers/admin/promo.jpg', $resolved);
+    }
+
+    public function test_promotion_image_is_served_without_public_storage_symlink(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('offers/admin/promo.jpg', 'image-content');
+
+        $this->get('/media/promotions/offers/admin/promo.jpg')
+            ->assertOk()
+            ->assertHeader('Cache-Control', 'max-age=86400, public')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
     }
 
     public function test_insecure_or_unrelated_remote_image_is_rejected(): void

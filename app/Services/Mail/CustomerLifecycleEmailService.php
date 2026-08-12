@@ -12,8 +12,7 @@ class CustomerLifecycleEmailService
 {
     public function __construct(
         private readonly ResendEmailService $resendEmailService,
-    ) {
-    }
+    ) {}
 
     public function sendPasswordReset(User $user, string $resetUrl): void
     {
@@ -129,7 +128,7 @@ HTML;
             "Hola {$user->name},",
             "Te extraniamos. Tu ultima actividad fue {$lastSeenText}.",
             'Vuelve a la tienda y descubre nuestras promos y productos disponibles.',
-            "Entrar ahora: ".url('/productos'),
+            'Entrar ahora: '.url('/productos'),
         ]);
 
         $html = <<<HTML
@@ -178,7 +177,7 @@ HTML;
             "Hola {$cartRecovery->customer_name},",
             'Guardamos los productos que dejaste en tu carrito para que contines tu compra.',
             "Subtotal guardado: S/ {$subtotal}",
-            "Retomar compra: ".url('/carrito'),
+            'Retomar compra: '.url('/carrito'),
         ]);
 
         $html = <<<HTML
@@ -251,8 +250,9 @@ HTML;
         $normalizedPath = '/'.ltrim($path, '/');
         $absolutePath = null;
 
-        if (str_starts_with($normalizedPath, '/storage/')) {
-            $relative = ltrim(substr($normalizedPath, strlen('/storage/')), '/');
+        if (str_starts_with($normalizedPath, '/storage/') || str_starts_with($normalizedPath, '/media/promotions/')) {
+            $prefix = str_starts_with($normalizedPath, '/storage/') ? '/storage/' : '/media/promotions/';
+            $relative = ltrim(substr($normalizedPath, strlen($prefix)), '/');
             $candidate = storage_path('app/public/'.$relative);
             if (is_file($candidate)) {
                 $absolutePath = $candidate;

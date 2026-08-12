@@ -69,7 +69,12 @@ class PromoDetailsPage extends StatelessWidget {
                       height: 190,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/pollooooo.png',
+                        height: 190,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -104,4 +109,3 @@ class PromoDetailsPage extends StatelessWidget {
     );
   }
 }
-

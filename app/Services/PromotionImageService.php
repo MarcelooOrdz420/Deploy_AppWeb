@@ -67,14 +67,17 @@ class PromotionImageService
 
         // Uploaded files are always returned as same-origin paths. This also
         // repairs records created with an old APP_URL or an insecure http URL.
-        if (Str::startsWith($normalizedPath, '/storage/')) {
-            $relativePath = rawurldecode(Str::after($normalizedPath, '/storage/'));
+        if (Str::startsWith($normalizedPath, ['/storage/', '/media/promotions/'])) {
+            $prefix = Str::startsWith($normalizedPath, '/storage/')
+                ? '/storage/'
+                : '/media/promotions/';
+            $relativePath = rawurldecode(Str::after($normalizedPath, $prefix));
             if ($relativePath === '' || Str::contains($relativePath, ['..', '\\'])) {
                 return null;
             }
 
             return Storage::disk('public')->exists($relativePath)
-                ? $normalizedPath
+                ? '/media/promotions/'.$relativePath
                 : null;
         }
 

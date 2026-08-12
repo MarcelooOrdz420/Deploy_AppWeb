@@ -67,6 +67,17 @@ class ApiConfig {
     final originUri = Uri.tryParse(origin);
     if (originUri == null) return raw;
 
+    // Production media must use the configured HTTPS API origin. Rewrite old
+    // same-host HTTP links and reject unrelated insecure origins.
+    if (uri.scheme == 'http' && originUri.scheme == 'https') {
+      if (uri.host == originUri.host) {
+        return uri
+            .replace(scheme: 'https', port: originUri.hasPort ? originUri.port : null)
+            .toString();
+      }
+      return '$origin/images/products/default.svg';
+    }
+
     final isLocalHost = uri.host == 'localhost' || uri.host == '127.0.0.1';
     final isLocalOrigin = originUri.host == 'localhost' || originUri.host == '127.0.0.1';
     if (!isLocalHost || !isLocalOrigin) return raw;
@@ -121,4 +132,3 @@ class ApiConfig {
     return out.isEmpty ? values : out;
   }
 }
-

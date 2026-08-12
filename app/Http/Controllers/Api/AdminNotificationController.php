@@ -42,7 +42,7 @@ class AdminNotificationController extends Controller
             $path = $request->file('image')->store('offers/admin', 'public');
             // Keep local uploads on the current origin. This avoids mixed-content
             // failures and stale domains when APP_URL changes between deployments.
-            $data['image_url'] = '/storage/'.ltrim($path, '/');
+            $data['image_url'] = '/media/promotions/'.ltrim($path, '/');
         }
 
         $product = Product::query()->findOrFail($data['product_id']);
@@ -93,6 +93,9 @@ class AdminNotificationController extends Controller
             'original_price' => $offer->original_price,
             'discount_percent' => $offer->discount_percent,
         ];
+        $publicImageUrl = $offer->image_url
+            ? url('/'.ltrim($offer->image_url, '/'))
+            : null;
         $data['cta_url'] = $broadcastPayload['cta_url'];
 
         $broadcast = $this->broadcastOffer($broadcastPayload);
@@ -116,7 +119,7 @@ class AdminNotificationController extends Controller
                         notification: [
                             'title' => $data['title'],
                             'body' => $data['message'],
-                            'image' => $data['image_url'] ?? null,
+                            'image' => $publicImageUrl,
                         ],
                         data: [
                             'route' => '/promo',
@@ -124,7 +127,7 @@ class AdminNotificationController extends Controller
                             'title' => $data['title'],
                             'message' => $data['message'],
                             'body' => $data['body'] ?? $data['message'],
-                            'image_url' => $data['image_url'] ?? null,
+                            'image_url' => $publicImageUrl,
                             'cta_label' => $data['cta_label'] ?? null,
                             'product_id' => isset($data['product_id']) ? (string) $data['product_id'] : '',
                             'cta_url' => $broadcastPayload['cta_url'],

@@ -1,14 +1,19 @@
 <?php
 
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\PromotionImageController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/productos');
 Route::redirect('/app', '/productos');
+Route::get('/media/promotions/{path}', PromotionImageController::class)
+    ->where('path', '.*')
+    ->name('promotions.image');
 Route::view('/productos', 'store.products')->name('store.products');
 Route::get('/promociones/{offer}', function (\App\Models\MarketingOffer $offer, \App\Services\PromotionImageService $imageService) {
     abort_unless($offer->is_active, 404);
     $offer->load('product');
+
     return view('store.promotion', [
         'offer' => $offer,
         'promotionImageUrl' => $imageService->resolve($offer->image_url, $offer->product),
