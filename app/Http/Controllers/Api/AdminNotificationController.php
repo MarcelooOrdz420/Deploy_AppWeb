@@ -4,18 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\OfferNotificationSent;
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Product;
 use App\Models\MarketingOffer;
+use App\Models\Product;
+use App\Models\User;
 use App\Services\Fcm\FcmClient;
-use App\Services\Marketing\CustomerRecoveryCampaignService;
 use App\Services\Mail\CustomerLifecycleEmailService;
+use App\Services\Marketing\CustomerRecoveryCampaignService;
 use App\Services\PromotionImageService;
 use App\Services\Realtime\PusherNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use ReflectionClass;
 use Throwable;
 
@@ -41,7 +40,9 @@ class AdminNotificationController extends Controller
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('offers/admin', 'public');
-            $data['image_url'] = Storage::url($path);
+            // Keep local uploads on the current origin. This avoids mixed-content
+            // failures and stale domains when APP_URL changes between deployments.
+            $data['image_url'] = '/storage/'.ltrim($path, '/');
         }
 
         $product = Product::query()->findOrFail($data['product_id']);
@@ -58,7 +59,7 @@ class AdminNotificationController extends Controller
             $allowedAdjustment = max(1.00, round($normalPrice * 0.02, 2));
             if (abs($promoPrice - $calculatedPrice) > $allowedAdjustment) {
                 return response()->json([
-                    'message' => "El {$data['discount_percent']}% da S/ ".number_format($calculatedPrice, 2).". Solo puedes ajustar hasta S/ ".number_format($allowedAdjustment, 2).' para evitar una promoción engañosa.',
+                    'message' => "El {$data['discount_percent']}% da S/ ".number_format($calculatedPrice, 2).'. Solo puedes ajustar hasta S/ '.number_format($allowedAdjustment, 2).' para evitar una promoción engañosa.',
                 ], 422);
             }
         }
@@ -155,7 +156,6 @@ class AdminNotificationController extends Controller
             ],
         ]);
     }
-
 
     public function sendRecoveryCampaigns(Request $request, CustomerRecoveryCampaignService $campaignService): JsonResponse
     {

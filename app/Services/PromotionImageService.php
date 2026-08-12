@@ -11,14 +11,9 @@ class PromotionImageService
     public function resolve(?string $candidate, Product $product): string
     {
         foreach ([$candidate, $product->image_url] as $image) {
-            $image = trim((string) $image);
-            if ($image === '' || str_ends_with($image, '/images/products/default.svg')) {
-                continue;
-            }
-            if (Str::startsWith($image, ['http://', 'https://'])
-                || (Str::startsWith($image, '/storage/') && Storage::disk('public')->exists(Str::after($image, '/storage/')))
-                || is_file(public_path(ltrim($image, '/')))) {
-                return $image;
+            $resolved = $this->resolveCandidate((string) $image);
+            if ($resolved !== null) {
+                return $resolved;
             }
         }
 
@@ -52,5 +47,54 @@ class PromotionImageService
         }
 
         return '/images/products/default.svg';
+    }
+
+    private function resolveCandidate(string $image): ?string
+    {
+        $image = trim($image);
+        if ($image === '' || str_ends_with($image, '/images/products/default.svg')) {
+            return null;
+        }
+
+        $scheme = strtolower((string) parse_url($image, PHP_URL_SCHEME));
+        $host = strtolower((string) parse_url($image, PHP_URL_HOST));
+        $path = parse_url($image, PHP_URL_PATH);
+        if (! is_string($path) || $path === '') {
+            return null;
+        }
+
+        $normalizedPath = '/'.ltrim($path, '/');
+
+        // Uploaded files are always returned as same-origin paths. This also
+        // repairs records created with an old APP_URL or an insecure http URL.
+        if (Str::startsWith($normalizedPath, '/storage/')) {
+            $relativePath = rawurldecode(Str::after($normalizedPath, '/storage/'));
+            if ($relativePath === '' || Str::contains($relativePath, ['..', '\\'])) {
+                return null;
+            }
+
+            return Storage::disk('public')->exists($relativePath)
+                ? $normalizedPath
+                : null;
+        }
+
+        // Public application assets are valid only when they exist locally.
+        if ($scheme === '' && $host === '' && is_file(public_path(ltrim($normalizedPath, '/')))) {
+            return $normalizedPath;
+        }
+
+        // Never render remote HTTP content or assets from an unrelated host.
+        if ($scheme !== 'https' || $host === '') {
+            return null;
+        }
+
+        $appHost = strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST));
+        if ($appHost === '' || ! hash_equals($appHost, $host)) {
+            return null;
+        }
+
+        return is_file(public_path(ltrim($normalizedPath, '/')))
+            ? $normalizedPath
+            : null;
     }
 }
