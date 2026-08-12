@@ -324,6 +324,8 @@ class ChatOrderDraftService
 
         if (Str::contains($normalized, ['izipay', 'tarjeta'])) {
             $fields['payment_method'] = 'izipay';
+        } elseif (Str::contains($normalized, ['contraentrega', 'contra entrega', 'al recibir', 'en efectivo'])) {
+            $fields['payment_method'] = 'cod';
         }
 
         if (Str::contains($normalized, 'salada')) {
@@ -422,7 +424,7 @@ class ChatOrderDraftService
             $missing[] = 'ensalada dulce o salada';
         }
         if (! $this->draftValue($draft, 'payment_method')) {
-            $missing[] = 'metodo de pago';
+            $missing[] = 'metodo de pago (Izipay o contraentrega)';
         }
 
         $upsell = $this->needsComplementOffer($items, $metadata)

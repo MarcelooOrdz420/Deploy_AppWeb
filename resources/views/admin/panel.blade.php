@@ -1288,6 +1288,7 @@
                 <button id="exportCsvBtn" class="btn-main">Exportar Excel</button>
             </div>
             <div id="ordersList" class="list"></div>
+            <div id="orderActionsMsg" class="msg"></div>
 
             <hr style="border-color:#ffd7bd; margin:18px 0;">
             <div class="row" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
@@ -1312,26 +1313,6 @@
                     </form>
                 </section>
 
-                <section class="panel" style="padding:16px;">
-                    <h3>Validar pago digital</h3>
-                    <form id="paymentForm">
-                        <label>Pedido ID</label>
-                        <input name="order_id" required>
-                        <label>Estado de pago</label>
-                        <select name="payment_status" required>
-                            <option value="pending">Pendiente</option>
-                            <option value="reported">Reportado</option>
-                            <option value="verified">Verificado</option>
-                            <option value="rejected">Rechazado</option>
-                        </select>
-                        <label>Codigo operacion (opcional)</label>
-                        <input name="payment_reference">
-                        <label>Nota (opcional)</label>
-                        <input name="note">
-                        <button type="submit" class="btn-main">Actualizar pago</button>
-                        <div id="paymentMsg" class="msg"></div>
-                    </form>
-                </section>
             </div>
         </section>
 
@@ -1534,8 +1515,7 @@ const reloadCompanyProfileBtn = document.getElementById('reloadCompanyProfileBtn
 
 const statusForm = document.getElementById('statusForm');
 const statusMsg = document.getElementById('statusMsg');
-const paymentForm = document.getElementById('paymentForm');
-const paymentMsg = document.getElementById('paymentMsg');
+const orderActionsMsg = document.getElementById('orderActionsMsg');
 const ordersList = document.getElementById('ordersList');
 const filterStatus = document.getElementById('filterStatus');
 const filterPaymentMethod = document.getElementById('filterPaymentMethod');
@@ -2360,9 +2340,7 @@ async function fetchOrders() {
     ordersList.querySelectorAll('[data-fill]').forEach(btn => {
         btn.addEventListener('click', () => {
             statusForm.order_id.value = btn.getAttribute('data-fill');
-            paymentForm.order_id.value = btn.getAttribute('data-fill');
             statusMsg.textContent = `Pedido ID ${btn.getAttribute('data-fill')} seleccionado`;
-            paymentMsg.textContent = `Pedido ID ${btn.getAttribute('data-fill')} seleccionado`;
         });
     });
     ordersList.querySelectorAll('[data-proof-modal]').forEach(btn => {
@@ -2387,16 +2365,16 @@ async function fetchOrders() {
 
 async function previewEinvoice(orderId) {
     const token = getToken();
-    paymentMsg.textContent = `Generando preview SUNAT para pedido ${orderId}...`;
+    orderActionsMsg.textContent = `Generando preview SUNAT para pedido ${orderId}...`;
     const res = await fetch(`/api/v1/admin/orders/${orderId}/einvoice/preview`, {
         headers: { 'Authorization': `Bearer ${token}` },
     });
     const data = await res.json();
     if (!res.ok) {
-        paymentMsg.textContent = data.message || 'No se pudo generar preview SUNAT.';
+        orderActionsMsg.textContent = data.message || 'No se pudo generar preview SUNAT.';
         return;
     }
-    paymentMsg.textContent = `Preview SUNAT listo para pedido ${orderId}.`;
+    orderActionsMsg.textContent = `Preview SUNAT listo para pedido ${orderId}.`;
     alert(JSON.stringify(data, null, 2));
 }
 
@@ -2410,7 +2388,7 @@ async function sendEinvoice(orderId, button = null) {
         button.setAttribute('aria-busy', 'true');
     }
     const token = getToken();
-    paymentMsg.textContent = `Enviando comprobante SUNAT para pedido ${orderId}...`;
+    orderActionsMsg.textContent = `Enviando comprobante SUNAT para pedido ${orderId}...`;
     try {
         const res = await fetch(`/api/v1/admin/orders/${orderId}/einvoice/send`, {
             method: 'POST',
@@ -2418,15 +2396,15 @@ async function sendEinvoice(orderId, button = null) {
         });
         const data = await res.json();
         if (!res.ok) {
-            paymentMsg.textContent = data.message || 'No se pudo emitir comprobante SUNAT.';
+            orderActionsMsg.textContent = data.message || 'No se pudo emitir comprobante SUNAT.';
             return;
         }
-        paymentMsg.textContent = data.already_sent
+        orderActionsMsg.textContent = data.already_sent
             ? `El pedido ${orderId} ya tenia comprobante emitido.`
             : `Comprobante electronico enviado para pedido ${orderId}.`;
         await fetchOrders();
     } catch {
-        paymentMsg.textContent = 'No se pudo conectar con el servicio de comprobantes.';
+        orderActionsMsg.textContent = 'No se pudo conectar con el servicio de comprobantes.';
     } finally {
         if (button?.isConnected) {
             button.disabled = false;
@@ -2439,13 +2417,13 @@ async function sendEinvoice(orderId, button = null) {
 async function sendEinvoiceEmail(orderId) {
     if (!confirm(`Reenviar el comprobante por correo para el pedido ID ${orderId}?`)) return;
     const token = getToken();
-    paymentMsg.textContent = `Enviando correo del comprobante para pedido ${orderId}...`;
+    orderActionsMsg.textContent = `Enviando correo del comprobante para pedido ${orderId}...`;
     const res = await fetch(`/api/v1/admin/orders/${orderId}/einvoice/send-customer-copy`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
     });
     const data = await res.json();
-    paymentMsg.textContent = res.ok
+    orderActionsMsg.textContent = res.ok
         ? `${data.message} Destino: ${data.recipient}`
         : (data.message || 'No se pudo enviar el correo del comprobante.');
     if (res.ok) await fetchOrders();
@@ -2775,35 +2753,6 @@ async function updateOrderStatus(e) {
     await fetchOrders();
 }
 
-async function updatePaymentStatus(e) {
-    e.preventDefault();
-    const token = getToken();
-    const orderId = paymentForm.order_id.value.trim();
-    if (!orderId) return;
-
-    const payload = {
-        payment_status: paymentForm.payment_status.value,
-        payment_reference: paymentForm.payment_reference.value.trim() || null,
-        note: paymentForm.note.value.trim() || null,
-    };
-
-    const res = await fetch(`/api/v1/admin/orders/${orderId}/payment-status`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-        paymentMsg.textContent = data.message || 'No se pudo actualizar pago';
-        return;
-    }
-    paymentMsg.textContent = `Pago actualizado a ${paymentStatusEs(data.payment_status)}`;
-    await fetchOrders();
-}
-
 async function deleteOrder(orderId) {
     if (!confirm(`Eliminar pedido ID ${orderId}? Esta accion lo quitara de la vista del cliente.`)) return;
     const token = getToken();
@@ -2817,7 +2766,7 @@ async function deleteOrder(orderId) {
         return;
     }
     statusMsg.textContent = `Pedido ${orderId} eliminado`;
-    paymentMsg.textContent = `Pedido ${orderId} eliminado`;
+    orderActionsMsg.textContent = `Pedido ${orderId} eliminado`;
     await fetchOrders();
 }
 
@@ -2932,7 +2881,6 @@ if (reloadCompanyProfileBtn) {
     reloadCompanyProfileBtn.addEventListener('click', fetchCompanyProfile);
 }
 statusForm.addEventListener('submit', updateOrderStatus);
-paymentForm.addEventListener('submit', updatePaymentStatus);
 applyFiltersBtn.addEventListener('click', fetchOrders);
 clearFiltersBtn.addEventListener('click', () => {
     filterStatus.value = '';

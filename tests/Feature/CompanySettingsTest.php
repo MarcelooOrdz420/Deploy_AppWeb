@@ -12,6 +12,14 @@ class CompanySettingsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_public_settings_include_cash_on_delivery(): void
+    {
+        $payment = app(CompanySettingsService::class)->publicSettings()['payments']['cod'];
+
+        $this->assertTrue($payment['enabled']);
+        $this->assertSame('Pago contraentrega', $payment['label']);
+    }
+
     public function test_saved_location_values_are_returned_instead_of_environment_defaults(): void
     {
         config([

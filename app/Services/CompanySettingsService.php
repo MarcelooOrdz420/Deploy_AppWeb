@@ -25,6 +25,11 @@ class CompanySettingsService
                     'enabled' => (bool) config('company.payments.izipay.enabled'),
                     'public_key' => config('services.izipay.public_key'),
                 ],
+                'cod' => [
+                    'label' => config('company.payments.cod.label'),
+                    'message' => config('company.payments.cod.message'),
+                    'enabled' => (bool) config('company.payments.cod.enabled'),
+                ],
             ],
         ];
     }

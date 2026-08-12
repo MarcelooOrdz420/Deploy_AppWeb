@@ -82,6 +82,12 @@ class LocalResponder
             $lines[] = "{$label}: {$message}";
         }
 
+        if (($payments['cod']['enabled'] ?? false)) {
+            $label = trim((string) ($payments['cod']['label'] ?? 'Pago contraentrega'));
+            $message = trim((string) ($payments['cod']['message'] ?? 'Paga al recibir tu pedido en el lugar de entrega acordado.'));
+            $lines[] = "{$label}: {$message}";
+        }
+
         return $lines ? "Medios de pago\n".implode("\n", array_map(fn (string $line): string => "• {$line}", $lines)) : null;
     }
 

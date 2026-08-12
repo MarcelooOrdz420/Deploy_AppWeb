@@ -21,4 +21,20 @@ class StorePagesTest extends TestCase
                 ->assertHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
         }
     }
+
+    public function test_checkout_uses_payment_dropdown_with_izipay_and_cash_on_delivery(): void
+    {
+        $this->get('/carrito')
+            ->assertOk()
+            ->assertSee('name="payment_method"', false)
+            ->assertSee('value="izipay"', false)
+            ->assertSee('value="cod"', false);
+    }
+
+    public function test_admin_panel_does_not_render_manual_payment_validation(): void
+    {
+        $this->get('/admin/panel')
+            ->assertOk()
+            ->assertDontSee('Validar pago digital');
+    }
 }

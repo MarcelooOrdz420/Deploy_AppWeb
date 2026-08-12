@@ -222,7 +222,7 @@ class OrderController extends Controller
             'delivery_type' => ['required', Rule::in(['pickup', 'delivery'])],
             'scheduled_for' => ['nullable', 'date'],
             'delivery_window_label' => ['nullable', 'string', 'max:120'],
-            'payment_method' => ['required', Rule::in(['izipay'])],
+            'payment_method' => ['required', Rule::in(['izipay', 'cod'])],
             'payment_reference' => ['nullable', 'string', 'max:120'],
             'billing_document_type' => ['nullable', Rule::in(['dni', 'ruc'])],
             'billing_document_number' => ['nullable', 'string', 'max:20'],
@@ -318,7 +318,7 @@ class OrderController extends Controller
                 'status' => Order::STATUS_PENDING,
                 'total_amount' => 0,
                 'payment_method' => $data['payment_method'],
-                'payment_gateway' => 'izipay',
+                'payment_gateway' => $data['payment_method'] === 'izipay' ? 'izipay' : null,
                 'payment_reference' => $data['payment_reference'] ?? null,
                 'payment_proof_path' => null,
                 'payment_status' => 'pending',
@@ -459,6 +459,17 @@ class OrderController extends Controller
                 'status' => $data['status'],
             ]);
 
+            if ($data['status'] === Order::STATUS_DELIVERED
+                && (string) $order->payment_method === 'cod'
+                && (string) $order->payment_status !== 'verified') {
+                $order->update([
+                    'payment_status' => 'verified',
+                    'payment_reference' => $order->payment_reference ?: 'COD-'.$order->tracking_code,
+                    'payment_reported_at' => $order->payment_reported_at ?: now(),
+                    'payment_verified_at' => now(),
+                ]);
+            }
+
             $this->syncInventoryForStatusTransition(
                 order: $order->fresh(['items']),
                 previousStatus: $previousStatus,
@@ -477,43 +488,9 @@ class OrderController extends Controller
         });
 
         $this->sendOrderStatusPush($order);
-
-        return response()->json($order);
-    }
-
-    public function updatePaymentStatus(Request $request, Order $order): JsonResponse
-    {
-        $data = $request->validate([
-            'payment_status' => ['required', Rule::in(['pending', 'reported', 'verified', 'rejected'])],
-            'payment_reference' => ['nullable', 'string', 'max:120'],
-            'note' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        if ($this->isDigitalPaymentMethod((string) $order->payment_method)) {
-            if (! $order->payment_proof_path && in_array($data['payment_status'], ['reported', 'verified'], true)) {
-                return response()->json([
-                    'message' => 'No puedes marcar este pago como reportado o verificado sin comprobante subido.',
-                ], 422);
-            }
-        }
-
-        $order->update([
-            'payment_status' => $data['payment_status'],
-            'payment_reference' => $data['payment_reference'] ?? $order->payment_reference,
-            'payment_verified_at' => $data['payment_status'] === 'verified' ? now() : null,
-        ]);
-
-        OrderStatusHistory::create([
-            'order_id' => $order->id,
-            'status' => $order->status,
-            'note' => $data['note'] ?? ('Pago actualizado: '.$data['payment_status']),
-            'changed_by' => $request->user()->id,
-        ]);
-
-        $this->sendOrderStatusPush($order, paymentStatus: $data['payment_status']);
         $this->trySendElectronicReceipt($order->fresh(['items']));
 
-        return response()->json($order->fresh(['items', 'statusHistory']));
+        return response()->json($order);
     }
 
     private function sendOrderStatusPush(Order $order, ?string $paymentStatus = null): void

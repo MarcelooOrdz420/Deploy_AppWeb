@@ -24,5 +24,10 @@ return [
             'message' => env('COMPANY_IZIPAY_MESSAGE', 'Paga con tarjeta desde el checkout seguro de Izipay.'),
             'enabled' => (bool) env('IZIPAY_ENABLED', true),
         ],
+        'cod' => [
+            'label' => 'Pago contraentrega',
+            'message' => 'Paga al recibir tu pedido en el lugar de entrega acordado.',
+            'enabled' => true,
+        ],
     ],
 ];

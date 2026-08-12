@@ -13,7 +13,7 @@ import '../services/session_service.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
 
-enum PayMethod { izipay }
+enum PayMethod { izipay, cod }
 enum DeliveryType { delivery, pickup }
 enum ReceiptType { none, boleta, factura }
 
@@ -143,6 +143,8 @@ class _PaymentPageState extends State<PaymentPage> {
     switch (_method) {
       case PayMethod.izipay:
         return 'izipay';
+      case PayMethod.cod:
+        return 'cod';
     }
   }
 
@@ -677,7 +679,21 @@ class _PaymentPageState extends State<PaymentPage> {
             title: 'Metodo de pago',
             child: Column(
               children: [
-                _payTile('Izipay', PayMethod.izipay, Icons.credit_card),
+                DropdownButtonFormField<PayMethod>(
+                  value: _method,
+                  items: const [
+                    DropdownMenuItem(
+                      value: PayMethod.izipay,
+                      child: Text('Pago seguro con Izipay'),
+                    ),
+                    DropdownMenuItem(
+                      value: PayMethod.cod,
+                      child: Text('Pago contraentrega'),
+                    ),
+                  ],
+                  decoration: _decor('Selecciona como pagaras'),
+                  onChanged: (value) => setState(() => _method = value ?? PayMethod.izipay),
+                ),
                 const SizedBox(height: 10),
                 _paymentPanel(),
                 if (_needsOperationCode) ...[
@@ -938,23 +954,15 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  Widget _payTile(String title, PayMethod method, IconData icon) {
-    return RadioListTile<PayMethod>(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      value: method,
-      groupValue: _method,
-      onChanged: (value) => setState(() => _method = value!),
-      title: Text(
-        title,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontWeight: FontWeight.w700),
-      ),
-      secondary: Icon(icon, color: Colors.orange),
-    );
-  }
-
   Widget _paymentPanel() {
+    if (_method == PayMethod.cod) {
+      return _paymentInfoCard(
+        title: 'Pago contraentrega',
+        subtitle: 'Paga al recibir tu pedido en el lugar de entrega acordado.',
+        child: const Icon(Icons.payments_outlined, size: 44, color: Colors.orange),
+      );
+    }
+
     return _paymentInfoCard(
       title: _settings.izipay.label,
       subtitle: _settings.izipay.message.isEmpty

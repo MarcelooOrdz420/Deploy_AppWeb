@@ -155,6 +155,12 @@ class ChatbotService
             $lines[] = "- {$label}: {$message}";
         }
 
+        if (($payments['cod']['enabled'] ?? false)) {
+            $label = trim((string) ($payments['cod']['label'] ?? 'Pago contraentrega'));
+            $message = trim((string) ($payments['cod']['message'] ?? 'Paga al recibir tu pedido en el lugar acordado.'));
+            $lines[] = "- {$label}: {$message}";
+        }
+
         return $lines ? implode("\n", $lines) : null;
     }
 
