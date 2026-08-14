@@ -24,6 +24,7 @@ class AdminNotificationController extends Controller
     {
         $data = $request->validate([
             'target' => ['nullable', 'string', 'in:mobile,web,all'],
+            'send_realtime' => ['nullable', 'boolean'],
             'send_push' => ['nullable', 'boolean'],
             'send_email' => ['nullable', 'boolean'],
             'email_subject' => ['nullable', 'string', 'max:140'],
@@ -98,8 +99,10 @@ class AdminNotificationController extends Controller
             : null;
         $data['cta_url'] = $broadcastPayload['cta_url'];
 
-        $broadcast = $this->broadcastOffer($broadcastPayload);
-
+        $sendRealtime = (bool) ($data['send_realtime'] ?? true);
+        $broadcast = $sendRealtime
+            ? $this->broadcastOffer($broadcastPayload)
+            : ['ok' => true, 'skipped' => true];
         $push = null;
         $email = null;
         $sendPush = (bool) ($data['send_push'] ?? false);
@@ -154,6 +157,7 @@ class AdminNotificationController extends Controller
             'email' => $email,
             'payload' => $broadcastPayload + [
                 'send_push' => $sendPush,
+                'send_realtime' => $sendRealtime,
                 'send_email' => $sendEmail,
                 'email_subject' => $data['email_subject'] ?? null,
             ],

@@ -1023,34 +1023,24 @@
 
         <section id="sec-offers" class="panel">
             <h2>Promociones</h2>
-            <p class="section-subtitle">La promo se emite en tiempo real a la web y, si Firebase esta configurado, tambien puede salir como push. La imagen se sube desde aqui y se guarda en el servidor.</p>
+            <p class="section-subtitle">Elige de forma sencilla donde quieres avisar la promocion. La imagen se sube desde aqui y se guarda en el servidor.</p>
             <form id="offerForm">
-                <div class="row">
-                    <div>
-                        <label>Destino</label>
-                        <select name="target" required>
-                            <option value="all" selected>Web + App movil</option>
-                            <option value="web">Solo Web</option>
-                            <option value="mobile">Solo App movil</option>
-                        </select>
-                        <div class="helper-text">Web + App movil envia la promocion a ambos canales.</div>
-                    </div>
-                    <div>
-                        <label>Boton (opcional)</label>
-                        <input name="cta_label" placeholder="Ej: Ver promo">
-                    </div>
+                <input type="hidden" name="target" value="mobile">
+                <input type="hidden" name="cta_label" value="">
+                <div class="toggle-row">
+                    <label class="toggle-main">
+                        <input type="checkbox" name="send_realtime" checked> Enviar a app abierta
+                    </label>
                 </div>
                 <div class="toggle-row">
                     <label class="toggle-main">
-                        <input type="checkbox" name="send_push" checked> Enviar tambien Push (FCM) para app cerrada
+                        <input type="checkbox" name="send_push" checked> Enviar a app cerrada
                     </label>
-                    <span class="toggle-status-text">Requiere configurar Firebase.</span>
                 </div>
                 <div class="toggle-row">
                     <label class="toggle-main">
-                        <input type="checkbox" name="send_email"> Enviar tambien por correo a clientes activos
+                        <input type="checkbox" name="send_email"> Enviar por correo
                     </label>
-                    <span class="toggle-status-text">Usa Resend si esta configurado.</span>
                 </div>
                 <div class="row">
                     <div>
@@ -1568,14 +1558,16 @@ async function sendOffer(formData, targetValue) {
         return;
     }
 
-    const webStatus = data?.broadcast?.ok === true
-        ? ` Web: OK`
-        : (data?.broadcast?.message ? ` Web: ${data.broadcast.message}` : '');
+    const openAppStatus = offerForm.send_realtime?.checked
+        ? (data?.broadcast?.ok === true
+            ? ` App abierta: OK`
+            : ` App abierta: ${data?.broadcast?.message || 'ERROR'}`)
+        : '';
     const pushStatus = data?.push?.ok === true
-        ? (data.push.topic ? ` Push: OK (${data.push.topic})` : ` Push: OK`)
-        : (data?.push?.ok === false ? ` Push: ${data.push.message || 'ERROR'}` : '');
-    const emailStatus = data?.email ? ` Email: ${data.email.sent || 0}` : '';
-    offerMsg.textContent = `Promo enviada.${webStatus}${pushStatus}${emailStatus}`;
+        ? ` App cerrada: OK`
+        : (data?.push?.ok === false ? ` App cerrada: ${data.push.message || 'ERROR'}` : '');
+    const emailStatus = data?.email ? ` Correos enviados: ${data.email.sent || 0}` : '';
+    offerMsg.textContent = `Promo enviada.${openAppStatus}${pushStatus}${emailStatus}`;
     offerMsg.classList.add('success');
     offerForm.reset();
     setUploadPreview(offerImagePreview, '');
@@ -2729,6 +2721,7 @@ if (offerForm) {
         event.preventDefault();
         const formData = new FormData();
         formData.append('target', offerForm.target.value);
+        formData.append('send_realtime', offerForm.send_realtime?.checked ? '1' : '0');
         formData.append('send_push', offerForm.send_push?.checked ? '1' : '0');
         formData.append('send_email', offerForm.send_email?.checked ? '1' : '0');
         formData.append('email_subject', offerForm.email_subject.value.trim() || '');

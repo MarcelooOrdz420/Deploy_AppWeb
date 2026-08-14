@@ -320,6 +320,8 @@
 @section('scripts')
 <script>
 const cartListEl=document.getElementById('cartList'),cartTotalEl=document.getElementById('cartTotal'),orderForm=document.getElementById('orderForm'),orderMsg=document.getElementById('orderMsg'),payOptions=document.getElementById('payOptions'),saladWrap=document.getElementById('saladWrap'),lastOrderBox=document.getElementById('lastOrderBox'),processingOverlay=document.getElementById('processingOverlay'),processingTitle=document.getElementById('processingTitle'),processingText=document.getElementById('processingText'),geoBtn=document.getElementById('geoBtn'),geoMsg=document.getElementById('geoMsg'),paymentProofWrap=document.getElementById('paymentProofWrap'),paymentProofFile=document.getElementById('paymentProofFile'),paymentProofPreview=document.getElementById('paymentProofPreview'),billingReceiptType=document.getElementById('billingReceiptType'),billingDocumentType=document.getElementById('billingDocumentType'),billingMetadata=document.getElementById('billingMetadata'),billingDocumentWrap=document.getElementById('billingDocumentWrap'),billingDocumentLabel=document.getElementById('billingDocumentLabel'),billingDocumentNumber=document.getElementById('billingDocumentNumber'),lookupDocumentBtn=document.getElementById('lookupDocumentBtn'),billingLookupBox=document.getElementById('billingLookupBox'),billingFieldsWrap=document.getElementById('billingFieldsWrap'),billingName=document.getElementById('billingName'),billingEmail=document.getElementById('billingEmail'),billingNameLabel=document.getElementById('billingNameLabel'),billingEmailWrap=document.getElementById('billingEmailWrap'),deliveryType=document.getElementById('deliveryType'),deliveryFieldsWrap=document.getElementById('deliveryFieldsWrap'),heroStatus=document.getElementById('heroStatus');let lastLookupValue='';
+let orderSubmitting=false,orderIdempotencyKey='';
+function newOrderIdempotencyKey(){return globalThis.crypto?.randomUUID?.()||`web-${Date.now()}-${Math.random().toString(16).slice(2)}`}
 function getToken(){return localStorage.getItem('ed_token')}function isLoggedIn(){return Boolean(getToken())}function getCart(){return JSON.parse(localStorage.getItem('ed_cart')||'[]')}function setCart(cart){localStorage.setItem('ed_cart',JSON.stringify(cart));window.dispatchEvent(new Event('storage'))}function money(n){return Number(n).toFixed(2)}function digits(v){return String(v||'').replace(/\D/g,'')}function optionalTrim(field){return field?field.value.trim()||null:null}function needsDigitalProof(method){return false}
 const PURCHASE_LIMITS={exact:{'pollo entero a la brasa':1,'mega combo familiar':1,'1/2 pollo a la brasa':2,'1/4 pollo a la brasa':4,'mostrito tradicional':4,'chicha morada 1l':2,'limonada frozen':2},sodaNames:['coca-cola personal 500ml','inca kola personal 500ml','sprite personal 500ml'],sodaMax:3};
 function setProcessingState(visible,title='Espera, estamos procesando tu pedido',text='Validando productos, datos de entrega y forma de pago.'){processingOverlay.style.display=visible?'flex':'none';processingTitle.textContent=title;processingText.textContent=text}
@@ -349,6 +351,7 @@ orderForm.elements.payment_method.addEventListener('change',updatePaymentInfo);o
 geoBtn.addEventListener('click',()=>{if(!navigator.geolocation){geoMsg.style.display='block';geoMsg.textContent='Tu navegador no soporta geolocalizacion.';return}geoMsg.style.display='block';geoMsg.textContent='Detectando tu ubicacion exacta...';navigator.geolocation.getCurrentPosition(async position=>{const latitude=position.coords.latitude.toFixed(7),longitude=position.coords.longitude.toFixed(7);if(orderForm.latitude)orderForm.latitude.value=latitude;if(orderForm.longitude)orderForm.longitude.value=longitude;try{const data=await reverseGeocode(latitude,longitude),address=data.address||{},road=address.road||address.pedestrian||address.residential||address.cycleway||'',avenue=address.avenue||'',houseNumber=address.house_number||'',suburb=address.suburb||address.neighbourhood||address.city_district||'',city=address.city||address.town||address.village||address.county||'',state=address.state||'',amenity=address.amenity||address.shop||address.tourism||'',exactPlace=[road||avenue,houseNumber].filter(Boolean).join(' ').trim()||data.name||data.display_name||'Ubicacion detectada',nearbyReference=[amenity?`Cerca de ${amenity}`:'',suburb?`Zona ${suburb}`:'',city?`Distrito/Ciudad ${city}`:'',state&&state!==city?state:''].filter(Boolean).join(' | ');orderForm.address.value=exactPlace;orderForm.reference.value=nearbyReference||'Ubicacion obtenida desde GPS';geoMsg.textContent=`Ubicacion detectada: ${exactPlace}${nearbyReference?` | ${nearbyReference}`:''}`}catch(error){orderForm.address.value='Ubicacion detectada desde GPS';orderForm.reference.value='Completa la calle, avenida o referencia cercana manualmente';geoMsg.textContent=error?.name==='AbortError'?'La traduccion a nombre de calles tardo demasiado. Completa la referencia manualmente.':'Se detecto tu ubicacion, pero no se pudo traducir a nombres de calles. Completa la referencia manualmente.'}},()=>{geoMsg.style.display='block';geoMsg.textContent='No se pudo obtener tu ubicacion.'},{enableHighAccuracy:true,timeout:12000,maximumAge:0})});
 orderForm.addEventListener('submit', async e => {
     e.preventDefault();
+    if (orderSubmitting) return;
     if (!isLoggedIn()) {
         window.location.href = '/login';
         return;
@@ -374,6 +377,7 @@ orderForm.addEventListener('submit', async e => {
     }
 
     const payload = {
+        idempotency_key: orderIdempotencyKey || (orderIdempotencyKey = newOrderIdempotencyKey()),
         customer_name: orderForm.customer_name.value.trim(),
         customer_phone: orderForm.customer_phone.value.trim(),
         customer_email: (typeof window.parseUser === 'function' ? window.parseUser()?.email : null) || null,
@@ -396,6 +400,7 @@ orderForm.addEventListener('submit', async e => {
         items: cart.map(i => ({ product_id: i.id, quantity: i.qty, promotion_id: i.promo_id || null })),
     };
 
+    orderSubmitting = true;
     setProcessingState(true);
     orderMsg.textContent = 'Procesando pedido...';
 
@@ -418,6 +423,7 @@ orderForm.addEventListener('submit', async e => {
         }
 
         if (!res.ok) {
+            orderSubmitting = false;
             setProcessingState(false);
             orderMsg.textContent = data.message || (raw && raw.includes('Server Error')
                 ? 'El servidor tuvo un error al registrar el pedido.'
@@ -425,7 +431,14 @@ orderForm.addEventListener('submit', async e => {
             return;
         }
 
-        if (paymentMethod() === 'izipay') {
+        const storedPaymentMethod = String(data.payment_method || payload.payment_method);
+        localStorage.setItem('ed_last_tracking', data.tracking_code);
+        const recent = JSON.parse(localStorage.getItem('ed_recent_trackings') || '[]');
+        localStorage.setItem('ed_recent_trackings', JSON.stringify([data.tracking_code, ...recent.filter(v => v !== data.tracking_code)].slice(0, 10)));
+        setCart([]);
+        renderCart();
+
+        if (storedPaymentMethod === 'izipay') {
             setProcessingState(true, 'Pedido creado, redirigiendo a Izipay', 'Tu pedido ya esta registrado. Ahora completaremos el pago seguro.');
             try {
                 await openIzipayCheckout(data.id);
@@ -437,13 +450,8 @@ orderForm.addEventListener('submit', async e => {
             }
         }
 
-        localStorage.setItem('ed_last_tracking', data.tracking_code);
-        const recent = JSON.parse(localStorage.getItem('ed_recent_trackings') || '[]');
-        localStorage.setItem('ed_recent_trackings', JSON.stringify([data.tracking_code, ...recent.filter(v => v !== data.tracking_code)].slice(0, 10)));
         setProcessingState(true, 'Pedido enviado a la empresa', `Tu pedido (${data.tracking_code}) fue enviado al sistema. Te avisaremos cuando cambie de estado.`);
         orderMsg.textContent = `Pedido creado. Codigo: ${data.tracking_code}. Estado: ${data.status || 'pending'}`;
-        setCart([]);
-        renderCart();
         orderForm.reset();
         if(paymentProofPreview)paymentProofPreview.textContent = 'Aun no seleccionaste archivo.';
         updatePaymentInfo();
@@ -455,6 +463,7 @@ orderForm.addEventListener('submit', async e => {
             window.location.href = '/mis-pedidos';
         }, 1600);
     } catch {
+        orderSubmitting = false;
         setProcessingState(false);
         orderMsg.textContent = 'No se pudo conectar al servidor.';
     }

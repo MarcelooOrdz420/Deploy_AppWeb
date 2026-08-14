@@ -53,6 +53,8 @@ class _PaymentPageState extends State<PaymentPage> {
   String _lastLookupValue = '';
   Map<String, dynamic>? _billingMetadata;
   bool _submitting = false;
+  late final String _idempotencyKey =
+      'mobile-${DateTime.now().microsecondsSinceEpoch}-${identityHashCode(this)}';
   bool _lookingUpDocument = false;
   List<SavedAddress> _savedAddresses = const [];
   String? _selectedAddressValue;
@@ -358,6 +360,7 @@ class _PaymentPageState extends State<PaymentPage> {
       final response = await _orderApiService.createOrder(
         token: token,
         payload: {
+          'idempotency_key': _idempotencyKey,
           'customer_name': customerName,
           'customer_phone': customerPhone,
           'customer_email': _customerEmailCtrl.text.trim().isEmpty ? null : _customerEmailCtrl.text.trim(),
@@ -397,8 +400,14 @@ class _PaymentPageState extends State<PaymentPage> {
               (_deliveryType == DeliveryType.delivery ? cart.deliveryFee() : 0.0));
       final itemsText = cart.items.map((item) => item.producto.name).join(', ');
       final itemCount = cart.totalItemsCount;
+      final storedPaymentMethod =
+          (response['payment_method'] ?? _paymentMethodValue()).toString();
 
-      if (_method == PayMethod.izipay && orderId > 0) {
+      // El pedido ya existe en el servidor. Vaciar ahora evita que un reintento
+      // de pago o una segunda pulsacion vuelva a crear el mismo pedido.
+      cart.clear();
+
+      if (storedPaymentMethod == 'izipay' && orderId > 0) {
         final checkout = await _orderApiService.izipayCheckout(
           token: token,
           orderId: orderId,
@@ -435,11 +444,21 @@ class _PaymentPageState extends State<PaymentPage> {
           trackingCode: trackingCode,
           checkoutUrl: checkoutUrl,
         );
-        if (!verified) return;
+        if (!verified) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'El pedido $trackingCode ya fue creado. Puedes revisar el pago mas tarde en Mis pedidos.',
+              ),
+            ),
+          );
+          context.go('/app');
+          return;
+        }
       }
 
       if (!mounted) return;
-      cart.clear();
       context.push(
         '/confirmacion',
         extra: {
@@ -752,7 +771,11 @@ class _PaymentPageState extends State<PaymentPage> {
                       ),
                     )
                   : const Icon(Icons.lock_outline),
-              label: Text(_submitting ? 'Enviando' : 'Pagar'),
+              label: Text(
+                _submitting
+                    ? 'Enviando'
+                    : (_method == PayMethod.cod ? 'Confirmar pedido' : 'Pagar'),
+              ),
             ),
           ],
         ),

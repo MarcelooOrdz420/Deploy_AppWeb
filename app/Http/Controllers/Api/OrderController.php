@@ -218,6 +218,7 @@ class OrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
+            'idempotency_key' => ['nullable', 'string', 'max:80'],
             'customer_name' => ['required', 'string', 'max:120'],
             'customer_phone' => ['required', 'string', 'max:30'],
             'customer_email' => ['nullable', 'email', 'max:120'],
@@ -244,6 +245,52 @@ class OrderController extends Controller
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.promotion_id' => ['nullable', 'integer', 'exists:marketing_offers,id'],
         ]);
+
+        $idempotencyKey = trim((string) ($data['idempotency_key'] ?? ''));
+        if ($idempotencyKey !== '' && Schema::hasColumn('orders', 'idempotency_key')) {
+            $existingOrder = Order::query()
+                ->with(['items', 'statusHistory'])
+                ->where('user_id', $request->user()->id)
+                ->where('idempotency_key', $idempotencyKey)
+                ->first();
+
+            if ($existingOrder) {
+                return response()->json($existingOrder->setAttribute('idempotent_replay', true));
+            }
+        }
+
+        $fingerprintItems = collect($data['items'])
+            ->map(fn (array $item): array => [
+                'product_id' => (int) $item['product_id'],
+                'quantity' => (int) $item['quantity'],
+                'promotion_id' => isset($item['promotion_id']) ? (int) $item['promotion_id'] : null,
+            ])
+            ->sortBy(fn (array $item): string => $item['product_id'].'-'.($item['promotion_id'] ?? 0))
+            ->values()
+            ->all();
+        $checkoutFingerprint = hash('sha256', json_encode([
+            'customer_name' => trim((string) $data['customer_name']),
+            'customer_phone' => trim((string) $data['customer_phone']),
+            'delivery_type' => $data['delivery_type'],
+            'scheduled_for' => $data['scheduled_for'] ?? null,
+            'payment_method' => $data['payment_method'],
+            'address' => trim((string) ($data['address'] ?? '')),
+            'items' => $fingerprintItems,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        if (Schema::hasColumn('orders', 'checkout_fingerprint')) {
+            $recentDuplicate = Order::query()
+                ->with(['items', 'statusHistory'])
+                ->where('user_id', $request->user()->id)
+                ->where('checkout_fingerprint', $checkoutFingerprint)
+                ->where('created_at', '>=', now()->subSeconds(90))
+                ->latest('id')
+                ->first();
+
+            if ($recentDuplicate) {
+                return response()->json($recentDuplicate->setAttribute('idempotent_replay', true));
+            }
+        }
 
         if ($data['delivery_type'] === 'delivery' && empty($data['address'])) {
             return response()->json(['message' => 'Direccion requerida para delivery.'], 422);
@@ -307,7 +354,7 @@ class OrderController extends Controller
         $ordersHasScheduledFor = Schema::hasColumn('orders', 'scheduled_for');
         $ordersHasDeliveryWindowLabel = Schema::hasColumn('orders', 'delivery_window_label');
 
-        $order = DB::transaction(function () use ($data, $request, $scheduledFor, $ordersHasScheduledFor, $ordersHasDeliveryWindowLabel): Order {
+        $order = DB::transaction(function () use ($data, $request, $scheduledFor, $ordersHasScheduledFor, $ordersHasDeliveryWindowLabel, $checkoutFingerprint): Order {
             $trackingCode = strtoupper('ED-'.substr(uniqid(), -8));
 
             $orderData = [
@@ -340,6 +387,13 @@ class OrderController extends Controller
                 'latitude' => $data['latitude'] ?? null,
                 'longitude' => $data['longitude'] ?? null,
             ];
+
+            if (Schema::hasColumn('orders', 'idempotency_key')) {
+                $orderData['idempotency_key'] = $data['idempotency_key'] ?? null;
+            }
+            if (Schema::hasColumn('orders', 'checkout_fingerprint')) {
+                $orderData['checkout_fingerprint'] = $checkoutFingerprint;
+            }
 
             if ($ordersHasScheduledFor) {
                 $orderData['scheduled_for'] = $scheduledFor;

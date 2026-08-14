@@ -18,6 +18,8 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'idempotency_key',
+        'checkout_fingerprint',
         'tracking_code',
         'customer_name',
         'customer_phone',
