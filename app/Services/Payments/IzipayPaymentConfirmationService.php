@@ -4,6 +4,7 @@ namespace App\Services\Payments;
 
 use App\Models\Order;
 use App\Models\PaymentTransaction;
+use App\Models\OrderStatusHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -145,9 +146,22 @@ class IzipayPaymentConfirmationService
                 'payment_gateway' => $order->payment_gateway ?: 'izipay',
                 'payment_reference' => $transactionId,
                 'payment_status' => $effectiveStatus,
+                'status' => $effectiveStatus === 'verified' && $order->status === Order::STATUS_PENDING
+                    ? Order::STATUS_CONFIRMED
+                    : $order->status,
                 'payment_reported_at' => $order->payment_reported_at ?: now(),
                 'payment_verified_at' => $effectiveStatus === 'verified' ? ($order->payment_verified_at ?: now()) : $order->payment_verified_at,
             ])->save();
+            if (! $wasVerified && $effectiveStatus === 'verified') {
+                OrderStatusHistory::create([
+                    'order_id' => $order->id,
+                    'status' => Order::STATUS_CONFIRMED,
+                    'note' => $order->payment_method === 'yape'
+                        ? 'Pago con Yape confirmado por Izipay'
+                        : 'Pago con tarjeta confirmado por Izipay',
+                    'changed_by' => null,
+                ]);
+            }
             Log::info('Izipay payment confirmation processed.', [
                 'order_id' => $order->id, 'status' => $effectiveStatus, 'duplicate' => false,
             ]);
@@ -194,7 +208,8 @@ class IzipayPaymentConfirmationService
 
     private function usesIzipay(Order $order): bool
     {
-        return $order->payment_gateway === 'izipay' || $order->payment_method === 'izipay';
+        return $order->payment_gateway === 'izipay'
+            || in_array($order->payment_method, ['izipay', 'yape'], true);
     }
 
     private function decimalToCents(string $amount): int

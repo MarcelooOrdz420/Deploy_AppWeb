@@ -191,7 +191,7 @@ function saveLastStatuses(map) {
 function getToken() { return localStorage.getItem('ed_token'); }
 function statusEs(code) { return STATUS_ES[code] || code || 'n/a'; }
 function paymentStatusEs(code) { return PAYMENT_STATUS_ES[code] || code || 'n/a'; }
-function paymentMethodEs(code) { return String(code || '').toLowerCase() === 'izipay' ? 'Pago con tarjeta' : String(code || '').toLowerCase() === 'cod' ? 'Pago contraentrega' : code || 'n/a'; }
+function paymentMethodEs(code) { return String(code || '').toLowerCase() === 'izipay' ? 'Pago con tarjeta' : String(code || '').toLowerCase() === 'yape' ? 'Yape' : String(code || '').toLowerCase() === 'cod' ? 'Pago contraentrega' : code || 'n/a'; }
 function needsDigitalProof(method) { return false; }
 async function loadPreferences() {
     const token = getToken();
@@ -303,7 +303,7 @@ async function fetchMyOrders() {
                 <div><strong>Pago:</strong> ${paymentMethodEs(order.payment_method)} | <strong>Estado pago:</strong> ${paymentStatusEs(order.payment_status)}</div>
                 <div><strong>Operacion:</strong> ${order.payment_reference || 'sin codigo'}</div>
                 <div class="order-products"><strong>Productos comprados</strong>${Array.isArray(order.items)&&order.items.length?order.items.map(item=>`<div>${item.quantity} × ${item.product_name} · S/ ${Number(item.line_total).toFixed(2)}</div>`).join(''):'<div>Detalle no disponible</div>'}</div>
-                ${String(order.payment_method || '').toLowerCase() === 'izipay' ? paymentMessage(String(order.payment_status || 'pending').toLowerCase()) : ''}
+                ${['izipay','yape'].includes(String(order.payment_method || '').toLowerCase()) ? paymentMessage(String(order.payment_status || 'pending').toLowerCase()) : ''}
                 ${needsDigitalProof(order.payment_method) ? `
                 <div class="proof-box">
                     <div><strong>Voucher digital</strong></div>
@@ -316,7 +316,7 @@ async function fetchMyOrders() {
                     </div>
                 </div>` : ''}
                 <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-                    ${String(order.payment_method || '').toLowerCase() === 'izipay'
+                    ${['izipay','yape'].includes(String(order.payment_method || '').toLowerCase())
                         && ['pending', 'rejected'].includes(String(order.payment_status || '').toLowerCase())
                         && String(order.status || '').toLowerCase() !== 'cancelled'
                         ? `<button data-izipay-checkout="${order.id}" class="btn-soft">Pagar ahora</button>`

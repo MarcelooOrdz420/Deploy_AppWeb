@@ -38,6 +38,10 @@ class IzipayService
         if ($amountCents <= 0 || trim((string) $order->tracking_code) === '') {
             throw new RuntimeException('El total almacenado del pedido no es valido.');
         }
+        if ($order->payment_method === 'yape'
+            && ($amountCents / 100) > (float) config('company.payments.yape.max_amount', 2000)) {
+            throw new RuntimeException('Yape permite pagos de hasta S/ '.number_format((float) config('company.payments.yape.max_amount', 2000), 2).'.');
+        }
 
         $currency = strtoupper((string) config('company.currency', 'PEN'));
         if ($currency !== 'PEN') {
@@ -61,7 +65,11 @@ class IzipayService
                     'phoneNumber' => $order->customer_phone,
                     'address' => $order->billing_address ?: $order->address]),
             ]),
-            'metadata' => ['order_id' => (string) $order->id, 'tracking_code' => $reference],
+            'metadata' => [
+                'order_id' => (string) $order->id,
+                'tracking_code' => $reference,
+                'selected_payment_method' => (string) $order->payment_method,
+            ],
         ];
 
         Log::info('Izipay payment creation started.', ['order_id' => $order->id,
@@ -237,7 +245,8 @@ class IzipayService
 
     private function usesIzipay(Order $order): bool
     {
-        return $order->payment_gateway === 'izipay' || $order->payment_method === 'izipay';
+        return $order->payment_gateway === 'izipay'
+            || in_array($order->payment_method, ['izipay', 'yape'], true);
     }
 
     private function decimalToCents(string $amount): int

@@ -58,7 +58,8 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/orders', [OrderController::class, 'store']);
         Route::get('/orders/my', [OrderController::class, 'myOrders']);
         Route::get('/orders/{order}', [OrderController::class, 'show']);
-        Route::get('/orders/{order}/payments/izipay-checkout', [PaymentController::class, 'izipayCheckout']);
+        Route::get('/orders/{order}/payments/izipay-checkout', [PaymentController::class, 'izipayCheckout'])
+            ->middleware('throttle:10,1');
         Route::post('/orders/{order}/payment-proof', [OrderController::class, 'uploadPaymentProof']);
         Route::get('/orders/{order}/receipt-view', [OrderController::class, 'receiptView']);
         Route::get('/orders/{order}/receipt', [OrderController::class, 'downloadReceipt']);

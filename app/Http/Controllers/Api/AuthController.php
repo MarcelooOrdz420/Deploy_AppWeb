@@ -243,6 +243,7 @@ class AuthController extends Controller
                 'cart', 'carrito', 'cart_items', 'cart_total', 'checkout',
                 'checkout_data', 'customer_data', 'delivery_data', 'address',
                 'payment_method', 'payment_draft', 'order_draft', 'izipay_data',
+                'yape_payment_attempt', 'yape_payment_reference', 'yape_payment_status',
                 'pending_order',
             ]);
             $request->session()->invalidate();

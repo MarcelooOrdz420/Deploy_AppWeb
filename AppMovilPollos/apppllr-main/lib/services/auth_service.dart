@@ -18,7 +18,10 @@ class RegisterResponse {
 }
 
 class AuthService {
-  Future<void> _persistAuthPayload(Map<String, dynamic> data, {required String fallbackEmail}) async {
+  Future<void> _persistAuthPayload(
+    Map<String, dynamic> data, {
+    required String fallbackEmail,
+  }) async {
     final token = data['token']?.toString();
 
     if (token == null || token.isEmpty) {
@@ -28,31 +31,38 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
 
-    final user = (data['user'] is Map) ? (data['user'] as Map).cast<String, dynamic>() : null;
+    final user = (data['user'] is Map)
+        ? (data['user'] as Map).cast<String, dynamic>()
+        : null;
     await prefs.setInt('user_id', (user?['id'] as num?)?.toInt() ?? 0);
     await prefs.setString('user_name', user?['name']?.toString() ?? '');
-    await prefs.setString('user_email', user?['email']?.toString() ?? fallbackEmail);
+    await prefs.setString(
+      'user_email',
+      user?['email']?.toString() ?? fallbackEmail,
+    );
     await prefs.setString('user_phone', user?['phone']?.toString() ?? '');
     await prefs.setString('user_role', user?['role']?.toString() ?? 'customer');
 
     await PushNotificationsService.instance.syncOrderTopics();
   }
 
-  String _messageFromDio(DioException e, {String fallback = 'Error de servidor'}) {
+  String _messageFromDio(
+    DioException e, {
+    String fallback = 'Error de servidor',
+  }) {
     final data = e.response?.data;
-    if (data is Map && data['message'] != null) return data['message'].toString();
+    if (data is Map && data['message'] != null)
+      return data['message'].toString();
     if (data is Map && data['errors'] is Map) {
       final errors = (data['errors'] as Map).values.toList();
       final firstError = errors.isNotEmpty ? errors.first : null;
-      if (firstError is List && firstError.isNotEmpty) return firstError.first.toString();
+      if (firstError is List && firstError.isNotEmpty)
+        return firstError.first.toString();
     }
     return fallback;
   }
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     try {
       final res = await ApiClient.post(
         '/auth/login',
@@ -102,38 +112,28 @@ class AuthService {
     }
   }
 
-  Future<void> verifyOtp({
-    required String email,
-    required String code,
-  }) async {
+  Future<void> verifyOtp({required String email, required String code}) async {
     try {
       final res = await ApiClient.post(
         '/auth/verify-otp',
-        data: {
-          'email': email,
-          'code': code,
-        },
+        data: {'email': email, 'code': code},
       );
 
       final data = (res.data as Map).cast<String, dynamic>();
       await _persistAuthPayload(data, fallbackEmail: email);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
-      final msg = _messageFromDio(e, fallback: 'No se pudo verificar el codigo');
+      final msg = _messageFromDio(
+        e,
+        fallback: 'No se pudo verificar el codigo',
+      );
       throw Exception(status != null ? '($status) $msg' : msg);
     }
   }
 
-  Future<void> resendOtp({
-    required String email,
-  }) async {
+  Future<void> resendOtp({required String email}) async {
     try {
-      await ApiClient.post(
-        '/auth/resend-otp',
-        data: {
-          'email': email,
-        },
-      );
+      await ApiClient.post('/auth/resend-otp', data: {'email': email});
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final msg = _messageFromDio(e, fallback: 'No se pudo reenviar el codigo');
@@ -141,19 +141,15 @@ class AuthService {
     }
   }
 
-  Future<void> forgotPassword({
-    required String email,
-  }) async {
+  Future<void> forgotPassword({required String email}) async {
     try {
-      await ApiClient.post(
-        '/auth/forgot-password',
-        data: {
-          'email': email,
-        },
-      );
+      await ApiClient.post('/auth/forgot-password', data: {'email': email});
     } on DioException catch (e) {
       final status = e.response?.statusCode;
-      final msg = _messageFromDio(e, fallback: 'No se pudo enviar el correo de recuperacion');
+      final msg = _messageFromDio(
+        e,
+        fallback: 'No se pudo enviar el correo de recuperacion',
+      );
       throw Exception(status != null ? '($status) $msg' : msg);
     }
   }
@@ -176,7 +172,10 @@ class AuthService {
       );
     } on DioException catch (e) {
       final status = e.response?.statusCode;
-      final msg = _messageFromDio(e, fallback: 'No se pudo restablecer la contrasena');
+      final msg = _messageFromDio(
+        e,
+        fallback: 'No se pudo restablecer la contrasena',
+      );
       throw Exception(status != null ? '($status) $msg' : msg);
     }
   }
@@ -190,7 +189,9 @@ class AuthService {
     final serverClientId = RuntimeConfig.googleServerClientId.trim();
 
     if (serverClientId.isEmpty) {
-      throw Exception('Falta configurar google.server_client_id en runtime_config.json');
+      throw Exception(
+        'Falta configurar google.server_client_id en runtime_config.json',
+      );
     }
 
     final googleSignIn = GoogleSignIn(
@@ -221,7 +222,10 @@ class AuthService {
       await _persistAuthPayload(data, fallbackEmail: account.email);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
-      final msg = _messageFromDio(e, fallback: 'No se pudo iniciar sesion con Google');
+      final msg = _messageFromDio(
+        e,
+        fallback: 'No se pudo iniciar sesion con Google',
+      );
       throw Exception(status != null ? '($status) $msg' : msg);
     }
   }
@@ -249,6 +253,9 @@ class AuthService {
       'payment_draft',
       'izipay_data',
       'izipay_token',
+      'yape_payment_attempt',
+      'yape_payment_reference',
+      'yape_payment_status',
       'pending_order',
       'order_draft',
       'receipt_preview',

@@ -45,7 +45,6 @@ final _orders = OrdersController();
 
 final GoRouter _router = GoRouter(
   routes: [
-
     // Parte externa de la app
     GoRoute(
       path: '/',
@@ -71,16 +70,14 @@ final GoRouter _router = GoRouter(
     ),
 
     // APP PRINCIPAL (Bottom Navigation)
+    GoRoute(path: '/app', builder: (context, state) => const AppShell()),
     GoRoute(
-      path: '/app',
-      builder: (context, state) => const AppShell(),
+      path: '/pedidos',
+      builder: (context, state) => const AppShell(initialIndex: 3),
     ),
 
     // BUSCAR
-    GoRoute(
-      path: '/buscar',
-      builder: (context, state) => const SearchPage(),
-    ),
+    GoRoute(path: '/buscar', builder: (context, state) => const SearchPage()),
 
     // DETALLE
     GoRoute(
@@ -92,10 +89,7 @@ final GoRouter _router = GoRouter(
     ),
 
     // PAGO
-    GoRoute(
-      path: '/pago',
-      builder: (context, state) => const PaymentPage(),
-    ),
+    GoRoute(path: '/pago', builder: (context, state) => const PaymentPage()),
 
     // CONFIRMACION
     GoRoute(
@@ -116,10 +110,7 @@ final GoRouter _router = GoRouter(
     ),
 
     // CHATBOT
-    GoRoute(
-      path: '/chat',
-      builder: (context, state) => const ChatBotPage(),
-    ),
+    GoRoute(path: '/chat', builder: (context, state) => const ChatBotPage()),
 
     // PROMO DETAILS
     GoRoute(
@@ -154,7 +145,8 @@ class MyApp extends StatelessWidget {
             // pequeñas y mantiene legibilidad en pantallas grandes.
             final shortestSide = mq.size.shortestSide;
             final responsiveFactor = (shortestSide / 390.0).clamp(0.88, 1.08);
-            final effectiveScale = (mq.textScaleFactor * responsiveFactor).clamp(0.88, 1.25);
+            final effectiveScale = (mq.textScaleFactor * responsiveFactor)
+                .clamp(0.88, 1.25);
 
             return MediaQuery(
               data: mq.copyWith(textScaler: TextScaler.linear(effectiveScale)),

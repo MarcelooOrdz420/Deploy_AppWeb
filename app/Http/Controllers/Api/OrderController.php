@@ -225,7 +225,7 @@ class OrderController extends Controller
             'delivery_type' => ['required', Rule::in(['pickup', 'delivery'])],
             'scheduled_for' => ['nullable', 'date'],
             'delivery_window_label' => ['nullable', 'string', 'max:120'],
-            'payment_method' => ['required', Rule::in(['izipay', 'cod'])],
+            'payment_method' => ['required', Rule::in(['izipay', 'yape', 'cod'])],
             'payment_reference' => ['nullable', 'string', 'max:120'],
             'billing_document_type' => ['nullable', Rule::in(['dni', 'ruc'])],
             'billing_document_number' => ['nullable', 'string', 'max:20'],
@@ -367,7 +367,7 @@ class OrderController extends Controller
                 'status' => Order::STATUS_PENDING,
                 'total_amount' => 0,
                 'payment_method' => $data['payment_method'],
-                'payment_gateway' => $data['payment_method'] === 'izipay' ? 'izipay' : null,
+                'payment_gateway' => in_array($data['payment_method'], ['izipay', 'yape'], true) ? 'izipay' : null,
                 'payment_reference' => $data['payment_reference'] ?? null,
                 'payment_proof_path' => null,
                 'payment_status' => 'pending',
@@ -464,6 +464,13 @@ class OrderController extends Controller
                 );
 
                 $total += $lineTotal;
+            }
+
+            if ($data['payment_method'] === 'yape'
+                && $total > (float) config('company.payments.yape.max_amount', 2000)) {
+                abort(response()->json([
+                    'message' => 'Yape permite pagos de hasta S/ '.number_format((float) config('company.payments.yape.max_amount', 2000), 2).'.',
+                ], 422));
             }
 
             $order->update(['total_amount' => $total]);
@@ -831,6 +838,7 @@ HTML;
     {
         return match ($paymentMethod) {
             'izipay' => 'Izipay',
+            'yape' => 'Yape',
             'cod' => 'Contraentrega',
             default => $paymentMethod,
         };
@@ -849,7 +857,7 @@ HTML;
 
     private function isDigitalPaymentMethod(string $paymentMethod): bool
     {
-        return false;
+        return in_array($paymentMethod, ['izipay', 'yape'], true);
     }
 
     private function trySendElectronicReceipt(Order $order): void

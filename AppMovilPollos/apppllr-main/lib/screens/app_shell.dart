@@ -16,14 +16,16 @@ import 'profile_tab.dart';
 import 'search_page.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
 
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
-  int _index = 0;
+  late int _index;
   StreamSubscription<PusherMessage>? _pusherSubscription;
   String _userRole = 'customer';
 
@@ -38,6 +40,8 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
+    _index = widget.initialIndex.clamp(0, 4);
+    AppShellController.instance.goTo(_index);
     AppShellController.instance.tabIndex.addListener(_handleTabChange);
     _loadUserRole();
     _initNotifications();
@@ -64,13 +68,19 @@ class _AppShellState extends State<AppShell> {
       if (!mounted) return;
 
       // No mostrar respuestas del chatbot como "notificación" dentro del app shell.
-      if (message.name == 'chatbot.reply' || message.name == 'chat.message') return;
+      if (message.name == 'chatbot.reply' || message.name == 'chat.message')
+        return;
       if (message.channel != PusherConfig.notificationsChannel) return;
 
       final type = (message.data['type'] ?? '').toString().trim().toLowerCase();
-      final target = (message.data['target'] ?? '').toString().trim().toLowerCase();
+      final target = (message.data['target'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase();
       if (type == 'order_created') {
-        final allowAdminNotification = _userRole == 'admin' && (target.isEmpty || target == 'admin' || target == 'all');
+        final allowAdminNotification =
+            _userRole == 'admin' &&
+            (target.isEmpty || target == 'admin' || target == 'all');
         if (!allowAdminNotification) return;
         _showOrderAlert(message);
         return;
@@ -114,7 +124,9 @@ class _AppShellState extends State<AppShell> {
                         ],
                         stops: [0, .58, .58],
                       ),
-                      border: Border.all(color: const Color(0xFFFFC061).withOpacity(.32)),
+                      border: Border.all(
+                        color: const Color(0xFFFFC061).withOpacity(.32),
+                      ),
                       boxShadow: const [
                         BoxShadow(
                           color: Color.fromRGBO(0, 0, 0, .32),
@@ -139,9 +151,14 @@ class _AppShellState extends State<AppShell> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(8),
                                     color: Colors.white.withOpacity(.12),
-                                    border: Border.all(color: Colors.white.withOpacity(.2)),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(.2),
+                                    ),
                                   ),
-                                  child: Image.asset('assets/polloia.png', fit: BoxFit.contain),
+                                  child: Image.asset(
+                                    'assets/polloia.png',
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 const Expanded(
@@ -161,10 +178,15 @@ class _AppShellState extends State<AppShell> {
                           if (imageUrl.isNotEmpty) ...[
                             const SizedBox(height: 14),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 18),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                              ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: _promoImage(imageUrl, height: promoImageHeight),
+                                child: _promoImage(
+                                  imageUrl,
+                                  height: promoImageHeight,
+                                ),
                               ),
                             ),
                           ],
@@ -237,7 +259,9 @@ class _AppShellState extends State<AppShell> {
 
   void _showOrderAlert(PusherMessage message) {
     final body = (message.data['body'] ?? message.message).toString().trim();
-    final trackingCode = (message.data['tracking_code'] ?? '').toString().trim();
+    final trackingCode = (message.data['tracking_code'] ?? '')
+        .toString()
+        .trim();
 
     showDialog<void>(
       context: context,
@@ -281,15 +305,21 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _openOffer(PusherMessage message) {
-    final rawProductId = message.data['product_id'] ?? message.data['productId'] ?? message.data['id'];
-    final productId = rawProductId is num ? rawProductId.toInt() : int.tryParse(rawProductId?.toString() ?? '');
+    final rawProductId =
+        message.data['product_id'] ??
+        message.data['productId'] ??
+        message.data['id'];
+    final productId = rawProductId is num
+        ? rawProductId.toInt()
+        : int.tryParse(rawProductId?.toString() ?? '');
     if (productId != null && productId > 0) {
       context.push('/detalles/$productId');
       return;
     }
 
     // Si el server envía el contenido, abrimos una pantalla de detalle de promo.
-    final hasPromoText = (message.data['title'] ?? '').toString().trim().isNotEmpty ||
+    final hasPromoText =
+        (message.data['title'] ?? '').toString().trim().isNotEmpty ||
         (message.data['message'] ?? '').toString().trim().isNotEmpty ||
         (message.data['body'] ?? '').toString().trim().isNotEmpty;
 
@@ -299,7 +329,9 @@ class _AppShellState extends State<AppShell> {
     }
 
     // Allow server to explicitly control where the CTA lands.
-    final route = (message.data['route'] ?? message.data['deep_link'] ?? '').toString().trim();
+    final route = (message.data['route'] ?? message.data['deep_link'] ?? '')
+        .toString()
+        .trim();
     if (route.isNotEmpty && route.startsWith('/')) {
       context.push(route);
       return;
@@ -356,32 +388,35 @@ class _AppShellState extends State<AppShell> {
             child: Column(
               children: [
                 Expanded(
-                  child: IndexedStack(
-                    index: _index,
-                    children: _pages,
-                  ),
+                  child: IndexedStack(index: _index, children: _pages),
                 ),
-                DecoratedBox(
+                Container(
+                  margin: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withOpacity(.92),
-                          StoreTheme.cream.withOpacity(.94),
-                        ],
-                      ),
-                      border: Border(
-                        top: BorderSide(color: StoreTheme.borderSoft),
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color.fromRGBO(52, 17, 0, .07),
-                          blurRadius: 24,
-                          offset: Offset(0, 10),
-                        ),
+                    borderRadius: BorderRadius.circular(26),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withOpacity(.92),
+                        StoreTheme.cream.withOpacity(.94),
                       ],
                     ),
+                    border: Border(
+                      top: BorderSide(color: StoreTheme.borderSoft),
+                      left: BorderSide(color: StoreTheme.borderSoft),
+                      right: BorderSide(color: StoreTheme.borderSoft),
+                      bottom: BorderSide(color: StoreTheme.borderSoft),
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color.fromRGBO(52, 17, 0, .07),
+                        blurRadius: 24,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
                   child: NavigationBar(
                     selectedIndex: _index,
                     onDestinationSelected: (i) {
@@ -389,11 +424,31 @@ class _AppShellState extends State<AppShell> {
                       AppShellController.instance.goTo(i);
                     },
                     destinations: const [
-                      NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Inicio'),
-                      NavigationDestination(icon: Icon(Icons.search_outlined), selectedIcon: Icon(Icons.search_rounded), label: 'Buscar'),
-                      NavigationDestination(icon: Icon(Icons.shopping_bag_outlined), selectedIcon: Icon(Icons.shopping_bag_rounded), label: 'Carrito'),
-                      NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long_rounded), label: 'Pedidos'),
-                      NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person_rounded), label: 'Perfil'),
+                      NavigationDestination(
+                        icon: Icon(Icons.home_outlined),
+                        selectedIcon: Icon(Icons.home_rounded),
+                        label: 'Inicio',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.search_outlined),
+                        selectedIcon: Icon(Icons.search_rounded),
+                        label: 'Buscar',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.shopping_bag_outlined),
+                        selectedIcon: Icon(Icons.shopping_bag_rounded),
+                        label: 'Carrito',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.receipt_long_outlined),
+                        selectedIcon: Icon(Icons.receipt_long_rounded),
+                        label: 'Pedidos',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.person_outline),
+                        selectedIcon: Icon(Icons.person_rounded),
+                        label: 'Perfil',
+                      ),
                     ],
                   ),
                 ),

@@ -90,6 +90,18 @@ class IzipayWebhookTest extends TestCase
         $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'pending']);
     }
 
+    public function test_mobile_payment_result_returns_to_the_app_orders_screen(): void
+    {
+        $order = $this->orderWithAttempt('yape');
+        $returnUrl = URL::temporarySignedRoute('izipay.result', now()->addMinutes(5), ['order' => $order->id]);
+
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 14)')
+            ->get($returnUrl)
+            ->assertOk()
+            ->assertSee('eldorado:///pedidos', false)
+            ->assertDontSee('Continuar en la web');
+    }
+
     public function test_ipn_first_and_browser_return_afterwards_do_not_duplicate_records(): void
     {
         $order = $this->orderWithAttempt();
@@ -120,6 +132,18 @@ class IzipayWebhookTest extends TestCase
         $this->assertDatabaseHas('payment_transactions', ['order_id' => $order->id, 'amount' => 25.50, 'status' => 'pending']);
     }
 
+    public function test_yape_checkout_rejects_amount_above_configured_limit(): void
+    {
+        config(['company.payments.yape.max_amount' => 2000]);
+        $order = $this->order('yape');
+        $order->update(['total_amount' => 2000.01]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Yape permite pagos de hasta S/ 2,000.00.');
+
+        app(IzipayService::class)->createPayment($order->fresh());
+    }
+
     public function test_valid_approved_notification_is_idempotent(): void
     {
         $order = $this->order();
@@ -136,6 +160,55 @@ class IzipayWebhookTest extends TestCase
         $this->assertDatabaseHas('orders', ['id' => $order->id, 'payment_status' => 'verified', 'payment_reference' => 'tx-unique-1']);
         $this->assertSame(1, PaymentTransaction::where('transaction_uuid', 'tx-unique-1')->count());
         $this->assertDatabaseHas('payment_transactions', ['order_id' => $order->id, 'status' => 'verified']);
+    }
+
+    public function test_yape_uses_izipay_and_is_confirmed_only_by_a_valid_signed_notification(): void
+    {
+        $order = $this->orderWithAttempt('yape');
+
+        $this->sendNotification($order, 'PAID', 'tx-yape-approved')->assertOk();
+        $this->sendNotification($order, 'PAID', 'tx-yape-approved')->assertOk();
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'payment_method' => 'yape',
+            'payment_gateway' => 'izipay',
+            'payment_status' => 'verified',
+            'status' => Order::STATUS_CONFIRMED,
+            'payment_reference' => 'tx-yape-approved',
+        ]);
+        $this->assertDatabaseCount('payment_transactions', 1);
+        $this->assertDatabaseHas('order_status_histories', [
+            'order_id' => $order->id,
+            'status' => Order::STATUS_CONFIRMED,
+            'note' => 'Pago con Yape confirmado por Izipay',
+        ]);
+    }
+
+    public function test_rejected_yape_remains_unpaid_and_pending(): void
+    {
+        $order = $this->orderWithAttempt('yape');
+
+        $this->sendNotification($order, 'REFUSED', 'tx-yape-refused')->assertOk();
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'payment_status' => 'rejected',
+            'status' => Order::STATUS_PENDING,
+        ]);
+    }
+
+    public function test_unknown_yape_status_stays_pending(): void
+    {
+        $order = $this->orderWithAttempt('yape');
+
+        $this->sendNotification($order, 'PROCESSING', 'tx-yape-pending')->assertOk();
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'payment_status' => 'pending',
+            'status' => Order::STATUS_PENDING,
+        ]);
     }
 
     public function test_approved_ipn_automatically_issues_nubefact_receipt_for_customer(): void
@@ -296,19 +369,19 @@ class IzipayWebhookTest extends TestCase
         $this->get('/mis-pedidos')->assertOk()->assertSee('Pago realizado exitosamente')->assertSee('Pago pendiente de confirmacion');
     }
 
-    private function order(): Order
+    private function order(string $paymentMethod = 'izipay'): Order
     {
         $order = Order::create(['tracking_code' => 'ED-TEST01', 'customer_name' => 'Cliente Test',
             'customer_phone' => '999888777', 'delivery_type' => 'pickup', 'status' => Order::STATUS_PENDING,
-            'total_amount' => 25.50, 'payment_method' => 'izipay', 'payment_gateway' => 'izipay', 'payment_status' => 'pending']);
+            'total_amount' => 25.50, 'payment_method' => $paymentMethod, 'payment_gateway' => 'izipay', 'payment_status' => 'pending']);
         OrderItem::create(['order_id' => $order->id, 'product_name' => 'Pollo', 'unit_price' => 25.50,
             'quantity' => 1, 'line_total' => 25.50]);
         return $order;
     }
 
-    private function orderWithAttempt(): Order
+    private function orderWithAttempt(string $paymentMethod = 'izipay'): Order
     {
-        $order = $this->order();
+        $order = $this->order($paymentMethod);
         PaymentTransaction::create([
             'order_id' => $order->id, 'provider' => 'izipay', 'status' => 'pending',
             'amount' => 25.50, 'currency' => 'PEN', 'merchant_order_id' => $order->tracking_code,

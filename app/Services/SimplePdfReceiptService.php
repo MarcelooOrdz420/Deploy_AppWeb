@@ -23,6 +23,7 @@ class SimplePdfReceiptService
         $delivery = $order->delivery_type === 'delivery' ? 'Delivery' : 'Recojo en local';
         $paymentMethod = match ($order->payment_method) {
             'izipay' => 'Izipay',
+            'yape' => 'Yape',
             'cod' => 'Contraentrega',
             default => (string) $order->payment_method,
         };

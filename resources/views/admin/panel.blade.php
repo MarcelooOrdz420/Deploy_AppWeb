@@ -1200,6 +1200,7 @@
                     <select id="filterPaymentMethod">
                         <option value="">Todos</option>
                         <option value="izipay">Izipay</option>
+                        <option value="yape">Yape</option>
                     </select>
                 </div>
                 <div>
@@ -1659,7 +1660,7 @@ function paymentStatusEs(code) {
 }
 
 function paymentMethodEs(code) {
-    return String(code || '').toLowerCase() === 'izipay' ? 'Pago con tarjeta' : String(code || '').toLowerCase() === 'cod' ? 'Pago contraentrega' : code || 'n/a';
+    return String(code || '').toLowerCase() === 'izipay' ? 'Pago con tarjeta' : String(code || '').toLowerCase() === 'yape' ? 'Yape' : String(code || '').toLowerCase() === 'cod' ? 'Pago contraentrega' : code || 'n/a';
 }
 
 function paymentStatusClass(code) {

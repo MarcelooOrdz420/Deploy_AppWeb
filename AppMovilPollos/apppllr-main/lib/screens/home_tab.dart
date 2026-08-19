@@ -88,11 +88,13 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
     final maxPrice = double.tryParse(_maxPriceCtrl.text.trim());
 
     return products.where((product) {
-      final matchesName = query.isEmpty ||
+      final matchesName =
+          query.isEmpty ||
           _normalize(product.name).contains(query) ||
           _normalize(product.categoria).contains(query);
       final matchesCategory =
-          _selectedCategory.isEmpty || _normalizeCategory(product.categoria) == _selectedCategory;
+          _selectedCategory.isEmpty ||
+          _normalizeCategory(product.categoria) == _selectedCategory;
       final matchesPrice = maxPrice == null || product.price <= maxPrice;
       return matchesName && matchesCategory && matchesPrice;
     }).toList();
@@ -111,8 +113,10 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   String _normalizeCategory(String value) {
     final normalized = _normalize(value);
     if (normalized.contains('pollo')) return 'pollos';
-    if (normalized.contains('parrilla') || normalized.contains('anticucho')) return 'parrillas';
-    if (normalized.contains('bebida') || normalized.contains('gaseosa')) return 'bebidas';
+    if (normalized.contains('parrilla') || normalized.contains('anticucho'))
+      return 'parrillas';
+    if (normalized.contains('bebida') || normalized.contains('gaseosa'))
+      return 'bebidas';
     return normalized;
   }
 
@@ -177,7 +181,9 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            product.description.isEmpty ? 'Sin descripcion.' : product.description,
+                            product.description.isEmpty
+                                ? 'Sin descripcion.'
+                                : product.description,
                             style: const TextStyle(
                               color: StoreTheme.inkSoft,
                               height: 1.5,
@@ -205,7 +211,9 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                               style: FilledButton.styleFrom(
                                 backgroundColor: StoreTheme.orange,
                                 foregroundColor: StoreTheme.ink,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
                               onPressed: () async {
                                 await _addToCart(dialogContext, product);
@@ -254,7 +262,8 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
           return const StoreAsyncState(
             icon: Icons.restaurant_menu,
             title: 'Cargando menu',
-            message: 'Estamos preparando la vitrina para mostrarte el catalogo.',
+            message:
+                'Estamos preparando la vitrina para mostrarte el catalogo.',
           );
         }
 
@@ -270,9 +279,15 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
 
         final products = snap.data ?? const <Producto>[];
         final filtered = _filteredProducts(products);
-        final pollos = products.where((item) => _normalizeCategory(item.categoria) == 'pollos').toList();
-        final bebidas = products.where((item) => _normalizeCategory(item.categoria) == 'bebidas').toList();
-        final parrillas = products.where((item) => _normalizeCategory(item.categoria) == 'parrillas').toList();
+        final pollos = products
+            .where((item) => _normalizeCategory(item.categoria) == 'pollos')
+            .toList();
+        final bebidas = products
+            .where((item) => _normalizeCategory(item.categoria) == 'bebidas')
+            .toList();
+        final parrillas = products
+            .where((item) => _normalizeCategory(item.categoria) == 'parrillas')
+            .toList();
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -301,12 +316,18 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                     children: [
                       Text(
                         'Elige una categoria para ver los productos.',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                       SizedBox(height: 8),
                       Text(
                         'Selecciona Pollos, Parrillas, Bebidas o Todas.',
-                        style: TextStyle(color: StoreTheme.inkSoft, height: 1.5),
+                        style: TextStyle(
+                          color: StoreTheme.inkSoft,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -360,11 +381,13 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   }
 
   Widget _buildTopBar(BuildContext context) {
-    final cartCount = CartScope.of(context).items.fold<int>(0, (sum, item) => sum + item.qty);
+    final cartCount = CartScope.of(
+      context,
+    ).items.fold<int>(0, (sum, item) => sum + item.qty);
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: StoreTheme.lineStrong.withOpacity(.52)),
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
@@ -393,7 +416,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: const BoxDecoration(
               color: Color(0xFFFFC20E),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
             child: const Text(
               'Horario de atencion · Lun-Vie 12 pm a 8 pm · Sab 11 am a 9 pm · Dom 11 am a 7 pm',
@@ -411,119 +434,127 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: StoreTheme.lineStrong.withOpacity(.9)),
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(.95),
-                      const Color(0xFFFFF1E3),
-                    ],
-                  ),
-                ),
-                child: Image.asset('assets/polloia.png'),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: [
-                    const Text(
-                      'Pollo a la Brasa y Parrillas',
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 2.2,
-                        color: Color(0xFFFFC20E),
-                        fontWeight: FontWeight.w900,
+                    Container(
+                      width: 48,
+                      height: 48,
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: StoreTheme.lineStrong.withOpacity(.9),
+                        ),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(.95),
+                            const Color(0xFFFFF1E3),
+                          ],
+                        ),
+                      ),
+                      child: Image.asset('assets/polloia.png'),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Pollo a la Brasa y Parrillas',
+                            style: TextStyle(
+                              fontSize: 11,
+                              letterSpacing: 2.2,
+                              color: Color(0xFFFFC20E),
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Pollos y Parrillas "El Dorado"',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFFFFF8ED),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Hola, $_userName',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Color(0xFFFFE7B4)),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Pollos y Parrillas "El Dorado"',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFFFFF8ED),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Hola, $_userName',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Color(0xFFFFE7B4)),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            AppShellController.instance.goTo(2);
+                            context.go('/app');
+                          },
+                          icon: const Icon(Icons.shopping_cart_outlined),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF17110D),
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                        if (cartCount > 0)
+                          Positioned(
+                            top: -4,
+                            right: -2,
+                            child: CircleAvatar(
+                              radius: 10,
+                              backgroundColor: StoreTheme.orangeDeep,
+                              child: Text(
+                                '$cartCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
-              ),
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      AppShellController.instance.goTo(2);
-                      context.go('/app');
-                    },
-                    icon: const Icon(Icons.shopping_cart_outlined),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFF17110D),
-                      foregroundColor: Colors.white,
-                    ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
                   ),
-                  if (cartCount > 0)
-                    Positioned(
-                      top: -4,
-                      right: -2,
-                      child: CircleAvatar(
-                        radius: 10,
-                        backgroundColor: StoreTheme.orangeDeep,
+                  decoration: BoxDecoration(
+                    color: Color(0xFF000000),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.white.withOpacity(.35)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.local_fire_department_rounded,
+                        color: Color(0xFFFFC20E),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
                         child: Text(
-                          '$cartCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
+                          'Menu visual, rapido y listo para pedir.',
+                          style: TextStyle(
+                            color: Color(0xFFFFF8ED),
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: Color(0xFF000000),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withOpacity(.35)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.local_fire_department_rounded, color: Color(0xFFFFC20E)),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Menu visual, rapido y listo para pedir.',
-                    style: TextStyle(
-                      color: Color(0xFFFFF8ED),
-                      fontWeight: FontWeight.w900,
-                    ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
               ],
             ),
           ),
@@ -591,17 +622,17 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
           const SizedBox(height: 10),
           const Text(
             'Descarga, compra y sigue tus pedidos con una experiencia directa, oscura y dorada.',
-            style: TextStyle(color: Color(0xFFEFE7DA), height: 1.5, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: Color(0xFFEFE7DA),
+              height: 1.5,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [
-              _pill('Pollos'),
-              _pill('Parrillas'),
-              _pill('Bebidas'),
-            ],
+            children: [_pill('Pollos'), _pill('Parrillas'), _pill('Bebidas')],
           ),
           const SizedBox(height: 16),
           Container(
@@ -697,7 +728,8 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                           Expanded(
                             child: _HeroCard(
                               title: secondary?.name ?? 'Combos',
-                              subtitle: secondary?.description.isNotEmpty == true
+                              subtitle:
+                                  secondary?.description.isNotEmpty == true
                                   ? secondary!.description
                                   : 'Listos para compartir.',
                               product: secondary,
@@ -752,7 +784,10 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
           children: [
             const Padding(
               padding: EdgeInsets.fromLTRB(4, 2, 4, 12),
-              child: Text('Promociones destacadas', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              child: Text(
+                'Promociones destacadas',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+              ),
             ),
             SizedBox(
               height: 330,
@@ -839,24 +874,32 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                     SizedBox(height: 8),
                     Text(
                       'Filtra por antojo, categoria o presupuesto.',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF7F0),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: StoreTheme.lineStrong.withOpacity(.82)),
+                  border: Border.all(
+                    color: StoreTheme.lineStrong.withOpacity(.82),
+                  ),
                 ),
                 child: Text(
                   !_hasSelection
                       ? 'Elige una categoria'
                       : resultsCount == 1
-                          ? '1 producto encontrado'
-                          : '$resultsCount productos encontrados',
+                      ? '1 producto encontrado'
+                      : '$resultsCount productos encontrados',
                   style: const TextStyle(
                     color: Color(0xFF82471F),
                     fontWeight: FontWeight.w800,
@@ -888,7 +931,10 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                   items: const [
                     DropdownMenuItem(value: '', child: Text('Todas')),
                     DropdownMenuItem(value: 'pollos', child: Text('Pollos')),
-                    DropdownMenuItem(value: 'parrillas', child: Text('Parrillas')),
+                    DropdownMenuItem(
+                      value: 'parrillas',
+                      child: Text('Parrillas'),
+                    ),
                     DropdownMenuItem(value: 'bebidas', child: Text('Bebidas')),
                   ],
                   onChanged: (value) {
@@ -905,13 +951,16 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _maxPriceCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   onChanged: (_) => setState(() => _hasSelection = true),
                   decoration: InputDecoration(
                     labelText: 'Precio maximo',
                     hintText: 'Ej: 40.00',
                     prefixIcon: const Icon(Icons.payments_outlined),
-                    suffixIcon: _selectedCategory.isEmpty &&
+                    suffixIcon:
+                        _selectedCategory.isEmpty &&
                             _searchCtrl.text.trim().isEmpty &&
                             _maxPriceCtrl.text.trim().isEmpty
                         ? null
@@ -1105,7 +1154,9 @@ class _ProductCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: soldOut ? const Color(0xFFFFF1EA) : const Color(0xFFFFF7F0),
+              color: soldOut
+                  ? const Color(0xFFFFF1EA)
+                  : const Color(0xFFFFF7F0),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
                 color: soldOut
@@ -1118,7 +1169,9 @@ class _ProductCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
-                color: soldOut ? const Color(0xFF9A3610) : const Color(0xFF7E451D),
+                color: soldOut
+                    ? const Color(0xFF9A3610)
+                    : const Color(0xFF7E451D),
               ),
             ),
           ),
@@ -1135,7 +1188,9 @@ class _ProductCard extends StatelessWidget {
               Expanded(
                 child: FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: soldOut ? Colors.grey.shade300 : StoreTheme.orange,
+                    backgroundColor: soldOut
+                        ? Colors.grey.shade300
+                        : StoreTheme.orange,
                     foregroundColor: StoreTheme.ink,
                   ),
                   onPressed: soldOut ? null : onAdd,

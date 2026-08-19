@@ -44,24 +44,50 @@ class _CartTabState extends State<CartTab> {
   Widget build(BuildContext context) {
     final cart = CartScope.of(context);
     final subtotal = cart.subtotal;
-    final deliveryFee = cart.deliveryFee(freeOver: 70, fee: cart.isDelivery ? 4 : 0);
+    final deliveryFee = cart.deliveryFee(
+      freeOver: 70,
+      fee: cart.isDelivery ? 4 : 0,
+    );
     final total = subtotal + deliveryFee;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
       children: [
-        const StoreSurface(
-          child: Column(
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                StoreTheme.ink,
+                Color(0xFF4A2412),
+                StoreTheme.orangeDark,
+              ],
+            ),
+          ),
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              CircleAvatar(
+                backgroundColor: StoreTheme.orange,
+                foregroundColor: Colors.white,
+                child: Icon(Icons.shopping_bag_rounded),
+              ),
+              SizedBox(height: 14),
               Text(
-                'Carrito',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                'Tu pedido',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
               ),
               SizedBox(height: 8),
               Text(
                 'Revisa tu pedido antes de pasar al pago.',
-                style: TextStyle(color: StoreTheme.inkSoft),
+                style: TextStyle(color: StoreTheme.borderLight),
               ),
             ],
           ),
@@ -71,7 +97,11 @@ class _CartTabState extends State<CartTab> {
           const StoreSurface(
             child: Column(
               children: [
-                Icon(Icons.shopping_cart_outlined, size: 48, color: StoreTheme.orange),
+                Icon(
+                  Icons.shopping_cart_outlined,
+                  size: 48,
+                  color: StoreTheme.orange,
+                ),
                 SizedBox(height: 12),
                 Text(
                   'Tu carrito esta vacio',
@@ -100,12 +130,17 @@ class _CartTabState extends State<CartTab> {
                         children: [
                           Text(
                             item.producto.name,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             'S/ ${item.producto.price.toStringAsFixed(2)}',
-                            style: const TextStyle(color: StoreTheme.orangeDeep),
+                            style: const TextStyle(
+                              color: StoreTheme.orangeDeep,
+                            ),
                           ),
                         ],
                       ),
@@ -120,7 +155,10 @@ class _CartTabState extends State<CartTab> {
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
                         '${item.qty}',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
                     _qtyButton('+', () => cart.add(item.producto)),
@@ -187,7 +225,10 @@ class _CartTabState extends State<CartTab> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, color: StoreTheme.orangeDeep),
+                    const Icon(
+                      Icons.location_on_outlined,
+                      color: StoreTheme.orangeDeep,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -198,7 +239,9 @@ class _CartTabState extends State<CartTab> {
                       ),
                     ),
                     TextButton(
-                      onPressed: cart.isDelivery ? () => _showAddressOptions(cart) : null,
+                      onPressed: cart.isDelivery
+                          ? () => _showAddressOptions(cart)
+                          : null,
                       child: const Text('Cambiar'),
                     ),
                   ],
@@ -223,7 +266,9 @@ class _CartTabState extends State<CartTab> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF7F0),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: StoreTheme.lineStrong.withOpacity(.82)),
+                    border: Border.all(
+                      color: StoreTheme.lineStrong.withOpacity(.82),
+                    ),
                   ),
                   child: const Text(
                     'Puedes pedir para ahora o programarlo desde 30 minutos hacia adelante. La cocina recibe pedidos hasta las 11:00 PM.',
@@ -262,7 +307,9 @@ class _CartTabState extends State<CartTab> {
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFF7F0),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: StoreTheme.lineStrong.withOpacity(.82)),
+                        border: Border.all(
+                          color: StoreTheme.lineStrong.withOpacity(.82),
+                        ),
                       ),
                       child: Text(
                         cart.deliveryWindowLabel.isNotEmpty
@@ -291,7 +338,9 @@ class _CartTabState extends State<CartTab> {
               if (!logged) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Debes iniciar sesion para continuar con la compra.'),
+                    content: Text(
+                      'Debes iniciar sesion para continuar con la compra.',
+                    ),
                   ),
                 );
                 context.go('/correo');
@@ -328,9 +377,14 @@ class _CartTabState extends State<CartTab> {
                   ..._savedAddresses.map((address) {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.location_on_outlined, color: StoreTheme.orangeDeep),
+                      leading: const Icon(
+                        Icons.location_on_outlined,
+                        color: StoreTheme.orangeDeep,
+                      ),
                       title: Text(address.address),
-                      subtitle: address.label == null ? null : Text(address.label!),
+                      subtitle: address.label == null
+                          ? null
+                          : Text(address.label!),
                       onTap: () {
                         cart.setAddress(
                           addressValue: address.address,
@@ -342,7 +396,10 @@ class _CartTabState extends State<CartTab> {
                   }),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.my_location_outlined, color: StoreTheme.orangeDeep),
+                  leading: const Icon(
+                    Icons.my_location_outlined,
+                    color: StoreTheme.orangeDeep,
+                  ),
                   title: const Text('Usar ubicacion real'),
                   onTap: () async {
                     Navigator.pop(context);
@@ -351,7 +408,10 @@ class _CartTabState extends State<CartTab> {
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.edit_location_alt_outlined, color: StoreTheme.orangeDeep),
+                  leading: const Icon(
+                    Icons.edit_location_alt_outlined,
+                    color: StoreTheme.orangeDeep,
+                  ),
                   title: const Text('Escribir direccion manualmente'),
                   onTap: () async {
                     Navigator.pop(context);
@@ -374,14 +434,18 @@ class _CartTabState extends State<CartTab> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: StoreTheme.paper,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: const Text('Direccion de entrega'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: addressCtrl,
-                decoration: const InputDecoration(labelText: 'Direccion exacta'),
+                decoration: const InputDecoration(
+                  labelText: 'Direccion exacta',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -391,7 +455,10 @@ class _CartTabState extends State<CartTab> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: StoreTheme.orange,
@@ -417,7 +484,9 @@ class _CartTabState extends State<CartTab> {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        throw Exception('Activa la ubicacion del dispositivo para usar esta opcion.');
+        throw Exception(
+          'Activa la ubicacion del dispositivo para usar esta opcion.',
+        );
       }
 
       var permission = await Geolocator.checkPermission();
@@ -425,7 +494,8 @@ class _CartTabState extends State<CartTab> {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         throw Exception('No diste permiso para acceder a tu ubicacion.');
       }
 
@@ -443,7 +513,9 @@ class _CartTabState extends State<CartTab> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ubicacion actual cargada correctamente.')),
+        const SnackBar(
+          content: Text('Ubicacion actual cargada correctamente.'),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -462,7 +534,9 @@ class _CartTabState extends State<CartTab> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('La cocina ya no recibe pedidos para hoy. Atendemos hasta las 11:00 PM.'),
+          content: Text(
+            'La cocina ya no recibe pedidos para hoy. Atendemos hasta las 11:00 PM.',
+          ),
         ),
       );
       return;
@@ -489,7 +563,9 @@ class _CartTabState extends State<CartTab> {
     if (scheduled.isBefore(minimum)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Debes programar al menos 30 minutos hacia adelante.')),
+        const SnackBar(
+          content: Text('Debes programar al menos 30 minutos hacia adelante.'),
+        ),
       );
       return;
     }
@@ -512,8 +588,8 @@ class _CartTabState extends State<CartTab> {
     final hour = value.hour == 0
         ? 12
         : value.hour > 12
-            ? value.hour - 12
-            : value.hour;
+        ? value.hour - 12
+        : value.hour;
     final suffix = value.hour >= 12 ? 'PM' : 'AM';
     final minutes = value.minute.toString().padLeft(2, '0');
     return '$hour:$minutes $suffix';
@@ -567,7 +643,9 @@ class _CartTabState extends State<CartTab> {
       style: FilledButton.styleFrom(
         backgroundColor: active ? StoreTheme.orange : Colors.white,
         foregroundColor: StoreTheme.ink,
-        side: active ? null : BorderSide(color: StoreTheme.lineStrong.withOpacity(.82)),
+        side: active
+            ? null
+            : BorderSide(color: StoreTheme.lineStrong.withOpacity(.82)),
       ),
       onPressed: onTap,
       child: Text(label),

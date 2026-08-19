@@ -14,8 +14,10 @@ import '../services/session_service.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
 
-enum PayMethod { izipay, cod }
+enum PayMethod { izipay, yape, cod }
+
 enum DeliveryType { delivery, pickup }
+
 enum ReceiptType { none, boleta, factura }
 
 class PaymentPage extends StatefulWidget {
@@ -49,7 +51,8 @@ class _PaymentPageState extends State<PaymentPage> {
   ReceiptType _receiptType = ReceiptType.none;
   String _saladType = 'dulce';
   String _billingDocumentType = '';
-  String _lookupMessage = 'Activa boleta o factura para identificar al cliente antes de pagar.';
+  String _lookupMessage =
+      'Activa boleta o factura para identificar al cliente antes de pagar.';
   String _lastLookupValue = '';
   Map<String, dynamic>? _billingMetadata;
   bool _submitting = false;
@@ -111,12 +114,15 @@ class _PaymentPageState extends State<PaymentPage> {
   void _prefillFromCart() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final cart = CartScope.of(context);
-      _deliveryType = cart.isDelivery ? DeliveryType.delivery : DeliveryType.pickup;
+      _deliveryType = cart.isDelivery
+          ? DeliveryType.delivery
+          : DeliveryType.pickup;
       _addressCtrl.text = cart.address;
       _referenceCtrl.text = cart.reference;
       if (_nameCtrl.text.trim().isEmpty) _nameCtrl.text = cart.customerName;
       if (_phoneCtrl.text.trim().isEmpty) _phoneCtrl.text = cart.customerPhone;
-      if (_customerEmailCtrl.text.trim().isEmpty) _customerEmailCtrl.text = cart.customerEmail;
+      if (_customerEmailCtrl.text.trim().isEmpty)
+        _customerEmailCtrl.text = cart.customerEmail;
       if (cart.saladType.isNotEmpty) _saladType = cart.saladType;
       _selectedAddressValue = null;
       if (cart.latitude != null) {
@@ -137,6 +143,8 @@ class _PaymentPageState extends State<PaymentPage> {
     switch (_method) {
       case PayMethod.izipay:
         return 'izipay';
+      case PayMethod.yape:
+        return 'yape';
       case PayMethod.cod:
         return 'cod';
     }
@@ -161,7 +169,8 @@ class _PaymentPageState extends State<PaymentPage> {
 
   int get _billingDocumentLength => _billingDocumentType == 'ruc' ? 11 : 8;
 
-  String get _billingDocumentLabel => _billingDocumentType == 'ruc' ? 'RUC' : 'DNI';
+  String get _billingDocumentLabel =>
+      _billingDocumentType == 'ruc' ? 'RUC' : 'DNI';
 
   Future<void> _lookupDocument({bool silent = false}) async {
     if (_lookingUpDocument) return;
@@ -173,15 +182,21 @@ class _PaymentPageState extends State<PaymentPage> {
     if (_billingDocumentType.isEmpty || number.isEmpty) {
       if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Selecciona tipo de documento e ingresa el numero.')),
+          const SnackBar(
+            content: Text('Selecciona tipo de documento e ingresa el numero.'),
+          ),
         );
       }
       return;
     }
 
-    if (_billingDocumentType.isNotEmpty && number.length != _billingDocumentLength) {
+    if (_billingDocumentType.isNotEmpty &&
+        number.length != _billingDocumentLength) {
       if (mounted) {
-        setState(() => _lookupMessage = 'El $_billingDocumentLabel debe tener $_billingDocumentLength digitos.');
+        setState(
+          () => _lookupMessage =
+              'El $_billingDocumentLabel debe tener $_billingDocumentLength digitos.',
+        );
       }
       return;
     }
@@ -192,11 +207,13 @@ class _PaymentPageState extends State<PaymentPage> {
       final data = _billingDocumentType == 'ruc'
           ? await _peruLookupService.lookupRuc(token: token, ruc: number)
           : await _peruLookupService.lookupDni(token: token, dni: number);
-      final normalized = (data['normalized'] as Map? ?? <String, dynamic>{}).cast<String, dynamic>();
-      _billingNameCtrl.text = (_billingDocumentType == 'ruc'
-              ? normalized['business_name']
-              : normalized['full_name'])
-          ?.toString() ??
+      final normalized = (data['normalized'] as Map? ?? <String, dynamic>{})
+          .cast<String, dynamic>();
+      _billingNameCtrl.text =
+          (_billingDocumentType == 'ruc'
+                  ? normalized['business_name']
+                  : normalized['full_name'])
+              ?.toString() ??
           '';
       if (_nameCtrl.text.trim().isEmpty) {
         _nameCtrl.text = _billingNameCtrl.text.trim();
@@ -241,7 +258,9 @@ class _PaymentPageState extends State<PaymentPage> {
         _billingAddressCtrl.clear();
         _billingMetadata = null;
       } else {
-        _billingDocumentType = _receiptType == ReceiptType.factura ? 'ruc' : 'dni';
+        _billingDocumentType = _receiptType == ReceiptType.factura
+            ? 'ruc'
+            : 'dni';
         _billingNumberCtrl.clear();
         _billingNameCtrl.clear();
         _billingAddressCtrl.clear();
@@ -251,7 +270,8 @@ class _PaymentPageState extends State<PaymentPage> {
             : 'Ingresa el DNI del cliente y lo identificamos automaticamente.';
       }
       if (_receiptType == ReceiptType.none) {
-        _lookupMessage = 'Activa boleta o factura para identificar al cliente antes de pagar.';
+        _lookupMessage =
+            'Activa boleta o factura para identificar al cliente antes de pagar.';
       }
       _lastLookupValue = '';
     });
@@ -294,7 +314,9 @@ class _PaymentPageState extends State<PaymentPage> {
     if (token.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inicia sesion para registrar tu pedido.')),
+        const SnackBar(
+          content: Text('Inicia sesion para registrar tu pedido.'),
+        ),
       );
       return;
     }
@@ -303,8 +325,9 @@ class _PaymentPageState extends State<PaymentPage> {
     final customerPhone = _phoneCtrl.text.trim();
     final address = _addressCtrl.text.trim();
     final operationCode = _operationCtrl.text.trim();
-    final hasChicken =
-        cart.items.any((item) => item.producto.categoria.toLowerCase() == 'pollos');
+    final hasChicken = cart.items.any(
+      (item) => item.producto.categoria.toLowerCase() == 'pollos',
+    );
 
     if (customerName.isEmpty || customerPhone.isEmpty) {
       if (!mounted) return;
@@ -317,7 +340,9 @@ class _PaymentPageState extends State<PaymentPage> {
     if (_deliveryType == DeliveryType.delivery && address.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La direccion es obligatoria para delivery.')),
+        const SnackBar(
+          content: Text('La direccion es obligatoria para delivery.'),
+        ),
       );
       return;
     }
@@ -336,10 +361,12 @@ class _PaymentPageState extends State<PaymentPage> {
       return;
     }
 
-      if (_needsOperationCode && operationCode.isEmpty) {
+    if (_needsOperationCode && operationCode.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresa el codigo de operacion del pago.')),
+        const SnackBar(
+          content: Text('Ingresa el codigo de operacion del pago.'),
+        ),
       );
       return;
     }
@@ -363,47 +390,73 @@ class _PaymentPageState extends State<PaymentPage> {
           'idempotency_key': _idempotencyKey,
           'customer_name': customerName,
           'customer_phone': customerPhone,
-          'customer_email': _customerEmailCtrl.text.trim().isEmpty ? null : _customerEmailCtrl.text.trim(),
-          'delivery_type': _deliveryType == DeliveryType.delivery ? 'delivery' : 'pickup',
+          'customer_email': _customerEmailCtrl.text.trim().isEmpty
+              ? null
+              : _customerEmailCtrl.text.trim(),
+          'delivery_type': _deliveryType == DeliveryType.delivery
+              ? 'delivery'
+              : 'pickup',
           'scheduled_for': cart.scheduleNow || cart.scheduledFor == null
               ? null
               : cart.scheduledFor!.toIso8601String(),
-          'delivery_window_label': cart.scheduleNow ? 'Lo antes posible' : cart.deliveryWindowLabel,
+          'delivery_window_label': cart.scheduleNow
+              ? 'Lo antes posible'
+              : cart.deliveryWindowLabel,
           'payment_method': _paymentMethodValue(),
           'payment_reference': operationCode.isEmpty ? null : operationCode,
           'billing_receipt_type': _receiptValue(),
-          'billing_document_type': _billingDocumentType.isEmpty ? null : _billingDocumentType,
-          'billing_document_number': _billingNumberCtrl.text.trim().isEmpty ? null : _billingNumberCtrl.text.trim(),
-          'billing_name': _billingNameCtrl.text.trim().isEmpty ? null : _billingNameCtrl.text.trim(),
-          'billing_email': _billingEmailCtrl.text.trim().isEmpty ? null : _billingEmailCtrl.text.trim(),
-          'billing_address': _billingAddressCtrl.text.trim().isEmpty ? null : _billingAddressCtrl.text.trim(),
+          'billing_document_type': _billingDocumentType.isEmpty
+              ? null
+              : _billingDocumentType,
+          'billing_document_number': _billingNumberCtrl.text.trim().isEmpty
+              ? null
+              : _billingNumberCtrl.text.trim(),
+          'billing_name': _billingNameCtrl.text.trim().isEmpty
+              ? null
+              : _billingNameCtrl.text.trim(),
+          'billing_email': _billingEmailCtrl.text.trim().isEmpty
+              ? null
+              : _billingEmailCtrl.text.trim(),
+          'billing_address': _billingAddressCtrl.text.trim().isEmpty
+              ? null
+              : _billingAddressCtrl.text.trim(),
           'billing_metadata': _billingMetadata,
           'salad_type': hasChicken ? _saladType : null,
-          'drink_note': cart.orderNote.trim().isEmpty ? null : cart.orderNote.trim(),
+          'drink_note': cart.orderNote.trim().isEmpty
+              ? null
+              : cart.orderNote.trim(),
           'address': address.isEmpty ? null : address,
-          'reference': _referenceCtrl.text.trim().isEmpty ? null : _referenceCtrl.text.trim(),
+          'reference': _referenceCtrl.text.trim().isEmpty
+              ? null
+              : _referenceCtrl.text.trim(),
           'latitude': _parseCoordinate(_latitudeCtrl),
           'longitude': _parseCoordinate(_longitudeCtrl),
           'items': cart.items
-              .map((item) => {
-                    'product_id': item.producto.id,
-                    'quantity': item.qty,
-                  })
+              .map(
+                (item) => {
+                  'product_id': item.producto.id,
+                  'quantity': item.qty,
+                },
+              )
               .toList(),
         },
       );
 
       final trackingCode = (response['tracking_code'] ?? '').toString();
       final orderId = (response['id'] as num?)?.toInt() ?? 0;
-      final totalPaid = double.tryParse((response['total_amount'] ?? '0').toString()) ??
+      final totalPaid =
+          double.tryParse((response['total_amount'] ?? '0').toString()) ??
           (cart.subtotal +
-              (_deliveryType == DeliveryType.delivery ? cart.deliveryFee() : 0.0));
+              (_deliveryType == DeliveryType.delivery
+                  ? cart.deliveryFee()
+                  : 0.0));
       final itemsText = cart.items.map((item) => item.producto.name).join(', ');
       final itemCount = cart.totalItemsCount;
       final storedPaymentMethod =
           (response['payment_method'] ?? _paymentMethodValue()).toString();
 
-      if (storedPaymentMethod == 'izipay' && orderId > 0) {
+      if ((storedPaymentMethod == 'izipay' || storedPaymentMethod == 'yape') &&
+          orderId > 0) {
         final checkout = await _orderApiService.izipayCheckout(
           token: token,
           orderId: orderId,
@@ -439,6 +492,7 @@ class _PaymentPageState extends State<PaymentPage> {
           orderId: orderId,
           trackingCode: trackingCode,
           checkoutUrl: checkoutUrl,
+          paymentMethod: storedPaymentMethod,
         );
         if (!verified) {
           if (!mounted) return;
@@ -486,6 +540,7 @@ class _PaymentPageState extends State<PaymentPage> {
     required int orderId,
     required String trackingCode,
     required String checkoutUrl,
+    required String paymentMethod,
   }) async {
     return await showDialog<bool>(
           context: context,
@@ -496,8 +551,10 @@ class _PaymentPageState extends State<PaymentPage> {
             orderId: orderId,
             trackingCode: trackingCode,
             checkoutUrl: checkoutUrl,
+            paymentMethod: paymentMethod,
           ),
-        ) ?? false;
+        ) ??
+        false;
   }
 
   Future<bool> _openIzipay(String checkoutUrl) {
@@ -511,11 +568,18 @@ class _PaymentPageState extends State<PaymentPage> {
   @override
   Widget build(BuildContext context) {
     final cart = CartScope.of(context);
-    final hasChicken = cart.items.any((item) => item.producto.categoria.toLowerCase() == 'pollos');
-    final deliveryFee = _deliveryType == DeliveryType.delivery ? cart.deliveryFee() : 0.0;
+    final hasChicken = cart.items.any(
+      (item) => item.producto.categoria.toLowerCase() == 'pollos',
+    );
+    final deliveryFee = _deliveryType == DeliveryType.delivery
+        ? cart.deliveryFee()
+        : 0.0;
     final total = cart.subtotal + deliveryFee;
-    final selectedSavedAddressId = (_selectedAddressValue != null &&
-            _savedAddresses.any((item) => item.id.toString() == _selectedAddressValue))
+    final selectedSavedAddressId =
+        (_selectedAddressValue != null &&
+            _savedAddresses.any(
+              (item) => item.id.toString() == _selectedAddressValue,
+            ))
         ? _selectedAddressValue
         : null;
 
@@ -548,9 +612,22 @@ class _PaymentPageState extends State<PaymentPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('¡Tu pollo ya casi está listo!', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+                      Text(
+                        '¡Tu pollo ya casi está listo!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                       SizedBox(height: 3),
-                      Text('Completa tus datos, elige la entrega y paga seguro.', style: TextStyle(color: StoreTheme.borderLight, fontSize: 12)),
+                      Text(
+                        'Completa tus datos, elige la entrega y paga seguro.',
+                        style: TextStyle(
+                          color: StoreTheme.borderLight,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -624,10 +701,12 @@ class _PaymentPageState extends State<PaymentPage> {
                       decoration: _decor('Direcciones guardadas'),
                       value: selectedSavedAddressId,
                       items: _savedAddresses
-                          .map((item) => DropdownMenuItem<String>(
-                                value: item.id.toString(),
-                                child: Text(item.address),
-                              ))
+                          .map(
+                            (item) => DropdownMenuItem<String>(
+                              value: item.id.toString(),
+                              child: Text(item.address),
+                            ),
+                          )
                           .toList(),
                       onChanged: (value) {
                         if (value == null) return;
@@ -657,9 +736,13 @@ class _PaymentPageState extends State<PaymentPage> {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      Expanded(child: _field(_latitudeCtrl, 'Latitud (opcional)')),
+                      Expanded(
+                        child: _field(_latitudeCtrl, 'Latitud (opcional)'),
+                      ),
                       const SizedBox(width: 10),
-                      Expanded(child: _field(_longitudeCtrl, 'Longitud (opcional)')),
+                      Expanded(
+                        child: _field(_longitudeCtrl, 'Longitud (opcional)'),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -682,27 +765,33 @@ class _PaymentPageState extends State<PaymentPage> {
                   DropdownMenuItem(value: 'salada', child: Text('Salada')),
                 ],
                 decoration: _decor('Tipo de ensalada'),
-                onChanged: (value) => setState(() => _saladType = value ?? 'dulce'),
+                onChanged: (value) =>
+                    setState(() => _saladType = value ?? 'dulce'),
               ),
             ),
           _section(
-            title: 'Metodo de pago',
+            title: '¿Cómo deseas pagar?',
             child: Column(
               children: [
-                DropdownButtonFormField<PayMethod>(
-                  value: _method,
-                  items: const [
-                    DropdownMenuItem(
-                      value: PayMethod.izipay,
-                      child: Text('Pago con tarjeta'),
-                    ),
-                    DropdownMenuItem(
-                      value: PayMethod.cod,
-                      child: Text('Pago contraentrega'),
-                    ),
-                  ],
-                  decoration: _decor('Selecciona como pagaras'),
-                  onChanged: (value) => setState(() => _method = value ?? PayMethod.izipay),
+                _paymentChoice(
+                  value: PayMethod.izipay,
+                  icon: Icons.credit_card_rounded,
+                  title: 'Tarjeta / Izipay',
+                  subtitle: 'Visa, Mastercard y más desde el checkout seguro.',
+                ),
+                const SizedBox(height: 10),
+                _paymentChoice(
+                  value: PayMethod.yape,
+                  icon: Icons.phone_android_rounded,
+                  title: 'Yape',
+                  subtitle: 'Paga de forma segura con Yape mediante Izipay.',
+                ),
+                const SizedBox(height: 10),
+                _paymentChoice(
+                  value: PayMethod.cod,
+                  icon: Icons.payments_outlined,
+                  title: 'Contraentrega',
+                  subtitle: 'Paga cuando recibas tu pedido.',
                 ),
                 if (_needsOperationCode) ...[
                   const SizedBox(height: 10),
@@ -728,10 +817,7 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  Widget _bottomPayBar({
-    required CartController cart,
-    required double total,
-  }) {
+  Widget _bottomPayBar({required CartController cart, required double total}) {
     return SafeArea(
       top: false,
       child: Container(
@@ -780,12 +866,17 @@ class _PaymentPageState extends State<PaymentPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: StoreTheme.orange,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              onPressed: cart.items.isEmpty || _submitting ? null : _submitOrder,
+              onPressed: cart.items.isEmpty || _submitting
+                  ? null
+                  : _submitOrder,
               icon: _submitting
                   ? const SizedBox(
                       width: 16,
@@ -816,7 +907,10 @@ class _PaymentPageState extends State<PaymentPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17),
+            ),
             const SizedBox(height: 14),
             child,
           ],
@@ -826,9 +920,77 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Widget _field(TextEditingController controller, String label) {
-    return TextField(
-      controller: controller,
-      decoration: _decor(label),
+    return TextField(controller: controller, decoration: _decor(label));
+  }
+
+  Widget _paymentChoice({
+    required PayMethod value,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    final selected = _method == value;
+    return Material(
+      color: selected ? StoreTheme.creamStrong : StoreTheme.surface,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: _submitting ? null : () => setState(() => _method = value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: selected ? StoreTheme.orange : StoreTheme.borderSoft,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: selected ? StoreTheme.orange : StoreTheme.surfaceSoft,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  icon,
+                  color: selected ? Colors.white : StoreTheme.orangeDark,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: StoreTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                color: selected ? StoreTheme.orange : StoreTheme.border,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -836,7 +998,9 @@ class _PaymentPageState extends State<PaymentPage> {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        throw Exception('Activa la ubicacion del dispositivo para usar esta opcion.');
+        throw Exception(
+          'Activa la ubicacion del dispositivo para usar esta opcion.',
+        );
       }
 
       var permission = await Geolocator.checkPermission();
@@ -844,7 +1008,8 @@ class _PaymentPageState extends State<PaymentPage> {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         throw Exception('No diste permiso para acceder a tu ubicacion.');
       }
 
@@ -861,7 +1026,9 @@ class _PaymentPageState extends State<PaymentPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ubicacion actual cargada correctamente.')),
+        const SnackBar(
+          content: Text('Ubicacion actual cargada correctamente.'),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -882,9 +1049,18 @@ class _PaymentPageState extends State<PaymentPage> {
         DropdownButtonFormField<ReceiptType>(
           value: _receiptType,
           items: const [
-            DropdownMenuItem(value: ReceiptType.none, child: Text('No deseo comprobante')),
-            DropdownMenuItem(value: ReceiptType.boleta, child: Text('Boleta con DNI')),
-            DropdownMenuItem(value: ReceiptType.factura, child: Text('Factura con RUC')),
+            DropdownMenuItem(
+              value: ReceiptType.none,
+              child: Text('No deseo comprobante'),
+            ),
+            DropdownMenuItem(
+              value: ReceiptType.boleta,
+              child: Text('Boleta con DNI'),
+            ),
+            DropdownMenuItem(
+              value: ReceiptType.factura,
+              child: Text('Factura con RUC'),
+            ),
           ],
           decoration: _decor('Comprobante'),
           onChanged: (value) => _onReceiptChanged(value ?? ReceiptType.none),
@@ -923,7 +1099,9 @@ class _PaymentPageState extends State<PaymentPage> {
             ],
             onChanged: _onDocumentChanged,
             decoration: _decor('$docLabel del cliente').copyWith(
-              hintText: _receiptType == ReceiptType.factura ? 'Ej: 20131312955' : 'Ej: 12345678',
+              hintText: _receiptType == ReceiptType.factura
+                  ? 'Ej: 20131312955'
+                  : 'Ej: 12345678',
               suffixIcon: _lookingUpDocument
                   ? const Padding(
                       padding: EdgeInsets.all(12),
@@ -943,7 +1121,11 @@ class _PaymentPageState extends State<PaymentPage> {
           TextField(
             controller: _billingNameCtrl,
             readOnly: true,
-            decoration: _decor(_receiptType == ReceiptType.factura ? 'Razon social' : 'Nombre del cliente'),
+            decoration: _decor(
+              _receiptType == ReceiptType.factura
+                  ? 'Razon social'
+                  : 'Nombre del cliente',
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -980,7 +1162,11 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  bool _isWithinKitchenSchedule(DateTime now, DateTime closeTime, CartController cart) {
+  bool _isWithinKitchenSchedule(
+    DateTime now,
+    DateTime closeTime,
+    CartController cart,
+  ) {
     if (cart.scheduleNow) {
       return !now.isAfter(closeTime);
     }
@@ -1003,8 +1189,8 @@ class _PaymentPageState extends State<PaymentPage> {
     final hour = value.hour == 0
         ? 12
         : value.hour > 12
-            ? value.hour - 12
-            : value.hour;
+        ? value.hour - 12
+        : value.hour;
     final suffix = value.hour >= 12 ? 'PM' : 'AM';
     final minutes = value.minute.toString().padLeft(2, '0');
     return '$hour:$minutes $suffix';
@@ -1018,6 +1204,7 @@ class _PaymentStatusDialog extends StatefulWidget {
     required this.orderId,
     required this.trackingCode,
     required this.checkoutUrl,
+    required this.paymentMethod,
   });
 
   final OrderApiService orderApiService;
@@ -1025,6 +1212,7 @@ class _PaymentStatusDialog extends StatefulWidget {
   final int orderId;
   final String trackingCode;
   final String checkoutUrl;
+  final String paymentMethod;
 
   @override
   State<_PaymentStatusDialog> createState() => _PaymentStatusDialogState();
@@ -1046,7 +1234,10 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog> {
     if (_checking || !mounted) return;
     setState(() => _checking = true);
     try {
-      final order = await widget.orderApiService.getOrder(token: widget.token, orderId: widget.orderId);
+      final order = await widget.orderApiService.getOrder(
+        token: widget.token,
+        orderId: widget.orderId,
+      );
       if (!mounted) return;
       final status = (order['payment_status'] ?? 'pending').toString();
       if (status == 'verified') {
@@ -1071,17 +1262,28 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog> {
   @override
   Widget build(BuildContext context) {
     final rejected = _status == 'rejected';
+    final isYape = widget.paymentMethod == 'yape';
     return AlertDialog(
-      title: Text(rejected ? 'Pago rechazado' : 'Verificando pago'),
-      content: Text(rejected
-          ? 'Izipay rechazo el pago. Puedes volver a abrir el checkout.'
-          : 'Estamos verificando automaticamente el pago del pedido ${widget.trackingCode}.'),
+      title: Text(
+        rejected
+            ? 'Pago rechazado'
+            : isYape
+            ? 'Verificando tu Yape'
+            : 'Verificando pago',
+      ),
+      content: Text(
+        rejected
+            ? 'No se pudo completar el pago${isYape ? ' con Yape' : ''}. Puedes reintentar o elegir otro método.'
+            : 'Estamos verificando automáticamente ${isYape ? 'tu pago con Yape' : 'el pago'} del pedido ${widget.trackingCode}.',
+      ),
       actions: [
         if (widget.checkoutUrl.isNotEmpty)
           TextButton(
             onPressed: () => launchUrl(
               Uri.parse(widget.checkoutUrl),
-              mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.inAppBrowserView,
+              mode: kIsWeb
+                  ? LaunchMode.platformDefault
+                  : LaunchMode.inAppBrowserView,
               webOnlyWindowName: kIsWeb ? '_self' : null,
             ),
             child: Text(rejected ? 'Reintentar pago' : 'Volver a Izipay'),

@@ -58,10 +58,12 @@ Route::match(['get', 'post'], '/pago/izipay/{order}/resultado', [PaymentControll
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
     ->name('izipay.result');
 Route::get('/pago/izipay/{order}/estado', [PaymentController::class, 'izipayStatus'])
+    ->middleware('throttle:60,1')
     ->name('izipay.status');
 
 Route::get('/pago/izipay/{order}', function (\App\Models\Order $order, \Illuminate\Http\Request $request) {
-    abort_if((string) $order->payment_gateway !== 'izipay' && (string) $order->payment_method !== 'izipay', 404);
+    abort_if((string) $order->payment_gateway !== 'izipay'
+        && ! in_array((string) $order->payment_method, ['izipay', 'yape'], true), 404);
     abort_unless($request->hasValidSignature(), 403);
     $payment = $order->paymentTransactions()->latest('id')->first();
     abort_if(! $payment || trim((string) $payment->form_token_reference) === '', 404);
@@ -72,6 +74,8 @@ Route::get('/pago/izipay/{order}', function (\App\Models\Order $order, \Illumina
         'publicKey' => config('services.izipay.public_key'),
         'jsUrl' => config('services.izipay.js_url'),
         'cssUrl' => config('services.izipay.css_url'),
+        'isYape' => (string) $order->payment_method === 'yape',
+        'isMobileClient' => (bool) preg_match('/Android|iPhone|iPad|iPod/i', (string) $request->userAgent()),
         'resultUrl' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
             'izipay.result', now()->addMinutes(30), ['order' => $order->id]
         ),

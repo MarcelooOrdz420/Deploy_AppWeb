@@ -156,6 +156,8 @@ class PaymentController extends Controller
         }
         return view('payments.izipay-result', [
             'order' => $order,
+            'isYape' => (string) $order->payment_method === 'yape',
+            'isMobileClient' => (bool) preg_match('/Android|iPhone|iPad|iPod/i', (string) $request->userAgent()),
             'confirmationError' => $confirmationError,
             'statusUrl' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
                 'izipay.status', now()->addMinutes(30), ['order' => $order->id]
@@ -172,7 +174,7 @@ class PaymentController extends Controller
     private function usesIzipay(Order $order): bool
     {
         return (string) $order->payment_gateway === 'izipay'
-            || (string) $order->payment_method === 'izipay';
+            || in_array((string) $order->payment_method, ['izipay', 'yape'], true);
     }
 
     /** @param array{answer:string,hash:string,algorithm:string,hash_key:string} $fields */

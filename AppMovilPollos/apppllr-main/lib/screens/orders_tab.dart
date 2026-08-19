@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/order_api_service.dart';
 import '../services/pusher_service.dart';
@@ -26,6 +28,7 @@ class _OrdersTabState extends State<OrdersTab> {
   String _paymentLabel(dynamic method) {
     return switch ((method ?? '').toString().toLowerCase()) {
       'izipay' => 'Pago con tarjeta',
+      'yape' => 'Yape',
       'cod' => 'Pago contraentrega',
       final value when value.isNotEmpty => value,
       _ => '-',
@@ -70,7 +73,10 @@ class _OrdersTabState extends State<OrdersTab> {
       if (code.isEmpty) continue;
 
       final prev = _lastStatuses[code];
-      if (prev != null && prev.isNotEmpty && prev != status && status.isNotEmpty) {
+      if (prev != null &&
+          prev.isNotEmpty &&
+          prev != status &&
+          status.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -157,7 +163,10 @@ class _OrdersTabState extends State<OrdersTab> {
                     SizedBox(height: 8),
                     Text(
                       'Sigue el estado de tus ordenes y revisa tu boleta.',
-                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ],
                 ),
@@ -167,11 +176,18 @@ class _OrdersTabState extends State<OrdersTab> {
                 const StoreSurface(
                   child: Column(
                     children: [
-                      Icon(Icons.inventory_2_outlined, size: 48, color: StoreTheme.orange),
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 48,
+                        color: StoreTheme.orange,
+                      ),
                       SizedBox(height: 12),
                       Text(
                         'Aun no tienes pedidos registrados.',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -190,8 +206,19 @@ class _OrdersTabState extends State<OrdersTab> {
     final itemList = ((order['items'] as List?) ?? const [])
         .map((e) => (e as Map).cast<String, dynamic>())
         .toList();
-    final total = double.tryParse((order['total_amount'] ?? '0').toString()) ?? 0.0;
+    final total =
+        double.tryParse((order['total_amount'] ?? '0').toString()) ?? 0.0;
     final status = (order['status'] ?? '-').toString();
+    final paymentMethod = (order['payment_method'] ?? '')
+        .toString()
+        .toLowerCase();
+    final paymentStatus = (order['payment_status'] ?? 'pending')
+        .toString()
+        .toLowerCase();
+    final canRetryPayment =
+        ['izipay', 'yape'].contains(paymentMethod) &&
+        ['pending', 'rejected'].contains(paymentStatus) &&
+        status.toLowerCase() != 'cancelled';
 
     return StoreSurface(
       margin: const EdgeInsets.only(bottom: 12),
@@ -203,7 +230,10 @@ class _OrdersTabState extends State<OrdersTab> {
               Expanded(
                 child: Text(
                   'Codigo ${order['tracking_code'] ?? '-'}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               _statusChip(status),
@@ -247,9 +277,57 @@ class _OrdersTabState extends State<OrdersTab> {
               ),
             ],
           ),
+          if (canRetryPayment) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => _retryPayment(order),
+                icon: Icon(
+                  paymentMethod == 'yape'
+                      ? Icons.phone_android_rounded
+                      : Icons.lock_outline_rounded,
+                ),
+                label: Text(
+                  paymentMethod == 'yape'
+                      ? 'Reintentar con Yape'
+                      : 'Pagar con tarjeta',
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _retryPayment(Map<String, dynamic> order) async {
+    final orderId = (order['id'] as num?)?.toInt() ?? 0;
+    final token = await SessionService().getToken();
+    if (orderId <= 0 || token.isEmpty) return;
+
+    try {
+      final checkout = await OrderApiService().izipayCheckout(
+        token: token,
+        orderId: orderId,
+      );
+      final url = (checkout['payment_url'] ?? '').toString().trim();
+      if (url.isEmpty) throw Exception('Izipay no devolvió un enlace de pago.');
+      await launchUrl(
+        Uri.parse(url),
+        mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.inAppBrowserView,
+        webOnlyWindowName: kIsWeb ? '_self' : null,
+      );
+      if (!mounted) return;
+      setState(() => _future = _loadOrders());
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    }
   }
 
   Widget _localCard(OrderModel order) {
@@ -288,8 +366,8 @@ class _OrdersTabState extends State<OrdersTab> {
     final activeColor = normalized == 'delivered'
         ? const Color(0xFF2DBF72)
         : normalized == 'cancelled'
-            ? const Color(0xFFE76B3C)
-            : StoreTheme.orange;
+        ? const Color(0xFFE76B3C)
+        : StoreTheme.orange;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -338,7 +416,9 @@ class _OrdersTabState extends State<OrdersTab> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: StoreTheme.paper,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+          ),
           title: Text('Boleta ${order['tracking_code'] ?? ''}'),
           content: SingleChildScrollView(
             child: Column(
@@ -356,7 +436,9 @@ class _OrdersTabState extends State<OrdersTab> {
                 ),
                 const SizedBox(height: 8),
                 ...items.map((item) {
-                  final line = double.tryParse((item['line_total'] ?? '0').toString()) ?? 0.0;
+                  final line =
+                      double.tryParse((item['line_total'] ?? '0').toString()) ??
+                      0.0;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Text(

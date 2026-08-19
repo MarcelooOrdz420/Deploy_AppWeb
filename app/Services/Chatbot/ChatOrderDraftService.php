@@ -322,7 +322,9 @@ class ChatOrderDraftService
             $fields['delivery_type'] = 'pickup';
         }
 
-        if (Str::contains($normalized, ['izipay', 'tarjeta'])) {
+        if (Str::contains($normalized, ['yape', 'yapear'])) {
+            $fields['payment_method'] = 'yape';
+        } elseif (Str::contains($normalized, ['izipay', 'tarjeta'])) {
             $fields['payment_method'] = 'izipay';
         } elseif (Str::contains($normalized, ['contraentrega', 'contra entrega', 'al recibir', 'en efectivo'])) {
             $fields['payment_method'] = 'cod';
@@ -424,7 +426,7 @@ class ChatOrderDraftService
             $missing[] = 'ensalada dulce o salada';
         }
         if (! $this->draftValue($draft, 'payment_method')) {
-            $missing[] = 'metodo de pago (tarjeta o contraentrega)';
+            $missing[] = 'metodo de pago (tarjeta, Yape o contraentrega)';
         }
 
         $upsell = $this->needsComplementOffer($items, $metadata)
