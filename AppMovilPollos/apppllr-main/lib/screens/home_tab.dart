@@ -24,6 +24,8 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   final TextEditingController _searchCtrl = TextEditingController();
   final TextEditingController _maxPriceCtrl = TextEditingController();
   final PageController _heroController = PageController();
+  final ScrollController _pageController = ScrollController();
+  final GlobalKey _catalogKey = GlobalKey();
   Timer? _heroTimer;
   int _heroPage = 0;
 
@@ -56,6 +58,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _heroTimer?.cancel();
     _heroController.dispose();
+    _pageController.dispose();
     _searchCtrl.dispose();
     _maxPriceCtrl.dispose();
     super.dispose();
@@ -297,6 +300,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
             await _future;
           },
           child: ListView(
+            controller: _pageController,
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
             children: [
               _buildTopBar(context),
@@ -343,9 +347,19 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                 bebidas: bebidas,
                 parrillas: parrillas,
               ),
-              const SizedBox(height: 16),
-              _buildFilterSection(filtered.length),
-              const SizedBox(height: 16),
+              const SizedBox(height: 22),
+              Container(key: _catalogKey),
+              Text(
+                _selectedCategory.isEmpty
+                    ? 'Nuestro menú'
+                    : 'Productos · ${_selectedCategory[0].toUpperCase()}${_selectedCategory.substring(1)}',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -.7,
+                ),
+              ),
+              const SizedBox(height: 14),
               if (!_hasSelection)
                 const StoreSurface(
                   child: Column(
@@ -575,10 +589,24 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
       borderRadius: BorderRadius.circular(24),
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        onTap: () => setState(() {
-          _selectedCategory = category;
-          _hasSelection = true;
-        }),
+        onTap: () {
+          setState(() {
+            _selectedCategory = category;
+            _hasSelection = true;
+            _searchCtrl.clear();
+            _maxPriceCtrl.clear();
+          });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final target = _catalogKey.currentContext;
+            if (!mounted || target == null) return;
+            Scrollable.ensureVisible(
+              target,
+              duration: const Duration(milliseconds: 420),
+              curve: Curves.easeOutCubic,
+              alignment: .04,
+            );
+          });
+        },
         child: Container(
           height: 116,
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),

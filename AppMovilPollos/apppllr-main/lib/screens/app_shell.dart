@@ -450,7 +450,10 @@ class _AppShellState extends State<AppShell> {
             foregroundColor: StoreTheme.ink,
             elevation: 10,
             onPressed: () => context.push('/chat'),
-            child: const Icon(Icons.smart_toy_outlined),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Image.asset('assets/polloia.png', fit: BoxFit.contain),
+            ),
           ),
         ),
       ),

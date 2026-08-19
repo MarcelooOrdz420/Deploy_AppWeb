@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/auth_service.dart';
+import '../services/company_settings_service.dart';
 import '../services/profile_data_service.dart';
 import '../services/session_service.dart';
 import '../state/app_shell_controller.dart';
@@ -94,6 +96,24 @@ class _ProfileTabState extends State<ProfileTab> {
     setState(() {
       _marketingEmailsEnabled = value;
     });
+  }
+
+  Future<void> _openWhatsAppHelp() async {
+    final settings = await CompanySettingsService().fetch();
+    final phone = settings.supportPhone.replaceAll(RegExp(r'\D'), '');
+    final uri = Uri.parse(
+      'https://wa.me/$phone?text=${Uri.encodeComponent('Hola, tengo una consulta sobre mi compra en Pollos y Parrillas El Dorado.')}',
+    );
+    final opened =
+        phone.isNotEmpty &&
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo abrir WhatsApp. Intenta nuevamente.'),
+        ),
+      );
+    }
   }
 
   Future<String?> _promptValue(
@@ -206,15 +226,11 @@ class _ProfileTabState extends State<ProfileTab> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _quickAction(Icons.support_agent_rounded, 'Ayuda', () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Abre POLL-IA para recibir ayuda inmediata.',
-                      ),
-                    ),
-                  );
-                }),
+                child: _quickAction(
+                  Icons.support_agent_rounded,
+                  'Ayuda',
+                  _openWhatsAppHelp,
+                ),
               ),
             ],
           ),
