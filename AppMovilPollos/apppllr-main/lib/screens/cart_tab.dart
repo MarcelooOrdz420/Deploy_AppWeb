@@ -271,7 +271,7 @@ class _CartTabState extends State<CartTab> {
                     ),
                   ),
                   child: const Text(
-                    'Puedes pedir para ahora o programarlo desde 30 minutos hacia adelante. La cocina recibe pedidos hasta las 11:00 PM.',
+                    'Puedes pedir para ahora o programarlo con anticipación.',
                     style: TextStyle(
                       color: StoreTheme.inkSoft,
                       fontWeight: FontWeight.w600,
@@ -534,9 +534,7 @@ class _CartTabState extends State<CartTab> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'La cocina ya no recibe pedidos para hoy. Atendemos hasta las 11:00 PM.',
-          ),
+          content: Text('La cocina ya no recibe pedidos para hoy.'),
         ),
       );
       return;
@@ -573,7 +571,7 @@ class _CartTabState extends State<CartTab> {
     if (scheduled.isAfter(closeTime)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La cocina cierra a las 11:00 PM.')),
+        const SnackBar(content: Text('Ese horario ya no está disponible.')),
       );
       return;
     }

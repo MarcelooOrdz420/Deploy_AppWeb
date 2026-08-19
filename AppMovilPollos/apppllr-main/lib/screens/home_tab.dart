@@ -390,15 +390,9 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: StoreTheme.lineStrong.withOpacity(.52)),
         gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Color(0xFF000000),
-            Color(0xFF000000),
-            Color(0xFF17100A),
-            Color(0xFFFFBF00),
-          ],
-          stops: [0, .62, .86, 1],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.white, Color(0xFFFFF8F2), Color(0xFFFFE6D2)],
         ),
         boxShadow: const [
           BoxShadow(
@@ -411,26 +405,8 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFC20E),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            child: const Text(
-              'Horario de atencion · Lun-Vie 12 pm a 8 pm · Sab 11 am a 9 pm · Dom 11 am a 7 pm',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF220A00),
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-                letterSpacing: .5,
-              ),
-            ),
-          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -464,7 +440,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                             style: TextStyle(
                               fontSize: 11,
                               letterSpacing: 2.2,
-                              color: Color(0xFFFFC20E),
+                              color: StoreTheme.orangeDeep,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
@@ -477,7 +453,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                               fontSize: 22,
                               fontStyle: FontStyle.italic,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFFFFF8ED),
+                              color: StoreTheme.ink,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -485,7 +461,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                             'Hola, $_userName',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Color(0xFFFFE7B4)),
+                            style: const TextStyle(color: StoreTheme.inkSoft),
                           ),
                         ],
                       ),
@@ -500,7 +476,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                           },
                           icon: const Icon(Icons.shopping_cart_outlined),
                           style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFF17110D),
+                            backgroundColor: StoreTheme.orange,
                             foregroundColor: Colors.white,
                           ),
                         ),
@@ -532,22 +508,19 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: Color(0xFF000000),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white.withOpacity(.35)),
+                    border: Border.all(color: StoreTheme.borderSoft),
                   ),
                   child: const Row(
                     children: [
-                      Icon(
-                        Icons.local_fire_department_rounded,
-                        color: Color(0xFFFFC20E),
-                      ),
+                      Icon(Icons.search_rounded, color: StoreTheme.orangeDeep),
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Menu visual, rapido y listo para pedir.',
+                          '¿Qué se te antoja hoy?',
                           style: TextStyle(
-                            color: Color(0xFFFFF8ED),
+                            color: StoreTheme.ink,
                             fontWeight: FontWeight.w900,
                           ),
                         ),

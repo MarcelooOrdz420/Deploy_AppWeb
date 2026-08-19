@@ -132,7 +132,7 @@ class _PaymentPageState extends State<PaymentPage> {
         _longitudeCtrl.text = cart.longitude!.toStringAsFixed(6);
       }
       final email = await _sessionService.getUserEmail();
-      if (_customerEmailCtrl.text.trim().isEmpty) {
+      if (email.trim().isNotEmpty) {
         _customerEmailCtrl.text = email;
       }
       if (mounted) setState(() {});
@@ -354,7 +354,7 @@ class _PaymentPageState extends State<PaymentPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'La cocina recibe pedidos hasta las 11:00 PM y los programados deben ser desde 30 minutos adelante.',
+            'Los pedidos programados deben solicitarse con anticipación.',
           ),
         ),
       );

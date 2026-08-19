@@ -5,7 +5,6 @@
 @section('content')
     <section class="catalog-shell">
         <section class="hero-showcase surface">
-            <div class="hero-hours-bar">Horario de atencion · Lunes a Viernes 12:00 pm a 8:00 pm · Sabado 11:00 am a 9:00 pm · Domingo 11:00 am a 7:00 pm</div>
             <div class="catalog-hero">
                 <div class="hero-copy-stack" aria-hidden="true">
                 <div class="hero-logo-lockup">
@@ -25,11 +24,11 @@
                 <article class="hero-feature hero-feature-main hero-media--cover">
                     <img id="heroImageA" src="/images/hero/slide-1.jpg" alt="Promo El Dorado 1" class="hero-poster">
                     <div class="hero-tint hero-tint-soft"></div>
-                </article>
-                    <div class="hero-plate-copy">
+                    <div class="hero-note">
                         <strong>Pollos</strong>
                         <span>Pollo a la brasa preparado con el sabor de la casa.</span>
                     </div>
+                </article>
                 </div>
                 <div class="hero-stage-right">
                 <article class="hero-feature hero-feature-side hero-media--contain">
@@ -89,12 +88,6 @@
             </div>
 
             <div class="quick-filter-row">
-                <button type="button" class="btn-soft" data-quick-category="">Ver todo</button>
-                <button type="button" class="btn-soft" data-quick-category="pollos">Solo pollos</button>
-                <button type="button" class="btn-soft" data-quick-category="parrillas">Solo parrillas</button>
-                <button type="button" class="btn-soft" data-quick-category="bebidas">Solo bebidas</button>
-                <button type="button" class="btn-soft" data-quick-budget="25">Hasta S/ 25</button>
-                <button type="button" class="btn-soft" data-quick-budget="40">Hasta S/ 40</button>
                 <button type="button" id="clearFiltersBtn" class="btn-soft" hidden>Limpiar filtros</button>
             </div>
 
@@ -1446,6 +1439,22 @@
             .products-grid .product-name {
                 max-width: none;
             }
+        }
+
+        /* Las tres promociones conservan el carrusel y comparten la misma medida. */
+        @media (min-width: 561px) {
+            .hero-visual-stage {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                grid-template-rows: minmax(300px, 1fr) !important;
+                height: clamp(340px, 38vw, 520px) !important;
+            }
+            .hero-stage-left,
+            .hero-stage-right { display: contents !important; }
+            .hero-feature,
+            .hero-feature-main,
+            .hero-feature-side { width: 100%; height: 100%; min-height: 0; }
+            .hero-quality-chip,
+            .hero-plate-copy { display: none !important; }
         }
 
         /* Composicion final: tres imagenes reales y contenido legible. */

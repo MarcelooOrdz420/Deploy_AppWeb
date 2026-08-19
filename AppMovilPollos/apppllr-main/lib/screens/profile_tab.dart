@@ -45,7 +45,8 @@ class _ProfileTabState extends State<ProfileTab> {
       }
 
       try {
-        _marketingEmailsEnabled = (await _profileData.getPreferences()).marketingEmailsEnabled;
+        _marketingEmailsEnabled =
+            (await _profileData.getPreferences()).marketingEmailsEnabled;
       } catch (_) {}
     }
 
@@ -77,7 +78,11 @@ class _ProfileTabState extends State<ProfileTab> {
 
   Future<void> _addAddress() async {
     final controller = TextEditingController();
-    final value = await _promptValue('Agregar direccion', 'Ej: Av. Principal 123, Lima', controller);
+    final value = await _promptValue(
+      'Agregar direccion',
+      'Ej: Av. Principal 123, Lima',
+      controller,
+    );
     if (value == null || value.isEmpty) return;
     await _profileData.addAddress(value);
     await _load();
@@ -91,20 +96,29 @@ class _ProfileTabState extends State<ProfileTab> {
     });
   }
 
-  Future<String?> _promptValue(String title, String hint, TextEditingController controller) {
+  Future<String?> _promptValue(
+    String title,
+    String hint,
+    TextEditingController controller,
+  ) {
     return showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: StoreTheme.paper,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: Text(title),
           content: TextField(
             controller: controller,
             decoration: InputDecoration(hintText: hint),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: StoreTheme.orange,
@@ -126,8 +140,15 @@ class _ProfileTabState extends State<ProfileTab> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
         children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(4, 4, 4, 16),
+            child: Text(
+              'Mi cuenta',
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+            ),
+          ),
           StoreSurface(
-            child: Column(
+            child: Row(
               children: [
                 CircleAvatar(
                   radius: 38,
@@ -142,17 +163,60 @@ class _ProfileTabState extends State<ProfileTab> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  _name,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _name,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _email.isEmpty ? 'Completa tu perfil' : _email,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: StoreTheme.inkSoft),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  _email.isEmpty ? '-' : _email,
-                  style: const TextStyle(color: StoreTheme.inkSoft),
-                ),
+                const Icon(Icons.chevron_right_rounded),
               ],
             ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _quickAction(Icons.receipt_long_outlined, 'Pedidos', () {
+                  AppShellController.instance.goTo(3);
+                }),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _quickAction(
+                  Icons.location_on_outlined,
+                  'Direcciones',
+                  _logged ? _addAddress : () => context.go('/correo'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _quickAction(Icons.support_agent_rounded, 'Ayuda', () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Abre POLL-IA para recibir ayuda inmediata.',
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           _section(
@@ -167,28 +231,33 @@ class _ProfileTabState extends State<ProfileTab> {
                     ),
                   ]
                 : _addresses.isEmpty
-                    ? const [
-                        Text(
-                          'No tienes direcciones guardadas.',
-                          style: TextStyle(color: StoreTheme.inkSoft),
-                        ),
-                      ]
-                    : List<Widget>.generate(_addresses.length, (index) {
-                        final address = _addresses[index];
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.location_on_outlined, color: StoreTheme.orangeDeep),
-                          title: Text(address.address),
-                          subtitle: address.label == null ? null : Text(address.label!),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () async {
-                              await _profileData.removeAddress(address.id);
-                              await _load();
-                            },
-                          ),
-                        );
-                      }),
+                ? const [
+                    Text(
+                      'No tienes direcciones guardadas.',
+                      style: TextStyle(color: StoreTheme.inkSoft),
+                    ),
+                  ]
+                : List<Widget>.generate(_addresses.length, (index) {
+                    final address = _addresses[index];
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(
+                        Icons.location_on_outlined,
+                        color: StoreTheme.orangeDeep,
+                      ),
+                      title: Text(address.address),
+                      subtitle: address.label == null
+                          ? null
+                          : Text(address.label!),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () async {
+                          await _profileData.removeAddress(address.id);
+                          await _load();
+                        },
+                      ),
+                    );
+                  }),
           ),
           const SizedBox(height: 14),
           StoreSurface(
@@ -214,7 +283,10 @@ class _ProfileTabState extends State<ProfileTab> {
               children: [
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.history, color: StoreTheme.orangeDeep),
+                  leading: const Icon(
+                    Icons.history,
+                    color: StoreTheme.orangeDeep,
+                  ),
                   title: const Text('Historial de pedidos'),
                   onTap: () => context.go('/app'),
                 ),
@@ -251,19 +323,50 @@ class _ProfileTabState extends State<ProfileTab> {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               if (actionLabel != null)
-                TextButton(
-                  onPressed: onAction,
-                  child: Text(actionLabel),
-                ),
+                TextButton(onPressed: onAction, child: Text(actionLabel)),
             ],
           ),
           const SizedBox(height: 8),
           ...children,
         ],
+      ),
+    );
+  }
+
+  Widget _quickAction(IconData icon, String label, VoidCallback onTap) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          height: 112,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: StoreTheme.borderSoft),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: StoreTheme.orangeDeep, size: 30),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

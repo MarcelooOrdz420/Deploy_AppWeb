@@ -865,7 +865,6 @@
                         <div class="footer-contact">
                             <span id="footerLocationName">Local principal El Dorado</span>
                             <span id="footerAddress">Jr. Cuzco, Huancayo, Perú</span>
-                            <span id="footerHours">Atención continua hasta las 11:00 PM</span>
                             <span>Celular: <span id="footerPhone">964 900 990</span></span>
                         </div>
                     </section>
@@ -1124,6 +1123,10 @@ initClientSession();
     .pollia-purchase-actions { display:flex; flex-wrap:wrap; gap:8px; position:sticky; bottom:0; padding-top:4px; background:#FFFDF9; }
     .pollia-purchase-actions button { min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid #EAB68A; background:#fff; color:#25170F; font-weight:900; }
     .pollia-purchase-actions .primary { background:#FF6F1F; color:#fff; border-color:#C94700; }
+    .pollia-validation { display:flex; gap:12px; align-items:flex-start; padding:13px 14px; border:1px solid #FF9D5A; border-radius:14px; background:linear-gradient(135deg,#FFF7EE,#FFE8D5); color:#7A2A00; box-shadow:0 10px 24px rgba(122,42,0,.10); }
+    .pollia-validation > span { display:grid; place-items:center; flex:0 0 28px; width:28px; height:28px; border-radius:50%; background:#FF6F1F; color:#fff; font-weight:900; }
+    .pollia-validation strong { display:block; margin-bottom:3px; font-size:14px; }
+    .pollia-validation p { margin:0; color:#68432E; font-size:13px; line-height:1.4; }
     .pollia-product-summary { display:grid; gap:6px; padding:10px; border-radius:12px; background:#FFF1E3; color:#25170F; }
     #promoOverlay #promoTitle { color:#fff!important; background:transparent!important; opacity:1!important; }
     #promoOverlay #promoMessage { color:#fff8ef!important; }
@@ -1669,7 +1672,7 @@ initClientSession();
         const steps = [
             `<h3>Paso 1 · Plato y cantidad</h3><label>¿Qué plato deseas pedir?<select data-guided="productId"><option value="">Selecciona</option>${optionsFor(dishes,d.productId)}</select></label><label>Cantidad<input data-guided="qty" type="number" min="1" max="20" value="${Number(d.qty)||1}"></label>`,
             `<h3>Paso 2 · Complementos</h3>${sides.length?`<label>Acompañamiento<select data-guided="sideId"><option value="">Sin acompañamiento</option>${optionsFor(sides,d.sideId)}</select></label>`:''}<label>Ensalada<select data-guided="salad"><option value="">Sin ensalada</option><option value="dulce" ${d.salad==='dulce'?'selected':''}>Dulce</option><option value="salada" ${d.salad==='salada'?'selected':''}>Salada</option></select></label>${drinks.length?`<label>Bebida<select data-guided="drinkId"><option value="">Sin bebida</option>${optionsFor(drinks,d.drinkId)}</select></label><label>Cantidad bebida<input data-guided="drinkQty" type="number" min="1" max="20" value="${Number(d.drinkQty)||1}"></label>`:''}<label>Indicaciones<textarea data-guided="notes" maxlength="255" placeholder="Sin ají, papas bien doradas...">${escapeHtml(d.notes||'')}</textarea></label>`,
-            `<h3>Paso 3 · Entrega</h3><label>Modalidad<select data-guided="deliveryType"><option value="delivery" ${d.deliveryType==='delivery'?'selected':''}>Delivery</option><option value="pickup" ${d.deliveryType==='pickup'?'selected':''}>Recojo en local</option></select></label><button type="button" data-guided-location>Usar mi ubicación actual</button><span data-guided-location-status>${d.latitude&&d.longitude?'Ubicación GPS guardada. Debajo puedes corregir la dirección.':'El navegador te pedirá permiso para acceder al GPS.'}</span><input data-guided="latitude" type="hidden" value="${escapeHtml(d.latitude||'')}"><input data-guided="longitude" type="hidden" value="${escapeHtml(d.longitude||'')}"><label>Dirección<input data-guided="address" maxlength="255" value="${escapeHtml(d.address||'')}"></label><label>Referencia<input data-guided="reference" maxlength="255" value="${escapeHtml(d.reference||'')}"></label>`,
+            `<h3>Paso 3 · Entrega</h3><label>Modalidad<select data-guided="deliveryType"><option value="delivery" ${d.deliveryType==='delivery'?'selected':''}>Delivery</option><option value="pickup" ${d.deliveryType==='pickup'?'selected':''}>Recojo en local</option></select></label>${d.deliveryType==='delivery'?`<button type="button" data-guided-location>Usar mi ubicación actual</button><span data-guided-location-status>${d.latitude&&d.longitude?'Ubicación GPS guardada. Debajo puedes corregir la dirección.':'El navegador te pedirá permiso para acceder al GPS.'}</span><input data-guided="latitude" type="hidden" value="${escapeHtml(d.latitude||'')}"><input data-guided="longitude" type="hidden" value="${escapeHtml(d.longitude||'')}"><label>Dirección<input data-guided="address" maxlength="255" value="${escapeHtml(d.address||'')}"></label>`:''}<label>Referencia<input data-guided="reference" maxlength="255" value="${escapeHtml(d.reference||'')}"></label>`,
             `<h3>Paso 4 · Tus datos</h3><label>Nombre completo<input data-guided="customerName" maxlength="120" value="${escapeHtml(d.customerName||'')}"></label><label>Teléfono<input data-guided="phone" inputmode="tel" maxlength="30" value="${escapeHtml(d.phone||'')}"></label><label>Correo<input data-guided="email" type="email" maxlength="120" value="${escapeHtml(d.email||'')}"></label>`,
             `<h3>Resumen</h3><div class="pollia-product-summary"><strong>${escapeHtml(product?.name||'Plato pendiente')} × ${Number(d.qty)||1}</strong>${side?`<span>${escapeHtml(side.name)}</span>`:''}${drink?`<span>${escapeHtml(drink.name)} × ${Number(d.drinkQty)||1}</span>`:''}<span>${d.deliveryType==='delivery'?'Delivery':'Recojo en local'}</span><strong>Subtotal: S/ ${((Number(product?.price||0)*Number(d.qty||1))+Number(side?.price||0)+(Number(drink?.price||0)*Number(d.drinkQty||1))).toFixed(2)}</strong></div>`,
         ];
@@ -1678,7 +1681,17 @@ initClientSession();
         purchaseFlow.innerHTML = `<div class="pollia-purchase-card">${steps[guided.step]}<div class="pollia-purchase-actions">${guided.step?'<button type="button" data-guided-back>Anterior</button>':''}${guided.step<4?'<button type="button" class="primary" data-guided-next>Continuar</button>':`<button type="button" class="primary" data-guided-confirm>${confirmLabel}</button>`}<button type="button" data-guided-cancel>Cancelar</button></div></div>`;
         purchaseFlow.querySelector('[data-guided-back]')?.addEventListener('click',()=>{captureGuidedFields();guided.step--;renderGuidedPurchase()});
         purchaseFlow.querySelector('[data-guided-location]')?.addEventListener('click', requestGuidedLocation);
-        purchaseFlow.querySelector('[data-guided-next]')?.addEventListener('click',()=>{captureGuidedFields();if(guided.step===0&&!d.productId)return alert('Selecciona un plato.');if(guided.step===2&&d.deliveryType==='delivery'&&!d.address)return alert('Ingresa la dirección.');if(guided.step===3&&(!d.customerName||!/^\+?[0-9\s-]{7,30}$/.test(d.phone||'')||!/^\S+@\S+\.\S+$/.test(d.email||'')))return alert('Completa nombre, teléfono y correo válidos.');guided.step++;renderGuidedPurchase()});
+        purchaseFlow.querySelector('[data-guided="deliveryType"]')?.addEventListener('change',()=>{captureGuidedFields();renderGuidedPurchase()});
+        const showGuidedError = message => {
+            purchaseFlow.querySelector('.pollia-validation')?.remove();
+            const notice = document.createElement('div');
+            notice.className = 'pollia-validation';
+            notice.setAttribute('role', 'alert');
+            notice.innerHTML = `<span aria-hidden="true">!</span><div><strong>Revisa tus datos</strong><p>${escapeHtml(message)}</p></div>`;
+            purchaseFlow.querySelector('.pollia-purchase-card')?.prepend(notice);
+            notice.scrollIntoView({behavior:'smooth',block:'nearest'});
+        };
+        purchaseFlow.querySelector('[data-guided-next]')?.addEventListener('click',()=>{captureGuidedFields();if(guided.step===0&&!d.productId)return showGuidedError('Selecciona un plato.');if(guided.step===2&&d.deliveryType==='delivery'&&!d.address)return showGuidedError('Ingresa la dirección de entrega.');if(guided.step===3&&(!d.customerName||!/^\+?[0-9\s-]{7,30}$/.test(d.phone||'')||!/^\S+@\S+\.\S+$/.test(d.email||'')))return showGuidedError('Completa nombre, teléfono y correo válidos.');guided.step++;renderGuidedPurchase()});
         purchaseFlow.querySelector('[data-guided-cancel]')?.addEventListener('click',()=>closeGuided(true));
         purchaseFlow.querySelector('[data-guided-confirm]')?.addEventListener('click', () => {
             captureGuidedFields();
