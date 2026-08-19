@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $isYape ? 'Pago con Yape' : 'Pago con tarjeta' }} - {{ $order->tracking_code }}</title>
+    <title>Pago con tarjeta - {{ $order->tracking_code }}</title>
     <link rel="stylesheet" href="{{ $cssUrl }}">
     <style>
         body {
@@ -54,14 +54,11 @@
         <div class="brand-mark">
             <img src="/images/ico-pollo.jpg" alt="El Dorado">
         </div>
-        <h1>{{ $isYape ? 'Pago seguro con Yape' : 'Pago seguro con tarjeta' }}</h1>
+        <h1>Pago seguro con tarjeta</h1>
         <p class="meta">
             Pedido {{ $order->tracking_code }}<br>
             Total: S/ {{ number_format((float) $order->total_amount, 2) }}
         </p>
-        @if($isYape)
-            <p class="meta">Selecciona Yape dentro del formulario seguro de Izipay. Tu código de aprobación se ingresa únicamente allí y nunca se guarda en El Dorado.</p>
-        @endif
 
         <div class="kr-smart-form" kr-form-token="{{ $formToken }}"></div>
         <div class="kr-form-error" aria-live="polite"></div>

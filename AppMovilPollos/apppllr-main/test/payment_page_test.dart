@@ -7,7 +7,7 @@ import 'package:flutter_application_1/state/cart_controller.dart';
 import 'package:flutter_application_1/theme/store_theme.dart';
 
 void main() {
-  testWidgets('checkout móvil muestra tarjeta, Yape y contraentrega', (
+  testWidgets('checkout móvil muestra tarjeta y contraentrega sin Yape', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -28,7 +28,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Tarjeta / Izipay'), findsOneWidget);
-    expect(find.text('Yape'), findsOneWidget);
+    expect(find.text('Yape'), findsNothing);
     expect(find.text('Contraentrega'), findsOneWidget);
     expect(find.text('¡Tu pollo ya casi está listo!'), findsOneWidget);
   });

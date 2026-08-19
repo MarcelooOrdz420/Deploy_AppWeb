@@ -216,7 +216,7 @@ class _OrdersTabState extends State<OrdersTab> {
         .toString()
         .toLowerCase();
     final canRetryPayment =
-        ['izipay', 'yape'].contains(paymentMethod) &&
+        paymentMethod == 'izipay' &&
         ['pending', 'rejected'].contains(paymentStatus) &&
         status.toLowerCase() != 'cancelled';
 
@@ -283,16 +283,8 @@ class _OrdersTabState extends State<OrdersTab> {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: () => _retryPayment(order),
-                icon: Icon(
-                  paymentMethod == 'yape'
-                      ? Icons.phone_android_rounded
-                      : Icons.lock_outline_rounded,
-                ),
-                label: Text(
-                  paymentMethod == 'yape'
-                      ? 'Reintentar con Yape'
-                      : 'Pagar con tarjeta',
-                ),
+                icon: const Icon(Icons.lock_outline_rounded),
+                label: const Text('Pagar con tarjeta'),
               ),
             ),
           ],

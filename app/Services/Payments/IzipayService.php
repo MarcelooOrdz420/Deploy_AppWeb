@@ -38,11 +38,6 @@ class IzipayService
         if ($amountCents <= 0 || trim((string) $order->tracking_code) === '') {
             throw new RuntimeException('El total almacenado del pedido no es valido.');
         }
-        if ($order->payment_method === 'yape'
-            && ($amountCents / 100) > (float) config('company.payments.yape.max_amount', 2000)) {
-            throw new RuntimeException('Yape permite pagos de hasta S/ '.number_format((float) config('company.payments.yape.max_amount', 2000), 2).'.');
-        }
-
         $currency = strtoupper((string) config('company.currency', 'PEN'));
         if ($currency !== 'PEN') {
             throw new RuntimeException('Izipay solo esta habilitado para pagos en PEN.');
@@ -246,7 +241,7 @@ class IzipayService
     private function usesIzipay(Order $order): bool
     {
         return $order->payment_gateway === 'izipay'
-            || in_array($order->payment_method, ['izipay', 'yape'], true);
+            && $order->payment_method === 'izipay';
     }
 
     private function decimalToCents(string $amount): int

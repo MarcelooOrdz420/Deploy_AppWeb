@@ -1200,7 +1200,6 @@
                     <select id="filterPaymentMethod">
                         <option value="">Todos</option>
                         <option value="izipay">Izipay</option>
-                        <option value="yape">Yape</option>
                     </select>
                 </div>
                 <div>

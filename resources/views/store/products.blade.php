@@ -1627,6 +1627,36 @@
             .float-cart-panel { max-height: 82vh; border-radius: 20px 20px 14px 14px; }
             .float-cart-actions { grid-template-columns: 1fr; }
         }
+
+        /* Composición final: tres fotos visibles, alineadas y del mismo tamaño. */
+        .hero-visual-stage {
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            grid-template-rows: 1fr !important;
+            gap: clamp(6px, 1vw, 14px) !important;
+            height: clamp(230px, 31vw, 500px) !important;
+            overflow: hidden !important;
+        }
+        .hero-stage-left,
+        .hero-stage-right { display: contents !important; }
+        .hero-feature,
+        .hero-feature-main,
+        .hero-feature-side {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 0 !important;
+            grid-column: auto !important;
+            grid-row: auto !important;
+        }
+        .hero-poster { object-fit: cover !important; }
+        .hero-quality-chip,
+        .hero-plate-copy { display: none !important; }
+        @media (max-width: 560px) {
+            .hero-visual-stage { height: clamp(150px, 46vw, 230px) !important; }
+            .hero-feature { flex: none !important; }
+            .hero-note { padding: 8px !important; }
+            .hero-note span { display: none; }
+        }
     </style>
 @endsection
 

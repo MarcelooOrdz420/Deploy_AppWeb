@@ -14,7 +14,7 @@ import '../services/session_service.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
 
-enum PayMethod { izipay, yape, cod }
+enum PayMethod { izipay, cod }
 
 enum DeliveryType { delivery, pickup }
 
@@ -143,8 +143,6 @@ class _PaymentPageState extends State<PaymentPage> {
     switch (_method) {
       case PayMethod.izipay:
         return 'izipay';
-      case PayMethod.yape:
-        return 'yape';
       case PayMethod.cod:
         return 'cod';
     }
@@ -455,8 +453,7 @@ class _PaymentPageState extends State<PaymentPage> {
       final storedPaymentMethod =
           (response['payment_method'] ?? _paymentMethodValue()).toString();
 
-      if ((storedPaymentMethod == 'izipay' || storedPaymentMethod == 'yape') &&
-          orderId > 0) {
+      if (storedPaymentMethod == 'izipay' && orderId > 0) {
         final checkout = await _orderApiService.izipayCheckout(
           token: token,
           orderId: orderId,
@@ -778,13 +775,6 @@ class _PaymentPageState extends State<PaymentPage> {
                   icon: Icons.credit_card_rounded,
                   title: 'Tarjeta / Izipay',
                   subtitle: 'Visa, Mastercard y más desde el checkout seguro.',
-                ),
-                const SizedBox(height: 10),
-                _paymentChoice(
-                  value: PayMethod.yape,
-                  icon: Icons.phone_android_rounded,
-                  title: 'Yape',
-                  subtitle: 'Paga de forma segura con Yape mediante Izipay.',
                 ),
                 const SizedBox(height: 10),
                 _paymentChoice(
@@ -1262,19 +1252,12 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog> {
   @override
   Widget build(BuildContext context) {
     final rejected = _status == 'rejected';
-    final isYape = widget.paymentMethod == 'yape';
     return AlertDialog(
-      title: Text(
-        rejected
-            ? 'Pago rechazado'
-            : isYape
-            ? 'Verificando tu Yape'
-            : 'Verificando pago',
-      ),
+      title: Text(rejected ? 'Pago rechazado' : 'Verificando pago'),
       content: Text(
         rejected
-            ? 'No se pudo completar el pago${isYape ? ' con Yape' : ''}. Puedes reintentar o elegir otro método.'
-            : 'Estamos verificando automáticamente ${isYape ? 'tu pago con Yape' : 'el pago'} del pedido ${widget.trackingCode}.',
+            ? 'No se pudo completar el pago. Puedes reintentar o elegir otro método.'
+            : 'Estamos verificando automáticamente el pago del pedido ${widget.trackingCode}.',
       ),
       actions: [
         if (widget.checkoutUrl.isNotEmpty)

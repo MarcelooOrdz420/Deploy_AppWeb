@@ -31,6 +31,7 @@ class StorePagesTest extends TestCase
             ->assertSee('name="payment_method"', false)
             ->assertSee('value="izipay"', false)
             ->assertSee('value="cod"', false)
+            ->assertDontSee('value="yape"', false)
             ->assertDontSee('id="paymentInfo"', false);
     }
 

@@ -156,9 +156,7 @@ class IzipayPaymentConfirmationService
                 OrderStatusHistory::create([
                     'order_id' => $order->id,
                     'status' => Order::STATUS_CONFIRMED,
-                    'note' => $order->payment_method === 'yape'
-                        ? 'Pago con Yape confirmado por Izipay'
-                        : 'Pago con tarjeta confirmado por Izipay',
+                    'note' => 'Pago con tarjeta confirmado por Izipay',
                     'changed_by' => null,
                 ]);
             }
@@ -209,7 +207,7 @@ class IzipayPaymentConfirmationService
     private function usesIzipay(Order $order): bool
     {
         return $order->payment_gateway === 'izipay'
-            || in_array($order->payment_method, ['izipay', 'yape'], true);
+            && $order->payment_method === 'izipay';
     }
 
     private function decimalToCents(string $amount): int
