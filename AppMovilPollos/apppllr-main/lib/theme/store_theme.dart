@@ -8,12 +8,12 @@ class StoreTheme {
   static const Color gold = Color(0xFFF7B801);
   static const Color goldDark = Color(0xFFDFA500);
   static const Color goldSoft = Color(0xFFFFF7D6);
-  static const Color cream = Color(0xFFF7F8FA);
+  static const Color cream = Color(0xFFF5F6F8);
   static const Color creamStrong = Color(0xFFFFF3EA);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceWarm = Color(0xFFFFFFFF);
   static const Color surfaceSoft = Color(0xFFFFFAF6);
-  static const Color field = Color(0xFFF2F3F5);
+  static const Color field = Color(0xFFF0F1F3);
   static const Color textPrimary = Color(0xFF25170F);
   static const Color textDark = Color(0xFF24160F);
   static const Color textSecondary = Color(0xFF68432E);
@@ -120,7 +120,7 @@ class StoreTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surface,
+        fillColor: field,
         hintStyle: const TextStyle(color: textMuted),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -128,15 +128,15 @@ class StoreTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: const BorderSide(color: lineStrong),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: const BorderSide(color: lineStrong),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: const BorderSide(color: orange, width: 1.6),
+          borderSide: const BorderSide(color: orange, width: 1.4),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -198,13 +198,10 @@ class StoreTheme {
         foregroundColor: Colors.white,
       ),
       cardTheme: CardThemeData(
-        color: surfaceWarm,
-        elevation: 1,
+        color: surface,
+        elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-          side: const BorderSide(color: borderSoft, width: .8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       ),
       navigationBarTheme: NavigationBarThemeData(
         height: 78,
@@ -305,23 +302,18 @@ class StoreTheme {
     return BoxDecoration(
       borderRadius: BorderRadius.circular(28),
       color: surface,
-      border: Border.all(color: borderSoft),
       boxShadow: const <BoxShadow>[
         BoxShadow(
-          color: Color.fromRGBO(25, 22, 20, .06),
-          blurRadius: 28,
-          offset: Offset(0, 10),
+          color: Color.fromRGBO(25, 22, 20, .045),
+          blurRadius: 24,
+          offset: Offset(0, 8),
         ),
       ],
     );
   }
 
   static BoxDecoration panelDecoration() {
-    return BoxDecoration(
-      borderRadius: BorderRadius.circular(26),
-      border: Border.all(color: borderSoft),
-      color: surface,
-    );
+    return BoxDecoration(borderRadius: BorderRadius.circular(26), color: field);
   }
 }
 

@@ -94,7 +94,6 @@ class _SearchPageState extends State<SearchPage> {
                       contentPadding: const EdgeInsets.all(12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
-                        side: const BorderSide(color: StoreTheme.borderSoft),
                       ),
                       tileColor: Colors.white,
                       leading: ProductoImage(

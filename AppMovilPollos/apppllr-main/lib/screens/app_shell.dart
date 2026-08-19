@@ -396,7 +396,6 @@ class _AppShellState extends State<AppShell> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(34),
                     color: Colors.white,
-                    border: Border.all(color: StoreTheme.borderSoft),
                     boxShadow: const [
                       BoxShadow(
                         color: Color.fromRGBO(25, 22, 20, .13),

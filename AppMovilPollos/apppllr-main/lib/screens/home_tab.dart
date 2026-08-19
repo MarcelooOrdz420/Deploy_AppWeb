@@ -425,7 +425,6 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: StoreTheme.lineStrong.withOpacity(.52)),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -455,9 +454,6 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: StoreTheme.lineStrong.withOpacity(.9),
-                        ),
                         gradient: LinearGradient(
                           colors: [
                             Colors.white.withOpacity(.95),
@@ -547,7 +543,6 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: StoreTheme.borderSoft),
                   ),
                   child: const Row(
                     children: [
@@ -589,9 +584,13 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: selected ? StoreTheme.orange : StoreTheme.borderSoft,
-            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(25, 22, 20, .05),
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
