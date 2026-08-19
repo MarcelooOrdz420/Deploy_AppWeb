@@ -10,6 +10,7 @@ import '../services/session_service.dart';
 import '../services/productos_service.dart';
 import '../models/producto.dart';
 import '../state/cart_controller.dart';
+import '../theme/store_theme.dart';
 
 class ChatBotPage extends StatefulWidget {
   const ChatBotPage({super.key});
@@ -257,6 +258,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 76,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -267,7 +269,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
             ),
           ],
         ),
-        backgroundColor: Colors.orange,
+        backgroundColor: Colors.white,
+        foregroundColor: StoreTheme.ink,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -359,8 +362,23 @@ class _ChatBotPageState extends State<ChatBotPage> {
                       maxWidth: MediaQuery.of(context).size.width * 0.82,
                     ),
                     decoration: BoxDecoration(
-                      color: isUser ? Colors.orange : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(14),
+                      color: isUser ? StoreTheme.orange : Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(24),
+                        topRight: const Radius.circular(24),
+                        bottomLeft: Radius.circular(isUser ? 24 : 6),
+                        bottomRight: Radius.circular(isUser ? 6 : 24),
+                      ),
+                      border: isUser
+                          ? null
+                          : Border.all(color: StoreTheme.borderSoft),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color.fromRGBO(25, 22, 20, .05),
+                          blurRadius: 16,
+                          offset: Offset(0, 6),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: isUser

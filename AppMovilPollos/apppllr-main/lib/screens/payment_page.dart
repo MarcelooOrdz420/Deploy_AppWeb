@@ -582,9 +582,13 @@ class _PaymentPageState extends State<PaymentPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Finaliza tu pedido'),
-        backgroundColor: StoreTheme.ink,
-        foregroundColor: StoreTheme.cream,
+        toolbarHeight: 76,
+        title: const Text(
+          'Terminar y pagar',
+          style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
+        ),
+        backgroundColor: StoreTheme.background,
+        foregroundColor: StoreTheme.ink,
         centerTitle: false,
       ),
       bottomNavigationBar: _bottomPayBar(cart: cart, total: total),
@@ -594,14 +598,17 @@ class _PaymentPageState extends State<PaymentPage> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: StoreTheme.ink,
-              borderRadius: BorderRadius.circular(24),
+              gradient: const LinearGradient(
+                colors: [Colors.white, Color(0xFFFFF3EA)],
+              ),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: StoreTheme.borderSoft),
             ),
             child: const Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: StoreTheme.orange,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Color(0xFFFFE4D2),
+                  foregroundColor: StoreTheme.orangeDeep,
                   child: Icon(Icons.local_dining_rounded),
                 ),
                 SizedBox(width: 14),
@@ -612,7 +619,7 @@ class _PaymentPageState extends State<PaymentPage> {
                       Text(
                         '¡Tu pollo ya casi está listo!',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: StoreTheme.ink,
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
                         ),
@@ -621,7 +628,7 @@ class _PaymentPageState extends State<PaymentPage> {
                       Text(
                         'Completa tus datos, elige la entrega y paga seguro.',
                         style: TextStyle(
-                          color: StoreTheme.borderLight,
+                          color: StoreTheme.inkSoft,
                           fontSize: 12,
                         ),
                       ),
@@ -813,13 +820,11 @@ class _PaymentPageState extends State<PaymentPage> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
         decoration: const BoxDecoration(
-          color: StoreTheme.ink,
-          border: Border(
-            top: BorderSide(color: StoreTheme.orangeSoft, width: 1.2),
-          ),
+          color: Colors.white,
+          border: Border(top: BorderSide(color: StoreTheme.borderSoft)),
           boxShadow: [
             BoxShadow(
-              color: Color.fromRGBO(0, 0, 0, .28),
+              color: Color.fromRGBO(25, 22, 20, .12),
               blurRadius: 20,
               offset: Offset(0, -8),
             ),
@@ -835,7 +840,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   const Text(
                     'Total a pagar',
                     style: TextStyle(
-                      color: StoreTheme.orangeSoft,
+                      color: StoreTheme.inkSoft,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
@@ -843,7 +848,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   Text(
                     'S/. ${total.toStringAsFixed(2)}',
                     style: const TextStyle(
-                      color: StoreTheme.cream,
+                      color: StoreTheme.ink,
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                     ),
@@ -861,7 +866,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   vertical: 14,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(24),
                 ),
               ),
               onPressed: cart.items.isEmpty || _submitting

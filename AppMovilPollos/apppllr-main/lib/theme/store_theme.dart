@@ -8,19 +8,19 @@ class StoreTheme {
   static const Color gold = Color(0xFFF7B801);
   static const Color goldDark = Color(0xFFDFA500);
   static const Color goldSoft = Color(0xFFFFF7D6);
-  static const Color cream = Color(0xFFFFF8F2);
-  static const Color creamStrong = Color(0xFFFFF1E3);
+  static const Color cream = Color(0xFFF7F8FA);
+  static const Color creamStrong = Color(0xFFFFF3EA);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceWarm = Color(0xFFFFFDF9);
-  static const Color surfaceSoft = Color(0xFFFFF6EE);
-  static const Color field = Color(0xFFFFF4EB);
+  static const Color surfaceWarm = Color(0xFFFFFFFF);
+  static const Color surfaceSoft = Color(0xFFFFFAF6);
+  static const Color field = Color(0xFFF2F3F5);
   static const Color textPrimary = Color(0xFF25170F);
   static const Color textDark = Color(0xFF24160F);
   static const Color textSecondary = Color(0xFF68432E);
   static const Color textMuted = Color(0xFF765744);
-  static const Color border = Color(0xFFEAB68A);
-  static const Color borderSoft = Color(0xFFF0C9AA);
-  static const Color borderLight = Color(0xFFF0CFB3);
+  static const Color border = Color(0xFFE4E6EA);
+  static const Color borderSoft = Color(0xFFEBEDF0);
+  static const Color borderLight = Color(0xFFF3D5BD);
   static const Color success = Color(0xFF17683A);
   static const Color danger = Color(0xFFA1261A);
   static const Color warning = Color(0xFF805100);
@@ -55,14 +55,49 @@ class StoreTheme {
 
     return base.copyWith(
       textTheme: base.textTheme.copyWith(
-        displayLarge: const TextStyle(color: textPrimary, fontSize: 48, fontWeight: FontWeight.w800),
-        headlineLarge: const TextStyle(color: textPrimary, fontSize: 34, fontWeight: FontWeight.w800),
-        headlineMedium: const TextStyle(color: textPrimary, fontSize: 28, fontWeight: FontWeight.w800),
-        titleLarge: const TextStyle(color: textPrimary, fontSize: 22, fontWeight: FontWeight.w700),
-        titleMedium: const TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
-        bodyLarge: const TextStyle(color: textPrimary, fontSize: 16, height: 1.45),
-        bodyMedium: const TextStyle(color: textPrimary, fontSize: 14, height: 1.45),
-        bodySmall: const TextStyle(color: textSecondary, fontSize: 12, height: 1.4),
+        displayLarge: const TextStyle(
+          color: textPrimary,
+          fontSize: 48,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -1.5,
+        ),
+        headlineLarge: const TextStyle(
+          color: textPrimary,
+          fontSize: 34,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -1,
+        ),
+        headlineMedium: const TextStyle(
+          color: textPrimary,
+          fontSize: 28,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -.6,
+        ),
+        titleLarge: const TextStyle(
+          color: textPrimary,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+        ),
+        titleMedium: const TextStyle(
+          color: textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+        ),
+        bodyLarge: const TextStyle(
+          color: textPrimary,
+          fontSize: 16,
+          height: 1.45,
+        ),
+        bodyMedium: const TextStyle(
+          color: textPrimary,
+          fontSize: 14,
+          height: 1.45,
+        ),
+        bodySmall: const TextStyle(
+          color: textSecondary,
+          fontSize: 12,
+          height: 1.4,
+        ),
         labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
       ),
       appBarTheme: const AppBarTheme(
@@ -87,17 +122,20 @@ class StoreTheme {
         filled: true,
         fillColor: surface,
         hintStyle: const TextStyle(color: textMuted),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           borderSide: const BorderSide(color: lineStrong),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           borderSide: const BorderSide(color: lineStrong),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           borderSide: const BorderSide(color: orange, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
@@ -116,7 +154,9 @@ class StoreTheme {
           foregroundColor: Colors.white,
           disabledBackgroundColor: borderSoft,
           disabledForegroundColor: textMuted,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -125,7 +165,9 @@ class StoreTheme {
           backgroundColor: orange,
           foregroundColor: Colors.white,
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -133,7 +175,9 @@ class StoreTheme {
           minimumSize: const Size(48, 48),
           foregroundColor: primaryDark,
           side: const BorderSide(color: border),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -163,19 +207,29 @@ class StoreTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 72,
+        height: 78,
         elevation: 0,
         backgroundColor: surface,
-        indicatorColor: creamStrong,
-        labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
-          color: states.contains(WidgetState.selected) ? orangeDark : textMuted,
-          fontSize: 11,
-          fontWeight: states.contains(WidgetState.selected) ? FontWeight.w800 : FontWeight.w600,
-        )),
-        iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
-          color: states.contains(WidgetState.selected) ? orangeDark : textMuted,
-          size: 24,
-        )),
+        indicatorColor: const Color(0xFFFFE4D2),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            color: states.contains(WidgetState.selected)
+                ? orangeDark
+                : textMuted,
+            fontSize: 11,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w800
+                : FontWeight.w600,
+          ),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? orangeDark
+                : textMuted,
+            size: 24,
+          ),
+        ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
@@ -200,10 +254,7 @@ class StoreTheme {
     );
 
     return base.copyWith(
-      textTheme: base.textTheme.apply(
-        bodyColor: cream,
-        displayColor: cream,
-      ),
+      textTheme: base.textTheme.apply(bodyColor: cream, displayColor: cream),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: ink,
@@ -213,7 +264,10 @@ class StoreTheme {
         filled: true,
         fillColor: paper,
         hintStyle: const TextStyle(color: inkSoft),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: lineStrong),
@@ -240,11 +294,7 @@ class StoreTheme {
   static const LinearGradient appGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: <Color>[
-      cream,
-      creamStrong,
-      surfaceSoft,
-    ],
+    colors: <Color>[cream, creamStrong, surfaceSoft],
   );
 
   static BoxDecoration frameDecoration() {
@@ -253,18 +303,14 @@ class StoreTheme {
 
   static BoxDecoration surfaceDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: lineStrong.withOpacity(.74)),
-      gradient: const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: <Color>[paper, paperSoft],
-      ),
+      borderRadius: BorderRadius.circular(28),
+      color: surface,
+      border: Border.all(color: borderSoft),
       boxShadow: const <BoxShadow>[
         BoxShadow(
-          color: Color.fromRGBO(52, 17, 0, .07),
-          blurRadius: 14,
-          offset: Offset(0, 4),
+          color: Color.fromRGBO(25, 22, 20, .06),
+          blurRadius: 28,
+          offset: Offset(0, 10),
         ),
       ],
     );
@@ -272,13 +318,9 @@ class StoreTheme {
 
   static BoxDecoration panelDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: lineStrong.withOpacity(.7)),
-      gradient: const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: <Color>[paper, paperSoft],
-      ),
+      borderRadius: BorderRadius.circular(26),
+      border: Border.all(color: borderSoft),
+      color: surface,
     );
   }
 }

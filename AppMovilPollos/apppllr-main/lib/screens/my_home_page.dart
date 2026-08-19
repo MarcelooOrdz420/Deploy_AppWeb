@@ -76,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     StoreFrame(
                       padding: EdgeInsets.zero,
-                      child: Padding(
+                      child: StoreSurface(
                         padding: const EdgeInsets.all(18),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,7 +89,11 @@ class _MyHomePageState extends State<MyHomePage> {
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(color: StoreTheme.lineStrong.withOpacity(.88)),
+                                    border: Border.all(
+                                      color: StoreTheme.lineStrong.withOpacity(
+                                        .88,
+                                      ),
+                                    ),
                                     gradient: LinearGradient(
                                       colors: [
                                         Colors.white.withOpacity(.94),
@@ -102,7 +106,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 const SizedBox(width: 14),
                                 const Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Pollo a la Brasa y Parrillas',
@@ -160,7 +165,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                       style: FilledButton.styleFrom(
                                         backgroundColor: StoreTheme.orange,
                                         foregroundColor: StoreTheme.ink,
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 16,
+                                        ),
                                       ),
                                       onPressed: () => context.go('/correo'),
                                       child: const Text('Iniciar sesion'),
@@ -178,7 +185,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                   Center(
                                     child: TextButton(
                                       onPressed: () => context.go('/invitado'),
-                                      child: const Text('Continuar como invitado'),
+                                      child: const Text(
+                                        'Continuar como invitado',
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -240,7 +249,11 @@ class _SplashView extends StatelessWidget {
               const Text(
                 'Pollos y Parrillas "El Dorado"',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 30, height: 1, fontWeight: FontWeight.w900),
+                style: TextStyle(
+                  fontSize: 30,
+                  height: 1,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
               const SizedBox(height: 10),
               const Text(

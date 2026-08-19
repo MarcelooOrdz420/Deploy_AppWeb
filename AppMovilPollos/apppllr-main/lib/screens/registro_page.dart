@@ -24,7 +24,8 @@ class _RegistroPageState extends State<RegistroPage> {
   bool _awaitingOtp = false;
   String _pendingEmail = '';
   String _otpHint = '';
-  bool get _googleEnabled => RuntimeConfig.googleServerClientId.trim().isNotEmpty;
+  bool get _googleEnabled =>
+      RuntimeConfig.googleServerClientId.trim().isNotEmpty;
 
   bool _isEmailValid(String email) {
     final r = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -50,15 +51,17 @@ class _RegistroPageState extends State<RegistroPage> {
     }
 
     if (!_isEmailValid(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Correo invalido')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Correo invalido')));
       return;
     }
 
     if (pass.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La contrasena debe tener minimo 6 caracteres')),
+        const SnackBar(
+          content: Text('La contrasena debe tener minimo 6 caracteres'),
+        ),
       );
       return;
     }
@@ -78,9 +81,9 @@ class _RegistroPageState extends State<RegistroPage> {
         _pendingEmail = email;
         _otpHint = result.message;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -105,9 +108,9 @@ class _RegistroPageState extends State<RegistroPage> {
       context.go('/app');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_cleanError(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_cleanError(e))));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -151,9 +154,9 @@ class _RegistroPageState extends State<RegistroPage> {
       context.go('/app');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_cleanError(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_cleanError(e))));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -173,9 +176,9 @@ class _RegistroPageState extends State<RegistroPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_cleanError(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_cleanError(e))));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -200,7 +203,7 @@ class _RegistroPageState extends State<RegistroPage> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(14),
               child: StoreFrame(
-                child: Padding(
+                child: StoreSurface(
                   padding: const EdgeInsets.all(18),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +221,9 @@ class _RegistroPageState extends State<RegistroPage> {
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: StoreTheme.lineStrong.withOpacity(.88)),
+                              border: Border.all(
+                                color: StoreTheme.lineStrong.withOpacity(.88),
+                              ),
                               gradient: LinearGradient(
                                 colors: [
                                   Colors.white.withOpacity(.94),
@@ -245,7 +250,10 @@ class _RegistroPageState extends State<RegistroPage> {
                                 SizedBox(height: 4),
                                 Text(
                                   'Registrarse',
-                                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
                               ],
                             ),
@@ -290,8 +298,14 @@ class _RegistroPageState extends State<RegistroPage> {
                             labelText: 'Contrasena',
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
-                              onPressed: _loading ? null : () => setState(() => _obscure = !_obscure),
-                              icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                              onPressed: _loading
+                                  ? null
+                                  : () => setState(() => _obscure = !_obscure),
+                              icon: Icon(
+                                _obscure
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
                             ),
                           ),
                         ),
@@ -309,7 +323,9 @@ class _RegistroPageState extends State<RegistroPage> {
                                 ? const SizedBox(
                                     height: 18,
                                     width: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text('Crear cuenta'),
                           ),
@@ -332,21 +348,29 @@ class _RegistroPageState extends State<RegistroPage> {
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFFFFF),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: StoreTheme.lineStrong.withOpacity(.7)),
+                            border: Border.all(
+                              color: StoreTheme.lineStrong.withOpacity(.7),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
                                 'Verifica tu correo',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 _otpHint.isEmpty
                                     ? 'Ingresa el codigo de 6 digitos enviado a $_pendingEmail.'
                                     : _otpHint,
-                                style: const TextStyle(color: StoreTheme.inkSoft, height: 1.5),
+                                style: const TextStyle(
+                                  color: StoreTheme.inkSoft,
+                                  height: 1.5,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               TextField(
@@ -367,14 +391,18 @@ class _RegistroPageState extends State<RegistroPage> {
                                   style: FilledButton.styleFrom(
                                     backgroundColor: StoreTheme.orange,
                                     foregroundColor: StoreTheme.ink,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                   ),
                                   onPressed: _loading ? null : _doVerifyOtp,
                                   child: _loading
                                       ? const SizedBox(
                                           height: 18,
                                           width: 18,
-                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
                                         )
                                       : const Text('Verificar codigo'),
                                 ),
@@ -394,8 +422,14 @@ class _RegistroPageState extends State<RegistroPage> {
                       const SizedBox(height: 10),
                       Center(
                         child: TextButton(
-                          onPressed: _loading ? null : () => context.go('/correo'),
-                          child: Text(_awaitingOtp ? 'Ya verifique, ir a iniciar sesion' : 'Ya tengo cuenta'),
+                          onPressed: _loading
+                              ? null
+                              : () => context.go('/correo'),
+                          child: Text(
+                            _awaitingOtp
+                                ? 'Ya verifique, ir a iniciar sesion'
+                                : 'Ya tengo cuenta',
+                          ),
                         ),
                       ),
                     ],

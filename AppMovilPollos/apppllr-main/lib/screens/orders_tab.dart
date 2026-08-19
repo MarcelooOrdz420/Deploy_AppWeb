@@ -147,26 +147,24 @@ class _OrdersTabState extends State<OrdersTab> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
             children: [
-              const StoreSurface(
+              const Padding(
+                padding: EdgeInsets.fromLTRB(4, 8, 4, 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '05 Mis pedidos',
+                      'Mis pedidos',
                       style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 2.2,
-                        color: Color(0xFF9B5A2C),
+                        fontSize: 32,
+                        letterSpacing: -1,
+                        color: StoreTheme.ink,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Sigue el estado de tus ordenes y revisa tu boleta.',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                      ),
+                      'Sigue tus órdenes y revisa tus comprobantes.',
+                      style: TextStyle(fontSize: 15, color: StoreTheme.inkSoft),
                     ),
                   ],
                 ),

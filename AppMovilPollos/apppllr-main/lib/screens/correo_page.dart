@@ -16,9 +16,11 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool _loading = false;
-  bool get _googleEnabled => RuntimeConfig.googleServerClientId.trim().isNotEmpty;
+  bool get _googleEnabled =>
+      RuntimeConfig.googleServerClientId.trim().isNotEmpty;
 
-  String _cleanError(Object e) => e.toString().replaceFirst('Exception: ', '').trim();
+  String _cleanError(Object e) =>
+      e.toString().replaceFirst('Exception: ', '').trim();
 
   Future<void> _doLogin() async {
     final email = emailController.text.trim();
@@ -60,9 +62,9 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
       context.go('/app');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_cleanError(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_cleanError(e))));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -83,14 +85,16 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Revisa tu correo. Si la cuenta existe, te enviamos el enlace de recuperacion.'),
+          content: Text(
+            'Revisa tu correo. Si la cuenta existe, te enviamos el enlace de recuperacion.',
+          ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_cleanError(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_cleanError(e))));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -133,7 +137,7 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(14),
               child: StoreFrame(
-                child: Padding(
+                child: StoreSurface(
                   padding: const EdgeInsets.all(18),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +155,9 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: StoreTheme.lineStrong.withOpacity(.88)),
+                              border: Border.all(
+                                color: StoreTheme.lineStrong.withOpacity(.88),
+                              ),
                               gradient: LinearGradient(
                                 colors: [
                                   Colors.white.withOpacity(.94),
@@ -178,7 +184,10 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
                                 SizedBox(height: 4),
                                 Text(
                                   'Iniciar sesion',
-                                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
                               ],
                             ),
@@ -188,7 +197,10 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
                       const SizedBox(height: 18),
                       const Text(
                         'Ingresa con tu correo para comprar y seguir tus pedidos.',
-                        style: TextStyle(color: StoreTheme.inkSoft, height: 1.5),
+                        style: TextStyle(
+                          color: StoreTheme.inkSoft,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 18),
                       TextField(
@@ -225,7 +237,9 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
                               ? const SizedBox(
                                   height: 18,
                                   width: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : const Text('Iniciar sesion'),
                         ),
@@ -244,7 +258,9 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
                       const SizedBox(height: 10),
                       Center(
                         child: TextButton(
-                          onPressed: _loading ? null : () => context.go('/registro'),
+                          onPressed: _loading
+                              ? null
+                              : () => context.go('/registro'),
                           child: const Text('No tengo cuenta, registrarme'),
                         ),
                       ),

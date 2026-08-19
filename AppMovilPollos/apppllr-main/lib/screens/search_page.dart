@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../models/producto.dart';
 import '../services/productos_service.dart';
 import '../state/cart_controller.dart';
+import '../theme/store_theme.dart';
 import '../widgets/producto_image.dart';
 
 class SearchPage extends StatefulWidget {
@@ -38,24 +39,34 @@ class _SearchPageState extends State<SearchPage> {
     final cart = CartScope.of(context);
 
     return Scaffold(
+      backgroundColor: StoreTheme.background,
       appBar: AppBar(
-        title: const Text('Búsqueda'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+        toolbarHeight: 86,
+        title: const Text(
+          'Buscar',
+          style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
         ),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
             child: TextField(
               controller: _ctrl,
               onChanged: _filter,
               decoration: InputDecoration(
                 hintText: 'Buscar por pollo, combos, bebidas...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: const Icon(Icons.search_rounded, size: 28),
+                suffixIcon: _ctrl.text.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () {
+                          _ctrl.clear();
+                          _filter('');
+                        },
+                      ),
               ),
             ),
           ),
@@ -66,34 +77,58 @@ class _SearchPageState extends State<SearchPage> {
                 if (snap.connectionState != ConnectionState.done) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (snap.hasError) return Center(child: Text('Error: ${snap.error}'));
+                if (snap.hasError)
+                  return Center(child: Text('Error: ${snap.error}'));
 
                 _all = snap.data!;
-                if (_filtered.isEmpty && _ctrl.text.trim().isEmpty) _filtered = _all;
+                if (_filtered.isEmpty && _ctrl.text.trim().isEmpty)
+                  _filtered = _all;
 
                 return ListView.separated(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 20),
                   itemCount: _filtered.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
                     final p = _filtered[i];
                     return ListTile(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.all(12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        side: const BorderSide(color: StoreTheme.borderSoft),
+                      ),
                       tileColor: Colors.white,
                       leading: ProductoImage(
                         producto: p,
-                        width: 54,
-                        height: 54,
-                        borderRadius: BorderRadius.circular(10),
+                        width: 72,
+                        height: 72,
+                        borderRadius: BorderRadius.circular(18),
                       ),
-                      title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text('S/. ${p.price.toStringAsFixed(2)}'),
+                      title: Text(
+                        p.name,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'S/ ${p.price.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          color: StoreTheme.orangeDeep,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                       trailing: IconButton(
-                        icon: const Icon(Icons.add_circle, color: Colors.orange),
+                        icon: const Icon(
+                          Icons.add_circle,
+                          color: StoreTheme.orange,
+                          size: 34,
+                        ),
                         onPressed: () {
                           cart.add(p);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${p.name} agregado al carrito')),
+                            SnackBar(
+                              content: Text('${p.name} agregado al carrito'),
+                            ),
                           );
                         },
                       ),

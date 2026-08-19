@@ -391,29 +391,17 @@ class _AppShellState extends State<AppShell> {
                   child: IndexedStack(index: _index, children: _pages),
                 ),
                 Container(
-                  margin: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                  margin: const EdgeInsets.fromLTRB(14, 6, 14, 12),
                   clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(26),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withOpacity(.92),
-                        StoreTheme.cream.withOpacity(.94),
-                      ],
-                    ),
-                    border: Border(
-                      top: BorderSide(color: StoreTheme.borderSoft),
-                      left: BorderSide(color: StoreTheme.borderSoft),
-                      right: BorderSide(color: StoreTheme.borderSoft),
-                      bottom: BorderSide(color: StoreTheme.borderSoft),
-                    ),
+                    borderRadius: BorderRadius.circular(34),
+                    color: Colors.white,
+                    border: Border.all(color: StoreTheme.borderSoft),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color.fromRGBO(52, 17, 0, .07),
-                        blurRadius: 24,
-                        offset: Offset(0, 8),
+                        color: Color.fromRGBO(25, 22, 20, .13),
+                        blurRadius: 34,
+                        offset: Offset(0, 14),
                       ),
                     ],
                   ),
@@ -457,11 +445,11 @@ class _AppShellState extends State<AppShell> {
           ),
         ),
         floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: 58),
+          padding: const EdgeInsets.only(bottom: 70),
           child: FloatingActionButton(
             backgroundColor: StoreTheme.orange,
             foregroundColor: StoreTheme.ink,
-            elevation: 6,
+            elevation: 10,
             onPressed: () => context.push('/chat'),
             child: const Icon(Icons.smart_toy_outlined),
           ),

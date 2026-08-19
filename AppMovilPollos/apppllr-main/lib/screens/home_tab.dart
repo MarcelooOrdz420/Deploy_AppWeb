@@ -300,7 +300,44 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
             children: [
               _buildTopBar(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: 22),
+              const Text(
+                'Elige tu favorito',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -.7,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _categoryShortcut(
+                      'Pollos',
+                      Icons.local_fire_department_rounded,
+                      'pollos',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _categoryShortcut(
+                      'Parrillas',
+                      Icons.outdoor_grill_rounded,
+                      'parrillas',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _categoryShortcut(
+                      'Bebidas',
+                      Icons.local_drink_rounded,
+                      'bebidas',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 22),
               _buildHeroCarousel(
                 pollos: pollos,
                 bebidas: bebidas,
@@ -532,6 +569,43 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _categoryShortcut(String label, IconData icon, String category) {
+    final selected = _selectedCategory == category;
+    return Material(
+      color: selected ? const Color(0xFFFFE4D2) : Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: () => setState(() {
+          _selectedCategory = category;
+          _hasSelection = true;
+        }),
+        child: Container(
+          height: 116,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: selected ? StoreTheme.orange : StoreTheme.borderSoft,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: StoreTheme.orangeDeep, size: 34),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -54,25 +54,22 @@ class _CartTabState extends State<CartTab> {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
       children: [
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                StoreTheme.ink,
-                Color(0xFF4A2412),
-                StoreTheme.orangeDark,
-              ],
+              colors: [Colors.white, Color(0xFFFFF8F2), Color(0xFFFFE8D8)],
             ),
+            border: Border.all(color: StoreTheme.borderSoft),
           ),
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                backgroundColor: StoreTheme.orange,
-                foregroundColor: Colors.white,
+                backgroundColor: Color(0xFFFFE4D2),
+                foregroundColor: StoreTheme.orangeDeep,
                 child: Icon(Icons.shopping_bag_rounded),
               ),
               SizedBox(height: 14),
@@ -81,13 +78,13 @@ class _CartTabState extends State<CartTab> {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: StoreTheme.ink,
                 ),
               ),
               SizedBox(height: 8),
               Text(
                 'Revisa tu pedido antes de pasar al pago.',
-                style: TextStyle(color: StoreTheme.borderLight),
+                style: TextStyle(color: StoreTheme.inkSoft),
               ),
             ],
           ),
