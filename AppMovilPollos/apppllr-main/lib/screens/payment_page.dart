@@ -403,10 +403,6 @@ class _PaymentPageState extends State<PaymentPage> {
       final storedPaymentMethod =
           (response['payment_method'] ?? _paymentMethodValue()).toString();
 
-      // El pedido ya existe en el servidor. Vaciar ahora evita que un reintento
-      // de pago o una segunda pulsacion vuelva a crear el mismo pedido.
-      cart.clear();
-
       if (storedPaymentMethod == 'izipay' && orderId > 0) {
         final checkout = await _orderApiService.izipayCheckout(
           token: token,
@@ -457,6 +453,11 @@ class _PaymentPageState extends State<PaymentPage> {
           return;
         }
       }
+
+      // El carrito móvil vive en memoria y no comparte el localStorage de la
+      // página de retorno de Izipay. Vaciarlo aquí garantiza que sólo se borre
+      // después de una confirmación real (o al confirmar contraentrega).
+      cart.clear();
 
       if (!mounted) return;
       context.push(
@@ -520,17 +521,41 @@ class _PaymentPageState extends State<PaymentPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pago y entrega'),
+        title: const Text('Finaliza tu pedido'),
         backgroundColor: StoreTheme.ink,
         foregroundColor: StoreTheme.cream,
+        centerTitle: false,
       ),
       bottomNavigationBar: _bottomPayBar(cart: cart, total: total),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 112),
         children: [
-          const Text(
-            'Completa tus datos y elige como pagar',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: StoreTheme.ink,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: const Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: StoreTheme.orange,
+                  foregroundColor: Colors.white,
+                  child: Icon(Icons.local_dining_rounded),
+                ),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('¡Tu pollo ya casi está listo!', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+                      SizedBox(height: 3),
+                      Text('Completa tus datos, elige la entrega y paga seguro.', style: TextStyle(color: StoreTheme.borderLight, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           _section(
@@ -786,14 +811,13 @@ class _PaymentPageState extends State<PaymentPage> {
   Widget _section({required String title, required Widget child}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 10),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+            const SizedBox(height: 14),
             child,
           ],
         ),
@@ -935,9 +959,8 @@ class _PaymentPageState extends State<PaymentPage> {
   InputDecoration _decor(String label) {
     return InputDecoration(
       labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       filled: true,
-      fillColor: const Color(0xFFFFFBF8),
+      fillColor: StoreTheme.surface,
     );
   }
 

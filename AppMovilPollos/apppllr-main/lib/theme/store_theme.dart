@@ -65,6 +65,19 @@ class StoreTheme {
         bodySmall: const TextStyle(color: textSecondary, fontSize: 12, height: 1.4),
         labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
       ),
+      appBarTheme: const AppBarTheme(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        backgroundColor: cream,
+        foregroundColor: textPrimary,
+        titleTextStyle: TextStyle(
+          color: textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -.3,
+        ),
+      ),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: ink,
@@ -145,9 +158,24 @@ class StoreTheme {
         elevation: 1,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: borderSoft),
+          borderRadius: BorderRadius.circular(22),
+          side: const BorderSide(color: borderSoft, width: .8),
         ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        height: 72,
+        elevation: 0,
+        backgroundColor: surface,
+        indicatorColor: creamStrong,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
+          color: states.contains(WidgetState.selected) ? orangeDark : textMuted,
+          fontSize: 11,
+          fontWeight: states.contains(WidgetState.selected) ? FontWeight.w800 : FontWeight.w600,
+        )),
+        iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
+          color: states.contains(WidgetState.selected) ? orangeDark : textMuted,
+          size: 24,
+        )),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
@@ -225,7 +253,7 @@ class StoreTheme {
 
   static BoxDecoration surfaceDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(22),
       border: Border.all(color: lineStrong.withOpacity(.74)),
       gradient: const LinearGradient(
         begin: Alignment.topCenter,
@@ -244,7 +272,7 @@ class StoreTheme {
 
   static BoxDecoration panelDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(22),
       border: Border.all(color: lineStrong.withOpacity(.7)),
       gradient: const LinearGradient(
         begin: Alignment.topCenter,

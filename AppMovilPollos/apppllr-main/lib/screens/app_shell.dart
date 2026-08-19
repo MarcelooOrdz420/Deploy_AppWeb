@@ -382,34 +382,19 @@ class _AppShellState extends State<AppShell> {
                         ),
                       ],
                     ),
-                  child: BottomNavigationBar(
-                      currentIndex: _index,
-                      onTap: (i) {
-                        setState(() => _index = i);
-                        AppShellController.instance.goTo(i);
-                      },
-                      items: const [
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.home_outlined),
-                          label: 'Inicio',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.search_outlined),
-                          label: 'Buscar',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.shopping_cart_outlined),
-                          label: 'Carrito',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.receipt_long_outlined),
-                          label: 'Pedidos',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.person_outline),
-                          label: 'Perfil',
-                        ),
-                      ],
+                  child: NavigationBar(
+                    selectedIndex: _index,
+                    onDestinationSelected: (i) {
+                      setState(() => _index = i);
+                      AppShellController.instance.goTo(i);
+                    },
+                    destinations: const [
+                      NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Inicio'),
+                      NavigationDestination(icon: Icon(Icons.search_outlined), selectedIcon: Icon(Icons.search_rounded), label: 'Buscar'),
+                      NavigationDestination(icon: Icon(Icons.shopping_bag_outlined), selectedIcon: Icon(Icons.shopping_bag_rounded), label: 'Carrito'),
+                      NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long_rounded), label: 'Pedidos'),
+                      NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person_rounded), label: 'Perfil'),
+                    ],
                   ),
                 ),
               ],
