@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -197,7 +198,11 @@ class AuthService {
 
     final googleSignIn = GoogleSignIn(
       scopes: const ['email', 'profile'],
-      serverClientId: serverClientId,
+      // google_sign_in_web requires the OAuth web client as clientId. Android
+      // uses the same OAuth web client as serverClientId so the ID token is
+      // issued for the Laravel backend audience.
+      clientId: kIsWeb ? serverClientId : null,
+      serverClientId: kIsWeb ? null : serverClientId,
     );
 
     try {
@@ -221,7 +226,11 @@ class AuthService {
 
       final data = (res.data as Map).cast<String, dynamic>();
       await _persistAuthPayload(data, fallbackEmail: account.email);
-    } on PlatformException catch (e) {
+    } on PlatformException catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('Google Sign-In failed: ${e.code} ${e.message}');
+        debugPrintStack(stackTrace: stackTrace);
+      }
       throw Exception(_googleSignInError(e));
     } on DioException catch (e) {
       final status = e.response?.statusCode;
@@ -235,7 +244,8 @@ class AuthService {
 
   String _googleSignInError(PlatformException error) {
     final code = error.code.trim().toLowerCase();
-    final details = '${error.message ?? ''} ${error.details ?? ''}'.toLowerCase();
+    final details = '${error.message ?? ''} ${error.details ?? ''}'
+        .toLowerCase();
 
     if (code == 'network_error' || details.contains('network_error')) {
       return 'No se pudo conectar con Google. Revisa tu conexion a internet e intenta nuevamente.';
@@ -251,14 +261,14 @@ class AuthService {
         (details.contains('api exception: 10') ||
             details.contains('apiexception: 10') ||
             details.contains('developer_error'))) {
-      return 'Google Sign-In no esta configurado para esta APK. Verifica el paquete com.systemarauco.appdorado, las huellas SHA-1/SHA-256 y vuelve a descargar google-services.json.';
+      return 'No pudimos iniciar sesion con Google. Intentalo nuevamente.';
     }
 
     if (code == 'sign_in_failed' || code == '12500') {
-      return 'Google rechazo el inicio de sesion. Verifica la configuracion OAuth de Android y el ID de cliente web.';
+      return 'No pudimos iniciar sesion con Google. Intentalo nuevamente.';
     }
 
-    return 'No se pudo iniciar sesion con Google (${error.code}).';
+    return 'No pudimos iniciar sesion con Google. Intentalo nuevamente.';
   }
 
   Future<void> logout() async {

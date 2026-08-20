@@ -23,6 +23,7 @@
 /storage/framework/views/*
 /storage/framework/cache/*
 /vendor
+/.android-build-tools/
 Homestead.json
 Homestead.yaml
 Thumbs.db

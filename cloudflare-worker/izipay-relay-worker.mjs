@@ -1,5 +1,5 @@
 const LARAVEL_IPN_URL = 'https://pollos.saborcentral.com/pagos/izipay/ipn';
-const TIMEOUT_MS = 10000;
+const TIMEOUT_MS = 15000;
 
 export default {
   async fetch(request, env) {
@@ -29,12 +29,24 @@ export default {
         method: 'POST', headers, body, redirect: 'manual', signal: controller.signal,
       });
       console.log(JSON.stringify({ upstream_status: upstream.status, duration_ms: Date.now() - startedAt }));
-      return upstream.status >= 200 && upstream.status < 300
-        ? new Response('OK', { status: 200 })
-        : new Response('Bad Gateway', { status: 502 });
-    } catch (error) {
-      console.error(JSON.stringify({ error: String(error?.name || 'upstream_error'), duration_ms: Date.now() - startedAt }));
+      if (upstream.status >= 200 && upstream.status < 300) {
+        return new Response('OK', { status: 200 });
+      }
+
+      // Preserve handled Laravel rejections so the Izipay event history shows
+      // the real class of error instead of turning every response into a 502.
+      if (upstream.status >= 400 && upstream.status < 500) {
+        return new Response('Notification rejected', { status: upstream.status });
+      }
+
       return new Response('Bad Gateway', { status: 502 });
+    } catch (error) {
+      const timedOut = error?.name === 'AbortError' || controller.signal.aborted;
+      console.error(JSON.stringify({
+        error: timedOut ? 'upstream_timeout' : String(error?.name || 'upstream_error'),
+        duration_ms: Date.now() - startedAt,
+      }));
+      return new Response(timedOut ? 'Gateway Timeout' : 'Bad Gateway', { status: timedOut ? 504 : 502 });
     } finally {
       clearTimeout(timeout);
     }

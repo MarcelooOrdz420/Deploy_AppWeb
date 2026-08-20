@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\IssueElectronicReceiptAfterVerifiedPayment;
 use App\Models\Order;
 use App\Services\Payments\IzipayService;
 use App\Services\Payments\IzipayPaymentConfirmationService;
-use App\Services\ElectronicReceiptDeliveryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -35,8 +35,7 @@ class PaymentController extends Controller
     public function izipayWebhook(
         Request $request,
         IzipayService $izipayService,
-        IzipayPaymentConfirmationService $confirmationService,
-        ElectronicReceiptDeliveryService $receiptDeliveryService
+        IzipayPaymentConfirmationService $confirmationService
     ): JsonResponse|Response
     {
         $startedAt = microtime(true);
@@ -113,7 +112,7 @@ class PaymentController extends Controller
 
         $order = $result['order'];
         if ($result['status'] === 'verified') {
-            $receiptDeliveryService->issueAfterVerifiedPayment($order);
+            IssueElectronicReceiptAfterVerifiedPayment::dispatchAfterResponse($order->id);
         }
 
         Log::info('Izipay IPN processed.', [
@@ -131,8 +130,7 @@ class PaymentController extends Controller
         Request $request,
         Order $order,
         IzipayService $izipayService,
-        IzipayPaymentConfirmationService $confirmationService,
-        ElectronicReceiptDeliveryService $receiptDeliveryService
+        IzipayPaymentConfirmationService $confirmationService
     ): \Illuminate\View\View
     {
         abort_unless($request->hasValidSignature(), 403);
@@ -146,7 +144,7 @@ class PaymentController extends Controller
                     $fields['hash_key'], 'browser_return', $this->signatureDiagnostics($request, $fields)
                 );
                 if ($result['status'] === 'verified') {
-                    $receiptDeliveryService->issueAfterVerifiedPayment($result['order']);
+                    IssueElectronicReceiptAfterVerifiedPayment::dispatchAfterResponse($result['order']->id);
                 }
                 $order->refresh();
             } catch (\RuntimeException $exception) {

@@ -29,7 +29,7 @@ test('POST preserves bytes and content type and sends secret', async () => {
   }
 });
 
-test('POST returns 502 when Laravel returns non-2xx', async () => {
+test('POST preserves handled Laravel 4xx responses', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response('Invalid signature', { status: 401 });
   try {
@@ -37,7 +37,41 @@ test('POST returns 502 when Laravel returns non-2xx', async () => {
       method: 'POST', body: 'kr-answer=%7B%7D',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     }), { RELAY_SECRET: 'relay-test-secret' });
+    assert.equal(response.status, 401);
+    assert.equal(await response.text(), 'Notification rejected');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('POST returns 502 when Laravel has a server error', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response('Internal error', { status: 500 });
+  try {
+    const response = await worker.fetch(new Request('https://relay.test', {
+      method: 'POST', body: 'kr-answer=%7B%7D',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    }), { RELAY_SECRET: 'relay-test-secret' });
     assert.equal(response.status, 502);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('POST returns 504 when the Laravel request times out', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    const error = new Error('Timed out');
+    error.name = 'AbortError';
+    throw error;
+  };
+  try {
+    const response = await worker.fetch(new Request('https://relay.test', {
+      method: 'POST', body: 'kr-answer=%7B%7D',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    }), { RELAY_SECRET: 'relay-test-secret' });
+    assert.equal(response.status, 504);
+    assert.equal(await response.text(), 'Gateway Timeout');
   } finally {
     globalThis.fetch = originalFetch;
   }
