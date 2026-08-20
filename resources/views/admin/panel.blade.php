@@ -371,6 +371,48 @@
             background: #fff;
         }
 
+        .side-panel-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            justify-content: flex-end;
+            background: rgba(34, 15, 4, .5);
+            z-index: 95;
+        }
+        .side-panel-overlay.open { display: flex; }
+        .side-panel {
+            width: min(420px, 92vw);
+            height: 100%;
+            overflow-y: auto;
+            border-left: 1px solid #ffd7bd;
+            background: linear-gradient(180deg, #fffdfb 0%, #fff5ed 100%);
+            box-shadow: -24px 0 50px rgba(52, 17, 0, .20);
+            padding: 18px;
+            transform: translateX(100%);
+            transition: transform .28s ease;
+        }
+        .side-panel-overlay.open .side-panel { transform: translateX(0); }
+        .side-panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .side-panel-body { display: grid; gap: 12px; }
+        .side-panel-preview {
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #fff7f2;
+            border: 1px solid #ffd8bf;
+            border-radius: 14px;
+            padding: 12px;
+            font-size: 12px;
+            color: #000000;
+            max-height: 70vh;
+            overflow: auto;
+        }
+
         .img-shell {
             margin-top: 10px;
             margin-bottom: 8px;
@@ -1228,31 +1270,6 @@
             </div>
             <div id="ordersList" class="list"></div>
             <div id="orderActionsMsg" class="msg"></div>
-
-            <hr style="border-color:#ffd7bd; margin:18px 0;">
-            <div class="row" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
-                <section class="panel" style="padding:16px;">
-                    <h3>Actualizar estado</h3>
-                    <form id="statusForm">
-                        <label>Pedido ID</label>
-                        <input name="order_id" required>
-                        <label>Nuevo estado</label>
-                        <select name="status" required>
-                            <option value="pending">Pendiente</option>
-                            <option value="confirmed">Confirmado</option>
-                            <option value="preparing">Preparando</option>
-                            <option value="on_the_way">En camino</option>
-                            <option value="delivered">Entregado</option>
-                            <option value="cancelled">Cancelado</option>
-                        </select>
-                        <label>Nota (opcional)</label>
-                        <input name="note">
-                        <button type="submit" class="btn-main">Actualizar estado</button>
-                        <div id="statusMsg" class="msg"></div>
-                    </form>
-                </section>
-
-            </div>
         </section>
 
         <section id="sec-cash-closure" class="panel" style="grid-column: 1 / -1;">
@@ -1312,6 +1329,39 @@
             <div id="proofModalContent"></div>
         </div>
     </div>
+</div>
+
+<div id="orderActionPanel" class="side-panel-overlay">
+    <aside class="side-panel">
+        <div class="side-panel-head">
+            <h3 id="orderActionPanelTitle" class="proof-modal-title">Accion de pedido</h3>
+            <button id="orderActionPanelCloseBtn" type="button">Cerrar</button>
+        </div>
+        <div class="side-panel-body">
+            <div id="orderActionPanelStatus">
+                <form id="statusForm">
+                    <label>Pedido ID</label>
+                    <input name="order_id" required>
+                    <label>Nuevo estado</label>
+                    <select name="status" required>
+                        <option value="pending">Pendiente</option>
+                        <option value="confirmed">Confirmado</option>
+                        <option value="preparing">Preparando</option>
+                        <option value="on_the_way">En camino</option>
+                        <option value="delivered">Entregado</option>
+                        <option value="cancelled">Cancelado</option>
+                    </select>
+                    <label>Nota (opcional)</label>
+                    <input name="note">
+                    <button type="submit" class="btn-main">Actualizar estado</button>
+                    <div id="statusMsg" class="msg"></div>
+                </form>
+            </div>
+            <div id="orderActionPanelPreview" style="display:none;">
+                <pre id="orderActionPanelPreviewContent" class="side-panel-preview"></pre>
+            </div>
+        </div>
+    </aside>
 </div>
 
 <div id="adminOrderToast" style="display:none; position:fixed; right:18px; bottom:18px; z-index:9998; width:min(400px, calc(100vw - 36px));">
@@ -1465,6 +1515,27 @@ const refreshCashSummaryBtn = document.getElementById('refreshCashSummaryBtn');
 const exportCashClosuresBtn = document.getElementById('exportCashClosuresBtn');
 const usersList = document.getElementById('usersList');
 const salesDashboard = document.getElementById('salesDashboard');
+const orderActionPanel = document.getElementById('orderActionPanel');
+const orderActionPanelTitle = document.getElementById('orderActionPanelTitle');
+const orderActionPanelCloseBtn = document.getElementById('orderActionPanelCloseBtn');
+const orderActionPanelStatus = document.getElementById('orderActionPanelStatus');
+const orderActionPanelPreview = document.getElementById('orderActionPanelPreview');
+const orderActionPanelPreviewContent = document.getElementById('orderActionPanelPreviewContent');
+
+function openOrderActionPanel(title) {
+    orderActionPanelTitle.textContent = title;
+    orderActionPanel.classList.add('open');
+}
+
+function closeOrderActionPanel() {
+    orderActionPanel.classList.remove('open');
+}
+
+orderActionPanelCloseBtn.addEventListener('click', closeOrderActionPanel);
+orderActionPanel.addEventListener('click', (event) => {
+    if (event.target === orderActionPanel) closeOrderActionPanel();
+});
+
 const proofModal = document.getElementById('proofModal');
 const proofModalTitle = document.getElementById('proofModalTitle');
 const proofModalMeta = document.getElementById('proofModalMeta');
@@ -2206,8 +2277,12 @@ async function fetchOrders() {
 
     ordersList.querySelectorAll('[data-fill]').forEach(btn => {
         btn.addEventListener('click', () => {
-            statusForm.order_id.value = btn.getAttribute('data-fill');
-            statusMsg.textContent = `Pedido ID ${btn.getAttribute('data-fill')} seleccionado`;
+            const orderId = btn.getAttribute('data-fill');
+            statusForm.order_id.value = orderId;
+            statusMsg.textContent = `Pedido ID ${orderId} seleccionado`;
+            orderActionPanelPreview.style.display = 'none';
+            orderActionPanelStatus.style.display = '';
+            openOrderActionPanel(`Actualizar estado - Pedido ${orderId}`);
         });
     });
     ordersList.querySelectorAll('[data-proof-modal]').forEach(btn => {
@@ -2242,7 +2317,10 @@ async function previewEinvoice(orderId) {
         return;
     }
     orderActionsMsg.textContent = `Preview SUNAT listo para pedido ${orderId}.`;
-    alert(JSON.stringify(data, null, 2));
+    orderActionPanelPreviewContent.textContent = JSON.stringify(data, null, 2);
+    orderActionPanelStatus.style.display = 'none';
+    orderActionPanelPreview.style.display = '';
+    openOrderActionPanel(`Preview SUNAT - Pedido ${orderId}`);
 }
 
 async function sendEinvoice(orderId, button = null) {
