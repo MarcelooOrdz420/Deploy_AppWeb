@@ -321,7 +321,13 @@
         }
         .proof-modal {
             position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             inset: 0;
+            width: 100vw;
+            height: 100vh;
             display: none;
             align-items: center;
             justify-content: center;
@@ -373,11 +379,17 @@
 
         .side-panel-overlay {
             position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
             inset: 0;
+            width: 100vw;
+            height: 100vh;
             display: none;
             justify-content: flex-end;
             background: rgba(34, 15, 4, .5);
-            z-index: 95;
+            z-index: 9999;
         }
         .side-panel-overlay.open { display: flex; }
         .side-panel {
@@ -442,6 +454,15 @@
         .product-form-grid {
             display: grid;
             gap: 14px;
+        }
+        .products-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 22px;
+            align-items: start;
+        }
+        @media (max-width: 860px) {
+            .products-layout { grid-template-columns: 1fr; }
         }
         .toggle-row {
             display: flex;
@@ -1163,6 +1184,8 @@
         <section id="sec-products" class="panel">
             <h2>Gestion de Productos</h2>
             <p class="section-subtitle">Administra catalogo, estado visible y stock interno sin mostrar existencias al cliente final.</p>
+            <div class="products-layout">
+            <div class="products-form-col">
             <form id="productForm">
                 <input type="hidden" name="product_id">
                 <div class="product-form-grid">
@@ -1215,11 +1238,14 @@
                 <div id="productMsg" class="msg"></div>
                 </div>
             </form>
+            </div>
 
-            <hr style="border-color:#ffd7bd; margin:18px 0;">
+            <div class="products-list-col">
             <h3>Lista de productos</h3>
             <p class="section-subtitle">Aqui ves activos, inactivos y agotados, con el stock real para control interno.</p>
             <div id="productsList" class="list"></div>
+            </div>
+            </div>
         </section>
 
         <section id="sec-orders" class="panel">
@@ -1525,6 +1551,8 @@ const orderActionPanelPreviewContent = document.getElementById('orderActionPanel
 function openOrderActionPanel(title) {
     orderActionPanelTitle.textContent = title;
     orderActionPanel.classList.add('open');
+    orderActionPanel.scrollTop = 0;
+    orderActionPanel.querySelector('.side-panel').scrollTop = 0;
 }
 
 function closeOrderActionPanel() {
@@ -1796,6 +1824,17 @@ function playAdminSound() {
         osc.start();
         osc.stop(ctx.currentTime + 0.22);
     } catch {}
+}
+
+let productToastTimer = null;
+function showProductToast(message) {
+    if (!adminOrderToast) return;
+    adminOrderToastTitle.textContent = 'Catalogo';
+    adminOrderToastMessage.textContent = message;
+    adminOrderToastBody.textContent = '';
+    adminOrderToast.style.display = 'block';
+    clearTimeout(productToastTimer);
+    productToastTimer = setTimeout(hideAdminOrderToast, 3500);
 }
 
 function showAdminOrderToast(payload) {
@@ -2210,6 +2249,7 @@ async function saveProduct(e) {
     }
 
     productMsg.textContent = editingId ? 'Producto actualizado' : 'Producto creado';
+    showProductToast(editingId ? 'Producto actualizado correctamente.' : 'Producto agregado al catalogo.');
     clearProductForm();
     await fetchProducts();
 }
