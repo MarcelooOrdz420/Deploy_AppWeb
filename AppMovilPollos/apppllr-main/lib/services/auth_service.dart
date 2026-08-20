@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/runtime_config.dart';
@@ -220,6 +221,8 @@ class AuthService {
 
       final data = (res.data as Map).cast<String, dynamic>();
       await _persistAuthPayload(data, fallbackEmail: account.email);
+    } on PlatformException catch (e) {
+      throw Exception(_googleSignInError(e));
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final msg = _messageFromDio(
@@ -228,6 +231,34 @@ class AuthService {
       );
       throw Exception(status != null ? '($status) $msg' : msg);
     }
+  }
+
+  String _googleSignInError(PlatformException error) {
+    final code = error.code.trim().toLowerCase();
+    final details = '${error.message ?? ''} ${error.details ?? ''}'.toLowerCase();
+
+    if (code == 'network_error' || details.contains('network_error')) {
+      return 'No se pudo conectar con Google. Revisa tu conexion a internet e intenta nuevamente.';
+    }
+
+    if (code == 'sign_in_canceled' ||
+        code == '12501' ||
+        details.contains('12501')) {
+      return 'Inicio de sesion con Google cancelado.';
+    }
+
+    if (code == 'sign_in_failed' &&
+        (details.contains('api exception: 10') ||
+            details.contains('apiexception: 10') ||
+            details.contains('developer_error'))) {
+      return 'Google Sign-In no esta configurado para esta APK. Verifica el paquete com.systemarauco.appdorado, las huellas SHA-1/SHA-256 y vuelve a descargar google-services.json.';
+    }
+
+    if (code == 'sign_in_failed' || code == '12500') {
+      return 'Google rechazo el inicio de sesion. Verifica la configuracion OAuth de Android y el ID de cliente web.';
+    }
+
+    return 'No se pudo iniciar sesion con Google (${error.code}).';
   }
 
   Future<void> logout() async {
