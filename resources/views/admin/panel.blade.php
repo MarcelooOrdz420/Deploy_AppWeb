@@ -1267,7 +1267,9 @@
                     <label>Metodo de pago</label>
                     <select id="filterPaymentMethod">
                         <option value="">Todos</option>
-                        <option value="izipay">Izipay</option>
+                        <option value="izipay">Pago con tarjeta</option>
+                        <option value="yape">Yape</option>
+                        <option value="cod">Contraentrega</option>
                     </select>
                 </div>
                 <div>
