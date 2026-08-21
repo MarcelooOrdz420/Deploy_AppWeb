@@ -384,6 +384,7 @@
         .read-only-admin [data-toggle-user],
         .read-only-admin [data-einvoice-send],
         .read-only-admin [data-einvoice-email],
+        .read-only-admin [data-save-role],
         .read-only-admin #runRecoveryCampaignBtn,
         .read-only-admin #removeProductImageBtn {
             pointer-events: none;
@@ -2667,16 +2668,18 @@ async function fetchUsers() {
                 <div class="muted">Creada: ${new Date(user.created_at).toLocaleString()} (${days} dias)</div>
                 <div class="muted">Estado: ${user.is_active ? 'Activa' : 'Desactivada'}</div>
                 <div style="display:flex; gap:8px; margin-top:8px; align-items:center; flex-wrap:wrap;">
-                    <select data-change-role="${user.id}" style="width:auto; margin:0;">
+                    <select data-role-select="${user.id}" style="width:auto; margin:0;">
                         <option value="customer" ${user.role === 'customer' ? 'selected' : ''}>Cliente</option>
                         <option value="reviewer" ${user.role === 'reviewer' ? 'selected' : ''}>Revisor (solo lectura)</option>
                         <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Administrador</option>
                     </select>
+                    <button type="button" data-save-role="${user.id}" class="btn-main">Guardar rol</button>
                     <button data-toggle-user="${user.id}" data-next="${user.is_active ? '0' : '1'}">
                         ${user.is_active ? 'Dar de baja' : 'Reactivar'}
                     </button>
                     <button data-delete-user="${user.id}" style="border-color:#ffc1b5; color:#a53216;">Eliminar</button>
                 </div>
+                <div data-role-msg="${user.id}" class="msg"></div>
             </article>`;
     }).join('');
 
@@ -2691,29 +2694,43 @@ async function fetchUsers() {
         btn.addEventListener('click', () => deleteUser(Number(btn.getAttribute('data-delete-user'))));
     });
 
-    usersList.querySelectorAll('[data-change-role]').forEach(select => {
-        select.addEventListener('change', () => changeUserRole(
-            Number(select.getAttribute('data-change-role')),
-            select.value,
-            select
-        ));
+    usersList.querySelectorAll('[data-save-role]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const userId = Number(btn.getAttribute('data-save-role'));
+            const select = usersList.querySelector(`[data-role-select="${userId}"]`);
+            if (select) changeUserRole(userId, select.value, btn);
+        });
     });
 }
 
-async function changeUserRole(userId, role, selectEl) {
+async function changeUserRole(userId, role, btn) {
+    const msgEl = usersList.querySelector(`[data-role-msg="${userId}"]`);
+    if (msgEl) { msgEl.textContent = 'Guardando...'; msgEl.className = 'msg'; }
+    if (btn) btn.disabled = true;
+
     const token = getToken();
-    const res = await fetch(`/api/v1/admin/users/${userId}`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-        alert(data.message || 'No se pudo cambiar el rol');
+    try {
+        const res = await fetch(`/api/v1/admin/users/${userId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ role }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            if (msgEl) { msgEl.textContent = data.message || 'No se pudo cambiar el rol'; msgEl.className = 'msg error'; }
+            if (btn) btn.disabled = false;
+            return;
+        }
+        if (msgEl) { msgEl.textContent = `Rol actualizado a "${role}" correctamente.`; msgEl.className = 'msg success'; }
+    } catch {
+        if (msgEl) { msgEl.textContent = 'Error de conexion al cambiar el rol.'; msgEl.className = 'msg error'; }
+        if (btn) btn.disabled = false;
+        return;
     }
+
     await fetchUsers();
 }
 
