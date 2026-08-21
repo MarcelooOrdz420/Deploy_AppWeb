@@ -278,7 +278,7 @@ form.addEventListener('submit', async (e) => {
             return;
         }
 
-        if (!data.user || data.user.role !== 'admin') {
+        if (!data.user || (data.user.role !== 'admin' && data.user.role !== 'reviewer')) {
             msg.textContent = 'Este usuario no tiene permisos de administrador.';
             return;
         }
@@ -289,7 +289,7 @@ form.addEventListener('submit', async (e) => {
         localStorage.setItem('ed_token', data.token);
         localStorage.setItem('ed_user', JSON.stringify(data.user));
         localStorage.setItem('ed_session', JSON.stringify({
-            role: 'admin',
+            role: data.user.role,
             lastActivity: Date.now(),
             expiresAt: Date.now() + (30 * 60 * 1000),
         }));

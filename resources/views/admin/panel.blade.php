@@ -377,6 +377,20 @@
             background: #fff;
         }
 
+        .read-only-admin form button[type="submit"],
+        .read-only-admin [data-delete-order],
+        .read-only-admin [data-delete],
+        .read-only-admin [data-delete-user],
+        .read-only-admin [data-toggle-user],
+        .read-only-admin [data-einvoice-send],
+        .read-only-admin [data-einvoice-email],
+        .read-only-admin #runRecoveryCampaignBtn,
+        .read-only-admin #removeProductImageBtn {
+            pointer-events: none;
+            opacity: .45;
+            filter: grayscale(.4);
+        }
+
         .side-panel-overlay {
             position: fixed;
             top: 0;
@@ -1012,6 +1026,10 @@
 </header>
 
 <div class="container">
+    <div id="readOnlyBanner" style="display:none; align-items:center; gap:10px; margin-top:16px; padding:12px 16px; border-radius:16px; border:1px solid #E87912; background:#FFF3E0; color:#8a4b00; font-weight:800;">
+        <span style="font-size:18px;">&#128065;</span>
+        <span>Modo de solo revision: puedes ver toda la informacion, pero los botones que modifican datos estan desactivados.</span>
+    </div>
     <div id="denyBox" class="panel" style="display:none; margin-top:16px;">
         <h2>Acceso denegado</h2>
         <p>Necesitas iniciar sesion como administrador.</p>
@@ -1424,6 +1442,7 @@
 })();
 
 const denyBox = document.getElementById('denyBox');
+const readOnlyBanner = document.getElementById('readOnlyBanner');
 const adminContent = document.getElementById('adminContent');
 const adminUserLabel = document.getElementById('adminUserLabel');
 const adminLogoutBtn = document.getElementById('adminLogoutBtn');
@@ -1710,7 +1729,7 @@ function saveSession(session) {
 
 function touchAdminSession() {
     const session = parseSession();
-    if (!session || session.role !== 'admin') return;
+    if (!session || (session.role !== 'admin' && session.role !== 'reviewer')) return;
     session.lastActivity = Date.now();
     session.expiresAt = Date.now() + ADMIN_TIMEOUT_MS;
     saveSession(session);
@@ -1888,7 +1907,12 @@ function todayDateValue() {
 
 function canUseAdmin() {
     const user = getUser();
-    return Boolean(user && user.role === 'admin' && getToken());
+    return Boolean(user && (user.role === 'admin' || user.role === 'reviewer') && getToken());
+}
+
+function isReadOnlyAdmin() {
+    const user = getUser();
+    return Boolean(user && user.role === 'reviewer');
 }
 
 function upsertCategoryOptions() {
@@ -2642,7 +2666,12 @@ async function fetchUsers() {
                 <div class="muted">Telefono: ${user.phone || '-'}</div>
                 <div class="muted">Creada: ${new Date(user.created_at).toLocaleString()} (${days} dias)</div>
                 <div class="muted">Estado: ${user.is_active ? 'Activa' : 'Desactivada'}</div>
-                <div style="display:flex; gap:8px; margin-top:8px;">
+                <div style="display:flex; gap:8px; margin-top:8px; align-items:center; flex-wrap:wrap;">
+                    <select data-change-role="${user.id}" style="width:auto; margin:0;">
+                        <option value="customer" ${user.role === 'customer' ? 'selected' : ''}>Cliente</option>
+                        <option value="reviewer" ${user.role === 'reviewer' ? 'selected' : ''}>Revisor (solo lectura)</option>
+                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Administrador</option>
+                    </select>
                     <button data-toggle-user="${user.id}" data-next="${user.is_active ? '0' : '1'}">
                         ${user.is_active ? 'Dar de baja' : 'Reactivar'}
                     </button>
@@ -2661,6 +2690,31 @@ async function fetchUsers() {
     usersList.querySelectorAll('[data-delete-user]').forEach(btn => {
         btn.addEventListener('click', () => deleteUser(Number(btn.getAttribute('data-delete-user'))));
     });
+
+    usersList.querySelectorAll('[data-change-role]').forEach(select => {
+        select.addEventListener('change', () => changeUserRole(
+            Number(select.getAttribute('data-change-role')),
+            select.value,
+            select
+        ));
+    });
+}
+
+async function changeUserRole(userId, role, selectEl) {
+    const token = getToken();
+    const res = await fetch(`/api/v1/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        alert(data.message || 'No se pudo cambiar el rol');
+    }
+    await fetchUsers();
 }
 
 async function toggleUserActive(userId, isActive) {
@@ -2760,7 +2814,8 @@ async function deleteOrder(orderId) {
 async function boot() {
     const user = getUser();
     const session = parseSession();
-    if (!canUseAdmin() || !session || session.role !== 'admin' || Date.now() > Number(session.expiresAt || 0)) {
+    const allowedRoles = ['admin', 'reviewer'];
+    if (!canUseAdmin() || !session || !allowedRoles.includes(session.role) || Date.now() > Number(session.expiresAt || 0)) {
         clearAuth();
         denyBox.style.display = 'block';
         adminUserLabel.textContent = 'Sin permisos admin';
@@ -2773,7 +2828,7 @@ async function boot() {
             headers: { 'Authorization': `Bearer ${getToken()}` },
         });
         const meData = await meRes.json();
-        if (!meRes.ok || !meData.user || meData.user.role !== 'admin' || !meData.user.is_active) {
+        if (!meRes.ok || !meData.user || !allowedRoles.includes(meData.user.role) || !meData.user.is_active) {
             clearAuth();
             window.location.href = '/admin/login';
             return;
@@ -2786,7 +2841,13 @@ async function boot() {
     }
 
     touchAdminSession();
-    adminUserLabel.textContent = `Admin: ${(getUser() || user).name}`;
+    const activeUser = getUser() || user;
+    const readOnly = isReadOnlyAdmin();
+    adminUserLabel.textContent = `${readOnly ? 'Revisor' : 'Admin'}: ${activeUser.name}`;
+    if (readOnly) {
+        document.body.classList.add('read-only-admin');
+        if (readOnlyBanner) readOnlyBanner.style.display = 'flex';
+    }
     adminContent.style.display = 'grid';
     if (adminMenu) adminMenu.style.display = 'flex';
     showAdminTab('sec-dashboard');

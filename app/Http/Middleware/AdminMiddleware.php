@@ -12,8 +12,12 @@ class AdminMiddleware
     {
         $user = auth()->user();
 
-        if (! $user || $user->role !== 'admin') {
+        if (! $user || ! in_array($user->role, ['admin', 'reviewer'], true)) {
             return response()->json(['message' => 'Acceso solo para administradores.'], 403);
+        }
+
+        if ($user->role === 'reviewer' && ! $request->isMethod('GET') && ! $request->isMethod('HEAD')) {
+            return response()->json(['message' => 'Cuenta de solo revision. No puedes realizar cambios.'], 403);
         }
 
         return $next($request);

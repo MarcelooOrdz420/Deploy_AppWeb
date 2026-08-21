@@ -24,9 +24,13 @@ class AdminUserController extends Controller
             return response()->json(['message' => 'No puedes desactivar tu propia cuenta admin.'], 422);
         }
 
+        if ($request->user()->id === $user->id && $request->has('role') && $request->string('role')->toString() !== 'admin') {
+            return response()->json(['message' => 'No puedes cambiar el rol de tu propia cuenta admin.'], 422);
+        }
+
         $data = $request->validate([
             'is_active' => ['sometimes', 'boolean'],
-            'role' => ['sometimes', 'string', 'in:admin,customer'],
+            'role' => ['sometimes', 'string', 'in:admin,customer,reviewer'],
         ]);
 
         $user->update($data);
