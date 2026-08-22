@@ -484,6 +484,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 (item) => {
                   'product_id': item.producto.id,
                   'quantity': item.qty,
+                  'promotion_id': item.promotionId,
                 },
               )
               .toList(),

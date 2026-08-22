@@ -287,6 +287,20 @@ class _AppShellState extends State<AppShell> {
     final productId = rawProductId is num
         ? rawProductId.toInt()
         : int.tryParse(rawProductId?.toString() ?? '');
+
+    // Si la promo trae precio con descuento, siempre prioriza la pantalla de
+    // promo (con precio y boton de compra) sobre el detalle normal del
+    // platillo: de lo contrario el cliente terminaba pagando el precio
+    // completo aunque la promo mostrara un descuento.
+    final hasPromoPrice = (message.data['promo_price'] ?? '')
+        .toString()
+        .trim()
+        .isNotEmpty;
+    if (hasPromoPrice) {
+      context.push('/promo', extra: message.data);
+      return;
+    }
+
     if (productId != null && productId > 0) {
       context.push('/detalles/$productId');
       return;

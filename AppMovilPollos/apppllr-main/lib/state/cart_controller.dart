@@ -5,10 +5,21 @@ import '../models/producto.dart';
 class CartItem {
   final Producto producto;
   int qty;
+  double? promoPrice;
+  double? originalPrice;
+  int? promotionId;
 
-  CartItem({required this.producto, this.qty = 1});
+  CartItem({
+    required this.producto,
+    this.qty = 1,
+    this.promoPrice,
+    this.originalPrice,
+    this.promotionId,
+  });
 
-  double get total => producto.price * qty;
+  double get unitPrice => promoPrice ?? producto.price;
+
+  double get total => unitPrice * qty;
 }
 
 class CartController extends ChangeNotifier {
@@ -57,6 +68,33 @@ class CartController extends ChangeNotifier {
       existing.qty += 1;
     } else {
       _items[p.id] = CartItem(producto: p, qty: 1);
+    }
+    notifyListeners();
+  }
+
+  // Agrega un producto al precio promocional de una oferta activa. Si el
+  // producto ya estaba en el carrito a precio normal, se actualiza para
+  // reflejar el precio con descuento (mismo comportamiento que la web).
+  void addPromo(
+    Producto p, {
+    required double promoPrice,
+    required double originalPrice,
+    required int promotionId,
+  }) {
+    final existing = _items[p.id];
+    if (existing != null) {
+      existing.qty += 1;
+      existing.promoPrice = promoPrice;
+      existing.originalPrice = originalPrice;
+      existing.promotionId = promotionId;
+    } else {
+      _items[p.id] = CartItem(
+        producto: p,
+        qty: 1,
+        promoPrice: promoPrice,
+        originalPrice: originalPrice,
+        promotionId: promotionId,
+      );
     }
     notifyListeners();
   }

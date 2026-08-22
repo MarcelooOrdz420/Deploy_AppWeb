@@ -152,12 +152,34 @@ class _CartTabState extends State<CartTab> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            'S/ ${item.producto.price.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              color: StoreTheme.orangeDeep,
+                          if (item.promoPrice != null) ...[
+                            Row(
+                              children: [
+                                Text(
+                                  'S/ ${(item.originalPrice ?? item.producto.price).toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    color: StoreTheme.inkSoft,
+                                    decoration: TextDecoration.lineThrough,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'S/ ${item.unitPrice.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    color: StoreTheme.orangeDeep,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                          ] else
+                            Text(
+                              'S/ ${item.unitPrice.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: StoreTheme.orangeDeep,
+                              ),
+                            ),
                         ],
                       ),
                     ),

@@ -141,6 +141,10 @@ class PushNotificationsService {
       'cta_url': (data['cta_url'] ?? '').toString(),
       'route': route,
       'target': (data['target'] ?? '').toString(),
+      'offer_id': (data['offer_id'] ?? '').toString(),
+      'promo_price': (data['promo_price'] ?? '').toString(),
+      'original_price': (data['original_price'] ?? '').toString(),
+      'discount_percent': (data['discount_percent'] ?? '').toString(),
     };
   }
 

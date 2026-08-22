@@ -1112,12 +1112,17 @@
                 <input type="hidden" name="cta_label" value="">
                 <div class="toggle-row">
                     <label class="toggle-main">
-                        <input type="checkbox" name="send_realtime" checked> Enviar a app abierta
+                        <input type="checkbox" id="offerSendAll" checked> Enviar a todos (app abierta, app cerrada, web y correo)
                     </label>
                 </div>
                 <div class="toggle-row">
                     <label class="toggle-main">
-                        <input type="checkbox" name="send_push" checked> Enviar a app cerrada
+                        <input type="checkbox" name="send_realtime" checked> Enviar a app abierta y web (tiempo real)
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <label class="toggle-main">
+                        <input type="checkbox" name="send_push" checked> Enviar a app cerrada (notificacion push)
                     </label>
                 </div>
                 <div class="toggle-row">
@@ -1745,6 +1750,12 @@ async function sendOffer(formData, targetValue) {
     offerMsg.textContent = `Promo enviada.${openAppStatus}${pushStatus}${emailStatus}`;
     offerMsg.classList.add('success');
     offerForm.reset();
+    const offerSendAllEl = document.getElementById('offerSendAll');
+    if (offerSendAllEl) {
+        offerSendAllEl.checked = Boolean(
+            offerForm.send_realtime?.checked && offerForm.send_push?.checked && offerForm.send_email?.checked
+        );
+    }
     setUploadPreview(offerImagePreview, '');
 }
 
@@ -3016,6 +3027,16 @@ if (offerForm) {
         const effective=(1-price/Number(product.price))*100,announced=Number(offerDiscountPercent?.value||0),expected=Number(product.price)*(1-announced/100),allowed=Math.max(1,Number(product.price)*.02),valid=!announced||Math.abs(price-expected)<=allowed;
         if(offerPriceHelp){offerPriceHelp.textContent=`Descuento real: ${effective.toFixed(2)}% · precio calculado S/ ${expected.toFixed(2)}${valid?' · ajuste permitido':' · ajuste demasiado grande'}`;offerPriceHelp.style.color=valid?'#166534':'#b42318'}
     });
+    const offerSendAll = document.getElementById('offerSendAll');
+    const offerChannelInputs = [offerForm.send_realtime, offerForm.send_push, offerForm.send_email].filter(Boolean);
+    const syncOfferSendAll = () => {
+        offerSendAll.checked = offerChannelInputs.every(input => input.checked);
+    };
+    offerSendAll?.addEventListener('change', () => {
+        offerChannelInputs.forEach(input => { input.checked = offerSendAll.checked; });
+    });
+    offerChannelInputs.forEach(input => input.addEventListener('change', syncOfferSendAll));
+    syncOfferSendAll();
     offerForm.addEventListener('submit', (event) => {
         event.preventDefault();
         const formData = new FormData();

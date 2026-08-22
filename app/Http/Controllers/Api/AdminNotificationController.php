@@ -134,6 +134,10 @@ class AdminNotificationController extends Controller
                             'cta_label' => $data['cta_label'] ?? null,
                             'product_id' => isset($data['product_id']) ? (string) $data['product_id'] : '',
                             'cta_url' => $broadcastPayload['cta_url'],
+                            'offer_id' => (string) $offer->id,
+                            'promo_price' => (string) $offer->promo_price,
+                            'original_price' => (string) $offer->original_price,
+                            'discount_percent' => (string) $offer->discount_percent,
                         ],
                     );
 
