@@ -46,6 +46,7 @@ class _PaymentPageState extends State<PaymentPage> {
   final _billingAddressCtrl = TextEditingController();
   final _latitudeCtrl = TextEditingController();
   final _longitudeCtrl = TextEditingController();
+  final _houseNumberCtrl = TextEditingController();
 
   PayMethod _method = PayMethod.izipay;
   DeliveryType _deliveryType = DeliveryType.delivery;
@@ -84,6 +85,7 @@ class _PaymentPageState extends State<PaymentPage> {
     _billingAddressCtrl.dispose();
     _latitudeCtrl.dispose();
     _longitudeCtrl.dispose();
+    _houseNumberCtrl.dispose();
     super.dispose();
   }
 
@@ -411,6 +413,14 @@ class _PaymentPageState extends State<PaymentPage> {
       return;
     }
 
+    final houseNumber = _houseNumberCtrl.text.trim();
+    final referenceValue = houseNumber.isEmpty
+        ? _referenceCtrl.text.trim()
+        : [
+            _referenceCtrl.text.trim(),
+            'Nro./Cuadra: $houseNumber',
+          ].where((part) => part.isNotEmpty).join(' | ');
+
     setState(() => _submitting = true);
 
     try {
@@ -418,7 +428,7 @@ class _PaymentPageState extends State<PaymentPage> {
       if (_deliveryType == DeliveryType.delivery) {
         cart.setAddress(
           addressValue: address,
-          referenceValue: _referenceCtrl.text.trim(),
+          referenceValue: referenceValue,
           latitudeValue: _parseCoordinate(_latitudeCtrl),
           longitudeValue: _parseCoordinate(_longitudeCtrl),
         );
@@ -466,9 +476,7 @@ class _PaymentPageState extends State<PaymentPage> {
               ? null
               : cart.orderNote.trim(),
           'address': address.isEmpty ? null : address,
-          'reference': _referenceCtrl.text.trim().isEmpty
-              ? null
-              : _referenceCtrl.text.trim(),
+          'reference': referenceValue.isEmpty ? null : referenceValue,
           'latitude': _parseCoordinate(_latitudeCtrl),
           'longitude': _parseCoordinate(_longitudeCtrl),
           'items': cart.items
@@ -812,23 +820,37 @@ class _PaymentPageState extends State<PaymentPage> {
                     ),
                   ],
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _field(_latitudeCtrl, 'Latitud (opcional)'),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _field(_longitudeCtrl, 'Longitud (opcional)'),
-                      ),
-                    ],
-                  ),
+                  _field(_houseNumberCtrl, 'Numero de casa / cuadra (opcional)'),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(
                     onPressed: _useCurrentLocation,
                     icon: const Icon(Icons.my_location_outlined),
                     label: const Text('Usar ubicacion exacta'),
                   ),
+                  if (_parseCoordinate(_latitudeCtrl) == null ||
+                      _parseCoordinate(_longitudeCtrl) == null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7EF),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFFFD4B1)),
+                      ),
+                      child: const Text(
+                        'Estas escribiendo la ubicacion manualmente. Verifica '
+                        'que la direccion y la referencia esten bien escritas, '
+                        'o usa "Usar ubicacion exacta" para que el repartidor '
+                        'te ubique con precision.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Colors.black87,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ],
             ),
@@ -1094,6 +1116,7 @@ class _PaymentPageState extends State<PaymentPage> {
       _selectedAddressValue = null;
 
       if (!mounted) return;
+      setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Ubicacion actual cargada correctamente.'),

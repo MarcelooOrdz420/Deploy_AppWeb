@@ -1408,6 +1408,9 @@
             <div id="orderActionPanelPreview" style="display:none;">
                 <pre id="orderActionPanelPreviewContent" class="side-panel-preview"></pre>
             </div>
+            <div id="orderActionPanelDetail" style="display:none;">
+                <div id="orderActionPanelDetailContent"></div>
+            </div>
         </div>
     </aside>
 </div>
@@ -1604,6 +1607,8 @@ const orderActionPanelCloseBtn = document.getElementById('orderActionPanelCloseB
 const orderActionPanelStatus = document.getElementById('orderActionPanelStatus');
 const orderActionPanelPreview = document.getElementById('orderActionPanelPreview');
 const orderActionPanelPreviewContent = document.getElementById('orderActionPanelPreviewContent');
+const orderActionPanelDetail = document.getElementById('orderActionPanelDetail');
+const orderActionPanelDetailContent = document.getElementById('orderActionPanelDetailContent');
 
 function openOrderActionPanel(title) {
     orderActionPanelTitle.textContent = title;
@@ -2367,6 +2372,7 @@ async function fetchOrders() {
                 ${order.billing_metadata?.einvoice?.delivery ? `<div class="muted">Correo comprobante: ${order.billing_metadata.einvoice.delivery.status || 'sin estado'}${order.billing_metadata.einvoice.delivery.recipient ? ` (${order.billing_metadata.einvoice.delivery.recipient})` : ''}</div>` : ''}
                 <div style="margin-top:6px;">Total: <strong>S/ ${Number(order.total_amount).toFixed(2)}</strong></div>
                 <div style="display:flex; gap:8px; margin-top:8px;">
+                    <button data-view-order="${order.id}">Ver pedido</button>
                     <button data-fill="${order.id}">Usar en actualizar estado</button>
                     ${order.payment_proof_path ? `<button data-proof-modal="${order.id}">Ver comprobante</button>` : ''}
                     ${order.billing_receipt_type ? `<button data-einvoice-preview="${order.id}">Preview SUNAT</button>${order.payment_status === 'verified' ? `<button data-einvoice-send="${order.id}">${order.billing_metadata?.einvoice?.sent_at ? 'Reenviar comprobante' : order.billing_metadata?.einvoice?.status === 'failed' ? 'Reintentar envio' : 'Enviar comprobante'}</button><button data-einvoice-email="${order.id}">Reenviar correo</button>` : ''}` : ''}
@@ -2383,8 +2389,15 @@ async function fetchOrders() {
             statusForm.order_id.value = orderId;
             statusMsg.textContent = `Pedido ID ${orderId} seleccionado`;
             orderActionPanelPreview.style.display = 'none';
+            orderActionPanelDetail.style.display = 'none';
             orderActionPanelStatus.style.display = '';
             openOrderActionPanel(`Actualizar estado - Pedido ${orderId}`);
+        });
+    });
+    ordersList.querySelectorAll('[data-view-order]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const order = orders.find(item => item.id === Number(btn.getAttribute('data-view-order')));
+            if (order) viewOrderDetail(order);
         });
     });
     ordersList.querySelectorAll('[data-proof-modal]').forEach(btn => {
@@ -2421,8 +2434,46 @@ async function previewEinvoice(orderId) {
     orderActionsMsg.textContent = `Preview SUNAT listo para pedido ${orderId}.`;
     orderActionPanelPreviewContent.textContent = JSON.stringify(data, null, 2);
     orderActionPanelStatus.style.display = 'none';
+    orderActionPanelDetail.style.display = 'none';
     orderActionPanelPreview.style.display = '';
     openOrderActionPanel(`Preview SUNAT - Pedido ${orderId}`);
+}
+
+function viewOrderDetail(order) {
+    const items = (order.items || []).map(item => `
+        <div style="padding:10px 0; border-bottom:1px solid #FFE4D2;">
+            <div style="display:flex; justify-content:space-between; gap:10px; font-weight:800; color:#25170f;">
+                <span>Pidio: ${escapeHtml(item.product_name)} × ${item.quantity}</span>
+                <span>Costo: S/ ${Number(item.line_total).toFixed(2)}</span>
+            </div>
+        </div>
+    `).join('') || '<div class="muted">Sin items registrados.</div>';
+
+    const extras = [];
+    if (order.salad_type) extras.push(`Ensalada tipo: ${escapeHtml(order.salad_type)}`);
+    if (order.drink_note) extras.push(`El cliente dijo: "${escapeHtml(order.drink_note)}"`);
+
+    const delivery = order.delivery_type === 'delivery'
+        ? `
+            <div class="muted">Direccion: ${escapeHtml(order.address || 'sin direccion')}</div>
+            <div class="muted">Referencia: ${escapeHtml(order.reference || 'sin referencia')}</div>
+        `
+        : '<div class="muted">Recojo en local</div>';
+
+    orderActionPanelDetailContent.innerHTML = `
+        <div style="margin-bottom:12px;">
+            <strong style="font-size:16px; color:#25170f;">Pedido ${escapeHtml(order.tracking_code)}</strong>
+            <div class="muted">Cliente: ${escapeHtml(order.customer_name)} · ${escapeHtml(order.customer_phone || '')}</div>
+        </div>
+        <div style="margin-bottom:12px;">${items}</div>
+        ${extras.length ? `<div style="margin-bottom:12px; padding:12px; background:#FFF7EF; border:1px solid #FFD4B1; border-radius:14px;">${extras.map(e => `<div>${e}</div>`).join('')}</div>` : ''}
+        ${delivery}
+        <div style="margin-top:12px; font-weight:900; color:#25170f;">Total: S/ ${Number(order.total_amount).toFixed(2)}</div>
+    `;
+    orderActionPanelStatus.style.display = 'none';
+    orderActionPanelPreview.style.display = 'none';
+    orderActionPanelDetail.style.display = '';
+    openOrderActionPanel(`Ver pedido - ${order.tracking_code}`);
 }
 
 async function sendEinvoice(orderId, button = null) {

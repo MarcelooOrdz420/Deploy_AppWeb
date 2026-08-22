@@ -472,6 +472,7 @@ class _CartTabState extends State<CartTab> {
   Future<void> _manualAddress(CartController cart) async {
     final addressCtrl = TextEditingController(text: cart.address);
     final referenceCtrl = TextEditingController(text: cart.reference);
+    final houseNumberCtrl = TextEditingController();
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -484,6 +485,22 @@ class _CartTabState extends State<CartTab> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF7EF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFFFD4B1)),
+                ),
+                child: const Text(
+                  'Escribir la ubicacion manualmente puede no ser exacta. '
+                  'Verifica que este bien escrita o usa "Usar ubicacion real" '
+                  'para mayor precision.',
+                  style: TextStyle(fontSize: 12.5, color: Colors.black87, height: 1.4),
+                ),
+              ),
+              const SizedBox(height: 12),
               TextField(
                 controller: addressCtrl,
                 decoration: const InputDecoration(
@@ -494,6 +511,13 @@ class _CartTabState extends State<CartTab> {
               TextField(
                 controller: referenceCtrl,
                 decoration: const InputDecoration(labelText: 'Referencia'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: houseNumberCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Numero de casa / cuadra (opcional)',
+                ),
               ),
             ],
           ),
@@ -516,9 +540,16 @@ class _CartTabState extends State<CartTab> {
     );
 
     if (result == true) {
+      final houseNumber = houseNumberCtrl.text.trim();
+      final reference = referenceCtrl.text.trim();
+      final referenceValue = houseNumber.isEmpty
+          ? reference
+          : [reference, 'Nro./Cuadra: $houseNumber']
+              .where((part) => part.isNotEmpty)
+              .join(' | ');
       cart.setAddress(
         addressValue: addressCtrl.text.trim(),
-        referenceValue: referenceCtrl.text.trim(),
+        referenceValue: referenceValue,
       );
     }
   }
