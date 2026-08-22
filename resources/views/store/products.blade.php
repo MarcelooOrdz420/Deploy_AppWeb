@@ -1959,7 +1959,7 @@ function showProduct(product) {
 
 function addToCart(product) {
     if (!product || product.can_sell === false || product.is_sold_out) {
-        alert(`Platillo agotado: ${product ? product.name : 'producto no disponible'}`);
+        showStoreAlert('Platillo agotado', `${product ? product.name : 'Este producto'} no esta disponible por el momento.`);
         return;
     }
     if (!isLoggedIn()) {
@@ -1979,7 +1979,7 @@ function addToCart(product) {
     });
     const limitError = validateCartLimits(nextCart);
     if (limitError) {
-        alert(limitError);
+        showStoreAlert('No se pudo agregar', limitError);
         return;
     }
     setCart(nextCart);

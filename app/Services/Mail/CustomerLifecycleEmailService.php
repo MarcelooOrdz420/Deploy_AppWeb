@@ -84,20 +84,20 @@ HTML;
             : '<div style="padding:20px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at center, rgba(255,255,255,.18), transparent 44%), linear-gradient(135deg,#ff7c18 0%,#ff931f 100%);"><div style="width:100%;max-width:280px;height:280px;border-radius:28px;border:4px solid rgba(255,255,255,.24);background:linear-gradient(135deg,#ffb347,#ff7c18);"></div></div>';
 
         $html = <<<HTML
-<div style="font-family:Arial,sans-serif;background:#120d0a;padding:28px;color:#111827;">
-  <div style="max-width:760px;margin:0 auto;border-radius:28px;overflow:hidden;background:linear-gradient(90deg,#1b130f 0%,#2a1d16 56%,#ff7c18 56%,#ff8f1f 100%);border:1px solid rgba(255,188,114,.24);box-shadow:0 30px 70px rgba(0,0,0,.28);">
-    <div style="padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.08);color:#fff7ed;">
-      <div style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.58);">{$brand}</div>
+<div style="font-family:Arial,sans-serif;background:#FFF1E3;padding:28px;color:#111827;">
+  <div style="max-width:760px;margin:0 auto;border-radius:28px;overflow:hidden;background:#FFFDF9;border:1px solid #FFB37A;box-shadow:0 30px 70px rgba(255,111,31,.18);">
+    <div style="padding:14px 20px;background:#FF6F1F;color:#fff;">
+      <div style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.85);">{$brand}</div>
     </div>
     <div style="display:grid;grid-template-columns:1.05fr .95fr;">
-      <div style="padding:30px 26px;background:radial-gradient(circle at top left, rgba(255,255,255,.08), transparent 22%), linear-gradient(135deg,#201712 0%,#160f0c 48%,#2b1a14 100%);color:#fff7ed;">
-        <div style="margin:0 0 12px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.56);">Promo del dia</div>
-        <p style="margin:0 0 8px;font-size:14px;color:rgba(255,247,237,.82);">Hola {$name},</p>
-        <h1 style="margin:0 0 14px;font-size:56px;line-height:.88;font-weight:900;text-transform:uppercase;color:#fff7ed;text-shadow:0 8px 18px rgba(0,0,0,.28);">{$title}</h1>
-        <p style="margin:0 0 10px;font-size:18px;line-height:1.35;color:#fff7ed;font-weight:800;">{$message}</p>
-        <p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:rgba(255,247,237,.82);">{$body}</p>
+      <div style="padding:30px 26px;background:#FFFDF9;color:#25170f;">
+        <div style="margin:0 0 12px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#FF6F1F;font-weight:800;">Promo del dia</div>
+        <p style="margin:0 0 8px;font-size:14px;color:#68432e;">Hola {$name},</p>
+        <h1 style="margin:0 0 14px;font-size:56px;line-height:.88;font-weight:900;text-transform:uppercase;color:#25170f;">{$title}</h1>
+        <p style="margin:0 0 10px;font-size:18px;line-height:1.35;color:#25170f;font-weight:800;">{$message}</p>
+        <p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:#68432e;">{$body}</p>
         <p style="margin:0;">
-          <a href="{$safeCtaUrl}" style="display:inline-block;padding:14px 24px;border-radius:999px;background:linear-gradient(135deg,#ffad18,#f28d00);color:#fffdf8;text-decoration:none;font-weight:800;text-transform:uppercase;letter-spacing:.05em;">{$safeCtaLabel}</a>
+          <a href="{$safeCtaUrl}" style="display:inline-block;padding:14px 24px;border-radius:999px;background:#FF6F1F;color:#fff;text-decoration:none;font-weight:800;text-transform:uppercase;letter-spacing:.05em;">{$safeCtaLabel}</a>
         </p>
       </div>
       {$imageBlock}

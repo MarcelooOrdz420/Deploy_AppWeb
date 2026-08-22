@@ -1425,6 +1425,18 @@
     </div>
 </div>
 
+<div id="adminConfirmOverlay" style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; padding:18px; background:rgba(24,15,8,.55);">
+    <div style="width:min(92vw,380px); background:#FFFDF9; border:1.5px solid #FFB37A; border-radius:26px; box-shadow:0 30px 60px rgba(255,111,31,.28); padding:26px 24px; text-align:center;">
+        <div style="width:44px; height:44px; border-radius:14px; background:#FFE4D2; color:#FF6F1F; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:900; margin:0 auto 14px;">!</div>
+        <strong id="adminConfirmTitle" style="display:block; font-size:18px; color:#25170f; margin-bottom:8px;">Confirmar accion</strong>
+        <p id="adminConfirmMessage" style="margin:0 0 18px; color:#68432e; font-size:14.5px; line-height:1.5;"></p>
+        <div style="display:flex; gap:10px;">
+            <button id="adminConfirmCancelBtn" type="button" class="pill-btn" style="flex:1; padding:12px; background:#FFF1E3; color:#7b3d11; border-color:#FFD9B0;">Cancelar</button>
+            <button id="adminConfirmOkBtn" type="button" class="pill-btn" style="flex:1; padding:12px; background:#FF6F1F; color:#fff; border-color:#FF6F1F;">Aceptar</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script>
 (() => {
@@ -1442,6 +1454,28 @@
         return originalFetch(input, init);
     };
 })();
+
+function showAdminConfirm(message, title = 'Confirmar accion') {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('adminConfirmOverlay');
+        if (!overlay) { resolve(window.confirm(message)); return; }
+        document.getElementById('adminConfirmTitle').textContent = title;
+        document.getElementById('adminConfirmMessage').textContent = message;
+        overlay.style.display = 'flex';
+        const okBtn = document.getElementById('adminConfirmOkBtn');
+        const cancelBtn = document.getElementById('adminConfirmCancelBtn');
+        const cleanup = (result) => {
+            overlay.style.display = 'none';
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+            resolve(result);
+        };
+        const onOk = () => cleanup(true);
+        const onCancel = () => cleanup(false);
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+    });
+}
 
 const denyBox = document.getElementById('denyBox');
 const readOnlyBanner = document.getElementById('readOnlyBanner');
@@ -2214,7 +2248,7 @@ function editProduct(productId) {
 }
 
 async function deleteProduct(productId) {
-    if (!confirm(`Eliminar producto ID ${productId}?`)) return;
+    if (!(await showAdminConfirm(`Eliminar producto ID ${productId}?`, 'Eliminar producto'))) return;
     const token = getToken();
     const res = await fetch(`/api/v1/products/${productId}`, {
         method: 'DELETE',
@@ -2392,7 +2426,7 @@ async function previewEinvoice(orderId) {
 }
 
 async function sendEinvoice(orderId, button = null) {
-    if (!confirm(`Emitir comprobante electronico para pedido ID ${orderId}?`)) return;
+    if (!(await showAdminConfirm(`Emitir comprobante electronico para pedido ID ${orderId}?`, 'Emitir comprobante'))) return;
     if (button?.disabled) return;
     const originalLabel = button?.textContent || '';
     if (button) {
@@ -2428,7 +2462,7 @@ async function sendEinvoice(orderId, button = null) {
 }
 
 async function sendEinvoiceEmail(orderId) {
-    if (!confirm(`Reenviar el comprobante por correo para el pedido ID ${orderId}?`)) return;
+    if (!(await showAdminConfirm(`Reenviar el comprobante por correo para el pedido ID ${orderId}?`, 'Reenviar comprobante'))) return;
     const token = getToken();
     orderActionsMsg.textContent = `Enviando correo del comprobante para pedido ${orderId}...`;
     const res = await fetch(`/api/v1/admin/orders/${orderId}/einvoice/send-customer-copy`, {
@@ -2756,7 +2790,7 @@ async function toggleUserActive(userId, isActive) {
 }
 
 async function deleteUser(userId) {
-    if (!confirm(`Eliminar usuario ID ${userId}?`)) return;
+    if (!(await showAdminConfirm(`Eliminar usuario ID ${userId}?`, 'Eliminar usuario'))) return;
     const token = getToken();
     const res = await fetch(`/api/v1/admin/users/${userId}`, {
         method: 'DELETE',
@@ -2776,7 +2810,7 @@ async function fetchJobs() {
     const res=await fetch('/api/v1/admin/jobs',{headers:{'Authorization':`Bearer ${getToken()}`}}),jobs=await res.json();
     if(!res.ok){adminJobsList.textContent=jobs.message||'No se pudieron cargar las vacantes.';return}
     adminJobsList.innerHTML=jobs.length?jobs.map(job=>`<article class="card"><strong>${escapeHtml(job.title)}</strong><div class="muted">${escapeHtml(job.description||'Sin descripción')}</div><button type="button" data-delete-job="${job.id}">Eliminar</button></article>`).join(''):'<div class="card">No hay vacantes publicadas.</div>';
-    adminJobsList.querySelectorAll('[data-delete-job]').forEach(button=>button.onclick=async()=>{if(!confirm('Eliminar esta vacante?'))return;await fetch(`/api/v1/admin/jobs/${button.dataset.deleteJob}`,{method:'DELETE',headers:{'Authorization':`Bearer ${getToken()}`}});fetchJobs()});
+    adminJobsList.querySelectorAll('[data-delete-job]').forEach(button=>button.onclick=async()=>{if(!(await showAdminConfirm('Eliminar esta vacante?','Eliminar vacante')))return;await fetch(`/api/v1/admin/jobs/${button.dataset.deleteJob}`,{method:'DELETE',headers:{'Authorization':`Bearer ${getToken()}`}});fetchJobs()});
 }
 
 async function saveJob(event) {
@@ -2814,7 +2848,7 @@ async function updateOrderStatus(e) {
 }
 
 async function deleteOrder(orderId) {
-    if (!confirm(`Eliminar pedido ID ${orderId}? Esta accion lo quitara de la vista del cliente.`)) return;
+    if (!(await showAdminConfirm(`Eliminar pedido ID ${orderId}? Esta accion lo quitara de la vista del cliente.`, 'Eliminar pedido'))) return;
     const token = getToken();
     const res = await fetch(`/api/v1/admin/orders/${orderId}`, {
         method: 'DELETE',

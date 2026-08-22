@@ -1129,11 +1129,13 @@ initClientSession();
     .pollia-validation p { margin:0; color:#68432E; font-size:13px; line-height:1.4; }
     .pollia-product-summary { display:grid; gap:6px; padding:10px; border-radius:12px; background:#FFF1E3; color:#25170F; }
     #promoOverlay #promoTitle { color:#fff!important; background:transparent!important; opacity:1!important; }
-    #promoOverlay #promoMessage { color:#fff8ef!important; }
-    #promoOverlay #promoBody { color:#ffd8bd!important; }
-    #promoToast > div { background:linear-gradient(135deg,#4f100c,#8b1f13)!important; }
-    #promoToastTitle,#promoToastMessage { color:#fff!important; }
-    #promoOverlay .promo-copy { background:linear-gradient(145deg,#49100c,#77180f)!important; }
+    #promoOverlay #promoMessage { color:#25170f!important; }
+    #promoOverlay #promoBody { color:#68432e!important; }
+    #promoToast > div { background:#FFFDF9!important; border:1.5px solid #FFB37A!important; box-shadow:0 26px 60px rgba(255,111,31,.24)!important; }
+    #promoToast > div > div:first-child { background:#FF6F1F!important; }
+    #promoToastTitle { color:#fff!important; }
+    #promoToastMessage { color:#25170f!important; }
+    #promoOverlay .promo-copy { background:#FFFDF9!important; }
     #promoOverlay .promo-media { background:linear-gradient(145deg,#ff9b30,#ff6d0b)!important; }
     #orderToast>div { background:#FFFDF9!important; border:1.5px solid #FFB37A!important; box-shadow:0 22px 50px rgba(255,111,31,.24)!important; }
     #orderToast>div>div:first-child { background:#FFF1E3!important; border:0!important; border-bottom:1px solid #FFE4D2!important; }
@@ -1178,20 +1180,20 @@ initClientSession();
     }
 </style>
 
-<div id="promoOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(14,10,7,.82); padding:18px;">
-    <div style="max-width:720px; margin:6vh auto 0; background:linear-gradient(90deg,#1b130f 0%,#2a1d16 55%,#ff7c18 55%,#ff8f1f 100%); border:1px solid rgba(255, 188, 114, .24); border-radius:30px; box-shadow:0 30px 70px rgba(0, 0, 0, .38); overflow:hidden;">
-        <div style="padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; color:#fff7ed; border-bottom:1px solid rgba(255,255,255,.08);">
+<div id="promoOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(24,15,8,.55); padding:18px;">
+    <div style="max-width:720px; margin:6vh auto 0; background:#FFFDF9; border:1.5px solid #FFB37A; border-radius:30px; box-shadow:0 30px 70px rgba(255,111,31,.28); overflow:hidden;">
+        <div style="padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; color:#fff; background:#FF6F1F;">
             <strong id="promoTitle" style="font-size:16px; line-height:1.2;">PromociÃ³n</strong>
-            <button id="promoCloseBtn" type="button" class="pill-btn" style="padding:8px 12px; background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">Cerrar</button>
+            <button id="promoCloseBtn" type="button" class="pill-btn" style="padding:8px 12px; background:rgba(255,255,255,.18); color:#fff; border-color:rgba(255,255,255,.3);">Cerrar</button>
         </div>
         <div style="display:grid; grid-template-columns:1.05fr .95fr; gap:0;">
-            <div class="promo-copy" style="padding:26px 24px; color:#fff7ed; background:radial-gradient(circle at top left, rgba(255,255,255,.08), transparent 22%), linear-gradient(135deg,#201712 0%,#160f0c 48%,#2b1a14 100%);">
-                <div style="font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.56); margin-bottom:10px;">Promo del dia</div>
-                <div id="promoMessage" style="font-size:38px; line-height:.92; font-weight:900; text-transform:uppercase; text-shadow:0 8px 18px rgba(0,0,0,.28);">Nueva promo</div>
-                <div id="promoBody" style="margin-top:12px; color:rgba(255,247,237,.82); line-height:1.6; max-width:280px;"></div>
+            <div class="promo-copy" style="padding:26px 24px; color:#25170f; background:#FFFDF9;">
+                <div style="font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:#FF6F1F; font-weight:800; margin-bottom:10px;">Promo del dia</div>
+                <div id="promoMessage" style="font-size:38px; line-height:.92; font-weight:900; text-transform:uppercase; color:#25170f;">Nueva promo</div>
+                <div id="promoBody" style="margin-top:12px; color:#68432e; line-height:1.6; max-width:280px;"></div>
                 <div class="promo-actions" style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;">
                     <button id="promoAcceptBtn" type="button" class="pill-btn primary-link" style="padding:12px 18px;">Ver</button>
-                    <button id="promoRejectBtn" type="button" class="pill-btn" style="padding:12px 18px; background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">Cerrar</button>
+                    <button id="promoRejectBtn" type="button" class="pill-btn" style="padding:12px 18px; background:#FFF1E3; color:#7b3d11; border-color:#FFD9B0;">Cerrar</button>
                 </div>
             </div>
             <div class="promo-media" style="padding:18px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, rgba(255,255,255,.18), transparent 44%), linear-gradient(135deg,#ff7c18 0%,#ff931f 100%);">
@@ -1202,15 +1204,15 @@ initClientSession();
 </div>
 
 <div id="promoToast" style="display:none; position:fixed; right:18px; bottom:18px; z-index:9998; width:min(380px, calc(100vw - 36px));">
-    <div style="background:linear-gradient(90deg,#1a120e 0%,#2b1b14 58%,#ff7e1c 58%,#ff8f21 100%); border:1px solid rgba(255, 188, 114, .24); border-radius:24px; box-shadow: 0 26px 60px rgba(0, 0, 0, .32); overflow:hidden;">
-        <div style="padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; gap:10px;">
+    <div style="background:#FFFDF9; border:1.5px solid #FFB37A; border-radius:24px; box-shadow: 0 26px 60px rgba(255,111,31,.24); overflow:hidden;">
+        <div style="padding:12px 14px; border-bottom:0; display:flex; align-items:center; justify-content:space-between; gap:10px; background:#FF6F1F; color:#fff;">
             <strong id="promoToastTitle" style="font-size:13px; line-height:1.2;">Nueva promociÃ³n</strong>
-            <button id="promoToastCloseBtn" type="button" class="pill-btn" style="padding:8px 10px; background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">X</button>
+            <button id="promoToastCloseBtn" type="button" class="pill-btn" style="padding:8px 10px; background:rgba(255,255,255,.18); color:#fff; border-color:rgba(255,255,255,.3);">X</button>
         </div>
         <div style="padding:14px;">
-            <div id="promoToastMessage" style="color:#fff7ed; line-height:1.24; font-size:22px; font-weight:900; text-transform:uppercase;"></div>
+            <div id="promoToastMessage" style="color:#25170f; line-height:1.24; font-size:22px; font-weight:900; text-transform:uppercase;"></div>
             <div class="promo-toast-actions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap;">
-                <button id="promoToastRejectBtn" type="button" class="pill-btn" style="background:rgba(255,255,255,.12); color:#fff7ed; border-color:rgba(255,255,255,.18);">Cerrar</button>
+                <button id="promoToastRejectBtn" type="button" class="pill-btn" style="background:#FFF1E3; color:#7b3d11; border-color:#FFD9B0;">Cerrar</button>
                 <button id="promoToastAcceptBtn" type="button" class="pill-btn primary-link">Ver</button>
             </div>
         </div>
@@ -1229,6 +1231,31 @@ initClientSession();
         </div>
     </div>
 </div>
+
+<div id="storeAlertOverlay" style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; padding:18px; background:rgba(24,15,8,.55);">
+    <div style="width:min(92vw,380px); background:#FFFDF9; border:1.5px solid #FFB37A; border-radius:26px; box-shadow:0 30px 60px rgba(255,111,31,.28); padding:26px 24px; text-align:center;">
+        <div style="width:44px; height:44px; border-radius:14px; background:#FFE4D2; color:#FF6F1F; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:900; margin:0 auto 14px;">!</div>
+        <strong id="storeAlertTitle" style="display:block; font-size:18px; color:#25170f; margin-bottom:8px;"></strong>
+        <p id="storeAlertMessage" style="margin:0 0 18px; color:#68432e; font-size:14.5px; line-height:1.5;"></p>
+        <button id="storeAlertOkBtn" type="button" class="btn-main" style="width:100%;">Entendido</button>
+    </div>
+</div>
+
+<script>
+function showStoreAlert(title, message) {
+    const overlay = document.getElementById('storeAlertOverlay');
+    if (!overlay) { alert(message); return; }
+    document.getElementById('storeAlertTitle').textContent = title;
+    document.getElementById('storeAlertMessage').textContent = message;
+    overlay.style.display = 'flex';
+}
+document.getElementById('storeAlertOkBtn')?.addEventListener('click', () => {
+    document.getElementById('storeAlertOverlay').style.display = 'none';
+});
+document.getElementById('storeAlertOverlay')?.addEventListener('click', (e) => {
+    if (e.target.id === 'storeAlertOverlay') document.getElementById('storeAlertOverlay').style.display = 'none';
+});
+</script>
 
 <style>
     .pollia-launcher {

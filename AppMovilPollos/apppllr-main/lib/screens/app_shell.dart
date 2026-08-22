@@ -121,25 +121,14 @@ class _AppShellState extends State<AppShell> {
                   ),
                   child: Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          Color(0xFF17110D),
-                          Color(0xFF2A1D16),
-                          Color(0xFFFF8F1F),
-                        ],
-                        stops: [0, .58, .58],
-                      ),
-                      border: Border.all(
-                        color: const Color(0xFFFFC061).withOpacity(.32),
-                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      color: StoreTheme.paper,
+                      border: Border.all(color: const Color(0xFFFFB37A)),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color.fromRGBO(0, 0, 0, .32),
-                          blurRadius: 32,
-                          offset: Offset(0, 16),
+                          color: Color.fromRGBO(255, 111, 31, .22),
+                          blurRadius: 40,
+                          offset: Offset(0, 20),
                         ),
                       ],
                     ),
@@ -148,20 +137,23 @@ class _AppShellState extends State<AppShell> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: const BoxDecoration(
+                              color: StoreTheme.orange,
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(24),
+                              ),
+                            ),
                             child: Row(
                               children: [
                                 Container(
-                                  width: 48,
-                                  height: 48,
-                                  padding: const EdgeInsets.all(7),
+                                  width: 40,
+                                  height: 40,
+                                  padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: Colors.white.withOpacity(.12),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(.2),
-                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    color: Colors.white.withOpacity(.22),
                                   ),
                                   child: Image.asset(
                                     'assets/polloia.png',
@@ -173,7 +165,7 @@ class _AppShellState extends State<AppShell> {
                                   child: Text(
                                     'PROMO DEL DIA',
                                     style: TextStyle(
-                                      color: Color(0xFFFFD18C),
+                                      color: Colors.white,
                                       fontSize: 11,
                                       letterSpacing: 2,
                                       fontWeight: FontWeight.w900,
@@ -184,13 +176,10 @@ class _AppShellState extends State<AppShell> {
                             ),
                           ),
                           if (imageUrl.isNotEmpty) ...[
-                            const SizedBox(height: 14),
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 18,
-                              ),
+                              padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(16),
                                 child: _promoImage(
                                   imageUrl,
                                   height: promoImageHeight,
@@ -199,14 +188,14 @@ class _AppShellState extends State<AppShell> {
                             ),
                           ],
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+                            padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
                             child: Text(
                               message.title,
                               style: const TextStyle(
-                                fontSize: 32,
-                                height: .95,
+                                fontSize: 30,
+                                height: .98,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFFFFF7ED),
+                                color: StoreTheme.ink,
                               ),
                             ),
                           ),
@@ -215,9 +204,9 @@ class _AppShellState extends State<AppShell> {
                             child: Text(
                               message.message,
                               style: const TextStyle(
-                                color: Color(0xFFFFE6C8),
+                                color: StoreTheme.inkSoft,
                                 height: 1.45,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -246,7 +235,7 @@ class _AppShellState extends State<AppShell> {
                                   onPressed: () => Navigator.of(context).pop(),
                                   child: const Text(
                                     'Cerrar',
-                                    style: TextStyle(color: Color(0xFFFFE6C8)),
+                                    style: TextStyle(color: StoreTheme.orangeDeep),
                                   ),
                                 ),
                               ],
