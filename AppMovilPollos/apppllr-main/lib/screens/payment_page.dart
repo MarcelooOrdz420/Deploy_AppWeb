@@ -154,6 +154,43 @@ class _PaymentPageState extends State<PaymentPage> {
     return double.tryParse(value);
   }
 
+  void _showDeliveryBlockedAlert() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delivery no disponible'),
+        content: const Text(
+          'Los pedidos menores a S/10 no califican para delivery. Elige '
+          'recojo en tienda o agrega mas productos para llegar al minimo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeliveryFeeAlert() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Costo de delivery'),
+        content: const Text(
+          'Se aplicara un costo de S/1.00 por delivery dentro de Huancayo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
   String? _receiptValue() {
     switch (_receiptType) {
       case ReceiptType.none:
@@ -340,6 +377,19 @@ class _PaymentPageState extends State<PaymentPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('La direccion es obligatoria para delivery.'),
+        ),
+      );
+      return;
+    }
+
+    if (_deliveryType == DeliveryType.delivery && !cart.qualifiesForDelivery) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Los pedidos menores a S/10 no califican para delivery. Elige '
+            'recojo en tienda o agrega mas productos.',
+          ),
         ),
       );
       return;
@@ -694,7 +744,16 @@ class _PaymentPageState extends State<PaymentPage> {
                   ],
                   selected: {_deliveryType},
                   onSelectionChanged: (values) {
-                    setState(() => _deliveryType = values.first);
+                    final next = values.first;
+                    if (next == DeliveryType.delivery &&
+                        !cart.qualifiesForDelivery) {
+                      _showDeliveryBlockedAlert();
+                      return;
+                    }
+                    setState(() => _deliveryType = next);
+                    if (next == DeliveryType.delivery) {
+                      _showDeliveryFeeAlert();
+                    }
                   },
                 ),
                 if (_deliveryType == DeliveryType.delivery) ...[

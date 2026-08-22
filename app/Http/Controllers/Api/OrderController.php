@@ -466,7 +466,21 @@ class OrderController extends Controller
                 $total += $lineTotal;
             }
 
-            $order->update(['total_amount' => $total]);
+            $deliveryFee = 0.0;
+            if ($data['delivery_type'] === 'delivery') {
+                if ($total < 10) {
+                    abort(response()->json([
+                        'message' => 'Los pedidos menores a S/10 no califican para delivery. Elige recojo en tienda o agrega mas productos.',
+                    ], 422));
+                }
+                $deliveryFee = 1.0;
+            }
+
+            $orderUpdate = ['total_amount' => $total + $deliveryFee];
+            if (Schema::hasColumn('orders', 'delivery_fee')) {
+                $orderUpdate['delivery_fee'] = $deliveryFee;
+            }
+            $order->update($orderUpdate);
 
             OrderStatusHistory::create([
                 'order_id' => $order->id,

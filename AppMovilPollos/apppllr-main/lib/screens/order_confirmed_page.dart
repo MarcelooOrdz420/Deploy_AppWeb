@@ -40,7 +40,7 @@ class _OrderConfirmedPageState extends State<OrderConfirmedPage> {
     final itemCount = widget.itemCount;
     final resolvedTrackingCode =
         (trackingCode ?? '').trim().isEmpty ? 'Generado por la API' : trackingCode!.trim();
-    final resolvedTotal = totalPaid ?? cart.total(freeOver: 70, fee: 4);
+    final resolvedTotal = totalPaid ?? cart.total();
     final resolvedItems = (itemsText ?? '').trim().isEmpty
         ? cart.items.map((e) => e.producto.name).join(', ')
         : itemsText!.trim();

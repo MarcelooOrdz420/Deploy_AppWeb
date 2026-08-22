@@ -44,11 +44,19 @@ class _CartTabState extends State<CartTab> {
   Widget build(BuildContext context) {
     final cart = CartScope.of(context);
     final subtotal = cart.subtotal;
-    final deliveryFee = cart.deliveryFee(
-      freeOver: 70,
-      fee: cart.isDelivery ? 4 : 0,
-    );
+    final deliveryFee = cart.isDelivery ? cart.deliveryFee() : 0.0;
     final total = subtotal + deliveryFee;
+
+    if (cart.isDelivery && !cart.qualifiesForDelivery) {
+      // El carrito cambio (se quitaron productos) y ya no llega al minimo:
+      // se fuerza recojo y se avisa, en vez de dejar un delivery "gratis"
+      // no intencional.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        cart.setDeliveryType(false);
+        _showDeliveryBlockedAlert();
+      });
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
@@ -206,7 +214,7 @@ class _CartTabState extends State<CartTab> {
                       child: _choiceButton(
                         label: 'Delivery',
                         active: cart.isDelivery,
-                        onTap: () => cart.setDeliveryType(true),
+                        onTap: () => _selectDelivery(cart),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -349,6 +357,52 @@ class _CartTabState extends State<CartTab> {
           ),
         ],
       ],
+    );
+  }
+
+  void _selectDelivery(CartController cart) {
+    if (!cart.qualifiesForDelivery) {
+      _showDeliveryBlockedAlert();
+      return;
+    }
+    cart.setDeliveryType(true);
+    _showDeliveryFeeAlert();
+  }
+
+  void _showDeliveryBlockedAlert() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delivery no disponible'),
+        content: const Text(
+          'Los pedidos menores a S/10 no califican para delivery. Elige '
+          'recojo en tienda o agrega mas productos para llegar al minimo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeliveryFeeAlert() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Costo de delivery'),
+        content: const Text(
+          'Se aplicara un costo de S/1.00 por delivery dentro de Huancayo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
     );
   }
 

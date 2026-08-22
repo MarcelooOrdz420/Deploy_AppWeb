@@ -29,6 +29,7 @@ class Order extends Model
         'delivery_window_label',
         'status',
         'total_amount',
+        'delivery_fee',
         'payment_method',
         'payment_gateway',
         'payment_reference',
@@ -55,6 +56,7 @@ class Order extends Model
     {
         return [
             'total_amount' => 'decimal:2',
+            'delivery_fee' => 'decimal:2',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'scheduled_for' => 'datetime',

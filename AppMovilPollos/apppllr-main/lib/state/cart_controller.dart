@@ -33,15 +33,16 @@ class CartController extends ChangeNotifier {
 
   double get subtotal => _items.values.fold(0.0, (a, b) => a + b.total);
 
-  double deliveryFee({double freeOver = 70, double fee = 4.0}) {
-    if (subtotal >= freeOver) return 0.0;
-    if (subtotal == 0) return 0.0;
-    return fee;
-  }
+  // Pedidos menores a este monto no califican para delivery (el costo de
+  // envio no seria rentable para la empresa en pedidos tan chicos).
+  static const double deliveryMinimumSubtotal = 10.0;
+  static const double deliveryFeeAmount = 1.0;
 
-  double total({double freeOver = 70, double fee = 4.0}) {
-    return subtotal + deliveryFee(freeOver: freeOver, fee: fee);
-  }
+  bool get qualifiesForDelivery => subtotal >= deliveryMinimumSubtotal;
+
+  double deliveryFee() => qualifiesForDelivery ? deliveryFeeAmount : 0.0;
+
+  double total() => subtotal + deliveryFee();
 
   void add(Producto p) {
     final existing = _items[p.id];
