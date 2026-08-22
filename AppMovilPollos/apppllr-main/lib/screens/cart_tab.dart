@@ -710,19 +710,23 @@ class _CartTabState extends State<CartTab> {
   Widget _qtyButton(String label, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(999),
       child: Container(
-        width: 36,
-        height: 36,
+        width: 34,
+        height: 34,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF7F0),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: StoreTheme.lineStrong.withOpacity(.82)),
+        decoration: const BoxDecoration(
+          color: StoreTheme.orange,
+          shape: BoxShape.circle,
         ),
         child: Text(
           label,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            height: 1,
+          ),
         ),
       ),
     );

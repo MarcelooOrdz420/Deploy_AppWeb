@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class StoreTheme {
   static const Color orange = Color(0xFFFF6F1F);
@@ -53,138 +54,167 @@ class StoreTheme {
       scaffoldBackgroundColor: background,
     );
 
+    final jakarta = GoogleFonts.plusJakartaSansTextTheme(base.textTheme);
+
     return base.copyWith(
-      textTheme: base.textTheme.copyWith(
-        displayLarge: const TextStyle(
+      textTheme: jakarta.copyWith(
+        displayLarge: jakarta.displayLarge?.copyWith(
           color: textPrimary,
           fontSize: 48,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
           letterSpacing: -1.5,
         ),
-        headlineLarge: const TextStyle(
+        headlineLarge: jakarta.headlineLarge?.copyWith(
           color: textPrimary,
           fontSize: 34,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
           letterSpacing: -1,
         ),
-        headlineMedium: const TextStyle(
+        headlineMedium: jakarta.headlineMedium?.copyWith(
           color: textPrimary,
           fontSize: 28,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
           letterSpacing: -.6,
         ),
-        titleLarge: const TextStyle(
+        titleLarge: jakarta.titleLarge?.copyWith(
           color: textPrimary,
           fontSize: 22,
           fontWeight: FontWeight.w700,
         ),
-        titleMedium: const TextStyle(
+        titleMedium: jakarta.titleMedium?.copyWith(
           color: textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w700,
         ),
-        bodyLarge: const TextStyle(
+        bodyLarge: jakarta.bodyLarge?.copyWith(
           color: textPrimary,
           fontSize: 16,
           height: 1.45,
         ),
-        bodyMedium: const TextStyle(
+        bodyMedium: jakarta.bodyMedium?.copyWith(
           color: textPrimary,
           fontSize: 14,
           height: 1.45,
         ),
-        bodySmall: const TextStyle(
+        bodySmall: jakarta.bodySmall?.copyWith(
           color: textSecondary,
           fontSize: 12,
           height: 1.4,
         ),
-        labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        labelLarge: jakarta.labelLarge?.copyWith(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
-        backgroundColor: cream,
+        backgroundColor: surface,
         foregroundColor: textPrimary,
-        titleTextStyle: TextStyle(
+        titleTextStyle: jakarta.titleLarge?.copyWith(
           color: textPrimary,
-          fontSize: 20,
-          fontWeight: FontWeight.w900,
+          fontSize: 19,
+          fontWeight: FontWeight.w800,
           letterSpacing: -.3,
         ),
       ),
-      snackBarTheme: const SnackBarThemeData(
+      snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: ink,
-        contentTextStyle: TextStyle(color: cream),
+        contentTextStyle: jakarta.bodyMedium?.copyWith(
+          color: cream,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: field,
-        hintStyle: const TextStyle(color: textMuted),
+        hintStyle: TextStyle(color: textMuted, fontWeight: FontWeight.w500),
+        labelStyle: TextStyle(color: textMuted, fontWeight: FontWeight.w600),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+          horizontal: 18,
+          vertical: 16,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: border.withOpacity(.7)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: border.withOpacity(.7)),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: const BorderSide(color: orange, width: 1.4),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderSide: BorderSide(color: orange, width: 1.8),
         ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: danger),
+        errorBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderSide: BorderSide(color: danger, width: 1.4),
         ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: danger, width: 2),
+        focusedErrorBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderSide: BorderSide(color: danger, width: 2),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(48, 48),
+          minimumSize: const Size(48, 54),
           backgroundColor: primary,
           foregroundColor: Colors.white,
           disabledBackgroundColor: borderSoft,
           disabledForegroundColor: textMuted,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 22),
+          textStyle: jakarta.labelLarge?.copyWith(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w800,
+            letterSpacing: .1,
           ),
+          shape: const StadiumBorder(),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          minimumSize: const Size(48, 48),
+          minimumSize: const Size(48, 54),
           backgroundColor: orange,
           foregroundColor: Colors.white,
-          elevation: 1,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+          elevation: 3,
+          shadowColor: orange.withOpacity(.38),
+          padding: const EdgeInsets.symmetric(horizontal: 22),
+          textStyle: jakarta.labelLarge?.copyWith(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w800,
+            letterSpacing: .1,
           ),
+          shape: const StadiumBorder(),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(48, 48),
+          minimumSize: const Size(48, 54),
           foregroundColor: primaryDark,
-          side: const BorderSide(color: border),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: border.withOpacity(.9), width: 1.4),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          textStyle: jakarta.labelLarge?.copyWith(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
           ),
+          shape: const StadiumBorder(),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           minimumSize: const Size(48, 48),
           foregroundColor: orangeDark,
-          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          textStyle: jakarta.labelLarge?.copyWith(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
@@ -196,24 +226,26 @@ class StoreTheme {
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: orange,
         foregroundColor: Colors.white,
+        elevation: 4,
       ),
       cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 78,
+        height: 76,
         elevation: 0,
         backgroundColor: surface,
-        indicatorColor: const Color(0xFFFFE4D2),
+        indicatorColor: orangeSoft.withOpacity(.22),
+        indicatorShape: const StadiumBorder(),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
             color: states.contains(WidgetState.selected)
                 ? orangeDark
                 : textMuted,
-            fontSize: 11,
+            fontSize: 11.5,
             fontWeight: states.contains(WidgetState.selected)
                 ? FontWeight.w800
                 : FontWeight.w600,
@@ -224,7 +256,7 @@ class StoreTheme {
             color: states.contains(WidgetState.selected)
                 ? orangeDark
                 : textMuted,
-            size: 24,
+            size: states.contains(WidgetState.selected) ? 26 : 24,
           ),
         ),
       ),
@@ -300,20 +332,25 @@ class StoreTheme {
 
   static BoxDecoration surfaceDecoration() {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(24),
       color: surface,
       boxShadow: const <BoxShadow>[
         BoxShadow(
-          color: Color.fromRGBO(25, 22, 20, .045),
-          blurRadius: 24,
-          offset: Offset(0, 8),
+          color: Color.fromRGBO(25, 22, 20, .07),
+          blurRadius: 22,
+          offset: Offset(0, 10),
+        ),
+        BoxShadow(
+          color: Color.fromRGBO(25, 22, 20, .03),
+          blurRadius: 4,
+          offset: Offset(0, 1),
         ),
       ],
     );
   }
 
   static BoxDecoration panelDecoration() {
-    return BoxDecoration(borderRadius: BorderRadius.circular(26), color: field);
+    return BoxDecoration(borderRadius: BorderRadius.circular(22), color: field);
   }
 }
 
