@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Jobs\IssueElectronicReceiptAfterVerifiedPayment;
 use App\Models\Order;
+use App\Models\Product;
+use App\Services\InventoryMovementService;
 use App\Services\Payments\IzipayService;
 use App\Services\Payments\IzipayPaymentConfirmationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
@@ -159,6 +162,9 @@ class PaymentController extends Controller
             'statusUrl' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
                 'izipay.status', now()->addMinutes(30), ['order' => $order->id]
             ),
+            'cancelUrl' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                'izipay.cancel-unpaid', now()->addMinutes(30), ['order' => $order->id]
+            ),
         ]);
     }
 
@@ -166,6 +172,52 @@ class PaymentController extends Controller
     {
         abort_unless($request->hasValidSignature(), 403);
         return response()->json(['payment_status' => $order->payment_status]);
+    }
+
+    public function izipayCancelUnpaid(Request $request, Order $order): JsonResponse
+    {
+        abort_unless($request->hasValidSignature(), 403);
+
+        if (! $this->usesIzipay($order)
+            || ! in_array((string) $order->payment_status, ['pending', 'rejected'], true)
+            || (string) $order->status !== Order::STATUS_PENDING) {
+            return response()->json([
+                'message' => 'Este pedido ya no se puede cancelar.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($order): void {
+            $order->load('items');
+            $movementService = app(InventoryMovementService::class);
+
+            foreach ($order->items as $item) {
+                if (! $item->product_id) {
+                    continue;
+                }
+
+                $product = Product::query()->lockForUpdate()->find($item->product_id);
+                if (! $product) {
+                    continue;
+                }
+
+                $stockBefore = (int) $product->stock;
+                $product->increment('stock', (int) $item->quantity);
+                $product->refresh();
+
+                $movementService->logCancellationReturn(
+                    order: $order,
+                    product: $product,
+                    quantity: (int) $item->quantity,
+                    stockBefore: $stockBefore,
+                    stockAfter: (int) $product->stock,
+                    actor: $order->user,
+                );
+            }
+
+            $order->delete();
+        });
+
+        return response()->json(['message' => 'Pedido cancelado, stock repuesto.']);
     }
 
     private function usesIzipay(Order $order): bool

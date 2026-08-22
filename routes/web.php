@@ -60,6 +60,10 @@ Route::match(['get', 'post'], '/pago/izipay/{order}/resultado', [PaymentControll
 Route::get('/pago/izipay/{order}/estado', [PaymentController::class, 'izipayStatus'])
     ->middleware('throttle:60,1')
     ->name('izipay.status');
+Route::post('/pago/izipay/{order}/cancelar', [PaymentController::class, 'izipayCancelUnpaid'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->middleware('throttle:10,1')
+    ->name('izipay.cancel-unpaid');
 
 Route::get('/pago/izipay/{order}', function (\App\Models\Order $order, \Illuminate\Http\Request $request) {
     abort_if((string) $order->payment_gateway !== 'izipay'
