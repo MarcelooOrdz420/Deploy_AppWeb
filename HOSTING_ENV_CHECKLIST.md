@@ -183,21 +183,9 @@ COMPANY_RUC=TU_RUC
 COMPANY_SUPPORT_PHONE=999888777
 COMPANY_SUPPORT_EMAIL=ventas@tu-dominio.com
 COMPANY_CURRENCY=PEN
-
-COMPANY_YAPE_LABEL="Yape Empresa"
-COMPANY_YAPE_PHONE=999888777
-COMPANY_YAPE_QR_PATH=/images/yape-qr.png
-COMPANY_YAPE_ENABLED=true
-
-COMPANY_PLIN_LABEL="Plin Empresa"
-COMPANY_PLIN_PHONE=999888777
-COMPANY_PLIN_QR_PATH=/images/plin-qr.png
-COMPANY_PLIN_ENABLED=true
-
-COMPANY_COD_LABEL="Pago contraentrega"
-COMPANY_COD_MESSAGE="Pagas cuando recibes tu pedido."
-COMPANY_COD_ENABLED=true
 ```
+
+El mensaje y estado de Izipay se controlan con `COMPANY_IZIPAY_MESSAGE` e `IZIPAY_ENABLED` (ver seccion de Izipay). El pago contraentrega esta activo siempre por defecto, sin variables de entorno propias.
 
 ## DNI/RUC y facturacion electronica
 

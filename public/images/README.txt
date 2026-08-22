@@ -1,1 +1,4 @@
-Coloca aqui tus imagenes:\n- Hero slider: public/images/hero/slide-1.jpg, slide-2.jpg, slide-3.jpg\n- Productos por categoria: public/images/products/pollos/*.jpg, parrillas/*.jpg, bebidas/*.jpg\n- QR pago: public/images/yape-qr.png y public/images/plin-qr.png\n- Fallback: public/images/products/default.jpg
+Coloca aqui tus imagenes:
+- Hero slider: public/images/hero/slide-1.jpg, slide-2.jpg, slide-3.jpg
+- Productos por categoria: public/images/products/pollos/*.jpg, parrillas/*.jpg, bebidas/*.jpg
+- Fallback: public/images/products/default.svg
