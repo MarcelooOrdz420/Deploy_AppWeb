@@ -238,106 +238,106 @@ class _CartTabState extends State<CartTab> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      color: StoreTheme.orangeDeep,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
+                if (cart.isDelivery) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        color: StoreTheme.orangeDeep,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          cart.address.isEmpty
+                              ? 'Aun no elegiste direccion'
+                              : cart.address,
+                          style: const TextStyle(color: StoreTheme.inkSoft),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => _showAddressOptions(cart),
+                        child: const Text('Cambiar'),
+                      ),
+                    ],
+                  ),
+                  if (cart.reference.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
                       child: Text(
-                        cart.address.isEmpty
-                            ? 'Aun no elegiste direccion'
-                            : cart.address,
+                        'Referencia: ${cart.reference}',
                         style: const TextStyle(color: StoreTheme.inkSoft),
                       ),
                     ),
-                    TextButton(
-                      onPressed: cart.isDelivery
-                          ? () => _showAddressOptions(cart)
-                          : null,
-                      child: const Text('Cambiar'),
-                    ),
-                  ],
-                ),
-                if (cart.reference.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      'Referencia: ${cart.reference}',
-                      style: const TextStyle(color: StoreTheme.inkSoft),
-                    ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Hora de entrega',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                   ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Hora de entrega',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7F0),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: StoreTheme.lineStrong.withOpacity(.82),
-                    ),
-                  ),
-                  child: const Text(
-                    'Puedes pedir para ahora o programarlo con anticipación.',
-                    style: TextStyle(
-                      color: StoreTheme.inkSoft,
-                      fontWeight: FontWeight.w600,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _radioChoice(
-                        label: 'Ahora',
-                        active: cart.scheduleNow,
-                        onTap: () => cart.setScheduleNow(true),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7F0),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: StoreTheme.lineStrong.withOpacity(.82),
                       ),
                     ),
-                    Expanded(
-                      child: _radioChoice(
-                        label: 'Programar',
-                        active: !cart.scheduleNow,
-                        onTap: () => _pickScheduledTime(cart),
+                    child: const Text(
+                      'Puedes pedir para ahora o programarlo con anticipación.',
+                      style: TextStyle(
+                        color: StoreTheme.inkSoft,
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
                       ),
                     ),
-                  ],
-                ),
-                if (!cart.scheduleNow && cart.scheduledFor != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF7F0),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: StoreTheme.lineStrong.withOpacity(.82),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _radioChoice(
+                          label: 'Ahora',
+                          active: cart.scheduleNow,
+                          onTap: () => cart.setScheduleNow(true),
                         ),
                       ),
-                      child: Text(
-                        cart.deliveryWindowLabel.isNotEmpty
-                            ? cart.deliveryWindowLabel
-                            : 'Pedido programado para ${_formatSchedule(cart.scheduledFor!)}',
-                        style: const TextStyle(
-                          color: StoreTheme.inkSoft,
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: _radioChoice(
+                          label: 'Programar',
+                          active: !cart.scheduleNow,
+                          onTap: () => _pickScheduledTime(cart),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (!cart.scheduleNow && cart.scheduledFor != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7F0),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: StoreTheme.lineStrong.withOpacity(.82),
+                          ),
+                        ),
+                        child: Text(
+                          cart.deliveryWindowLabel.isNotEmpty
+                              ? cart.deliveryWindowLabel
+                              : 'Pedido programado para ${_formatSchedule(cart.scheduledFor!)}',
+                          style: const TextStyle(
+                            color: StoreTheme.inkSoft,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                ],
               ],
             ),
           ),

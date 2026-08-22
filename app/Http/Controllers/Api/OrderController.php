@@ -496,6 +496,23 @@ class OrderController extends Controller
             return $order->load(['items', 'statusHistory']);
         });
 
+        // Los pedidos contraentrega se avisan de inmediato al admin: el cobro
+        // ocurre en la entrega, no hay pago por confirmar. Los pedidos con
+        // tarjeta (Izipay) recien avisan cuando el pago quede verificado
+        // (ver sendNewOrderAdminAlert desde el webhook/retorno de Izipay), asi
+        // el admin no recibe alertas de intentos de pago abandonados.
+        if ((string) $order->payment_method === 'cod') {
+            $this->sendNewOrderAdminAlert($order);
+        }
+
+        app(CartRecoveryService::class)->clearForUser($request->user());
+        app(ChatOrderDraftService::class)->markConverted($request->user(), null);
+
+        return response()->json($order, 201);
+    }
+
+    public function sendNewOrderAdminAlert(Order $order): void
+    {
         try {
             $payload = (new OrderCreatedAlertSent($order))->broadcastWith();
             $notifier = app(PusherNotifier::class);
@@ -505,11 +522,6 @@ class OrderController extends Controller
         } catch (\Throwable) {
             // Silencioso: el pedido no debe fallar si Pusher no esta configurado o falla.
         }
-
-        app(CartRecoveryService::class)->clearForUser($request->user());
-        app(ChatOrderDraftService::class)->markConverted($request->user(), null);
-
-        return response()->json($order, 201);
     }
 
     public function updateStatus(Request $request, Order $order): JsonResponse

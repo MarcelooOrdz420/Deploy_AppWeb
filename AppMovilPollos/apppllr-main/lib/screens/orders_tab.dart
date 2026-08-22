@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/order_api_service.dart';
 import '../services/pusher_service.dart';
@@ -22,6 +24,9 @@ class _OrdersTabState extends State<OrdersTab> {
   late Future<List<Map<String, dynamic>>> _future;
   StreamSubscription<PusherMessage>? _pusherSubscription;
   Map<String, String> _lastStatuses = const {};
+  final _orderApiService = OrderApiService();
+  final _sessionService = SessionService();
+  final Set<int> _pendingPaymentActionIds = {};
 
   String _paymentLabel(dynamic method) {
     return switch ((method ?? '').toString().toLowerCase()) {
@@ -228,6 +233,15 @@ class _OrdersTabState extends State<OrdersTab> {
     );
   }
 
+  bool _needsPaymentCompletion(Map<String, dynamic> order) {
+    final paymentMethod = (order['payment_method'] ?? '').toString();
+    final paymentStatus = (order['payment_status'] ?? '').toString();
+    final status = (order['status'] ?? '').toString();
+    return paymentMethod == 'izipay' &&
+        (paymentStatus == 'pending' || paymentStatus == 'rejected') &&
+        status != 'cancelled';
+  }
+
   Widget _serverCard(Map<String, dynamic> order) {
     final itemList = ((order['items'] as List?) ?? const [])
         .map((e) => (e as Map).cast<String, dynamic>())
@@ -235,6 +249,9 @@ class _OrdersTabState extends State<OrdersTab> {
     final total =
         double.tryParse((order['total_amount'] ?? '0').toString()) ?? 0.0;
     final status = (order['status'] ?? '-').toString();
+    final orderId = (order['id'] as num?)?.toInt() ?? 0;
+    final needsPayment = _needsPaymentCompletion(order);
+    final actionBusy = _pendingPaymentActionIds.contains(orderId);
 
     return StoreSurface(
       margin: const EdgeInsets.only(bottom: 12),
@@ -293,9 +310,138 @@ class _OrdersTabState extends State<OrdersTab> {
               ),
             ],
           ),
+          if (needsPayment) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7EF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFFFD4B1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Falta culminar el pago de este pedido. Termina el pago '
+                    'con tarjeta para que se prepare tu delivery o recojo.',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: StoreTheme.orange,
+                            foregroundColor: StoreTheme.ink,
+                          ),
+                          onPressed: actionBusy
+                              ? null
+                              : () => _culminarPago(orderId),
+                          child: Text(
+                            actionBusy ? 'Abriendo...' : 'Culminar pago',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: actionBusy
+                              ? null
+                              : () => _cancelarPedido(orderId),
+                          child: const Text('Cancelar pedido'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _culminarPago(int orderId) async {
+    setState(() => _pendingPaymentActionIds.add(orderId));
+    try {
+      final token = await _sessionService.getToken();
+      final checkout = await _orderApiService.izipayCheckout(
+        token: token,
+        orderId: orderId,
+      );
+      final checkoutUrl = (checkout['payment_url'] ?? '').toString().trim();
+      if (checkoutUrl.isEmpty) {
+        throw Exception('No se pudo generar el enlace de pago.');
+      }
+      await launchUrl(
+        Uri.parse(checkoutUrl),
+        mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.inAppBrowserView,
+        webOnlyWindowName: kIsWeb ? '_self' : null,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _pendingPaymentActionIds.remove(orderId));
+      } else {
+        _pendingPaymentActionIds.remove(orderId);
+      }
+    }
+  }
+
+  Future<void> _cancelarPedido(int orderId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: StoreTheme.paper,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Cancelar pedido'),
+        content: const Text(
+          'Si cancelas, este pedido no se guardara como compra. Podras '
+          'volver a pedir con otro metodo de pago, como contraentrega.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: StoreTheme.orange,
+              foregroundColor: StoreTheme.ink,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Si, cancelar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _pendingPaymentActionIds.add(orderId));
+    try {
+      final token = await _sessionService.getToken();
+      await _orderApiService.cancelUnpaidOrder(token: token, orderId: orderId);
+      if (!mounted) return;
+      setState(() => _future = _loadOrders());
+    } finally {
+      if (mounted) {
+        setState(() => _pendingPaymentActionIds.remove(orderId));
+      } else {
+        _pendingPaymentActionIds.remove(orderId);
+      }
+    }
   }
 
   Widget _localCard(OrderModel order) {

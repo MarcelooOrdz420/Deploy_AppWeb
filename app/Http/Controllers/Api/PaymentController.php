@@ -117,6 +117,9 @@ class PaymentController extends Controller
         if ($result['status'] === 'verified') {
             IssueElectronicReceiptAfterVerifiedPayment::dispatchAfterResponse($order->id);
         }
+        if ($result['status'] === 'verified' && ($result['transitioned'] ?? false)) {
+            app(OrderController::class)->sendNewOrderAdminAlert($order);
+        }
 
         Log::info('Izipay IPN processed.', [
             'order_id' => $order->id,
@@ -148,6 +151,9 @@ class PaymentController extends Controller
                 );
                 if ($result['status'] === 'verified') {
                     IssueElectronicReceiptAfterVerifiedPayment::dispatchAfterResponse($result['order']->id);
+                }
+                if ($result['status'] === 'verified' && ($result['transitioned'] ?? false)) {
+                    app(OrderController::class)->sendNewOrderAdminAlert($result['order']);
                 }
                 $order->refresh();
             } catch (\RuntimeException $exception) {
