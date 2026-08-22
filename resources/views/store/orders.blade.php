@@ -313,56 +313,6 @@ async function fetchMyOrders() {
     }
 }
 
-async function downloadReceipt(orderId) {
-    const token = getToken();
-    try {
-        const res = await fetch(`/api/v1/orders/${orderId}/receipt`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-        });
-        if (!res.ok) {
-            alert('No se pudo descargar ticket');
-            return;
-        }
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `boleta-${orderId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-    } catch {
-        alert('Error de conexion al descargar ticket');
-    }
-}
-
-function viewReceipt(orderId) {
-    const token = getToken();
-    if (!token) {
-        alert('Debes iniciar sesion');
-        return;
-    }
-    const url = `/api/v1/orders/${orderId}/receipt-view?token_preview=1`;
-    fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` },
-    }).then(async (res) => {
-        if (!res.ok) {
-            alert('No se pudo abrir la boleta');
-            return;
-        }
-        const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const win = window.open(blobUrl, '_blank');
-        if (!win) {
-            alert('Tu navegador bloqueo la ventana emergente');
-            URL.revokeObjectURL(blobUrl);
-            return;
-        }
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-    }).catch(() => alert('Error de conexion al abrir boleta'));
-}
-
 marketingEmailsEnabled?.addEventListener('change', savePreferences);
 window.addEventListener('ed:order-status-updated', () => {
     fetchMyOrders();
