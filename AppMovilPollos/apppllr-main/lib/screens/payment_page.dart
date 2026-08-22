@@ -510,11 +510,16 @@ class _PaymentPageState extends State<PaymentPage> {
           paymentMethod: storedPaymentMethod,
         );
         if (!verified) {
+          // El cliente eligio cancelar explicitamente en vez de esperar la
+          // confirmacion: como ya no hay forma de reintentar el pago de este
+          // pedido desde Mis pedidos, se vacia el carrito para que pueda
+          // empezar un pedido nuevo sin quedar con productos "atascados".
+          cart.clear();
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'El pedido $trackingCode ya fue creado. Puedes revisar el pago mas tarde en Mis pedidos.',
+                'Cancelaste el pago del pedido $trackingCode. Tu carrito se vacio; puedes armar un pedido nuevo cuando quieras.',
               ),
             ),
           );
@@ -1313,11 +1318,38 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog>
               child: Text(rejected ? 'Reintentar pago' : 'Volver a Izipay'),
             ),
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Revisar despues'),
+            onPressed: () => _confirmAbandon(context),
+            child: const Text('Cancelar pago'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmAbandon(BuildContext dialogContext) async {
+    final confirmed = await showDialog<bool>(
+      context: dialogContext,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Cancelar el pago?'),
+        content: const Text(
+          'Si abandonas el pago ahora, tu carrito se vaciara y este pedido '
+          'quedara sin completar. Tendras que armar un pedido nuevo si '
+          'quieres intentarlo otra vez.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Seguir esperando'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Si, cancelar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && dialogContext.mounted) {
+      Navigator.pop(dialogContext, false);
+    }
   }
 }

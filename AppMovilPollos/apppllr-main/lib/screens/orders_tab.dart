@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../services/order_api_service.dart';
 import '../services/pusher_service.dart';
@@ -207,16 +205,6 @@ class _OrdersTabState extends State<OrdersTab> {
     final total =
         double.tryParse((order['total_amount'] ?? '0').toString()) ?? 0.0;
     final status = (order['status'] ?? '-').toString();
-    final paymentMethod = (order['payment_method'] ?? '')
-        .toString()
-        .toLowerCase();
-    final paymentStatus = (order['payment_status'] ?? 'pending')
-        .toString()
-        .toLowerCase();
-    final canRetryPayment =
-        paymentMethod == 'izipay' &&
-        ['pending', 'rejected'].contains(paymentStatus) &&
-        status.toLowerCase() != 'cancelled';
 
     return StoreSurface(
       margin: const EdgeInsets.only(bottom: 12),
@@ -275,49 +263,9 @@ class _OrdersTabState extends State<OrdersTab> {
               ),
             ],
           ),
-          if (canRetryPayment) ...[
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () => _retryPayment(order),
-                icon: const Icon(Icons.lock_outline_rounded),
-                label: const Text('Pagar con tarjeta'),
-              ),
-            ),
-          ],
         ],
       ),
     );
-  }
-
-  Future<void> _retryPayment(Map<String, dynamic> order) async {
-    final orderId = (order['id'] as num?)?.toInt() ?? 0;
-    final token = await SessionService().getToken();
-    if (orderId <= 0 || token.isEmpty) return;
-
-    try {
-      final checkout = await OrderApiService().izipayCheckout(
-        token: token,
-        orderId: orderId,
-      );
-      final url = (checkout['payment_url'] ?? '').toString().trim();
-      if (url.isEmpty) throw Exception('Izipay no devolvió un enlace de pago.');
-      await launchUrl(
-        Uri.parse(url),
-        mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.inAppBrowserView,
-        webOnlyWindowName: kIsWeb ? '_self' : null,
-      );
-      if (!mounted) return;
-      setState(() => _future = _loadOrders());
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
-        ),
-      );
-    }
   }
 
   Widget _localCard(OrderModel order) {
