@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../models/producto.dart';
 import '../services/auth_service.dart';
 import '../services/productos_service.dart';
+import '../services/session_service.dart';
 import '../theme/store_theme.dart';
 import '../widgets/producto_image.dart';
 
@@ -33,7 +34,9 @@ class _MyHomePageState extends State<MyHomePage> {
     if (!mounted) return;
 
     if (token != null && token.isNotEmpty) {
-      context.go('/app');
+      final role = await SessionService().getUserRole();
+      if (!mounted) return;
+      context.go(role == 'delivery' ? '/reparto' : '/app');
       return;
     }
 

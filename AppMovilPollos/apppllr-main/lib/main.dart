@@ -6,6 +6,7 @@ import 'screens/invitado_page.dart';
 import 'screens/correo_page.dart';
 import 'screens/registro_page.dart';
 import 'screens/app_shell.dart';
+import 'screens/delivery_shell.dart';
 import 'screens/search_page.dart';
 import 'screens/detalles_page_api.dart';
 import 'screens/payment_page.dart';
@@ -75,6 +76,9 @@ final GoRouter _router = GoRouter(
       path: '/pedidos',
       builder: (context, state) => const AppShell(initialIndex: 3),
     ),
+
+    // APP DEL REPARTIDOR (cuentas con rol "delivery")
+    GoRoute(path: '/reparto', builder: (context, state) => const DeliveryShell()),
 
     // BUSCAR
     GoRoute(path: '/buscar', builder: (context, state) => const SearchPage()),

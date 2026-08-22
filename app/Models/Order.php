@@ -18,6 +18,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'assigned_driver_id',
         'idempotency_key',
         'checkout_fingerprint',
         'tracking_code',
@@ -71,6 +72,11 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function assignedDriver()
+    {
+        return $this->belongsTo(User::class, 'assigned_driver_id');
+    }
+
     public function items()
     {
         return $this->hasMany(OrderItem::class);
@@ -84,5 +90,18 @@ class Order extends Model
     public function paymentTransactions()
     {
         return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public static function statusLabel(string $status): string
+    {
+        return match ($status) {
+            self::STATUS_PENDING => 'pendiente',
+            self::STATUS_CONFIRMED => 'confirmado',
+            self::STATUS_PREPARING => 'en preparación',
+            self::STATUS_ON_THE_WAY => 'en camino',
+            self::STATUS_DELIVERED => 'entregado',
+            self::STATUS_CANCELLED => 'cancelado',
+            default => $status,
+        };
     }
 }

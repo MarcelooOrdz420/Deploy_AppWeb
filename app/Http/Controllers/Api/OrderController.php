@@ -7,6 +7,7 @@ use App\Events\OrderStatusUpdatedForUser;
 use App\Http\Controllers\Controller;
 use App\Models\MarketingOffer;
 use App\Models\Order;
+use App\Models\User;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\Product;
@@ -522,14 +523,28 @@ class OrderController extends Controller
             'note' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $order = DB::transaction(function () use ($data, $order, $request): Order {
+        $order = $this->applyStatusTransition($order, $data['status'], $data['note'] ?? null, $request->user());
+
+        $this->sendOrderStatusPush($order);
+
+        return response()->json($order);
+    }
+
+    /**
+     * Aplica un cambio de estado y todos sus efectos (verificacion de pago
+     * COD, sincronizacion de inventario, historial, emision de comprobante).
+     * Reutilizado tanto por el panel admin como por el flujo del repartidor.
+     */
+    public function applyStatusTransition(Order $order, string $status, ?string $note, User $actor): Order
+    {
+        $order = DB::transaction(function () use ($status, $note, $order, $actor): Order {
             $previousStatus = (string) $order->status;
 
             $order->update([
-                'status' => $data['status'],
+                'status' => $status,
             ]);
 
-            if ($data['status'] === Order::STATUS_DELIVERED
+            if ($status === Order::STATUS_DELIVERED
                 && (string) $order->payment_method === 'cod'
                 && (string) $order->payment_status !== 'verified') {
                 $order->update([
@@ -543,15 +558,15 @@ class OrderController extends Controller
             $this->syncInventoryForStatusTransition(
                 order: $order->fresh(['items']),
                 previousStatus: $previousStatus,
-                nextStatus: $data['status'],
-                actor: $request->user(),
+                nextStatus: $status,
+                actor: $actor,
             );
 
             OrderStatusHistory::create([
                 'order_id' => $order->id,
-                'status' => $data['status'],
-                'note' => $data['note'] ?? null,
-                'changed_by' => $request->user()->id,
+                'status' => $status,
+                'note' => $note,
+                'changed_by' => $actor->id,
             ]);
 
             return $order->fresh(['items', 'statusHistory']);
@@ -564,15 +579,13 @@ class OrderController extends Controller
             $order->refresh();
         }
 
-        $this->sendOrderStatusPush($order);
-
-        return response()->json($order);
+        return $order;
     }
 
-    private function sendOrderStatusPush(Order $order, ?string $paymentStatus = null): void
+    public function sendOrderStatusPush(Order $order, ?string $paymentStatus = null, ?User $driver = null): void
     {
         try {
-            $statusEvent = new OrderStatusUpdatedForUser($order, $paymentStatus);
+            $statusEvent = new OrderStatusUpdatedForUser($order, $paymentStatus, $driver);
             $notifier = app(PusherNotifier::class);
             if (! $notifier->trigger('private-user.'.$order->user_id, 'order.status.updated', $statusEvent->broadcastWith())) {
                 event($statusEvent);
@@ -589,9 +602,15 @@ class OrderController extends Controller
             }
 
             $status = (string) ($order->status ?? '');
+            $statusLabel = Order::statusLabel($status);
             $tracking = (string) ($order->tracking_code ?? '');
             $title = 'Actualizacion de pedido';
-            $body = $tracking !== '' ? "Pedido {$tracking}: {$status}" : "Pedido actualizado: {$status}";
+            $body = $tracking !== '' ? "Pedido {$tracking}: {$statusLabel}" : "Pedido actualizado: {$statusLabel}";
+            if ($driver && $status === Order::STATUS_ON_THE_WAY) {
+                $body = $tracking !== ''
+                    ? "{$driver->name} ya tiene tu pedido {$tracking} y va en camino."
+                    : "{$driver->name} ya tiene tu pedido y va en camino.";
+            }
             if ($paymentStatus) {
                 $body .= " | Pago: {$paymentStatus}";
             }

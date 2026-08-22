@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AdminCompanyProfileController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AdminNotificationController;
 use App\Http\Controllers\Api\CartRecoveryController;
+use App\Http\Controllers\Api\DeliveryOrderController;
 use App\Http\Controllers\Api\EInvoiceController;
 use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\PusherAuthController;
@@ -64,6 +65,13 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/orders/{order}/cancel-unpaid', [OrderController::class, 'cancelUnpaid']);
         Route::get('/orders/{order}/receipt-view', [OrderController::class, 'receiptView']);
         Route::get('/orders/{order}/receipt', [OrderController::class, 'downloadReceipt']);
+
+        Route::middleware('delivery')->group(function (): void {
+            Route::get('/delivery/orders/pool', [DeliveryOrderController::class, 'pool']);
+            Route::get('/delivery/orders/mine', [DeliveryOrderController::class, 'mine']);
+            Route::post('/delivery/orders/{order}/claim', [DeliveryOrderController::class, 'claim']);
+            Route::patch('/delivery/orders/{order}/status', [DeliveryOrderController::class, 'markDelivered']);
+        });
 
         Route::middleware('admin')->group(function (): void {
             Route::post('/admin/notifications/offers', [AdminNotificationController::class, 'sendOffer']);

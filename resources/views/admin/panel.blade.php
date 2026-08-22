@@ -2671,6 +2671,7 @@ async function fetchUsers() {
                     <select data-role-select="${user.id}" style="width:auto; margin:0;">
                         <option value="customer" ${user.role === 'customer' ? 'selected' : ''}>Cliente</option>
                         <option value="reviewer" ${user.role === 'reviewer' ? 'selected' : ''}>Revisor (solo lectura)</option>
+                        <option value="delivery" ${user.role === 'delivery' ? 'selected' : ''}>Repartidor</option>
                         <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Administrador</option>
                     </select>
                     <button type="button" data-save-role="${user.id}" class="btn-main">Guardar rol</button>

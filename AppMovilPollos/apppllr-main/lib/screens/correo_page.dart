@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../config/runtime_config.dart';
 import '../services/auth_service.dart';
+import '../services/session_service.dart';
 import '../theme/store_theme.dart';
 
 class LoginCorreoPage extends StatefulWidget {
@@ -22,6 +23,12 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
   String _cleanError(Object e) =>
       e.toString().replaceFirst('Exception: ', '').trim();
 
+  Future<void> _goAfterLogin() async {
+    final role = await SessionService().getUserRole();
+    if (!mounted) return;
+    context.go(role == 'delivery' ? '/reparto' : '/app');
+  }
+
   Future<void> _doLogin() async {
     final email = emailController.text.trim();
     final password = passwordController.text;
@@ -37,7 +44,7 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
     try {
       await AuthService().login(email: email, password: password);
       if (!mounted) return;
-      context.go('/app');
+      await _goAfterLogin();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -59,7 +66,7 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
     try {
       await AuthService().loginWithGoogle();
       if (!mounted) return;
-      context.go('/app');
+      await _goAfterLogin();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(

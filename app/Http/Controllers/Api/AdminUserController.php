@@ -30,7 +30,7 @@ class AdminUserController extends Controller
 
         $data = $request->validate([
             'is_active' => ['sometimes', 'boolean'],
-            'role' => ['sometimes', 'string', 'in:admin,customer,reviewer'],
+            'role' => ['sometimes', 'string', 'in:admin,customer,reviewer,delivery'],
         ]);
 
         $user->update($data);

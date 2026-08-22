@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\ApiAuthMiddleware;
 use App\Http\Middleware\CorsMiddleware;
+use App\Http\Middleware\DeliveryMiddleware;
 use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.api' => ApiAuthMiddleware::class,
             'admin' => AdminMiddleware::class,
+            'delivery' => DeliveryMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -86,6 +86,13 @@ class _AppShellState extends State<AppShell> {
         return;
       }
 
+      // Aviso al cliente de que su propio pedido cambio de estado (ej. "en
+      // camino"). Sin esta rama caia en el dialogo generico de promociones.
+      if (type == 'order_status_updated') {
+        _showOrderAlert(message);
+        return;
+      }
+
       // Permite que el backend decida si la promo es para mobile/web/all.
       if (target == 'web' || target == 'admin') return;
 
