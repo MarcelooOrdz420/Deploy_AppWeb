@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -549,29 +549,39 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                   ],
                 ),
                 const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+                Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  child: InkWell(
                     borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.search_rounded, color: StoreTheme.orangeDeep),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          '¿Qué se te antoja hoy?',
-                          style: TextStyle(
-                            color: StoreTheme.ink,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+                    onTap: () {
+                      AppShellController.instance.goTo(1);
+                      context.go('/app');
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
                       ),
-                    ],
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.search_rounded,
+                            color: StoreTheme.orangeDeep,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              '¿Qué se te antoja hoy?',
+                              style: TextStyle(
+                                color: StoreTheme.ink,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -633,201 +643,6 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeroSection({
-    required List<Producto> pollos,
-    required List<Producto> bebidas,
-  }) {
-    final primary = pollos.isNotEmpty ? pollos.first : null;
-    final secondary = pollos.length > 1 ? pollos[1] : primary;
-    final drinks = bebidas.isNotEmpty ? bebidas.first : secondary;
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF000000),
-            Color(0xFF090604),
-            Color(0xFF2A170B),
-            Color(0xFFFFBF00),
-          ],
-          stops: [0, .52, .82, 1],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color.fromRGBO(52, 17, 0, .18),
-            blurRadius: 28,
-            offset: Offset(0, 16),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Las mejores promos',
-            style: TextStyle(
-              fontSize: 24,
-              height: 1,
-              letterSpacing: -.6,
-              fontStyle: FontStyle.italic,
-              color: Color(0xFFFFBF00),
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'APP\nEL\nDORADO',
-            style: TextStyle(
-              fontSize: 56,
-              height: .78,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: -2.4,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Descarga, compra y sigue tus pedidos con una experiencia directa, oscura y dorada.',
-            style: TextStyle(
-              color: Color(0xFFEFE7DA),
-              height: 1.5,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [_pill('Pollos'), _pill('Parrillas'), _pill('Bebidas')],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFBF00),
-              borderRadius: BorderRadius.circular(4),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(0, 0, 0, .28),
-                  blurRadius: 18,
-                  offset: Offset(0, 10),
-                ),
-              ],
-            ),
-            child: const Text(
-              'DELIVERY 500 8800',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFFB40020),
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final stacked = constraints.maxWidth < 380;
-              if (stacked) {
-                return Column(
-                  children: [
-                    SizedBox(
-                      height: 260,
-                      child: _HeroCard(
-                        title: primary?.name ?? 'Brasa protagonista',
-                        subtitle: primary?.description.isNotEmpty == true
-                            ? primary!.description
-                            : 'Textura crocante, porcion potente y compra rapida.',
-                        product: primary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 170,
-                      child: _HeroCard(
-                        title: secondary?.name ?? 'Combos',
-                        subtitle: secondary?.description.isNotEmpty == true
-                            ? secondary!.description
-                            : 'Listos para compartir.',
-                        product: secondary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 170,
-                      child: _HeroCard(
-                        title: drinks?.name ?? 'Bebidas',
-                        subtitle: drinks?.description.isNotEmpty == true
-                            ? drinks!.description
-                            : 'El cierre ideal de tu pedido.',
-                        product: drinks,
-                      ),
-                    ),
-                  ],
-                );
-              }
-
-              return Row(
-                children: [
-                  Expanded(
-                    flex: 11,
-                    child: SizedBox(
-                      height: 350,
-                      child: _HeroCard(
-                        title: primary?.name ?? 'Brasa protagonista',
-                        subtitle: primary?.description.isNotEmpty == true
-                            ? primary!.description
-                            : 'Textura crocante, porcion potente y compra rapida.',
-                        product: primary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 9,
-                    child: SizedBox(
-                      height: 350,
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: _HeroCard(
-                              title: secondary?.name ?? 'Combos',
-                              subtitle:
-                                  secondary?.description.isNotEmpty == true
-                                  ? secondary!.description
-                                  : 'Listos para compartir.',
-                              product: secondary,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Expanded(
-                            child: _HeroCard(
-                              title: drinks?.name ?? 'Bebidas',
-                              subtitle: drinks?.description.isNotEmpty == true
-                                  ? drinks!.description
-                                  : 'El cierre ideal de tu pedido.',
-                              product: drinks,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
       ),
     );
   }
@@ -921,140 +736,6 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildFilterSection(int resultsCount) {
-    return StoreSurface(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Busqueda guiada',
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 2.2,
-                        color: Color(0xFF9B5A2C),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Filtra por antojo, categoria o presupuesto.',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7F0),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: StoreTheme.lineStrong.withOpacity(.82),
-                  ),
-                ),
-                child: Text(
-                  !_hasSelection
-                      ? 'Elige una categoria'
-                      : resultsCount == 1
-                      ? '1 producto encontrado'
-                      : '$resultsCount productos encontrados',
-                  style: const TextStyle(
-                    color: Color(0xFF82471F),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          StorePanel(
-            child: Column(
-              children: [
-                TextField(
-                  controller: _searchCtrl,
-                  onChanged: (_) => setState(() => _hasSelection = true),
-                  decoration: const InputDecoration(
-                    labelText: 'Buscar por nombre',
-                    hintText: 'Ej: pollo, parrilla, chicha...',
-                    prefixIcon: Icon(Icons.search),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _selectedCategory.isEmpty ? null : _selectedCategory,
-                  decoration: const InputDecoration(
-                    labelText: 'Categoria',
-                    prefixIcon: Icon(Icons.tune),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: '', child: Text('Todas')),
-                    DropdownMenuItem(value: 'pollos', child: Text('Pollos')),
-                    DropdownMenuItem(
-                      value: 'parrillas',
-                      child: Text('Parrillas'),
-                    ),
-                    DropdownMenuItem(value: 'bebidas', child: Text('Bebidas')),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCategory = value ?? '';
-                      if (_selectedCategory.isEmpty) {
-                        _searchCtrl.clear();
-                        _maxPriceCtrl.clear();
-                      }
-                      _hasSelection = true;
-                    });
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _maxPriceCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  onChanged: (_) => setState(() => _hasSelection = true),
-                  decoration: InputDecoration(
-                    labelText: 'Precio maximo',
-                    hintText: 'Ej: 40.00',
-                    prefixIcon: const Icon(Icons.payments_outlined),
-                    suffixIcon:
-                        _selectedCategory.isEmpty &&
-                            _searchCtrl.text.trim().isEmpty &&
-                            _maxPriceCtrl.text.trim().isEmpty
-                        ? null
-                        : IconButton(
-                            onPressed: () {
-                              setState(() {
-                                _searchCtrl.clear();
-                                _maxPriceCtrl.clear();
-                                _selectedCategory = '';
-                                _hasSelection = false;
-                              });
-                            },
-                            icon: const Icon(Icons.close),
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

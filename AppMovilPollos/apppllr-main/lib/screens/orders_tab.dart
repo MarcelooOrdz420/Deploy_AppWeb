@@ -33,6 +33,19 @@ class _OrdersTabState extends State<OrdersTab> {
     };
   }
 
+  String _statusLabel(dynamic status) {
+    return switch ((status ?? '').toString().toLowerCase()) {
+      'pending' => 'Pendiente',
+      'confirmed' => 'Confirmado',
+      'preparing' => 'En preparacion',
+      'on_the_way' => 'En camino',
+      'delivered' => 'Entregado',
+      'cancelled' => 'Cancelado',
+      final value when value.isNotEmpty => value,
+      _ => '-',
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -79,7 +92,7 @@ class _OrdersTabState extends State<OrdersTab> {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Tu pedido $code ahora está: $status'),
+              content: Text('Tu pedido $code ahora está: ${_statusLabel(status)}'),
               duration: const Duration(seconds: 3),
             ),
           );
@@ -327,7 +340,7 @@ class _OrdersTabState extends State<OrdersTab> {
           ),
           const SizedBox(width: 8),
           Text(
-            status,
+            _statusLabel(status),
             style: const TextStyle(
               color: Color(0xFF7E451D),
               fontWeight: FontWeight.w900,
@@ -366,7 +379,7 @@ class _OrdersTabState extends State<OrdersTab> {
                 Text('Cliente: ${order['customer_name'] ?? '-'}'),
                 Text('Telefono: ${order['customer_phone'] ?? '-'}'),
                 Text('Pago: ${_paymentLabel(order['payment_method'])}'),
-                Text('Estado: ${order['status'] ?? '-'}'),
+                Text('Estado: ${_statusLabel(order['status'])}'),
                 const SizedBox(height: 12),
                 const Text(
                   'Detalle',

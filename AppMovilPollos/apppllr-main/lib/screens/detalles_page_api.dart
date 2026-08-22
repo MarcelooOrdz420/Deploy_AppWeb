@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/producto.dart';
 import '../services/productos_service.dart';
+import '../state/cart_controller.dart';
+import '../theme/store_theme.dart';
 import '../widgets/producto_image.dart';
 
 class DetallesPageApi extends StatefulWidget {
@@ -54,6 +56,24 @@ class _DetallesPageApiState extends State<DetallesPageApi> {
                 const SizedBox(height: 16),
                 Text(p.description,
                     style: const TextStyle(fontSize: 16, color: Colors.black87)),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: StoreTheme.orange,
+                      foregroundColor: StoreTheme.ink,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    onPressed: () {
+                      CartScope.of(context).add(p);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${p.name} agregado al carrito')),
+                      );
+                    },
+                    child: const Text('Agregar al carrito'),
+                  ),
+                ),
               ],
             ),
           );
