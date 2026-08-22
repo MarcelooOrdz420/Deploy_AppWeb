@@ -192,7 +192,6 @@ function getToken() { return localStorage.getItem('ed_token'); }
 function statusEs(code) { return STATUS_ES[code] || code || 'n/a'; }
 function paymentStatusEs(code) { return PAYMENT_STATUS_ES[code] || code || 'n/a'; }
 function paymentMethodEs(code) { return String(code || '').toLowerCase() === 'izipay' ? 'Pago con tarjeta' : String(code || '').toLowerCase() === 'yape' ? 'Yape' : String(code || '').toLowerCase() === 'cod' ? 'Pago contraentrega' : code || 'n/a'; }
-function needsDigitalProof(method) { return false; }
 async function loadPreferences() {
     const token = getToken();
     if (!token) {
@@ -304,94 +303,13 @@ async function fetchMyOrders() {
                 <div><strong>Operacion:</strong> ${order.payment_reference || 'sin codigo'}</div>
                 <div class="order-products"><strong>Productos comprados</strong>${Array.isArray(order.items)&&order.items.length?order.items.map(item=>`<div>${item.quantity} × ${item.product_name} · S/ ${Number(item.line_total).toFixed(2)}</div>`).join(''):'<div>Detalle no disponible</div>'}</div>
                 ${String(order.payment_method || '').toLowerCase() === 'izipay' ? paymentMessage(String(order.payment_status || 'pending').toLowerCase()) : ''}
-                ${needsDigitalProof(order.payment_method) ? `
-                <div class="proof-box">
-                    <div><strong>Voucher digital</strong></div>
-                    <div class="proof-status">
-                        ${order.payment_proof_path ? 'Comprobante subido' : 'Falta subir comprobante para validacion'}
-                    </div>
-                    <div style="margin-top:8px;">
-                        <input type="file" data-proof-file="${order.id}" accept=".jpg,.jpeg,.png,.webp,.pdf">
-                        <button data-proof-upload="${order.id}" class="btn-soft">Subir comprobante</button>
-                    </div>
-                </div>` : ''}
-                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-                    ${String(order.payment_method || '').toLowerCase() === 'izipay'
-                        && ['pending', 'rejected'].includes(String(order.payment_status || '').toLowerCase())
-                        && String(order.status || '').toLowerCase() !== 'cancelled'
-                        ? `<button data-izipay-checkout="${order.id}" class="btn-soft">Pagar ahora</button>`
-                        : ''}
-                </div>
                 <div><strong>Estado de tu compra</strong>${orderTimelineHtml(order.status)}</div>
               </article>
             </details>
         `).join('');
-        ordersList.querySelectorAll('[data-proof-upload]').forEach(btn => {
-            btn.addEventListener('click', () => uploadProof(Number(btn.getAttribute('data-proof-upload'))));
-        });
-        ordersList.querySelectorAll('[data-izipay-checkout]').forEach(btn => {
-            btn.addEventListener('click', () => openIzipayCheckout(Number(btn.getAttribute('data-izipay-checkout'))));
-        });
 
     } catch {
         ordersList.innerHTML = '<strong>Error de conexion al cargar pedidos.</strong>';
-    }
-}
-
-async function uploadProof(orderId) {
-    const token = getToken();
-    const fileInput = document.querySelector(`[data-proof-file="${orderId}"]`);
-    const file = fileInput?.files?.[0];
-    if (!file) {
-        alert('Selecciona un archivo primero');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('proof', file);
-
-    try {
-        const res = await fetch(`/api/v1/orders/${orderId}/payment-proof`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData,
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            alert(data.message || 'No se pudo subir comprobante');
-            return;
-        }
-        alert('Comprobante subido correctamente');
-        fetchMyOrders();
-    } catch {
-        alert('Error de conexion al subir comprobante');
-    }
-}
-
-async function openIzipayCheckout(orderId) {
-    const token = getToken();
-    const button = document.querySelector(`[data-izipay-checkout="${orderId}"]`);
-    if (button?.disabled) return;
-    if (button) { button.disabled = true; button.textContent = 'Abriendo Izipay...'; }
-    try {
-        const res = await fetch(`/api/v1/orders/${orderId}/payments/izipay-checkout`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            alert(data.message || 'No se pudo iniciar el pago.');
-            return;
-        }
-        const target = data.payment_url;
-        if (!target) {
-            alert('Izipay aun no esta configurado en el servidor.');
-            return;
-        }
-        window.open(target, '_blank', 'noopener');
-    } catch {
-        alert('Error de conexion al abrir Izipay.');
-    } finally {
-        if (button) { button.disabled = false; button.textContent = 'Pagar ahora'; }
     }
 }
 
