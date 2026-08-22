@@ -2461,7 +2461,7 @@ function viewOrderDetail(order) {
 
     const extras = [];
     if (order.salad_type) extras.push(`Ensalada tipo: ${escapeHtml(order.salad_type)}`);
-    if (order.drink_note) extras.push(`El cliente dijo: "${escapeHtml(order.drink_note)}"`);
+    if (order.drink_note) extras.push(`Sugerencias del cliente: "${escapeHtml(order.drink_note)}"`);
 
     const delivery = order.delivery_type === 'delivery'
         ? `
