@@ -1241,6 +1241,18 @@ initClientSession();
     </div>
 </div>
 
+<div id="storeConfirmOverlay" style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; padding:18px; background:rgba(24,15,8,.55);">
+    <div style="width:min(92vw,380px); background:#FFFDF9; border:1.5px solid #FFB37A; border-radius:26px; box-shadow:0 30px 60px rgba(255,111,31,.28); padding:26px 24px; text-align:center;">
+        <div style="width:44px; height:44px; border-radius:14px; background:#FFE4D2; color:#FF6F1F; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:900; margin:0 auto 14px;">!</div>
+        <strong id="storeConfirmTitle" style="display:block; font-size:18px; color:#25170f; margin-bottom:8px;"></strong>
+        <p id="storeConfirmMessage" style="margin:0 0 18px; color:#68432e; font-size:14.5px; line-height:1.5;"></p>
+        <div style="display:flex; gap:10px;">
+            <button id="storeConfirmCancelBtn" type="button" class="pill-btn" style="flex:1;">Seguir esperando</button>
+            <button id="storeConfirmOkBtn" type="button" class="btn-main" style="flex:1;">Si, continuar</button>
+        </div>
+    </div>
+</div>
+
 <script>
 function showStoreAlert(title, message) {
     const overlay = document.getElementById('storeAlertOverlay');
@@ -1252,9 +1264,50 @@ function showStoreAlert(title, message) {
 document.getElementById('storeAlertOkBtn')?.addEventListener('click', () => {
     document.getElementById('storeAlertOverlay').style.display = 'none';
 });
+
+function showStoreConfirm(title, message, okLabel = 'Si, continuar', cancelLabel = 'Seguir esperando') {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('storeConfirmOverlay');
+        if (!overlay) { resolve(confirm(message)); return; }
+        document.getElementById('storeConfirmTitle').textContent = title;
+        document.getElementById('storeConfirmMessage').textContent = message;
+        const okBtn = document.getElementById('storeConfirmOkBtn');
+        const cancelBtn = document.getElementById('storeConfirmCancelBtn');
+        okBtn.textContent = okLabel;
+        cancelBtn.textContent = cancelLabel;
+        overlay.style.display = 'flex';
+        const cleanup = (result) => {
+            overlay.style.display = 'none';
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+            resolve(result);
+        };
+        const onOk = () => cleanup(true);
+        const onCancel = () => cleanup(false);
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+    });
+}
 document.getElementById('storeAlertOverlay')?.addEventListener('click', (e) => {
     if (e.target.id === 'storeAlertOverlay') document.getElementById('storeAlertOverlay').style.display = 'none';
 });
+
+(function notifyMobileVisitor() {
+    const ua = navigator.userAgent || '';
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    if (!isMobile) return;
+    if (sessionStorage.getItem('ed_mobile_notice_shown')) return;
+    sessionStorage.setItem('ed_mobile_notice_shown', '1');
+
+    const isAndroid = /Android/i.test(ua);
+    const message = isAndroid
+        ? 'Para una mejor vista te recomendamos usar una computadora o laptop. Tambien tenemos una app para Android pensada para el celular, con una experiencia mas comoda para pedir.'
+        : 'Para una mejor vista te recomendamos usar una computadora o laptop.';
+
+    setTimeout(() => {
+        if (typeof showStoreAlert === 'function') showStoreAlert('Estas entrando desde un celular', message);
+    }, 700);
+})();
 </script>
 
 <style>
