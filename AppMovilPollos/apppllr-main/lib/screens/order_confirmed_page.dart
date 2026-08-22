@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
 
-class OrderConfirmedPage extends StatelessWidget {
+class OrderConfirmedPage extends StatefulWidget {
   const OrderConfirmedPage({
     super.key,
     this.trackingCode,
@@ -18,8 +18,26 @@ class OrderConfirmedPage extends StatelessWidget {
   final int? itemCount;
 
   @override
+  State<OrderConfirmedPage> createState() => _OrderConfirmedPageState();
+}
+
+class _OrderConfirmedPageState extends State<OrderConfirmedPage> {
+  bool _clearedCart = false;
+
+  @override
   Widget build(BuildContext context) {
     final cart = CartScope.of(context);
+    // El pedido ya fue registrado si llegamos a esta pantalla: el carrito se
+    // vacia apenas se muestra, sin depender de que el usuario toque el boton
+    // "Volver al inicio".
+    if (!_clearedCart) {
+      _clearedCart = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => cart.clear());
+    }
+    final trackingCode = widget.trackingCode;
+    final totalPaid = widget.totalPaid;
+    final itemsText = widget.itemsText;
+    final itemCount = widget.itemCount;
     final resolvedTrackingCode =
         (trackingCode ?? '').trim().isEmpty ? 'Generado por la API' : trackingCode!.trim();
     final resolvedTotal = totalPaid ?? cart.total(freeOver: 70, fee: 4);
