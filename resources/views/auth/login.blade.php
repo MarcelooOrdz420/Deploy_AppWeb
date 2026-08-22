@@ -443,7 +443,7 @@ try {
 } catch {}
 
 function redirectAfterAuth(user) {
-    if (user && user.role === 'admin') return '/admin/panel';
+    if (user && (user.role === 'admin' || user.role === 'reviewer')) return '/admin/panel';
 
     try {
         const next = new URLSearchParams(window.location.search).get('next');

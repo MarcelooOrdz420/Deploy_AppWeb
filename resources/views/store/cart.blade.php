@@ -435,10 +435,11 @@ orderForm.addEventListener('submit', async e => {
         localStorage.setItem('ed_last_tracking', data.tracking_code);
         const recent = JSON.parse(localStorage.getItem('ed_recent_trackings') || '[]');
         localStorage.setItem('ed_recent_trackings', JSON.stringify([data.tracking_code, ...recent.filter(v => v !== data.tracking_code)].slice(0, 10)));
-        setCart([]);
-        renderCart();
 
         if (storedPaymentMethod === 'izipay') {
+            // El carrito NO se vacia aqui: recien se confirma el pago (o el
+            // cliente cancela) en la pagina de resultado de Izipay, que es
+            // quien realmente vacia 'ed_cart' segun corresponda.
             setProcessingState(true, 'Pedido creado, redirigiendo a Izipay', 'Tu pedido ya esta registrado. Ahora completaremos el pago seguro.');
             try {
                 await openIzipayCheckout(data.id);
@@ -450,6 +451,8 @@ orderForm.addEventListener('submit', async e => {
             }
         }
 
+        setCart([]);
+        renderCart();
         setProcessingState(true, 'Pedido enviado a la empresa', `Tu pedido (${data.tracking_code}) fue enviado al sistema. Te avisaremos cuando cambie de estado.`);
         orderMsg.textContent = `Pedido creado. Codigo: ${data.tracking_code}. Estado: ${data.status || 'pending'}`;
         orderForm.reset();
