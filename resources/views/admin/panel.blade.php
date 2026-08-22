@@ -1108,7 +1108,7 @@
             <h2>Promociones</h2>
             <p class="section-subtitle">Elige de forma sencilla donde quieres avisar la promocion. La imagen se sube desde aqui y se guarda en el servidor.</p>
             <form id="offerForm">
-                <input type="hidden" name="target" value="mobile">
+                <input type="hidden" name="target" value="all">
                 <input type="hidden" name="cta_label" value="">
                 <div class="toggle-row">
                     <label class="toggle-main">
@@ -2999,11 +2999,13 @@ cancelEditBtn.addEventListener('click', clearProductForm);
 productForm.is_available.addEventListener('change', syncProductAvailabilityLabel);
 productForm.addEventListener('submit', saveProduct);
 if (offerForm) {
+    const chargePrice = (raw) => Math.max(0.99, Math.round(raw) - 0.01);
     const calculateOfferPrice = () => {
         const product = productsCache.find(item => Number(item.id) === Number(offerProductSelect?.value));
         const percent = Number(offerDiscountPercent?.value || 0);
         if (!product || percent <= 0 || !offerPromoPrice) return;
-        offerPromoPrice.value = (Number(product.price) * (1 - percent / 100)).toFixed(2);
+        const rawPrice = Number(product.price) * (1 - percent / 100);
+        offerPromoPrice.value = chargePrice(rawPrice).toFixed(2);
         if (offerPriceHelp) offerPriceHelp.textContent = `Precio normal S/ ${Number(product.price).toFixed(2)} · ahorro S/ ${(Number(product.price)-Number(offerPromoPrice.value)).toFixed(2)}`;
     };
     offerDiscountPercent?.addEventListener('input', calculateOfferPrice);
