@@ -1231,6 +1231,9 @@ initClientSession();
 
 <style>
     .pollia-launcher {
+        /* POLL-IA queda disponible solo en la app movil; se oculta el boton
+           de la web sin borrar el widget ni el backend del chatbot. */
+        display: none !important;
         position: fixed;
         right: 18px;
         bottom: calc(88px + env(safe-area-inset-bottom));
