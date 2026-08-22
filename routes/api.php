@@ -61,6 +61,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/orders/{order}/payments/izipay-checkout', [PaymentController::class, 'izipayCheckout'])
             ->middleware('throttle:10,1');
         Route::post('/orders/{order}/payment-proof', [OrderController::class, 'uploadPaymentProof']);
+        Route::delete('/orders/{order}/cancel-unpaid', [OrderController::class, 'cancelUnpaid']);
         Route::get('/orders/{order}/receipt-view', [OrderController::class, 'receiptView']);
         Route::get('/orders/{order}/receipt', [OrderController::class, 'downloadReceipt']);
 

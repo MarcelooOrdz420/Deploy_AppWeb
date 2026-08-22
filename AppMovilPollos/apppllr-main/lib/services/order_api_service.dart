@@ -78,4 +78,19 @@ class OrderApiService {
     );
     return (res.data ?? <String, dynamic>{}).cast<String, dynamic>();
   }
+
+  Future<void> cancelUnpaidOrder({
+    required String token,
+    required int orderId,
+  }) async {
+    try {
+      await ApiClient.delete<Map<String, dynamic>>(
+        '/orders/$orderId/cancel-unpaid',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException {
+      // Si el servidor ya no permite cancelarlo (por ejemplo, se verifico
+      // el pago justo antes), no bloqueamos el flujo local del cliente.
+    }
+  }
 }

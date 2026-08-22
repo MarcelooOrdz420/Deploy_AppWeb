@@ -612,6 +612,34 @@ class OrderController extends Controller
         ]);
     }
 
+    public function cancelUnpaid(Request $request, Order $order): JsonResponse
+    {
+        if ($order->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        if ((string) $order->payment_method !== 'izipay'
+            || ! in_array((string) $order->payment_status, ['pending', 'rejected'], true)
+            || (string) $order->status !== Order::STATUS_PENDING) {
+            return response()->json([
+                'message' => 'Este pedido ya no se puede cancelar.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($order, $request): void {
+            $order->load('items');
+            $this->syncInventoryForStatusTransition(
+                order: $order,
+                previousStatus: Order::STATUS_PENDING,
+                nextStatus: Order::STATUS_CANCELLED,
+                actor: $request->user(),
+            );
+            $order->delete();
+        });
+
+        return response()->json(['message' => 'Pedido cancelado, stock repuesto.']);
+    }
+
     public function uploadPaymentProof(Request $request, Order $order): JsonResponse
     {
         $user = $request->user();

@@ -1332,9 +1332,9 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog>
       builder: (context) => AlertDialog(
         title: const Text('¿Cancelar el pago?'),
         content: const Text(
-          'Si abandonas el pago ahora, tu carrito se vaciara y este pedido '
-          'quedara sin completar. Tendras que armar un pedido nuevo si '
-          'quieres intentarlo otra vez.',
+          'Si abandonas el pago ahora, este pedido no se guardara como '
+          'compra y tu carrito se vaciara. Tendras que armar un pedido '
+          'nuevo si quieres intentarlo otra vez.',
         ),
         actions: [
           TextButton(
@@ -1348,7 +1348,14 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog>
         ],
       ),
     );
-    if (confirmed == true && dialogContext.mounted) {
+    if (confirmed != true) return;
+
+    await widget.orderApiService.cancelUnpaidOrder(
+      token: widget.token,
+      orderId: widget.orderId,
+    );
+
+    if (dialogContext.mounted) {
       Navigator.pop(dialogContext, false);
     }
   }
