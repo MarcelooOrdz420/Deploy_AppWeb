@@ -589,6 +589,7 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
               if (sides.isNotEmpty)
                 DropdownButtonFormField<Producto>(
                   value: _side,
+                  isExpanded: true,
                   decoration: _decor('Acompañamiento'),
                   items: [
                     const DropdownMenuItem(
@@ -604,6 +605,7 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _salad,
+                isExpanded: true,
                 decoration: _decor('Ensalada'),
                 items: const [
                   DropdownMenuItem(value: '', child: Text('Sin ensalada')),
@@ -616,6 +618,7 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
               if (drinks.isNotEmpty)
                 DropdownButtonFormField<Producto>(
                   value: _drink,
+                  isExpanded: true,
                   decoration: _decor('Bebida'),
                   items: [
                     const DropdownMenuItem(
@@ -646,6 +649,7 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
             children: [
               DropdownButtonFormField<String>(
                 value: _delivery,
+                isExpanded: true,
                 decoration: _decor('Modalidad'),
                 items: const [
                   DropdownMenuItem(value: 'delivery', child: Text('Delivery')),

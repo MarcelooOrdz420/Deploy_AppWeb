@@ -467,15 +467,18 @@ class OrderController extends Controller
                 $total += $lineTotal;
             }
 
-            $deliveryFee = 0.0;
-            if ($data['delivery_type'] === 'delivery') {
-                if ($total < 10) {
-                    abort(response()->json([
-                        'message' => 'Los pedidos menores a S/10 no califican para delivery. Elige recojo en tienda o agrega mas productos.',
-                    ], 422));
-                }
-                $deliveryFee = 1.0;
+            // Piso general de la tienda: la empresa vende pollos y parrillas,
+            // no bebidas sueltas. Ningun pedido (recojo o delivery, tarjeta o
+            // contraentrega) puede quedar por debajo de esto: es, a la vez,
+            // el minimo para calificar a delivery y aprox. el precio del 1/4
+            // de pollo a la brasa, el producto mas economico del menu.
+            if ($total < 10) {
+                abort(response()->json([
+                    'message' => 'El pedido debe ser de al menos S/10.00. Agrega mas productos para continuar.',
+                ], 422));
             }
+
+            $deliveryFee = $data['delivery_type'] === 'delivery' ? 1.0 : 0.0;
 
             $orderUpdate = ['total_amount' => $total + $deliveryFee];
             if (Schema::hasColumn('orders', 'delivery_fee')) {

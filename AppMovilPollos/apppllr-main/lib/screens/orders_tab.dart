@@ -118,13 +118,16 @@ class _OrdersTabState extends State<OrdersTab> {
     final logged = await SessionService().isLoggedIn();
     if (!logged) return <Map<String, dynamic>>[];
 
-    try {
-      final orders = await OrderApiService().myOrders();
-      _notifyStatusChanges(orders);
-      return orders;
-    } catch (_) {
-      return <Map<String, dynamic>>[];
-    }
+    // No se atrapa el error aqui a proposito: si el servidor falla, el
+    // FutureBuilder debe mostrar "no se pudo cargar" en vez de un falso
+    // "aun no tienes pedidos" que borra pedidos que si existen.
+    final orders = await OrderApiService().myOrders();
+    _notifyStatusChanges(orders);
+    return orders;
+  }
+
+  void _retry() {
+    setState(() => _future = _loadOrders());
   }
 
   @override
@@ -148,12 +151,26 @@ class _OrdersTabState extends State<OrdersTab> {
           );
         }
 
+        if (snap.hasError) {
+          return StoreAsyncState(
+            icon: Icons.wifi_off_rounded,
+            title: 'No se pudo cargar tus pedidos',
+            message: 'Revisa tu conexion e intenta de nuevo. Tus pedidos siguen guardados.',
+            actionLabel: 'Reintentar',
+            onAction: _retry,
+          );
+        }
+
         final serverOrders = snap.data ?? const <Map<String, dynamic>>[];
 
         return RefreshIndicator(
           onRefresh: () async {
             setState(() => _future = _loadOrders());
-            await _future;
+            try {
+              await _future;
+            } catch (_) {
+              // El error ya queda reflejado por el FutureBuilder.
+            }
           },
           child: ListView(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),

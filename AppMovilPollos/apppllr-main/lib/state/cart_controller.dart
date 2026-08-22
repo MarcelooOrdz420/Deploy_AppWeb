@@ -38,6 +38,13 @@ class CartController extends ChangeNotifier {
   static const double deliveryMinimumSubtotal = 10.0;
   static const double deliveryFeeAmount = 1.0;
 
+  // Piso general de la tienda: la empresa vende pollos y parrillas, no
+  // bebidas sueltas. Coincide con el minimo de delivery (aprox. el precio
+  // del 1/4 de pollo a la brasa, el producto mas economico del menu).
+  static const double minimumOrderSubtotal = deliveryMinimumSubtotal;
+
+  bool get qualifiesForOrder => subtotal >= minimumOrderSubtotal;
+
   bool get qualifiesForDelivery => subtotal >= deliveryMinimumSubtotal;
 
   double deliveryFee() => qualifiesForDelivery ? deliveryFeeAmount : 0.0;

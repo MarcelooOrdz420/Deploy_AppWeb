@@ -332,7 +332,7 @@ function normalizeProductName(name){return String(name||'').trim().toLowerCase()
 function validateCartLimits(cart){const totals={};let sodaTotal=0;cart.forEach(item=>{const normalizedName=normalizeProductName(item.name),quantity=Number(item.qty||0);totals[normalizedName]=(totals[normalizedName]||0)+quantity;if(PURCHASE_LIMITS.sodaNames.includes(normalizedName))sodaTotal+=quantity});for(const[name,max]of Object.entries(PURCHASE_LIMITS.exact)){if((totals[name]||0)>max){const label=cart.find(item=>normalizeProductName(item.name)===name)?.name||name;return`Solo se permiten ${max} unidades de ${label} por pedido.`}}if(sodaTotal>PURCHASE_LIMITS.sodaMax)return`Solo se permiten ${PURCHASE_LIMITS.sodaMax} gaseosas personales por pedido.`;return null}
  function paymentMethod(){return orderForm.elements.payment_method?.value||''}
 function updateHeroStatus(cart){heroStatus.textContent=!cart.length?'Carrito vacio':'Listo para confirmar'}
-const DELIVERY_MIN_SUBTOTAL=10,DELIVERY_FEE_AMOUNT=1;
+const DELIVERY_MIN_SUBTOTAL=10,DELIVERY_FEE_AMOUNT=1,MINIMUM_ORDER_SUBTOTAL=DELIVERY_MIN_SUBTOTAL;
 function qualifiesForDelivery(subtotal){return subtotal>=DELIVERY_MIN_SUBTOTAL}
 function deliveryFeeFor(subtotal,isDelivery){return isDelivery&&qualifiesForDelivery(subtotal)?DELIVERY_FEE_AMOUNT:0}
 function renderCart(){const cart=getCart();if(!cart.length){cartListEl.textContent='Sin productos agregados.';cartTotalEl.textContent='0.00';deliveryFeeRow.style.display='none';saladWrap.style.display='none';updateHeroStatus(cart);return}let total=0;cartListEl.innerHTML=cart.map((item,index)=>{const line=Number(item.price)*Number(item.qty),promo=item.promo_id?`<br><strong style="color:#c94700">Promoción: antes S/ ${money(item.original_price||item.price)} · ahora S/ ${money(item.price)}</strong>`:'';total+=line;return`<article class="cart-item-card"><div class="cart-item-index">#${index+1}</div><div class="cart-item-main"><strong class="cart-item-name">${item.name}</strong><div class="cart-item-meta">${item.category||'general'} - S/ ${money(item.price)} c/u${promo}</div></div><div class="cart-item-actions"><strong class="cart-item-line">S/ ${money(line)}</strong><div class="qty-actions"><button data-minus="${item.id}" class="qty-btn" type="button">-</button><span class="qty-read">${item.qty}</span><button data-plus="${item.id}" class="qty-btn" type="button">+</button></div></div></article>`}).join('');
@@ -377,6 +377,12 @@ orderForm.addEventListener('submit', async e => {
     const limitError = validateCartLimits(cart);
     if (limitError) {
         orderMsg.textContent = limitError;
+        return;
+    }
+
+    const cartSubtotal = cart.reduce((sum, item) => sum + Number(item.price) * Number(item.qty), 0);
+    if (cartSubtotal < MINIMUM_ORDER_SUBTOTAL) {
+        orderMsg.textContent = 'El pedido debe ser de al menos S/10.00. Agrega mas productos para continuar.';
         return;
     }
 

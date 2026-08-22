@@ -345,6 +345,18 @@ class _PaymentPageState extends State<PaymentPage> {
     final cart = CartScope.of(context);
     if (cart.items.isEmpty) return;
 
+    if (!cart.qualifiesForOrder) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'El pedido debe ser de al menos S/10.00. Agrega mas productos para continuar.',
+          ),
+        ),
+      );
+      return;
+    }
+
     final token = await _sessionService.getToken();
     if (token.isEmpty) {
       if (!mounted) return;
