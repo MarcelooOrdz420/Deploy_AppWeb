@@ -1408,11 +1408,18 @@
             <div id="orderActionPanelPreview" style="display:none;">
                 <pre id="orderActionPanelPreviewContent" class="side-panel-preview"></pre>
             </div>
-            <div id="orderActionPanelDetail" style="display:none;">
-                <div id="orderActionPanelDetailContent"></div>
-            </div>
         </div>
     </aside>
+</div>
+
+<div id="orderDetailModal" style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; padding:18px; background:rgba(24,15,8,.55);">
+    <div style="width:min(94vw,480px); max-height:86vh; overflow-y:auto; background:#FFFDF9; border:1.5px solid #FFB37A; border-radius:26px; box-shadow:0 30px 60px rgba(255,111,31,.28); padding:26px 24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px;">
+            <strong id="orderDetailModalTitle" style="font-size:18px; color:#25170f; line-height:1.3;">Ver pedido</strong>
+            <button id="orderDetailModalCloseBtn" type="button" class="pill-btn" style="flex-shrink:0; padding:8px 14px; background:#FFF1E3; color:#7b3d11; border-color:#FFD9B0;">Cerrar</button>
+        </div>
+        <div id="orderDetailModalContent"></div>
+    </div>
 </div>
 
 <div id="adminOrderToast" style="display:none; position:fixed; right:18px; bottom:18px; z-index:9998; width:min(400px, calc(100vw - 36px));">
@@ -1607,8 +1614,15 @@ const orderActionPanelCloseBtn = document.getElementById('orderActionPanelCloseB
 const orderActionPanelStatus = document.getElementById('orderActionPanelStatus');
 const orderActionPanelPreview = document.getElementById('orderActionPanelPreview');
 const orderActionPanelPreviewContent = document.getElementById('orderActionPanelPreviewContent');
-const orderActionPanelDetail = document.getElementById('orderActionPanelDetail');
-const orderActionPanelDetailContent = document.getElementById('orderActionPanelDetailContent');
+const orderDetailModal = document.getElementById('orderDetailModal');
+const orderDetailModalTitle = document.getElementById('orderDetailModalTitle');
+const orderDetailModalContent = document.getElementById('orderDetailModalContent');
+orderDetailModal.addEventListener('click', (event) => {
+    if (event.target === orderDetailModal) orderDetailModal.style.display = 'none';
+});
+document.getElementById('orderDetailModalCloseBtn').addEventListener('click', () => {
+    orderDetailModal.style.display = 'none';
+});
 
 function openOrderActionPanel(title) {
     orderActionPanelTitle.textContent = title;
@@ -2389,7 +2403,6 @@ async function fetchOrders() {
             statusForm.order_id.value = orderId;
             statusMsg.textContent = `Pedido ID ${orderId} seleccionado`;
             orderActionPanelPreview.style.display = 'none';
-            orderActionPanelDetail.style.display = 'none';
             orderActionPanelStatus.style.display = '';
             openOrderActionPanel(`Actualizar estado - Pedido ${orderId}`);
         });
@@ -2434,18 +2447,15 @@ async function previewEinvoice(orderId) {
     orderActionsMsg.textContent = `Preview SUNAT listo para pedido ${orderId}.`;
     orderActionPanelPreviewContent.textContent = JSON.stringify(data, null, 2);
     orderActionPanelStatus.style.display = 'none';
-    orderActionPanelDetail.style.display = 'none';
     orderActionPanelPreview.style.display = '';
     openOrderActionPanel(`Preview SUNAT - Pedido ${orderId}`);
 }
 
 function viewOrderDetail(order) {
     const items = (order.items || []).map(item => `
-        <div style="padding:10px 0; border-bottom:1px solid #FFE4D2;">
-            <div style="display:flex; justify-content:space-between; gap:10px; font-weight:800; color:#25170f;">
-                <span>Pidio: ${escapeHtml(item.product_name)} × ${item.quantity}</span>
-                <span>Costo: S/ ${Number(item.line_total).toFixed(2)}</span>
-            </div>
+        <div style="display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid #FFE4D2;">
+            <span style="color:#25170f; font-weight:700;">Pidio: ${escapeHtml(item.product_name)} × ${item.quantity}</span>
+            <span style="color:#8d3d00; font-weight:900; flex-shrink:0;">S/ ${Number(item.line_total).toFixed(2)}</span>
         </div>
     `).join('') || '<div class="muted">Sin items registrados.</div>';
 
@@ -2455,25 +2465,27 @@ function viewOrderDetail(order) {
 
     const delivery = order.delivery_type === 'delivery'
         ? `
-            <div class="muted">Direccion: ${escapeHtml(order.address || 'sin direccion')}</div>
-            <div class="muted">Referencia: ${escapeHtml(order.reference || 'sin referencia')}</div>
+            <div style="margin-top:14px; font-size:13px; color:#68432e; line-height:1.6;">
+                <div><strong style="color:#25170f;">Direccion:</strong> ${escapeHtml(order.address || 'sin direccion')}</div>
+                <div><strong style="color:#25170f;">Referencia:</strong> ${escapeHtml(order.reference || 'sin referencia')}</div>
+            </div>
         `
-        : '<div class="muted">Recojo en local</div>';
+        : '<div style="margin-top:14px; font-size:13px; color:#68432e;">Recojo en local</div>';
 
-    orderActionPanelDetailContent.innerHTML = `
-        <div style="margin-bottom:12px;">
-            <strong style="font-size:16px; color:#25170f;">Pedido ${escapeHtml(order.tracking_code)}</strong>
-            <div class="muted">Cliente: ${escapeHtml(order.customer_name)} · ${escapeHtml(order.customer_phone || '')}</div>
+    orderDetailModalTitle.textContent = `Ver pedido - ${order.tracking_code}`;
+    orderDetailModalContent.innerHTML = `
+        <div style="margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid #FFE4D2;">
+            <div style="font-size:13px; color:#68432e;">Cliente: <strong style="color:#25170f;">${escapeHtml(order.customer_name)}</strong> · ${escapeHtml(order.customer_phone || '')}</div>
         </div>
-        <div style="margin-bottom:12px;">${items}</div>
-        ${extras.length ? `<div style="margin-bottom:12px; padding:12px; background:#FFF7EF; border:1px solid #FFD4B1; border-radius:14px;">${extras.map(e => `<div>${e}</div>`).join('')}</div>` : ''}
+        <div style="margin-bottom:14px;">${items}</div>
+        ${extras.length ? `<div style="margin-bottom:14px; padding:14px; background:#FFF7EF; border:1px solid #FFD4B1; border-radius:16px; font-size:13.5px; color:#68432e; display:grid; gap:6px;">${extras.map(e => `<div>${e}</div>`).join('')}</div>` : ''}
         ${delivery}
-        <div style="margin-top:12px; font-weight:900; color:#25170f;">Total: S/ ${Number(order.total_amount).toFixed(2)}</div>
+        <div style="margin-top:16px; padding-top:14px; border-top:1px solid #FFE4D2; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px; color:#68432e; text-transform:uppercase; letter-spacing:.06em;">Total</span>
+            <strong style="font-size:20px; color:#25170f;">S/ ${Number(order.total_amount).toFixed(2)}</strong>
+        </div>
     `;
-    orderActionPanelStatus.style.display = 'none';
-    orderActionPanelPreview.style.display = 'none';
-    orderActionPanelDetail.style.display = '';
-    openOrderActionPanel(`Ver pedido - ${order.tracking_code}`);
+    orderDetailModal.style.display = 'flex';
 }
 
 async function sendEinvoice(orderId, button = null) {
