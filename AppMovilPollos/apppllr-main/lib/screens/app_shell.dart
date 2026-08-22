@@ -9,6 +9,7 @@ import '../services/pusher_service.dart';
 import '../services/session_service.dart';
 import '../state/app_shell_controller.dart';
 import '../theme/store_theme.dart';
+import '../widgets/store_alert_dialog.dart';
 import 'cart_tab.dart';
 import 'home_tab.dart';
 import 'orders_tab.dart';
@@ -269,45 +270,23 @@ class _AppShellState extends State<AppShell> {
     final trackingCode = (message.data['tracking_code'] ?? '')
         .toString()
         .trim();
+    final resolvedBody = body.isEmpty ? message.message : body;
+    final fullMessage = trackingCode.isEmpty
+        ? resolvedBody
+        : '$resolvedBody\n\nCodigo: $trackingCode';
 
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(message.title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(body.isEmpty ? message.message : body),
-            if (trackingCode.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Codigo: $trackingCode',
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cerrar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: StoreTheme.orange,
-              foregroundColor: StoreTheme.ink,
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-              AppShellController.instance.goTo(3);
-              if (!mounted) return;
-              setState(() => _index = 3);
-            },
-            child: const Text('Ver pedidos'),
-          ),
-        ],
-      ),
+    showStoreAlertDialog(
+      context,
+      title: message.title,
+      message: fullMessage,
+      icon: Icons.receipt_long_rounded,
+      buttonLabel: 'Cerrar',
+      secondaryLabel: 'Ver pedidos',
+      onSecondary: () {
+        AppShellController.instance.goTo(3);
+        if (!mounted) return;
+        setState(() => _index = 3);
+      },
     );
   }
 

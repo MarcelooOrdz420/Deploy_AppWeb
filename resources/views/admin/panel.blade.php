@@ -983,10 +983,11 @@
             box-shadow: 0 12px 26px rgba(37,23,15,.08) !important;
         }
         .panel h2, .panel h3, .product-card-title, .product-card-price, .label { color: #25170F !important; }
-        #adminOrderToast>div { background:linear-gradient(145deg,#3a160c,#7a2b0c)!important; border:1px solid #ff9d5a!important; box-shadow:0 22px 50px rgba(31,12,4,.34)!important; }
-        #adminOrderToast>div>div:first-child { background:#ff7a18!important; border:0!important; }
-        #adminOrderToastTitle,#adminOrderToastMessage { color:#fff!important; }
-        #adminOrderToastBody { color:#ffe4ce!important; }
+        #adminOrderToast>div { background:#FFFDF9!important; border:1.5px solid #FFB37A!important; box-shadow:0 22px 50px rgba(255,111,31,.24)!important; }
+        #adminOrderToast>div>div:first-child { background:#FFF1E3!important; border:0!important; border-bottom:1px solid #FFE4D2!important; }
+        #adminOrderToastTitle { color:#7b3d11!important; }
+        #adminOrderToastMessage { color:#25170f!important; }
+        #adminOrderToastBody { color:#68432e!important; }
         .section-subtitle, .helper-text, .muted { color: #68432E !important; }
         input, select, textarea { background: #FFF4EB !important; color: #25170F !important; border-color: #EAB68A !important; }
         .dashboard-pies { grid-column: 1 / -1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
@@ -1412,14 +1413,14 @@
 </div>
 
 <div id="adminOrderToast" style="display:none; position:fixed; right:18px; bottom:18px; z-index:9998; width:min(400px, calc(100vw - 36px));">
-    <div style="background:rgba(18,18,18,.98); border:1px solid rgba(255, 122, 26, .24); border-radius:22px; box-shadow: 0 26px 60px rgba(0, 0, 0, .32); overflow:hidden;">
-        <div style="padding:12px 14px; border-bottom:1px solid rgba(255, 122, 26, .18); display:flex; align-items:center; justify-content:space-between; gap:10px;">
-            <strong id="adminOrderToastTitle" style="font-size:13px; line-height:1.2;">Nuevo pedido</strong>
-            <button id="adminOrderToastCloseBtn" type="button" class="pill-btn" style="padding:8px 10px;">X</button>
+    <div style="background:#FFFDF9; border:1.5px solid #FFB37A; border-radius:22px; box-shadow: 0 26px 60px rgba(255,111,31,.24); overflow:hidden;">
+        <div style="padding:12px 14px; background:#FFF1E3; border-bottom:1px solid #FFE4D2; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <strong id="adminOrderToastTitle" style="font-size:13px; line-height:1.2; color:#7b3d11;">Nuevo pedido</strong>
+            <button id="adminOrderToastCloseBtn" type="button" class="pill-btn" style="padding:8px 10px; background:#FF6F1F; color:#fff; border-color:#FF6F1F;">X</button>
         </div>
         <div style="padding:12px 14px;">
-            <div id="adminOrderToastMessage" style="color:var(--text); line-height:1.45; font-weight:800;"></div>
-            <div id="adminOrderToastBody" class="muted" style="margin-top:8px;"></div>
+            <div id="adminOrderToastMessage" style="color:#25170f; line-height:1.45; font-weight:800;"></div>
+            <div id="adminOrderToastBody" style="margin-top:8px; color:#68432e;"></div>
         </div>
     </div>
 </div>

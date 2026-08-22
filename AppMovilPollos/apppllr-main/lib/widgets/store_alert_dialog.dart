@@ -11,6 +11,8 @@ Future<void> showStoreAlertDialog(
   required String message,
   String buttonLabel = 'Entendido',
   IconData icon = Icons.priority_high_rounded,
+  String? secondaryLabel,
+  VoidCallback? onSecondary,
 }) {
   return showDialog<void>(
     context: context,
@@ -65,21 +67,59 @@ Future<void> showStoreAlertDialog(
               ),
             ),
             const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: StoreTheme.orange,
-                  foregroundColor: StoreTheme.ink,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+            if (secondaryLabel != null)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: StoreTheme.orangeDeep,
+                        side: const BorderSide(color: StoreTheme.orange),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(buttonLabel),
+                    ),
                   ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: StoreTheme.orange,
+                        foregroundColor: StoreTheme.ink,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        onSecondary?.call();
+                      },
+                      child: Text(secondaryLabel),
+                    ),
+                  ),
+                ],
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: StoreTheme.orange,
+                    foregroundColor: StoreTheme.ink,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(buttonLabel),
                 ),
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(buttonLabel),
               ),
-            ),
           ],
         ),
       ),

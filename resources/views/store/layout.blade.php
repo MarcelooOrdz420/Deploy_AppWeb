@@ -1135,11 +1135,12 @@ initClientSession();
     #promoToastTitle,#promoToastMessage { color:#fff!important; }
     #promoOverlay .promo-copy { background:linear-gradient(145deg,#49100c,#77180f)!important; }
     #promoOverlay .promo-media { background:linear-gradient(145deg,#ff9b30,#ff6d0b)!important; }
-    #orderToast>div { background:linear-gradient(145deg,#3a160c,#7a2b0c)!important; border:1px solid #ff9d5a!important; box-shadow:0 22px 50px rgba(31,12,4,.34)!important; }
-    #orderToast>div>div:first-child { background:#ff7a18!important; border:0!important; }
-    #orderToastTitle,#orderToastMessage { color:#fff!important; }
-    #orderToastBody { color:#ffe4ce!important; }
-    #orderToastCloseBtn { background:#fff!important; color:#7a2b0c!important; border-color:#fff!important; }
+    #orderToast>div { background:#FFFDF9!important; border:1.5px solid #FFB37A!important; box-shadow:0 22px 50px rgba(255,111,31,.24)!important; }
+    #orderToast>div>div:first-child { background:#FFF1E3!important; border:0!important; border-bottom:1px solid #FFE4D2!important; }
+    #orderToastTitle { color:#7b3d11!important; }
+    #orderToastMessage { color:#25170f!important; }
+    #orderToastBody { color:#68432e!important; }
+    #orderToastCloseBtn { background:#FF6F1F!important; color:#fff!important; border-color:#FF6F1F!important; }
 
     @media (max-width: 720px) {
         #promoOverlay {

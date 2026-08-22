@@ -410,7 +410,7 @@ orderForm.addEventListener('submit', async e => {
 
     const cartSubtotal = cart.reduce((sum, item) => sum + Number(item.price) * Number(item.qty), 0);
     if (cartSubtotal < MINIMUM_ORDER_SUBTOTAL) {
-        orderMsg.textContent = 'El pedido debe ser de al menos S/10.00. Agrega mas productos para continuar.';
+        showCartAlert('Pedido muy pequeño', 'El pedido debe ser de al menos S/10.00. Agrega mas productos para continuar.');
         return;
     }
 
