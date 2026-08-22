@@ -461,6 +461,24 @@ class _PaymentPageState extends State<PaymentPage> {
         final checkoutUrl = (checkout['payment_url'] ?? '').toString().trim();
 
         if (checkoutUrl.isNotEmpty && mounted) {
+          await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Vas a salir de la app'),
+              content: const Text(
+                'Se te redirecciona a la web para verificar tu pago con '
+                'tarjeta de forma segura. Cuando termines, vuelve a la app.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Entendido'),
+                ),
+              ],
+            ),
+          );
+          if (!mounted) return;
           await Clipboard.setData(ClipboardData(text: checkoutUrl));
           final opened = await _openIzipay(checkoutUrl);
           if (!opened && mounted) {
@@ -1213,7 +1231,8 @@ class _PaymentStatusDialog extends StatefulWidget {
   State<_PaymentStatusDialog> createState() => _PaymentStatusDialogState();
 }
 
-class _PaymentStatusDialogState extends State<_PaymentStatusDialog> {
+class _PaymentStatusDialogState extends State<_PaymentStatusDialog>
+    with WidgetsBindingObserver {
   Timer? _timer;
   String _status = 'pending';
   bool _checking = false;
@@ -1221,8 +1240,19 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkPayment();
     _timer = Timer.periodic(const Duration(seconds: 3), (_) => _checkPayment());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Al volver del navegador (checkout de Izipay) revisamos de inmediato en
+    // vez de esperar al siguiente tick del timer, para que la ventana se
+    // cierre y el carrito se vacie apenas el pago quede confirmado.
+    if (state == AppLifecycleState.resumed) {
+      _checkPayment();
+    }
   }
 
   Future<void> _checkPayment() async {
@@ -1251,36 +1281,43 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog> {
   @override
   void dispose() {
     _timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final rejected = _status == 'rejected';
-    return AlertDialog(
-      title: Text(rejected ? 'Pago rechazado' : 'Verificando pago'),
-      content: Text(
-        rejected
-            ? 'No se pudo completar el pago. Puedes reintentar o elegir otro método.'
-            : 'Estamos verificando automáticamente el pago del pedido ${widget.trackingCode}.',
-      ),
-      actions: [
-        if (widget.checkoutUrl.isNotEmpty)
-          TextButton(
-            onPressed: () => launchUrl(
-              Uri.parse(widget.checkoutUrl),
-              mode: kIsWeb
-                  ? LaunchMode.platformDefault
-                  : LaunchMode.inAppBrowserView,
-              webOnlyWindowName: kIsWeb ? '_self' : null,
-            ),
-            child: Text(rejected ? 'Reintentar pago' : 'Volver a Izipay'),
-          ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Revisar despues'),
+    return PopScope(
+      // Bloquea el boton/gesto de retroceso del sistema: si se pudiera
+      // cerrar esta ventana con un "atras", el carrito quedaba sin vaciar
+      // aunque el pago ya estuviera confirmado por el webhook de Izipay.
+      canPop: false,
+      child: AlertDialog(
+        title: Text(rejected ? 'Pago rechazado' : 'Verificando pago'),
+        content: Text(
+          rejected
+              ? 'No se pudo completar el pago. Puedes reintentar o elegir otro método.'
+              : 'Estamos verificando automáticamente el pago del pedido ${widget.trackingCode}.',
         ),
-      ],
+        actions: [
+          if (widget.checkoutUrl.isNotEmpty)
+            TextButton(
+              onPressed: () => launchUrl(
+                Uri.parse(widget.checkoutUrl),
+                mode: kIsWeb
+                    ? LaunchMode.platformDefault
+                    : LaunchMode.inAppBrowserView,
+                webOnlyWindowName: kIsWeb ? '_self' : null,
+              ),
+              child: Text(rejected ? 'Reintentar pago' : 'Volver a Izipay'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Revisar despues'),
+          ),
+        ],
+      ),
     );
   }
 }
