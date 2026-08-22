@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../services/location_lookup_service.dart';
 import '../services/profile_data_service.dart';
 import '../services/session_service.dart';
+import '../state/app_shell_controller.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
 import '../widgets/producto_image.dart';
@@ -47,12 +48,21 @@ class _CartTabState extends State<CartTab> {
     final deliveryFee = cart.isDelivery ? cart.deliveryFee() : 0.0;
     final total = subtotal + deliveryFee;
 
-    if (cart.isDelivery && !cart.qualifiesForDelivery) {
+    // IndexedStack mantiene las 5 pestañas construidas todo el tiempo, asi
+    // que este build() corre aunque el usuario este en otra pestaña. Solo
+    // avisamos si hay productos (un carrito recien abierto/vacio no debe
+    // saltar la alerta) y si el usuario esta realmente viendo el carrito.
+    final isCartTabActive = AppShellController.instance.tabIndex.value == 2;
+    if (cart.items.isNotEmpty &&
+        cart.isDelivery &&
+        !cart.qualifiesForDelivery &&
+        isCartTabActive) {
       // El carrito cambio (se quitaron productos) y ya no llega al minimo:
       // se fuerza recojo y se avisa, en vez de dejar un delivery "gratis"
       // no intencional.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        if (AppShellController.instance.tabIndex.value != 2) return;
         cart.setDeliveryType(false);
         _showDeliveryBlockedAlert();
       });

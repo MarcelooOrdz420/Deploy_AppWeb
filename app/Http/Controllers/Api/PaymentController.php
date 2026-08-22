@@ -187,6 +187,19 @@ class PaymentController extends Controller
         }
 
         DB::transaction(function () use ($order): void {
+            // Se vuelve a leer con bloqueo dentro de la transaccion: si el
+            // webhook de Izipay verifico el pago justo en este instante, no
+            // se debe borrar un pedido que ya fue cobrado.
+            $fresh = Order::query()->lockForUpdate()->findOrFail($order->id);
+            if (! $this->usesIzipay($fresh)
+                || ! in_array((string) $fresh->payment_status, ['pending', 'rejected'], true)
+                || (string) $fresh->status !== Order::STATUS_PENDING) {
+                abort(response()->json([
+                    'message' => 'Este pedido ya no se puede cancelar.',
+                ], 422));
+            }
+
+            $order = $fresh;
             $order->load('items');
             $movementService = app(InventoryMovementService::class);
 

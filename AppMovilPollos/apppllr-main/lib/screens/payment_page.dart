@@ -1409,6 +1409,25 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog>
     );
     if (confirmed != true) return;
 
+    // Ultima verificacion antes de cancelar: si el pago se confirmo justo
+    // mientras el usuario decidia (el webhook de Izipay puede tardar unos
+    // segundos mas que el usuario en volver), no debemos borrar el pedido.
+    try {
+      final order = await widget.orderApiService.getOrder(
+        token: widget.token,
+        orderId: widget.orderId,
+      );
+      final status = (order['payment_status'] ?? 'pending').toString();
+      if (status == 'verified') {
+        _timer?.cancel();
+        if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+        return;
+      }
+    } catch (_) {
+      // Si la verificacion falla (ej. sin conexion), seguimos con la
+      // cancelacion normal en vez de bloquear al usuario.
+    }
+
     await widget.orderApiService.cancelUnpaidOrder(
       token: widget.token,
       orderId: widget.orderId,
