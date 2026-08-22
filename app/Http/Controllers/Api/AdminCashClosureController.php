@@ -146,9 +146,19 @@ class AdminCashClosureController extends Controller
 
     private function buildSummary(string $businessDate): array
     {
-        $orders = Order::query()
+        // "Pedidos" y "venta bruta" reflejan lo que entro ese dia (por fecha
+        // de creacion). El efectivo/digital/verificado del cierre reflejan lo
+        // que realmente se cobro ese dia (por fecha de verificacion de pago),
+        // para que un pedido creado tarde y cobrado al dia siguiente no
+        // infle el cuadre de caja del dia equivocado.
+        $createdOrders = Order::query()
             ->whereDate('created_at', $businessDate)
             ->where('status', '!=', Order::STATUS_CANCELLED)
+            ->get(['id', 'total_amount']);
+
+        $verifiedOrders = Order::query()
+            ->whereDate('payment_verified_at', $businessDate)
+            ->where('payment_status', 'verified')
             ->get([
                 'id',
                 'tracking_code',
@@ -160,18 +170,16 @@ class AdminCashClosureController extends Controller
                 'created_at',
             ]);
 
-        $grossSales = round((float) $orders->sum('total_amount'), 2);
-        $cashSales = round((float) $orders
+        $grossSales = round((float) $createdOrders->sum('total_amount'), 2);
+        $cashSales = round((float) $verifiedOrders
             ->where('payment_method', 'cod')
             ->sum('total_amount'), 2);
-        $digitalSales = round((float) $orders
+        $digitalSales = round((float) $verifiedOrders
             ->whereIn('payment_method', ['izipay', 'yape'])
             ->sum('total_amount'), 2);
-        $verifiedSales = round((float) $orders
-            ->filter(fn (Order $order): bool => $order->payment_status === 'verified')
-            ->sum('total_amount'), 2);
+        $verifiedSales = round((float) $verifiedOrders->sum('total_amount'), 2);
 
-        $paymentBreakdown = $orders
+        $paymentBreakdown = $verifiedOrders
             ->groupBy(fn (Order $order): string => (string) $order->payment_method)
             ->map(fn ($group, string $method): array => [
                 'method' => $method,
@@ -184,7 +192,7 @@ class AdminCashClosureController extends Controller
         return [
             'business_date' => $businessDate,
             'totals' => [
-                'orders_count' => $orders->count(),
+                'orders_count' => $createdOrders->count(),
                 'gross_sales' => $grossSales,
                 'verified_sales' => $verifiedSales,
                 'cash_sales' => $cashSales,
