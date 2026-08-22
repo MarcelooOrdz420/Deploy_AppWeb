@@ -57,7 +57,7 @@ class ChatbotController
         } else {
             $reply = $this->chatbot->reply(
                 message: $data['message'],
-                userName: $user?->name,
+                user: $user,
                 sessionId: $sessionId,
                 draftContext: $draftService->contextFor($user, $sessionId),
             );

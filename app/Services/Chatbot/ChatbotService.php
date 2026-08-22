@@ -2,7 +2,9 @@
 
 namespace App\Services\Chatbot;
 
+use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class ChatbotService
@@ -14,14 +16,14 @@ class ChatbotService
     ) {
     }
 
-    public function reply(string $message, ?string $userName = null, ?string $sessionId = null, ?string $draftContext = null): string
+    public function reply(string $message, ?User $user = null, ?string $sessionId = null, ?string $draftContext = null): string
     {
         $blocked = $this->blockedSensitiveReply($message);
         if ($blocked) {
             return $blocked;
         }
 
-        $system = $this->buildSystemPrompt($userName, $sessionId, $draftContext);
+        $system = $this->buildSystemPrompt($user, $sessionId, $draftContext);
         [$provider, $model] = $this->resolveProviderAndModel();
         $local = $this->local->reply($message);
 
@@ -82,7 +84,7 @@ class ChatbotService
         ];
     }
 
-    private function buildSystemPrompt(?string $userName, ?string $sessionId, ?string $draftContext = null): string
+    private function buildSystemPrompt(?User $user, ?string $sessionId, ?string $draftContext = null): string
     {
         $brand = (string) config('chatbot.brand_name');
         $supportPhone = (string) config('chatbot.support_phone');
@@ -91,18 +93,21 @@ class ChatbotService
         $knowledge = $this->readKnowledge();
         $payments = $this->paymentContext();
         $products = $this->productsContext();
+        $orders = $this->ordersContext($user);
 
         return trim(implode("\n", array_filter([
             "Eres POLL-IA, el asistente oficial de {$brand}.",
             'Responde en espanol, con tono amable, profesional y directo.',
             'Solo responde sobre productos, pedidos, pagos, delivery, horarios, ubicacion, contacto y uso de la app/web.',
-            'Si falta informacion, pide 1 o 2 datos concretos, por ejemplo codigo de tracking o correo.',
+            $orders
+                ? "El cliente esta logueado (correo: {$user?->email}) y estos son sus pedidos recientes:\n{$orders}\nUsa estos datos directamente para responder sobre el estado de su pedido. NO le pidas codigo de tracking ni correo: ya los tienes."
+                : 'Si falta informacion para revisar un pedido, pide 1 o 2 datos concretos, por ejemplo codigo de tracking o correo.',
             'Si hay un pedido temporal en contexto, no vuelvas a preguntar esos mismos productos o datos. Solo pide lo que falte.',
             'Si el usuario pide algo fuera del negocio, responde que no aplica y ofrece el contacto humano.',
             'No inventes precios, disponibilidad, horarios ni datos de pago: usa el contexto disponible.',
             'Nunca muestres cantidades de stock ni existencias exactas. Si un producto esta en el catalogo publico, solo puedes decir que esta disponible.',
             'No reveles ni solicites datos internos, administrativos, credenciales, tokens, claves, contrasenas, reportes internos, datos de clientes, direcciones privadas, DNI/RUC de clientes, correos privados ni configuracion del sistema.',
-            'Para consultas de productos usa solo el catalogo publico incluido en este contexto.',
+            'Para consultas de productos usa solo el catalogo publico incluido en este contexto. Formatea la lista de productos agrupada por categoria, con guiones y saltos de linea claros entre categorias, para que sea facil de leer (no la pegues toda en un solo bloque).',
             "Horario: {$hours}.",
             "Soporte: {$supportPhone} / {$supportEmail}.",
             $payments ? "Medios de pago y datos utiles:\n{$payments}" : null,
@@ -110,6 +115,36 @@ class ChatbotService
             $draftContext ? "Pedido temporal ya indicado por el cliente:\n{$draftContext}" : null,
             $knowledge ? "Base de conocimiento:\n{$knowledge}" : null,
         ])));
+    }
+
+    private function ordersContext(?User $user): ?string
+    {
+        if (! $user) {
+            return null;
+        }
+
+        try {
+            $orders = Order::query()
+                ->where('user_id', $user->id)
+                ->latest()
+                ->limit(3)
+                ->get(['tracking_code', 'status', 'payment_status', 'total_amount', 'created_at']);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($orders->isEmpty()) {
+            return null;
+        }
+
+        return $orders->map(function (Order $order): string {
+            $status = Order::statusLabel((string) $order->status);
+            $date = optional($order->created_at)->format('d/m/Y H:i');
+
+            return "- Pedido {$order->tracking_code}: estado {$status}, pago {$order->payment_status}, total S/ "
+                .number_format((float) $order->total_amount, 2, '.', '')
+                ." ({$date})";
+        })->implode("\n");
     }
 
     private function resolveProviderAndModel(): array

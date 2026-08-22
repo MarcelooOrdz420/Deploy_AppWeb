@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../config/runtime_config.dart';
@@ -274,6 +275,11 @@ class _RegistroPageState extends State<RegistroPage> {
                         TextField(
                           controller: _phoneController,
                           enabled: !_loading,
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(9),
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'Telefono',
                             prefixIcon: Icon(Icons.phone_outlined),

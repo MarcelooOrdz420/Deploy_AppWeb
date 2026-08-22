@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import '../config/pusher_config.dart';
 import '../services/chatbot_api_service.dart';
+import '../services/location_lookup_service.dart';
 import '../services/pusher_service.dart';
 import '../services/session_service.dart';
 import '../services/productos_service.dart';
@@ -469,6 +472,7 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
       _address = TextEditingController(),
       _reference = TextEditingController(),
       _notes = TextEditingController();
+  final _locationLookupService = LocationLookupService();
   late final Future<List<Producto>> _products = ProductosService().listar();
   int _step = 0, _qty = 1, _drinkQty = 1;
   Producto? _dish, _drink, _side;
@@ -492,6 +496,43 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
       _phone.text = values[1];
       _email.text = values[2];
     });
+  }
+
+  Future<void> _useCurrentLocation() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw Exception('Activa la ubicacion del dispositivo para usar esta opcion.');
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw Exception('No diste permiso para acceder a tu ubicacion.');
+      }
+
+      final position = await Geolocator.getCurrentPosition();
+      final lookup = await _locationLookupService.reverseGeocode(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+      if (!mounted) return;
+      setState(() {
+        _address.text = lookup.address;
+        _reference.text = lookup.reference;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ubicacion actual cargada correctamente.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   @override
@@ -660,8 +701,8 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
                 ],
                 onChanged: (v) => setState(() => _delivery = v ?? 'delivery'),
               ),
-              const SizedBox(height: 12),
-              if (_delivery == 'delivery')
+              if (_delivery == 'delivery') ...[
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _address,
                   decoration: _decor('Dirección'),
@@ -670,11 +711,18 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
                       ? 'Dirección obligatoria'
                       : null,
                 ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _reference,
-                decoration: _decor('Referencia'),
-              ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _reference,
+                  decoration: _decor('Referencia'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _useCurrentLocation,
+                  icon: const Icon(Icons.my_location_outlined),
+                  label: const Text('Usar mi ubicación'),
+                ),
+              ],
             ],
           ),
           Column(
@@ -691,11 +739,14 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
                 controller: _phone,
                 autofillHints: const [AutofillHints.telephoneNumber],
                 keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(9),
+                ],
                 decoration: _decor('Teléfono'),
-                validator: (v) =>
-                    RegExp(r'^\+?[0-9\s-]{7,30}$').hasMatch((v ?? '').trim())
+                validator: (v) => RegExp(r'^\d{9}$').hasMatch((v ?? '').trim())
                     ? null
-                    : 'Teléfono inválido',
+                    : 'Ingresa los 9 digitos de tu celular',
               ),
               const SizedBox(height: 12),
               TextFormField(

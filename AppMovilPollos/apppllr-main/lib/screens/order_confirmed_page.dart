@@ -51,7 +51,8 @@ class _OrderConfirmedPageState extends State<OrderConfirmedPage> {
         backgroundColor: StoreTheme.orange,
         foregroundColor: StoreTheme.ink,
       ),
-      body: Padding(
+      body: SafeArea(
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -120,6 +121,7 @@ class _OrderConfirmedPageState extends State<OrderConfirmedPage> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

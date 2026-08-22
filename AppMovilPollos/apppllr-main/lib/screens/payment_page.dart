@@ -47,6 +47,7 @@ class _PaymentPageState extends State<PaymentPage> {
   final _latitudeCtrl = TextEditingController();
   final _longitudeCtrl = TextEditingController();
   final _houseNumberCtrl = TextEditingController();
+  final _orderNoteCtrl = TextEditingController();
 
   PayMethod _method = PayMethod.izipay;
   DeliveryType _deliveryType = DeliveryType.delivery;
@@ -86,6 +87,7 @@ class _PaymentPageState extends State<PaymentPage> {
     _latitudeCtrl.dispose();
     _longitudeCtrl.dispose();
     _houseNumberCtrl.dispose();
+    _orderNoteCtrl.dispose();
     super.dispose();
   }
 
@@ -122,6 +124,9 @@ class _PaymentPageState extends State<PaymentPage> {
           : DeliveryType.pickup;
       _addressCtrl.text = cart.address;
       _referenceCtrl.text = cart.reference;
+      if (_orderNoteCtrl.text.trim().isEmpty && cart.orderNote.isNotEmpty) {
+        _orderNoteCtrl.text = cart.orderNote;
+      }
       if (_nameCtrl.text.trim().isEmpty) _nameCtrl.text = cart.customerName;
       if (_phoneCtrl.text.trim().isEmpty) _phoneCtrl.text = cart.customerPhone;
       if (_customerEmailCtrl.text.trim().isEmpty)
@@ -358,7 +363,7 @@ class _PaymentPageState extends State<PaymentPage> {
       (item) => item.producto.categoria.toLowerCase() == 'pollos',
     );
 
-    if (customerName.isEmpty || customerPhone.isEmpty) {
+    if (customerName.isEmpty || customerPhone.length != 9) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Completa nombre y telefono.')),
@@ -472,9 +477,9 @@ class _PaymentPageState extends State<PaymentPage> {
               : _billingAddressCtrl.text.trim(),
           'billing_metadata': _billingMetadata,
           'salad_type': hasChicken ? _saladType : null,
-          'drink_note': cart.orderNote.trim().isEmpty
+          'drink_note': _orderNoteCtrl.text.trim().isEmpty
               ? null
-              : cart.orderNote.trim(),
+              : _orderNoteCtrl.text.trim(),
           'address': address.isEmpty ? null : address,
           'reference': referenceValue.isEmpty ? null : referenceValue,
           'latitude': _parseCoordinate(_latitudeCtrl),
@@ -512,55 +517,55 @@ class _PaymentPageState extends State<PaymentPage> {
         final checkoutUrl = (checkout['payment_url'] ?? '').toString().trim();
 
         if (checkoutUrl.isNotEmpty && mounted) {
-          await showDialog<void>(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              title: const Text('Vas a salir de la app'),
-              content: const Text(
+          await showStoreAlertDialog(
+            context,
+            title: 'Vas a salir de la app',
+            message:
                 'Se te redirecciona a la web para verificar tu pago con '
                 'tarjeta de forma segura. Cuando termines, vuelve a la app.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Entendido'),
-                ),
-              ],
-            ),
+            icon: Icons.open_in_new_rounded,
+            buttonLabel: 'Entendido',
           );
           if (!mounted) return;
           await Clipboard.setData(ClipboardData(text: checkoutUrl));
           final opened = await _openIzipay(checkoutUrl);
           if (!opened && mounted) {
-            await showDialog<void>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Izipay listo'),
-                content: Text(
+            await showStoreAlertDialog(
+              context,
+              title: 'Izipay listo',
+              message:
                   'Copiamos el enlace de pago para tu pedido $trackingCode. '
                   'Abre tu navegador y pega el enlace para completar el pago seguro.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Continuar'),
-                  ),
-                ],
-              ),
+              icon: Icons.link_rounded,
+              buttonLabel: 'Continuar',
             );
           }
         }
 
         if (!mounted) return;
-        final verified = await _showPaymentStatusDialog(
+        final paymentResult = await _showPaymentStatusDialog(
           token: token,
           orderId: orderId,
           trackingCode: trackingCode,
           checkoutUrl: checkoutUrl,
           paymentMethod: storedPaymentMethod,
         );
-        if (!verified) {
+        if (paymentResult == 'switch_cod') {
+          // El pedido con tarjeta ya se cancelo dentro del dialogo: dejamos
+          // que el cliente revise y confirme de nuevo con contraentrega en
+          // vez de reenviar automaticamente, para que pueda ajustar datos.
+          setState(() => _method = PayMethod.cod);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Cambiamos el metodo de pago a contraentrega. Revisa y confirma tu pedido de nuevo.',
+              ),
+            ),
+          );
+          return;
+        }
+        if (paymentResult != 'verified') {
           // El cliente eligio cancelar explicitamente en vez de esperar la
           // confirmacion: como ya no hay forma de reintentar el pago de este
           // pedido desde Mis pedidos, se vacia el carrito para que pueda
@@ -606,14 +611,14 @@ class _PaymentPageState extends State<PaymentPage> {
     }
   }
 
-  Future<bool> _showPaymentStatusDialog({
+  Future<String> _showPaymentStatusDialog({
     required String token,
     required int orderId,
     required String trackingCode,
     required String checkoutUrl,
     required String paymentMethod,
   }) async {
-    return await showDialog<bool>(
+    return await showDialog<String>(
           context: context,
           barrierDismissible: false,
           builder: (_) => _PaymentStatusDialog(
@@ -625,7 +630,7 @@ class _PaymentPageState extends State<PaymentPage> {
             paymentMethod: paymentMethod,
           ),
         ) ??
-        false;
+        'abandoned';
   }
 
   Future<bool> _openIzipay(String checkoutUrl) {
@@ -719,7 +724,15 @@ class _PaymentPageState extends State<PaymentPage> {
               children: [
                 _field(_nameCtrl, 'Nombre'),
                 const SizedBox(height: 10),
-                _field(_phoneCtrl, 'Telefono'),
+                _field(
+                  _phoneCtrl,
+                  'Telefono',
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(9),
+                  ],
+                ),
                 const SizedBox(height: 10),
                 _field(_customerEmailCtrl, 'Correo (opcional)'),
               ],
@@ -871,6 +884,15 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
             ),
           _section(
+            title: 'Indicaciones para tu pedido',
+            child: TextField(
+              controller: _orderNoteCtrl,
+              maxLength: 120,
+              maxLines: 2,
+              decoration: _decor('Ej: mas cremas, sin aji, poco picante...'),
+            ),
+          ),
+          _section(
             title: '¿Cómo deseas pagar?',
             child: Column(
               children: [
@@ -1011,8 +1033,18 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  Widget _field(TextEditingController controller, String label) {
-    return TextField(controller: controller, decoration: _decor(label));
+  Widget _field(
+    TextEditingController controller,
+    String label, {
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: _decor(label),
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+    );
   }
 
   Widget _paymentChoice({
@@ -1347,7 +1379,7 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog>
       final status = (order['payment_status'] ?? 'pending').toString();
       if (status == 'verified') {
         _timer?.cancel();
-        Navigator.pop(context, true);
+        Navigator.pop(context, 'verified');
         return;
       }
       setState(() => _status = status);
@@ -1393,12 +1425,72 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog>
               child: Text(rejected ? 'Reintentar pago' : 'Volver a Izipay'),
             ),
           TextButton(
+            onPressed: () => _switchToCod(context),
+            child: const Text('Pagar contraentrega'),
+          ),
+          TextButton(
             onPressed: () => _confirmAbandon(context),
             child: const Text('Cancelar pago'),
           ),
         ],
       ),
     );
+  }
+
+  Future<bool> _verifiedWhileDeciding(BuildContext dialogContext) async {
+    // Ultima verificacion antes de cancelar: si el pago se confirmo justo
+    // mientras el usuario decidia (el webhook de Izipay puede tardar unos
+    // segundos mas que el usuario en volver), no debemos borrar el pedido.
+    try {
+      final order = await widget.orderApiService.getOrder(
+        token: widget.token,
+        orderId: widget.orderId,
+      );
+      final status = (order['payment_status'] ?? 'pending').toString();
+      if (status == 'verified') {
+        _timer?.cancel();
+        if (dialogContext.mounted) Navigator.pop(dialogContext, 'verified');
+        return true;
+      }
+    } catch (_) {
+      // Si la verificacion falla (ej. sin conexion), seguimos adelante en
+      // vez de bloquear al usuario.
+    }
+    return false;
+  }
+
+  Future<void> _switchToCod(BuildContext dialogContext) async {
+    final confirmed = await showDialog<bool>(
+      context: dialogContext,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Cambiar a pago contraentrega?'),
+        content: const Text(
+          'Cancelaremos este intento de pago con tarjeta y volveras al '
+          'formulario para confirmar tu pedido pagando contraentrega.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Seguir esperando'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Si, cambiar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (await _verifiedWhileDeciding(dialogContext)) return;
+
+    await widget.orderApiService.cancelUnpaidOrder(
+      token: widget.token,
+      orderId: widget.orderId,
+    );
+
+    if (dialogContext.mounted) {
+      Navigator.pop(dialogContext, 'switch_cod');
+    }
   }
 
   Future<void> _confirmAbandon(BuildContext dialogContext) async {
@@ -1424,25 +1516,7 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog>
       ),
     );
     if (confirmed != true) return;
-
-    // Ultima verificacion antes de cancelar: si el pago se confirmo justo
-    // mientras el usuario decidia (el webhook de Izipay puede tardar unos
-    // segundos mas que el usuario en volver), no debemos borrar el pedido.
-    try {
-      final order = await widget.orderApiService.getOrder(
-        token: widget.token,
-        orderId: widget.orderId,
-      );
-      final status = (order['payment_status'] ?? 'pending').toString();
-      if (status == 'verified') {
-        _timer?.cancel();
-        if (dialogContext.mounted) Navigator.pop(dialogContext, true);
-        return;
-      }
-    } catch (_) {
-      // Si la verificacion falla (ej. sin conexion), seguimos con la
-      // cancelacion normal en vez de bloquear al usuario.
-    }
+    if (await _verifiedWhileDeciding(dialogContext)) return;
 
     await widget.orderApiService.cancelUnpaidOrder(
       token: widget.token,
@@ -1450,7 +1524,7 @@ class _PaymentStatusDialogState extends State<_PaymentStatusDialog>
     );
 
     if (dialogContext.mounted) {
-      Navigator.pop(dialogContext, false);
+      Navigator.pop(dialogContext, 'abandoned');
     }
   }
 }

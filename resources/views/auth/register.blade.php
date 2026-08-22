@@ -405,7 +405,7 @@
             <input id="email" name="email" type="email" placeholder="xxxxx@gmail.com" required>
 
             <label for="phone">Teléfono</label>
-            <input id="phone" name="phone" type="text" placeholder="Telefono opcional">
+            <input id="phone" name="phone" type="text" inputmode="numeric" maxlength="9" placeholder="9 digitos, opcional">
 
             <label for="password">Contraseña</label>
             <input id="password" name="password" type="password" placeholder="Minimo 6 caracteres" required minlength="6">
@@ -478,6 +478,7 @@
 })();
 
 const form = document.getElementById('registerForm');
+form.phone.addEventListener('input', () => { form.phone.value = form.phone.value.replace(/\D/g, '').slice(0, 9); });
 const msg = document.getElementById('msg');
 const otpPanel = document.getElementById('otpPanel');
 const otpForm = document.getElementById('otpForm');

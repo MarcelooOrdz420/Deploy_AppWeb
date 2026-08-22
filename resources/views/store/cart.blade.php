@@ -68,7 +68,7 @@
                             </label>
                             <label class="field-card">
                                 <span class="label-main">Telefono</span>
-                                <input class="input-main" name="customer_phone" required placeholder="Ej: 987654321">
+                                <input class="input-main" name="customer_phone" type="text" inputmode="numeric" maxlength="9" required placeholder="Ej: 987654321">
                             </label>
                         </div>
                     </section>
@@ -431,6 +431,7 @@ function applyPolliaCheckoutPrefill(){try{const raw=localStorage.getItem('ed_pol
 orderForm.elements.payment_method.addEventListener('change',updatePaymentInfo);orderForm.querySelectorAll('input[name="receipt_delivery"]').forEach(radio=>radio.addEventListener('change',updateReceiptDeliveryUi));
 geoBtn.addEventListener('click',()=>{if(!navigator.geolocation){geoMsg.style.display='block';geoMsg.textContent='Tu navegador no soporta geolocalizacion.';return}geoMsg.style.display='block';geoMsg.textContent='Detectando tu ubicacion exacta...';navigator.geolocation.getCurrentPosition(async position=>{const latitude=position.coords.latitude.toFixed(7),longitude=position.coords.longitude.toFixed(7);if(orderForm.latitude)orderForm.latitude.value=latitude;if(orderForm.longitude)orderForm.longitude.value=longitude;try{const data=await reverseGeocode(latitude,longitude),address=data.address||{},road=address.road||address.pedestrian||address.residential||address.cycleway||'',avenue=address.avenue||'',houseNumber=address.house_number||'',suburb=address.suburb||address.neighbourhood||address.city_district||'',city=address.city||address.town||address.village||address.county||'',state=address.state||'',amenity=address.amenity||address.shop||address.tourism||'',exactPlace=[road||avenue,houseNumber].filter(Boolean).join(' ').trim()||data.name||data.display_name||'Ubicacion detectada',nearbyReference=[amenity?`Cerca de ${amenity}`:'',suburb?`Zona ${suburb}`:'',city?`Distrito/Ciudad ${city}`:'',state&&state!==city?state:''].filter(Boolean).join(' | ');orderForm.address.value=exactPlace;orderForm.reference.value=nearbyReference||'Ubicacion obtenida desde GPS';geoMsg.textContent=`Ubicacion detectada: ${exactPlace}`}catch(error){orderForm.address.value='Ubicacion detectada desde GPS';orderForm.reference.value='Completa la calle, avenida o referencia cercana manualmente';geoMsg.textContent=error?.name==='AbortError'?'La traduccion a nombre de calles tardo demasiado. Completa la referencia manualmente.':'Se detecto tu ubicacion, pero no se pudo traducir a nombres de calles. Completa la referencia manualmente.'}},()=>{geoMsg.style.display='block';geoMsg.textContent='No se pudo obtener tu ubicacion.'},{enableHighAccuracy:true,timeout:12000,maximumAge:0})});
 orderForm.address.addEventListener('input',()=>{if(orderForm.latitude)orderForm.latitude.value='';if(orderForm.longitude)orderForm.longitude.value='';showManualLocationWarningIfNeeded()});
+orderForm.customer_phone.addEventListener('input',()=>{orderForm.customer_phone.value=orderForm.customer_phone.value.replace(/\D/g,'').slice(0,9)});
 orderForm.addEventListener('submit', async e => {
     e.preventDefault();
     if (orderSubmitting) return;

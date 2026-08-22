@@ -221,7 +221,7 @@ class OrderController extends Controller
         $data = $request->validate([
             'idempotency_key' => ['nullable', 'string', 'max:80'],
             'customer_name' => ['required', 'string', 'max:120'],
-            'customer_phone' => ['required', 'string', 'max:30'],
+            'customer_phone' => ['required', 'digits:9'],
             'customer_email' => ['nullable', 'email', 'max:120'],
             'delivery_type' => ['required', Rule::in(['pickup', 'delivery'])],
             'scheduled_for' => ['nullable', 'date'],
