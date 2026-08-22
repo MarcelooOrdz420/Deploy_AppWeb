@@ -220,6 +220,15 @@
                 <p id="processingText">Validando productos, datos de entrega y forma de pago.</p>
             </div>
         </div>
+
+        <div id="cartAlertOverlay" class="cart-alert-overlay">
+            <div class="cart-alert-card">
+                <div class="cart-alert-icon">!</div>
+                <strong id="cartAlertTitle" class="cart-alert-title"></strong>
+                <p id="cartAlertMessage" class="cart-alert-message"></p>
+                <button id="cartAlertOkBtn" type="button" class="btn-main cart-alert-btn">Entendido</button>
+            </div>
+        </div>
     </section>
 
     <style>
@@ -284,7 +293,16 @@
         .payment-brief .qr-image{width:min(100%,150px);aspect-ratio:1/1;object-fit:contain;border-radius:14px;border:1px dashed rgba(255,111,31,.35);background:#fff;padding:8px}
         .checkout-actions{display:grid;gap:10px;padding-bottom:8px}
         .checkout-submit{min-height:58px;font-size:16px}
-        .order-feedback{min-height:22px;color:#7b3d11;font-size:14px;line-height:1.5}
+        .order-feedback{display:none;margin-top:10px;padding:14px 16px;border-radius:14px;font-size:14px;font-weight:700;line-height:1.5;color:#7b3d11;background:#FFF1E3;border:1.5px solid #FFB37A;box-shadow:0 10px 24px rgba(255,111,31,.14);align-items:flex-start;gap:10px}
+        .order-feedback:not(:empty){display:flex}
+        .order-feedback::before{content:"\26A0";flex-shrink:0;font-size:17px;line-height:1.3}
+        .cart-alert-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;z-index:95;background:rgba(24,15,8,.55);backdrop-filter:blur(2px)}
+        .cart-alert-overlay.is-open{display:flex}
+        .cart-alert-card{position:relative;width:min(92vw,380px);border-radius:26px;padding:26px 24px;border:1px solid rgba(234,182,138,.82);background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,246,238,.99));box-shadow:0 30px 60px rgba(52,17,0,.28);text-align:center;display:grid;gap:10px;justify-items:center;color:#25170f}
+        .cart-alert-icon{width:44px;height:44px;border-radius:14px;background:#FFE4D2;color:#FF6F1F;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900}
+        .cart-alert-title{font-size:19px;line-height:1.2}
+        .cart-alert-message{margin:0;color:#68432e;font-size:14.5px;line-height:1.5;font-weight:600}
+        .cart-alert-btn{width:100%;margin-top:6px}
         .processing-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:radial-gradient(circle at top left,rgba(255,157,90,.28),transparent 28%),radial-gradient(circle at bottom right,rgba(255,111,31,.18),transparent 26%),linear-gradient(180deg,#fffaf6 0%,#fff1e5 44%,#ffead8 100%);z-index:90}
         .processing-overlay::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,111,31,.12),transparent 42%);pointer-events:none}
         .processing-card{position:relative;width:min(92vw,420px);border-radius:28px;padding:28px 22px;border:1px solid rgba(234,182,138,.82);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,246,238,.98));box-shadow:0 26px 60px rgba(52,17,0,.13);text-align:center;display:grid;gap:12px;justify-items:center;color:#25170f}
@@ -339,8 +357,18 @@ function renderCart(){const cart=getCart();if(!cart.length){cartListEl.textConte
     if(deliveryType.value==='delivery'&&!qualifiesForDelivery(total)){deliveryType.value='pickup';updateDeliveryUi();alertDeliveryBlocked()}
     if(deliveryType.value==='delivery'){deliveryFeeRow.style.display='block';deliveryFeeRow.textContent=`Costo de delivery: S/ ${money(DELIVERY_FEE_AMOUNT)} (pedidos dentro de Huancayo).`}else{deliveryFeeRow.style.display='none'}
     cartTotalEl.textContent=money(total+deliveryFeeFor(total,deliveryType.value==='delivery'));saladWrap.style.display=hasChickenInCart()?'block':'none';updateHeroStatus(cart);cartListEl.querySelectorAll('[data-minus]').forEach(btn=>btn.addEventListener('click',()=>changeQty(Number(btn.getAttribute('data-minus')),-1)));cartListEl.querySelectorAll('[data-plus]').forEach(btn=>btn.addEventListener('click',()=>changeQty(Number(btn.getAttribute('data-plus')),1)))}
-function alertDeliveryBlocked(){alert('Los pedidos menores a S/10 no califican para delivery. Elige recojo en tienda o agrega mas productos.')}
-function alertDeliveryFee(){alert('Se aplicara un costo de S/1.00 por delivery dentro de Huancayo.')}
+function showCartAlert(title,message){
+    const overlay=document.getElementById('cartAlertOverlay');
+    if(!overlay)return;
+    document.getElementById('cartAlertTitle').textContent=title;
+    document.getElementById('cartAlertMessage').textContent=message;
+    overlay.classList.add('is-open');
+}
+function hideCartAlert(){document.getElementById('cartAlertOverlay')?.classList.remove('is-open')}
+document.getElementById('cartAlertOkBtn')?.addEventListener('click',hideCartAlert);
+document.getElementById('cartAlertOverlay')?.addEventListener('click',e=>{if(e.target.id==='cartAlertOverlay')hideCartAlert()});
+function alertDeliveryBlocked(){showCartAlert('Delivery no disponible','Los pedidos menores a S/10 no califican para delivery. Elige recojo en tienda o agrega mas productos.')}
+function alertDeliveryFee(){showCartAlert('Costo de delivery','Se aplicara un costo de S/1.00 por delivery dentro de Huancayo.')}
 function changeQty(productId,delta){const cart=getCart(),item=cart.find(i=>i.id===productId);if(!item)return;const nextCart=cart.map(entry=>({...entry})),nextItem=nextCart.find(i=>i.id===productId);nextItem.qty+=delta;const limitError=validateCartLimits(nextCart.filter(i=>i.qty>0));if(limitError){orderMsg.textContent=limitError;return}item.qty+=delta;setCart(cart.filter(i=>i.qty>0));renderCart()}
 function currentReceiptType(){return billingReceiptType.value}function currentDocumentLength(){return currentReceiptType()==='factura'?11:8}function resetBillingFields(){billingDocumentNumber.value='';billingName.value='';billingEmail.value='';billingMetadata.value='';lastLookupValue=''}
 function updateBillingUi(){const receipt=currentReceiptType();if(!receipt){billingDocumentType.value='';billingDocumentWrap.style.display='none';billingFieldsWrap.style.display='none';billingEmailWrap.style.display='none';billingLookupBox.textContent='Activa boleta o factura para identificar al cliente antes de pagar.';resetBillingFields();return}const isFactura=receipt==='factura';billingDocumentWrap.style.display='grid';billingFieldsWrap.style.display='grid';billingDocumentType.value=isFactura?'ruc':'dni';billingDocumentLabel.textContent=isFactura?'RUC del cliente':'DNI del cliente';billingDocumentNumber.placeholder=isFactura?'Ej: 20131312955':'Ej: 12345678';billingNameLabel.textContent=isFactura?'Razon social':'Nombre del cliente';billingLookupBox.textContent=isFactura?'Ingresa solo el RUC y consultamos la razon social para emitir factura.':'Ingresa solo el DNI y consultamos automaticamente al cliente para emitir boleta.';resetBillingFields();updateReceiptDeliveryUi()}

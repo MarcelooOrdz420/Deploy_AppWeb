@@ -9,6 +9,7 @@ import '../state/app_shell_controller.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
 import '../widgets/producto_image.dart';
+import '../widgets/store_alert_dialog.dart';
 
 class CartTab extends StatefulWidget {
   const CartTab({super.key});
@@ -380,39 +381,20 @@ class _CartTabState extends State<CartTab> {
   }
 
   void _showDeliveryBlockedAlert() {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delivery no disponible'),
-        content: const Text(
-          'Los pedidos menores a S/10 no califican para delivery. Elige '
+    showStoreAlertDialog(
+      context,
+      title: 'Delivery no disponible',
+      message: 'Los pedidos menores a S/10 no califican para delivery. Elige '
           'recojo en tienda o agrega mas productos para llegar al minimo.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Entendido'),
-          ),
-        ],
-      ),
     );
   }
 
   void _showDeliveryFeeAlert() {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Costo de delivery'),
-        content: const Text(
-          'Se aplicara un costo de S/1.00 por delivery dentro de Huancayo.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Entendido'),
-          ),
-        ],
-      ),
+    showStoreAlertDialog(
+      context,
+      title: 'Costo de delivery',
+      message: 'Se aplicara un costo de S/1.00 por delivery dentro de Huancayo.',
+      icon: Icons.local_shipping_outlined,
     );
   }
 
