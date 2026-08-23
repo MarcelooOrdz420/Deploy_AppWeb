@@ -48,6 +48,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
     _future = ProductosService().listar();
     _loadSession();
     _loadPromotion();
+    AppShellController.instance.promotionRefreshTick.addListener(_loadPromotion);
     WidgetsBinding.instance.addObserver(this);
     _startHeroTimer();
   }
@@ -73,6 +74,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    AppShellController.instance.promotionRefreshTick.removeListener(_loadPromotion);
     WidgetsBinding.instance.removeObserver(this);
     _heroTimer?.cancel();
     _heroController.dispose();
@@ -662,23 +664,25 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
     if (offer == null) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        height: 220,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [StoreTheme.creamStrong, StoreTheme.goldSoft],
           ),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(28),
           border: Border.all(color: StoreTheme.border),
         ),
-        child: Row(
-          children: [
-            const Icon(Icons.local_offer_outlined, color: StoreTheme.orangeDark, size: 34),
-            const SizedBox(width: 14),
-            const Expanded(
-              child: Text(
-                'Pronto más descuentos en nuestros productos',
-                style: TextStyle(fontWeight: FontWeight.w800, color: StoreTheme.textPrimary),
-              ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.local_offer_outlined, color: StoreTheme.orangeDark, size: 40),
+            SizedBox(height: 10),
+            Text(
+              'Pronto más descuentos en nuestros productos',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.w800, color: StoreTheme.textPrimary, fontSize: 15),
             ),
           ],
         ),
@@ -691,43 +695,64 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
       ),
       child: Container(
         width: double.infinity,
+        height: 260,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(28),
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [StoreTheme.orangeDark, StoreTheme.orange],
           ),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            SizedBox(
-              width: 110,
-              child: Image.network(
-                ApiConfig.resolveUrl(offer.imageUrl),
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: Colors.white24),
+            Image.network(
+              ApiConfig.resolveUrl(offer.imageUrl),
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(.05),
+                    Colors.black.withOpacity(.55),
+                    Colors.black.withOpacity(.82),
+                  ],
+                ),
               ),
             ),
-            Expanded(
+            Align(
+              alignment: Alignment.bottomLeft,
               child: Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      '-${offer.discountPercent.round()}% de descuento',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 11,
-                        letterSpacing: .4,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(.2),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white.withOpacity(.32)),
+                      ),
+                      child: Text(
+                        '-${offer.discountPercent.round()}% de descuento',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                          letterSpacing: .4,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
                       offer.title,
                       maxLines: 2,
@@ -735,16 +760,38 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
-                        fontSize: 17,
+                        fontSize: 24,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
-                      'S/ ${offer.originalPrice.toStringAsFixed(2)}  →  S/ ${offer.promoPrice.toStringAsFixed(2)}',
+                      offer.product.name,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         fontSize: 13,
+                      ),
+                    ),
+                    if ((offer.body ?? offer.message).isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        offer.body?.isNotEmpty == true ? offer.body! : offer.message,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(.85),
+                          fontSize: 12.5,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'S/ ${offer.originalPrice.toStringAsFixed(2)}   →   S/ ${offer.promoPrice.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 17,
                       ),
                     ),
                   ],

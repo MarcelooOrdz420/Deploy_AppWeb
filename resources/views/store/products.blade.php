@@ -5,11 +5,13 @@
 @section('content')
     <section class="catalog-shell">
         <a id="promoBox" class="promo-box promo-box--empty" href="{{ route('store.products') }}" style="display:none;">
-            <div class="promo-box-media"><img id="promoBoxImage" src="" alt=""></div>
+            <img id="promoBoxImage" class="promo-box-image" src="" alt="" style="display:none;">
+            <div class="promo-box-tint"></div>
             <div class="promo-box-copy">
                 <span id="promoBoxBadge" class="promo-box-badge"></span>
                 <strong id="promoBoxTitle" class="promo-box-title"></strong>
                 <span id="promoBoxSubtitle" class="promo-box-subtitle"></span>
+                <span id="promoBoxDetail" class="promo-box-detail"></span>
                 <span id="promoBoxPrices" class="promo-box-prices"></span>
                 <span id="promoBoxTimer" class="promo-box-timer"></span>
             </div>
@@ -171,55 +173,75 @@
         }
 
         .promo-box {
-            display: flex;
-            align-items: stretch;
-            gap: 18px;
+            position: relative;
+            display: block;
             width: 100%;
-            min-height: 140px;
-            border-radius: 22px;
+            min-height: clamp(240px, 30vw, 340px);
+            border-radius: 30px;
             overflow: hidden;
             text-decoration: none;
+            border: 1px solid rgba(255,255,255,.24);
             background: linear-gradient(120deg, #74120d 0%, #c94700 55%, #ff8a1f 100%);
-            box-shadow: 0 18px 34px rgba(116, 18, 13, .22);
+            box-shadow: 0 22px 42px rgba(26, 10, 0, .2);
             transition: transform .15s ease, box-shadow .15s ease;
         }
-        .promo-box:hover { transform: translateY(-2px); box-shadow: 0 22px 40px rgba(116, 18, 13, .3); }
-        .promo-box-media { flex: 0 0 clamp(110px, 22vw, 200px); background: rgba(255,255,255,.12); }
-        .promo-box-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .promo-box:hover { transform: translateY(-2px); box-shadow: 0 26px 48px rgba(26, 10, 0, .28); }
+        .promo-box-image {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+        .promo-box-tint {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(34,16,4,.82) 0%, rgba(34,16,4,.35) 45%, rgba(34,16,4,.08) 100%);
+        }
         .promo-box-copy {
-            flex: 1 1 auto;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 4px;
-            padding: 14px 20px 14px 0;
-            min-width: 0;
+            position: absolute;
+            left: 28px;
+            right: 28px;
+            bottom: 24px;
+            display: grid;
+            gap: 7px;
             color: #fff7ed;
+            z-index: 2;
         }
         .promo-box-badge {
-            align-self: flex-start;
-            font-size: 11px;
+            justify-self: start;
+            font-size: 12px;
             font-weight: 900;
             letter-spacing: .08em;
             text-transform: uppercase;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 999px;
-            background: rgba(255,255,255,.18);
-            border: 1px solid rgba(255,255,255,.3);
+            background: rgba(255,255,255,.2);
+            border: 1px solid rgba(255,255,255,.32);
         }
-        .promo-box-title { font-size: clamp(18px, 2.4vw, 26px); font-weight: 900; line-height: 1.1; }
-        .promo-box-subtitle { font-size: 13px; color: rgba(255,247,237,.85); }
-        .promo-box-prices { font-size: 14px; font-weight: 800; }
-        .promo-box-prices .promo-box-old { text-decoration: line-through; opacity: .75; font-weight: 600; margin-right: 8px; }
+        .promo-box-title { font-size: clamp(24px, 3.6vw, 38px); font-weight: 900; line-height: 1.05; text-wrap: balance; }
+        .promo-box-subtitle { font-size: 14px; font-weight: 700; color: rgba(255,247,237,.9); }
+        .promo-box-detail { font-size: 13.5px; line-height: 1.5; color: rgba(255,247,237,.82); max-width: 620px; }
+        .promo-box-prices { font-size: 19px; font-weight: 900; }
+        .promo-box-prices .promo-box-old { text-decoration: line-through; opacity: .75; font-weight: 600; margin-right: 10px; font-size: 15px; }
         .promo-box-timer { font-size: 12px; font-weight: 700; color: #ffe1b8; }
         .promo-box--empty { background: linear-gradient(120deg, #fff8e4 0%, #ffe3b0 100%); cursor: default; pointer-events: none; }
-        .promo-box--empty .promo-box-copy { color: #6b2a0b; }
+        .promo-box--empty .promo-box-tint { background: none; }
+        .promo-box--empty .promo-box-copy {
+            left: 0; right: 0; bottom: 0; top: 0;
+            display: grid;
+            place-items: center;
+            justify-items: center;
+            text-align: center;
+            gap: 10px;
+            padding: 24px;
+            color: #6b2a0b;
+        }
         .promo-box--empty .promo-box-badge { background: rgba(107,42,11,.1); border-color: rgba(107,42,11,.22); color: #6b2a0b; }
-        .promo-box--empty .promo-box-media { display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.4); font-size: 40px; }
         @media (max-width: 560px) {
-            .promo-box { flex-direction: column; min-height: 0; }
-            .promo-box-media { flex-basis: 150px; }
-            .promo-box-copy { padding: 12px 16px 16px; }
+            .promo-box { min-height: 280px; }
+            .promo-box-copy { left: 18px; right: 18px; bottom: 18px; }
         }
 
         .hero-showcase {
@@ -1806,6 +1828,7 @@ function renderPromoTimer(endsAtIso) {
 
 async function loadActivePromotion() {
     const box = document.getElementById('promoBox');
+    const imageEl = document.getElementById('promoBoxImage');
     if (!box) return;
     try {
         const res = await fetch('/api/v1/promotions/active');
@@ -1813,10 +1836,12 @@ async function loadActivePromotion() {
         if (!data?.active || !data.offer) {
             box.href = '#';
             box.classList.add('promo-box--empty');
-            document.getElementById('promoBoxImage').src = '/images/products/default.svg';
+            imageEl.style.display = 'none';
+            imageEl.removeAttribute('src');
             document.getElementById('promoBoxBadge').textContent = 'Promociones';
             document.getElementById('promoBoxTitle').textContent = 'Pronto mas descuentos en nuestros productos';
             document.getElementById('promoBoxSubtitle').textContent = 'Estamos preparando nuevas ofertas. Vuelve pronto.';
+            document.getElementById('promoBoxDetail').textContent = '';
             document.getElementById('promoBoxPrices').textContent = '';
             renderPromoTimer(null);
             box.style.display = '';
@@ -1825,10 +1850,12 @@ async function loadActivePromotion() {
         const offer = data.offer;
         box.href = offer.url;
         box.classList.remove('promo-box--empty');
-        document.getElementById('promoBoxImage').src = offer.image_url || '/images/products/default.svg';
+        imageEl.src = offer.image_url || '/images/products/default.svg';
+        imageEl.style.display = '';
         document.getElementById('promoBoxBadge').textContent = `-${Math.round(offer.discount_percent)}% de descuento`;
         document.getElementById('promoBoxTitle').textContent = offer.title;
         document.getElementById('promoBoxSubtitle').textContent = offer.product?.name || '';
+        document.getElementById('promoBoxDetail').textContent = offer.body || offer.message || '';
         document.getElementById('promoBoxPrices').innerHTML =
             `<span class="promo-box-old">S/ ${money(offer.original_price)}</span><span>S/ ${money(offer.promo_price)}</span>`;
         renderPromoTimer(offer.ends_at);
@@ -1837,6 +1864,8 @@ async function loadActivePromotion() {
         box.style.display = 'none';
     }
 }
+
+window.loadActivePromotion = loadActivePromotion;
 
 async function notifyPendingIzipayOrder() {
     const raw = localStorage.getItem('ed_pending_izipay_order');

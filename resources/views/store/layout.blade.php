@@ -2187,51 +2187,13 @@ document.getElementById('storeAlertOverlay')?.addEventListener('click', (e) => {
 
         lastPayload = payload || {};
 
-        const title = (payload?.title || 'PromociÃ³n').toString();
-        const message = (payload?.message || '').toString();
-        const body = (payload?.body || '').toString();
-
-        toastTitleEl.textContent = title;
-        toastMessageEl.textContent = message || body || 'Tienes una nueva promociÃ³n.';
-
-        toastAcceptBtn.textContent = (payload?.cta_label || 'Ver').toString();
-        toastAcceptBtn.onclick = () => {
-            const p = lastPayload || {};
-            titleEl.textContent = title;
-            messageEl.textContent = message;
-            bodyEl.textContent = body;
-
-            const img = resolveImage(p?.image_url || p?.imageUrl || '');
-            if (img) {
-                imageEl.src = img;
-                imageEl.onerror = () => {
-                    imageEl.onerror = null;
-                    imageEl.src = '/images/products/default.svg';
-                };
-                imageEl.style.display = 'block';
-            } else {
-                imageEl.removeAttribute('src');
-                imageEl.style.display = 'none';
-            }
-
-            acceptBtn.textContent = (p?.cta_label || 'Ver').toString();
-            acceptBtn.onclick = () => {
-                const destination = (p?.cta_url || (p?.product_id ? `/productos?product=${encodeURIComponent(p.product_id)}` : '/productos')).toString();
-                if (destination.startsWith('/') && !destination.startsWith('//')) {
-                    window.location.href = destination;
-                    return;
-                }
-                try {
-                    const target = new URL(destination, window.location.origin);
-                    if (target.protocol === 'http:' || target.protocol === 'https:') window.location.href = target.href;
-                } catch {}
-            };
-
-            hideToast();
-            showOverlay();
-        };
-
-        showToast();
+        // Ya no se interrumpe con un recuadro emergente a quien esta
+        // navegando: la promocion vigente se ve siempre en la caja
+        // destacada del inicio (arriba del carrusel). Aqui solo la
+        // refrescamos en caliente si la pagina actual la tiene.
+        if (typeof window.loadActivePromotion === 'function') {
+            window.loadActivePromotion();
+        }
     };
 
     [eventName, `.${eventName}`, 'App\\Events\\OfferNotificationSent'].forEach((name) => {

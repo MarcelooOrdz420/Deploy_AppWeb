@@ -1935,7 +1935,7 @@ async function fetchPromotions() {
 }
 
 async function cutPromotionShort(offerId) {
-    if (!confirm('¿Cortar esta promocion ahora? El precio volvera a la normal de inmediato en web, app y correo.')) return;
+    if (!(await showAdminConfirm('¿Cortar esta promocion ahora? El precio volvera a la normal de inmediato en web, app y correo.', 'Cortar promocion'))) return;
     const token = getToken();
     await fetch(`/api/v1/admin/promotions/${offerId}`, {
         method: 'PATCH',
