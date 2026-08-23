@@ -86,25 +86,10 @@ class _MyHomePageState extends State<MyHomePage> {
                           children: [
                             Row(
                               children: [
-                                Container(
+                                SizedBox(
                                   width: 58,
                                   height: 58,
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: StoreTheme.lineStrong.withOpacity(
-                                        .88,
-                                      ),
-                                    ),
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.white.withOpacity(.94),
-                                        const Color(0xFFFFF1E3),
-                                      ],
-                                    ),
-                                  ),
-                                  child: Image.asset('assets/polloia.png'),
+                                  child: Image.asset('assets/pollia.webp'),
                                 ),
                                 const SizedBox(width: 14),
                                 const Expanded(
@@ -234,8 +219,8 @@ class _SplashView extends StatelessWidget {
                         child: ProductoImage(producto: featured!),
                       )
                     : Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: Image.asset('assets/polloia.png'),
+                        padding: const EdgeInsets.all(6),
+                        child: Image.asset('assets/pollia.webp'),
                       ),
               ),
               const SizedBox(height: 20),

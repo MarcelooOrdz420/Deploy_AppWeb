@@ -156,7 +156,7 @@ class _AppShellState extends State<AppShell> {
                                     color: Colors.white.withOpacity(.22),
                                   ),
                                   child: Image.asset(
-                                    'assets/polloia.png',
+                                    'assets/pollia.webp',
                                     fit: BoxFit.contain,
                                   ),
                                 ),
@@ -435,13 +435,12 @@ class _AppShellState extends State<AppShell> {
         floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 70),
           child: FloatingActionButton(
-            backgroundColor: StoreTheme.orange,
+            backgroundColor: Colors.white,
             foregroundColor: StoreTheme.ink,
             elevation: 10,
             onPressed: () => context.push('/chat'),
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Image.asset('assets/polloia.png', fit: BoxFit.contain),
+            child: ClipOval(
+              child: Image.asset('assets/pollia.webp', fit: BoxFit.cover),
             ),
           ),
         ),

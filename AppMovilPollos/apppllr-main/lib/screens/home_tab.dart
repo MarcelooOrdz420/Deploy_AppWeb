@@ -462,20 +462,10 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
               children: [
                 Row(
                   children: [
-                    Container(
+                    SizedBox(
                       width: 48,
                       height: 48,
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.white.withOpacity(.95),
-                            const Color(0xFFFFF1E3),
-                          ],
-                        ),
-                      ),
-                      child: Image.asset('assets/polloia.png'),
+                      child: Image.asset('assets/pollia.webp'),
                     ),
                     const SizedBox(width: 12),
                     Expanded(

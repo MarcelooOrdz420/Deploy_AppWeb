@@ -216,23 +216,10 @@ class _RegistroPageState extends State<RegistroPage> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Container(
+                          SizedBox(
                             width: 56,
                             height: 56,
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: StoreTheme.lineStrong.withOpacity(.88),
-                              ),
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withOpacity(.94),
-                                  const Color(0xFFFFFFFF),
-                                ],
-                              ),
-                            ),
-                            child: Image.asset('assets/polloia.png'),
+                            child: Image.asset('assets/pollia.webp'),
                           ),
                           const SizedBox(width: 12),
                           const Expanded(

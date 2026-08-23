@@ -64,7 +64,7 @@ flutter_launcher_icons:
   android: true
   ios: false
   image_path: "assets/pollooooo.png"
-  adaptive_icon_background: "#FF6F1F"
+  adaptive_icon_background: "#010101"
   adaptive_icon_foreground: "assets/pollooooo.png"
 
 # For information on the generic Dart part of this file, see the
@@ -79,7 +79,7 @@ flutter:
     - assets/medio_pollo.png
     - assets/cuarto_pollo.png
     - assets/combo_familiar.png
-    - assets/polloia.png
+    - assets/pollia.webp
     - assets/ensalada_fresca.png
     - assets/chicha.png
     - assets/coca_cola.png
