@@ -5,8 +5,9 @@
 @section('content')
     <section class="catalog-shell">
         <a id="promoBox" class="promo-box promo-box--empty" href="{{ route('store.products') }}" style="display:none;">
-            <img id="promoBoxImage" class="promo-box-image" src="" alt="" style="display:none;">
-            <div class="promo-box-tint"></div>
+            <div class="promo-box-media">
+                <img id="promoBoxImage" class="promo-box-image" src="" alt="" style="display:none;">
+            </div>
             <div class="promo-box-copy">
                 <span id="promoBoxBadge" class="promo-box-badge"></span>
                 <strong id="promoBoxTitle" class="promo-box-title"></strong>
@@ -173,10 +174,10 @@
         }
 
         .promo-box {
-            position: relative;
-            display: block;
+            display: flex;
+            align-items: stretch;
             width: 100%;
-            min-height: clamp(240px, 30vw, 340px);
+            min-height: clamp(220px, 28vw, 300px);
             border-radius: 30px;
             overflow: hidden;
             text-decoration: none;
@@ -186,6 +187,12 @@
             transition: transform .15s ease, box-shadow .15s ease;
         }
         .promo-box:hover { transform: translateY(-2px); box-shadow: 0 26px 48px rgba(26, 10, 0, .28); }
+        .promo-box-media {
+            position: relative;
+            flex: 0 0 clamp(200px, 36%, 420px);
+            overflow: hidden;
+            background: rgba(255,255,255,.12);
+        }
         .promo-box-image {
             position: absolute;
             inset: 0;
@@ -194,23 +201,18 @@
             object-fit: cover;
             object-position: center;
         }
-        .promo-box-tint {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(34,16,4,.82) 0%, rgba(34,16,4,.35) 45%, rgba(34,16,4,.08) 100%);
-        }
         .promo-box-copy {
-            position: absolute;
-            left: 28px;
-            right: 28px;
-            bottom: 24px;
-            display: grid;
-            gap: 7px;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+            padding: 28px 32px;
+            min-width: 0;
             color: #fff7ed;
-            z-index: 2;
         }
         .promo-box-badge {
-            justify-self: start;
+            align-self: flex-start;
             font-size: 12px;
             font-weight: 900;
             letter-spacing: .08em;
@@ -220,28 +222,26 @@
             background: rgba(255,255,255,.2);
             border: 1px solid rgba(255,255,255,.32);
         }
-        .promo-box-title { font-size: clamp(24px, 3.6vw, 38px); font-weight: 900; line-height: 1.05; text-wrap: balance; }
+        .promo-box-title { font-size: clamp(22px, 3vw, 32px); font-weight: 900; line-height: 1.08; text-wrap: balance; }
         .promo-box-subtitle { font-size: 14px; font-weight: 700; color: rgba(255,247,237,.9); }
-        .promo-box-detail { font-size: 13.5px; line-height: 1.5; color: rgba(255,247,237,.82); max-width: 620px; }
+        .promo-box-detail { font-size: 13.5px; line-height: 1.5; color: rgba(255,247,237,.82); max-width: 480px; }
         .promo-box-prices { font-size: 19px; font-weight: 900; }
         .promo-box-prices .promo-box-old { text-decoration: line-through; opacity: .75; font-weight: 600; margin-right: 10px; font-size: 15px; }
         .promo-box-timer { font-size: 12px; font-weight: 700; color: #ffe1b8; }
         .promo-box--empty { background: linear-gradient(120deg, #fff8e4 0%, #ffe3b0 100%); cursor: default; pointer-events: none; }
-        .promo-box--empty .promo-box-tint { background: none; }
+        .promo-box--empty .promo-box-media { display: none; }
         .promo-box--empty .promo-box-copy {
-            left: 0; right: 0; bottom: 0; top: 0;
-            display: grid;
-            place-items: center;
+            flex: 1 1 auto;
+            align-items: center;
             justify-items: center;
             text-align: center;
-            gap: 10px;
-            padding: 24px;
             color: #6b2a0b;
         }
-        .promo-box--empty .promo-box-badge { background: rgba(107,42,11,.1); border-color: rgba(107,42,11,.22); color: #6b2a0b; }
-        @media (max-width: 560px) {
-            .promo-box { min-height: 280px; }
-            .promo-box-copy { left: 18px; right: 18px; bottom: 18px; }
+        .promo-box--empty .promo-box-badge { align-self: center; background: rgba(107,42,11,.1); border-color: rgba(107,42,11,.22); color: #6b2a0b; }
+        @media (max-width: 620px) {
+            .promo-box { flex-direction: column; min-height: 0; }
+            .promo-box-media { flex-basis: 190px; }
+            .promo-box-copy { padding: 18px 20px 22px; }
         }
 
         .hero-showcase {

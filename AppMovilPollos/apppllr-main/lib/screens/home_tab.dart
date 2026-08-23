@@ -664,7 +664,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
     if (offer == null) {
       return Container(
         width: double.infinity,
-        height: 220,
+        height: 240,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
@@ -695,7 +695,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
       ),
       child: Container(
         width: double.infinity,
-        height: 260,
+        height: 240,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
@@ -705,34 +705,24 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
             colors: [StoreTheme.orangeDark, StoreTheme.orange],
           ),
         ),
-        child: Stack(
-          fit: StackFit.expand,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Image.network(
-              ApiConfig.resolveUrl(offer.imageUrl),
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(.05),
-                    Colors.black.withOpacity(.55),
-                    Colors.black.withOpacity(.82),
-                  ],
-                ),
+            SizedBox(
+              width: 150,
+              child: Image.network(
+                ApiConfig.resolveUrl(offer.imageUrl),
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                errorBuilder: (_, __, ___) => Container(color: Colors.white.withOpacity(.12)),
               ),
             ),
-            Align(
-              alignment: Alignment.bottomLeft,
+            Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
@@ -760,7 +750,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
-                        fontSize: 24,
+                        fontSize: 21,
                       ),
                     ),
                     const SizedBox(height: 2),
