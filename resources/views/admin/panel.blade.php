@@ -1325,6 +1325,90 @@
             <div id="orderActionsMsg" class="msg"></div>
         </section>
 
+        <section id="sec-manual-sale" class="panel">
+            <h2>Registrar venta manual</h2>
+            <p class="section-subtitle">Para ventas cobradas en el mostrador (efectivo, tarjeta fisica o Yape). No pasa por Izipay y no pide datos personales de contacto del cliente.</p>
+
+            <div class="row">
+                <div>
+                    <label>Producto</label>
+                    <select id="manualSaleProductSelect"></select>
+                </div>
+                <div>
+                    <label>Cantidad</label>
+                    <input id="manualSaleQty" type="number" min="1" value="1">
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <button type="button" id="manualSaleAddItemBtn">Agregar producto</button>
+                </div>
+            </div>
+
+            <div id="manualSaleItemsList" class="list"></div>
+            <div style="font-weight:900; margin:8px 0 14px;">Total: S/ <span id="manualSaleTotal">0.00</span></div>
+
+            <div class="row">
+                <div>
+                    <label>Metodo de pago</label>
+                    <select id="manualSalePaymentMethod">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="yape">Yape</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Comprobante</label>
+                    <select id="manualSaleReceiptType">
+                        <option value="">Comprobante simple (sin DNI/RUC)</option>
+                        <option value="boleta">Boleta con DNI</option>
+                        <option value="factura">Factura con RUC</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="manualSaleDocumentWrap" class="row" style="display:none;">
+                <div>
+                    <label id="manualSaleDocumentLabel">DNI del cliente</label>
+                    <div style="display:flex; gap:6px;">
+                        <input id="manualSaleDocumentNumber" inputmode="numeric">
+                        <button type="button" id="manualSaleLookupBtn">Consultar</button>
+                    </div>
+                </div>
+                <div>
+                    <label id="manualSaleNameLabel">Nombre del cliente</label>
+                    <input id="manualSaleBillingName" readonly>
+                </div>
+            </div>
+
+            <div id="manualSaleDeliveryWrap" style="display:none;">
+                <label>Entrega del comprobante</label>
+                <div style="display:flex; gap:16px; margin:6px 0;">
+                    <label><input type="radio" name="manualSaleDelivery" value="persona" checked> En persona</label>
+                    <label><input type="radio" name="manualSaleDelivery" value="correo"> Por correo</label>
+                </div>
+                <div id="manualSaleEmailWrap" style="display:none;">
+                    <label>Correo destino</label>
+                    <input id="manualSaleEmail" type="email">
+                </div>
+            </div>
+
+            <div>
+                <label>Nota (opcional)</label>
+                <input id="manualSaleNote" maxlength="255">
+            </div>
+
+            <button type="button" id="manualSaleSubmitBtn" class="btn-main" style="margin-top:10px;">Registrar venta</button>
+            <div id="manualSaleMsg" class="msg"></div>
+
+            <div id="manualSaleResult" style="display:none; margin-top:10px;">
+                <div id="manualSaleResultInfo" class="msg"></div>
+                <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                    <button type="button" id="manualSaleDownloadBtn">Descargar comprobante simple</button>
+                    <button type="button" id="manualSaleSendEinvoiceBtn" style="display:none;">Emitir comprobante SUNAT</button>
+                    <button type="button" id="manualSaleSendEmailBtn" style="display:none;">Enviar por correo</button>
+                </div>
+            </div>
+        </section>
+
         <section id="sec-cash-closure" class="panel" style="grid-column: 1 / -1;">
             <h2>Cierre de caja</h2>
             <p class="section-subtitle">Resume ventas del dia, separa efectivo contra pagos digitales y guarda el cierre operativo para auditoria.</p>
@@ -2242,6 +2326,7 @@ async function fetchProducts() {
     upsertCategoryOptions();
     syncDashboardMetrics();
     renderProducts();
+    renderManualSaleProductOptions();
 }
 
 function renderProducts() {
@@ -3148,6 +3233,228 @@ if (removeProductImageBtn) {
         setUploadPreview(productImagePreview, '');
     });
 }
+
+// --- Registrar venta manual (mostrador) ---
+const manualSaleProductSelect = document.getElementById('manualSaleProductSelect');
+const manualSaleQty = document.getElementById('manualSaleQty');
+const manualSaleAddItemBtn = document.getElementById('manualSaleAddItemBtn');
+const manualSaleItemsList = document.getElementById('manualSaleItemsList');
+const manualSaleTotal = document.getElementById('manualSaleTotal');
+const manualSalePaymentMethod = document.getElementById('manualSalePaymentMethod');
+const manualSaleReceiptType = document.getElementById('manualSaleReceiptType');
+const manualSaleDocumentWrap = document.getElementById('manualSaleDocumentWrap');
+const manualSaleDocumentLabel = document.getElementById('manualSaleDocumentLabel');
+const manualSaleNameLabel = document.getElementById('manualSaleNameLabel');
+const manualSaleDocumentNumber = document.getElementById('manualSaleDocumentNumber');
+const manualSaleLookupBtn = document.getElementById('manualSaleLookupBtn');
+const manualSaleBillingName = document.getElementById('manualSaleBillingName');
+const manualSaleDeliveryWrap = document.getElementById('manualSaleDeliveryWrap');
+const manualSaleEmailWrap = document.getElementById('manualSaleEmailWrap');
+const manualSaleEmail = document.getElementById('manualSaleEmail');
+const manualSaleNote = document.getElementById('manualSaleNote');
+const manualSaleSubmitBtn = document.getElementById('manualSaleSubmitBtn');
+const manualSaleMsg = document.getElementById('manualSaleMsg');
+const manualSaleResult = document.getElementById('manualSaleResult');
+const manualSaleResultInfo = document.getElementById('manualSaleResultInfo');
+const manualSaleDownloadBtn = document.getElementById('manualSaleDownloadBtn');
+const manualSaleSendEinvoiceBtn = document.getElementById('manualSaleSendEinvoiceBtn');
+const manualSaleSendEmailBtn = document.getElementById('manualSaleSendEmailBtn');
+
+let manualSaleItems = [];
+let manualSaleLastOrderId = null;
+
+function renderManualSaleProductOptions() {
+    if (!manualSaleProductSelect) return;
+    const selected = manualSaleProductSelect.value;
+    manualSaleProductSelect.innerHTML = productsCache.map(p => `<option value="${Number(p.id)}">${escapeHtml(p.name || 'Producto')} - S/ ${Number(p.price).toFixed(2)}</option>`).join('');
+    if ([...manualSaleProductSelect.options].some(option => option.value === selected)) manualSaleProductSelect.value = selected;
+}
+
+function renderManualSaleItems() {
+    if (!manualSaleItemsList) return;
+    if (!manualSaleItems.length) {
+        manualSaleItemsList.innerHTML = '<div class="card">Sin productos agregados.</div>';
+        manualSaleTotal.textContent = '0.00';
+        return;
+    }
+    let total = 0;
+    manualSaleItemsList.innerHTML = manualSaleItems.map((item, index) => {
+        const lineTotal = item.price * item.quantity;
+        total += lineTotal;
+        return `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>${escapeHtml(item.name)} x${item.quantity}</span>
+            <span>S/ ${lineTotal.toFixed(2)} <button type="button" data-remove-manual-item="${index}" style="margin-left:8px;">Quitar</button></span>
+        </div>`;
+    }).join('');
+    manualSaleTotal.textContent = total.toFixed(2);
+    manualSaleItemsList.querySelectorAll('[data-remove-manual-item]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            manualSaleItems.splice(Number(btn.getAttribute('data-remove-manual-item')), 1);
+            renderManualSaleItems();
+        });
+    });
+}
+
+manualSaleAddItemBtn?.addEventListener('click', () => {
+    const productId = Number(manualSaleProductSelect.value);
+    const product = productsCache.find(p => Number(p.id) === productId);
+    const qty = Math.max(1, Number(manualSaleQty.value) || 1);
+    if (!product) return;
+    const existing = manualSaleItems.find(item => item.productId === productId);
+    if (existing) existing.quantity += qty;
+    else manualSaleItems.push({ productId, name: product.name, price: Number(product.price), quantity: qty });
+    manualSaleQty.value = 1;
+    renderManualSaleItems();
+});
+
+function updateManualSaleReceiptUi() {
+    const type = manualSaleReceiptType.value;
+    const isFactura = type === 'factura';
+    const needsDocument = type === 'boleta' || type === 'factura';
+    manualSaleDocumentWrap.style.display = needsDocument ? 'grid' : 'none';
+    manualSaleDeliveryWrap.style.display = needsDocument ? 'block' : 'none';
+    manualSaleDocumentLabel.textContent = isFactura ? 'RUC del cliente' : 'DNI del cliente';
+    manualSaleNameLabel.textContent = isFactura ? 'Razon social' : 'Nombre del cliente';
+    manualSaleDocumentNumber.placeholder = isFactura ? 'Ej: 20131312955' : 'Ej: 12345678';
+    if (!needsDocument) {
+        manualSaleDocumentNumber.value = '';
+        manualSaleBillingName.value = '';
+    }
+}
+manualSaleReceiptType?.addEventListener('change', updateManualSaleReceiptUi);
+
+document.querySelectorAll('input[name="manualSaleDelivery"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        manualSaleEmailWrap.style.display = document.querySelector('input[name="manualSaleDelivery"]:checked')?.value === 'correo' ? 'block' : 'none';
+    });
+});
+
+manualSaleLookupBtn?.addEventListener('click', async () => {
+    const token = getToken();
+    const isFactura = manualSaleReceiptType.value === 'factura';
+    const docType = isFactura ? 'ruc' : 'dni';
+    const number = manualSaleDocumentNumber.value.replace(/\D/g, '');
+    const needed = isFactura ? 11 : 8;
+    if (number.length !== needed) {
+        manualSaleMsg.textContent = `El ${docType.toUpperCase()} debe tener ${needed} digitos.`;
+        return;
+    }
+    manualSaleMsg.textContent = 'Consultando documento...';
+    try {
+        const endpoint = isFactura ? '/api/v1/lookups/ruc' : '/api/v1/lookups/dni';
+        const body = isFactura ? { ruc: number } : { dni: number };
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            manualSaleMsg.textContent = data.message || 'No se pudo consultar el documento.';
+            return;
+        }
+        const normalized = data.normalized || {};
+        manualSaleBillingName.value = isFactura ? (normalized.business_name || '') : (normalized.full_name || '');
+        manualSaleMsg.textContent = manualSaleBillingName.value ? 'Documento identificado.' : 'No se encontraron datos para ese documento.';
+    } catch {
+        manualSaleMsg.textContent = 'No se pudo conectar para validar el documento.';
+    }
+});
+
+manualSaleSubmitBtn?.addEventListener('click', async () => {
+    if (!manualSaleItems.length) {
+        manualSaleMsg.textContent = 'Agrega al menos un producto.';
+        return;
+    }
+    const receiptType = manualSaleReceiptType.value || null;
+    const isFactura = receiptType === 'factura';
+    const needsDocument = receiptType === 'boleta' || receiptType === 'factura';
+    if (needsDocument && (!manualSaleDocumentNumber.value.trim() || !manualSaleBillingName.value.trim())) {
+        manualSaleMsg.textContent = 'Consulta el documento antes de registrar la venta.';
+        return;
+    }
+    const deliveryMode = document.querySelector('input[name="manualSaleDelivery"]:checked')?.value || 'persona';
+    if (needsDocument && deliveryMode === 'correo' && !manualSaleEmail.value.trim()) {
+        manualSaleMsg.textContent = 'Ingresa el correo de destino.';
+        return;
+    }
+
+    const payload = {
+        payment_method: manualSalePaymentMethod.value,
+        note: manualSaleNote.value.trim() || null,
+        items: manualSaleItems.map(item => ({ product_id: item.productId, quantity: item.quantity })),
+        billing_receipt_type: receiptType,
+        billing_document_type: needsDocument ? (isFactura ? 'ruc' : 'dni') : null,
+        billing_document_number: needsDocument ? manualSaleDocumentNumber.value.trim() : null,
+        billing_name: needsDocument ? manualSaleBillingName.value.trim() : null,
+        billing_email: needsDocument && deliveryMode === 'correo' ? manualSaleEmail.value.trim() : null,
+    };
+
+    manualSaleSubmitBtn.disabled = true;
+    manualSaleMsg.textContent = 'Registrando venta...';
+    try {
+        const token = getToken();
+        const res = await fetch('/api/v1/admin/orders/manual', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            manualSaleMsg.textContent = data.message || 'No se pudo registrar la venta.';
+            return;
+        }
+        manualSaleLastOrderId = data.id;
+        manualSaleMsg.textContent = `Venta registrada: ${data.tracking_code}`;
+        manualSaleResultInfo.textContent = `Pedido ${data.tracking_code} - Total S/ ${Number(data.total_amount).toFixed(2)}`;
+        manualSaleResult.style.display = 'block';
+        manualSaleSendEinvoiceBtn.style.display = needsDocument ? 'inline-block' : 'none';
+        manualSaleSendEmailBtn.style.display = (needsDocument && deliveryMode === 'correo') ? 'inline-block' : 'none';
+        manualSaleItems = [];
+        manualSaleNote.value = '';
+        manualSaleDocumentNumber.value = '';
+        manualSaleBillingName.value = '';
+        manualSaleEmail.value = '';
+        manualSaleReceiptType.value = '';
+        updateManualSaleReceiptUi();
+        renderManualSaleItems();
+        await fetchOrders();
+    } catch {
+        manualSaleMsg.textContent = 'No se pudo conectar al servidor.';
+    } finally {
+        manualSaleSubmitBtn.disabled = false;
+    }
+});
+
+manualSaleDownloadBtn?.addEventListener('click', async () => {
+    if (!manualSaleLastOrderId) return;
+    const token = getToken();
+    const res = await fetch(`/api/v1/orders/${manualSaleLastOrderId}/receipt`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!res.ok) {
+        manualSaleMsg.textContent = 'No se pudo descargar el comprobante.';
+        return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `comprobante-${manualSaleLastOrderId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+});
+
+manualSaleSendEinvoiceBtn?.addEventListener('click', () => {
+    if (manualSaleLastOrderId) sendEinvoice(manualSaleLastOrderId, manualSaleSendEinvoiceBtn);
+});
+manualSaleSendEmailBtn?.addEventListener('click', () => {
+    if (manualSaleLastOrderId) sendEinvoiceEmail(manualSaleLastOrderId);
+});
+
+renderManualSaleItems();
 </script>
 </body>
 </html>

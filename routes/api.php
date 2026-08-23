@@ -87,6 +87,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/admin/orders', [OrderController::class, 'index']);
             Route::get('/admin/orders/stats', [OrderController::class, 'stats']);
             Route::get('/admin/orders/export', [OrderController::class, 'export']);
+            Route::post('/admin/orders/manual', [OrderController::class, 'storeManual']);
             Route::get('/admin/company-profile', [AdminCompanyProfileController::class, 'show']);
             Route::patch('/admin/company-profile', [AdminCompanyProfileController::class, 'update']);
             Route::get('/admin/cash-closures', [AdminCashClosureController::class, 'index']);

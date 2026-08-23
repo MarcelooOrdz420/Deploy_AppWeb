@@ -511,6 +511,120 @@ class OrderController extends Controller
         return response()->json($order, 201);
     }
 
+    /**
+     * Venta registrada por el admin en mostrador (efectivo, tarjeta fisica o
+     * Yape). No pasa por Izipay ni pide datos personales del cliente: solo
+     * el detalle de la compra, ya cobrada y entregada en el momento. Si el
+     * admin quiere emitir boleta/factura, ahi si se piden DNI/RUC y nombre
+     * (dato tributario, no de contacto).
+     */
+    public function storeManual(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'payment_method' => ['required', Rule::in(['tarjeta', 'efectivo', 'yape'])],
+            'note' => ['nullable', 'string', 'max:255'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'billing_receipt_type' => ['nullable', Rule::in(['boleta', 'factura'])],
+            'billing_document_type' => ['nullable', Rule::in(['dni', 'ruc'])],
+            'billing_document_number' => ['nullable', 'string', 'max:20'],
+            'billing_name' => ['nullable', 'string', 'max:180'],
+            'billing_email' => ['nullable', 'email', 'max:120'],
+        ]);
+
+        if (($data['billing_receipt_type'] ?? null) === 'boleta') {
+            if (($data['billing_document_type'] ?? null) !== 'dni' || strlen((string) ($data['billing_document_number'] ?? '')) !== 8) {
+                return response()->json(['message' => 'La boleta requiere DNI valido de 8 digitos.'], 422);
+            }
+            if (empty($data['billing_name'])) {
+                return response()->json(['message' => 'La boleta requiere el nombre del cliente.'], 422);
+            }
+        }
+
+        if (($data['billing_receipt_type'] ?? null) === 'factura') {
+            if (($data['billing_document_type'] ?? null) !== 'ruc' || strlen((string) ($data['billing_document_number'] ?? '')) !== 11) {
+                return response()->json(['message' => 'La factura requiere RUC valido de 11 digitos.'], 422);
+            }
+            if (empty($data['billing_name'])) {
+                return response()->json(['message' => 'La factura requiere la razon social.'], 422);
+            }
+        }
+
+        $order = DB::transaction(function () use ($data, $request): Order {
+            $trackingCode = strtoupper('ED-'.substr(uniqid(), -8));
+
+            $order = Order::create([
+                'user_id' => null,
+                'tracking_code' => $trackingCode,
+                'customer_name' => 'Venta en tienda',
+                'customer_phone' => '000000000',
+                'delivery_type' => 'pickup',
+                'status' => Order::STATUS_DELIVERED,
+                'total_amount' => 0,
+                'payment_method' => $data['payment_method'],
+                'payment_status' => 'verified',
+                'payment_verified_at' => now(),
+                'billing_document_type' => $data['billing_document_type'] ?? null,
+                'billing_document_number' => $data['billing_document_number'] ?? null,
+                'billing_name' => $data['billing_name'] ?? null,
+                'billing_email' => $data['billing_email'] ?? null,
+                'billing_receipt_type' => $data['billing_receipt_type'] ?? null,
+                'drink_note' => $data['note'] ?? null,
+            ]);
+
+            $total = 0;
+
+            foreach ($data['items'] as $item) {
+                $product = Product::query()->lockForUpdate()->findOrFail($item['product_id']);
+
+                if ((int) $product->stock < (int) $item['quantity']) {
+                    abort(response()->json([
+                        'message' => "Solo quedan {$product->stock} unidades disponibles de {$product->name}.",
+                    ], 422));
+                }
+
+                $lineTotal = (float) $product->price * (int) $item['quantity'];
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'unit_price' => $product->price,
+                    'original_unit_price' => $product->price,
+                    'discount_amount' => 0,
+                    'quantity' => $item['quantity'],
+                    'line_total' => $lineTotal,
+                ]);
+
+                $product->decrement('stock', (int) $item['quantity']);
+                $product->refresh();
+
+                app(InventoryMovementService::class)->logSale(
+                    order: $order,
+                    product: $product,
+                    quantity: (int) $item['quantity'],
+                    actor: $request->user(),
+                );
+
+                $total += $lineTotal;
+            }
+
+            $order->update(['total_amount' => $total]);
+
+            OrderStatusHistory::create([
+                'order_id' => $order->id,
+                'status' => Order::STATUS_DELIVERED,
+                'note' => 'Venta registrada manualmente por el admin',
+                'changed_by' => $request->user()->id,
+            ]);
+
+            return $order->load(['items', 'statusHistory']);
+        });
+
+        return response()->json($order, 201);
+    }
+
     public function sendNewOrderAdminAlert(Order $order): void
     {
         try {
@@ -1001,7 +1115,6 @@ HTML;
     {
         $productsById = $products->keyBy('id');
         $namedTotals = [];
-        $gaseosaTotal = 0;
 
         foreach ($items as $item) {
             $product = $productsById->get((int) $item['product_id']);
@@ -1012,20 +1125,18 @@ HTML;
             $quantity = (int) $item['quantity'];
             $normalizedName = $this->normalizeProductName($product->name);
             $namedTotals[$normalizedName] = ($namedTotals[$normalizedName] ?? 0) + $quantity;
-
-            if ($this->isLimitedSoda($product)) {
-                $gaseosaTotal += $quantity;
-            }
         }
 
+        // "Pollo entero a la brasa" y "Mega combo familiar": en el cliente se
+        // pide confirmar desde 3 unidades y a partir de 5 se redirige a
+        // contactar al administrador (pedidos tipo evento/catering), pero el
+        // tope real de autoservicio queda aqui en 4.
         $exactNameLimits = [
-            'pollo entero a la brasa' => 1,
-            'mega combo familiar' => 1,
+            'pollo entero a la brasa' => 4,
+            'mega combo familiar' => 4,
             '1/2 pollo a la brasa' => 2,
-            '1/4 pollo a la brasa' => 4,
+            '1/4 pollo a la brasa' => 3,
             'mostrito tradicional' => 4,
-            'chicha morada 1l' => 2,
-            'limonada frozen' => 2,
         ];
 
         foreach ($exactNameLimits as $normalizedName => $maxUnits) {
@@ -1036,28 +1147,40 @@ HTML;
                     ->first(fn (Product $product): bool => $this->normalizeProductName($product->name) === $normalizedName)
                     ?->name ?? $normalizedName;
 
-                return "Solo se permiten {$maxUnits} unidades de {$productLabel} por cliente en cada pedido.";
+                return "Solo se permiten {$maxUnits} unidades de {$productLabel} por cliente en cada pedido. Para pedidos mas grandes, coordina con el administrador.";
             }
         }
 
-        if ($gaseosaTotal > 3) {
-            return 'Solo se permiten 3 gaseosas personales por cliente en cada pedido.';
+        // Tope por categoria: cualquier producto de parrillas o bebidas,
+        // sin importar el nombre exacto, para evitar abusos por unidad.
+        // La chicha tiene su propio tope mas bajo que el resto de bebidas.
+        $categoryLimits = ['parrillas' => 2, 'bebidas' => 3];
+        $checkedCategoryProducts = [];
+
+        foreach ($products as $product) {
+            $normalizedName = $this->normalizeProductName($product->name);
+            if (isset($checkedCategoryProducts[$normalizedName])) {
+                continue;
+            }
+            $checkedCategoryProducts[$normalizedName] = true;
+
+            if (isset($exactNameLimits[$normalizedName])) {
+                continue;
+            }
+
+            $category = strtolower(trim((string) $product->category));
+            $limit = str_contains($normalizedName, 'chicha') ? 2 : ($categoryLimits[$category] ?? null);
+            if ($limit === null) {
+                continue;
+            }
+
+            $currentUnits = $namedTotals[$normalizedName] ?? 0;
+            if ($currentUnits > $limit) {
+                return "Solo se permiten {$limit} unidades de {$product->name} por cliente en cada pedido.";
+            }
         }
 
         return null;
-    }
-
-    private function isLimitedSoda(Product $product): bool
-    {
-        if ($product->category !== 'bebidas') {
-            return false;
-        }
-
-        return in_array($this->normalizeProductName($product->name), [
-            'coca-cola personal 500ml',
-            'inca kola personal 500ml',
-            'sprite personal 500ml',
-        ], true);
     }
 
     private function normalizeProductName(string $name): string

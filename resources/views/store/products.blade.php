@@ -1822,21 +1822,61 @@ function renderFloatCart() {
 
 const PURCHASE_LIMITS = {
     exact: {
-        'pollo entero a la brasa': 1,
-        'mega combo familiar': 1,
+        'pollo entero a la brasa': 4,
+        'mega combo familiar': 4,
         '1/2 pollo a la brasa': 2,
-        '1/4 pollo a la brasa': 4,
+        '1/4 pollo a la brasa': 3,
         'mostrito tradicional': 4,
-        'chicha morada 1l': 2,
-        'limonada frozen': 2,
     },
-    sodaNames: [
-        'coca-cola personal 500ml',
-        'inca kola personal 500ml',
-        'sprite personal 500ml',
-    ],
-    sodaMax: 3,
+    largeOrderNames: ['pollo entero a la brasa', 'mega combo familiar'],
+    categoryMax: {
+        parrillas: { max: 2, label: 'porciones o productos' },
+        bebidas: { max: 3, label: 'productos' },
+    },
+    chichaMax: 2,
 };
+
+function largeOrderBand(qty) {
+    if (qty <= 2) return 'free';
+    if (qty <= 4) return 'confirm';
+    return 'admin';
+}
+
+let _supportPhonePromise = null;
+function getSupportPhone() {
+    if (!_supportPhonePromise) {
+        _supportPhonePromise = fetch('/api/v1/settings/public')
+            .then(r => r.json())
+            .then(d => String(d.support_phone || '').replace(/\D/g, ''))
+            .catch(() => '');
+    }
+    return _supportPhonePromise;
+}
+
+async function checkLargeOrderLimit(item, previousQty, nextQty) {
+    const normalizedName = normalizeProductName(item.name);
+    if (!PURCHASE_LIMITS.largeOrderNames.includes(normalizedName)) return true;
+    const prevBand = largeOrderBand(previousQty), nextBand = largeOrderBand(nextQty);
+    if (nextBand === prevBand) return true;
+    if (nextBand === 'admin') {
+        const phone = await getSupportPhone();
+        const message = `Hola, quiero pedir ${nextQty} unidades de "${item.name}". ¿Me ayudan a coordinar este pedido?`;
+        const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : null;
+        const wantsContact = await showStoreConfirm(
+            'Pedido grande: contacta al administrador',
+            `Para pedir ${nextQty} o mas unidades de "${item.name}" (por ejemplo para un evento), coordina directamente con el administrador. Si continuas, tu carrito se vaciara.`,
+            waUrl ? 'Contactar por WhatsApp' : 'Entendido',
+            'Cancelar'
+        );
+        if (wantsContact) {
+            if (waUrl) window.open(waUrl, '_blank');
+            setCart([]);
+            renderFloatCart();
+        }
+        return false;
+    }
+    return showStoreConfirm('¿Estas seguro?', `Estas pidiendo ${nextQty} unidades de "${item.name}". ¿Estas seguro de tu pedido?`, 'Si, continuar', 'Mejor no');
+}
 
 function setSearchState(visible, title = 'Espera, estamos buscando...', text = 'Filtrando productos para mostrarte el mejor resultado.') {
     searchState.style.display = visible ? 'flex' : 'none';
@@ -1880,16 +1920,11 @@ function heroCategory(product) {
 
 function validateCartLimits(cart) {
     const totals = {};
-    let sodaTotal = 0;
 
     cart.forEach(item => {
         const normalizedName = normalizeProductName(item.name);
         const quantity = Number(item.qty || 0);
         totals[normalizedName] = (totals[normalizedName] || 0) + quantity;
-
-        if (PURCHASE_LIMITS.sodaNames.includes(normalizedName)) {
-            sodaTotal += quantity;
-        }
     });
 
     for (const [name, max] of Object.entries(PURCHASE_LIMITS.exact)) {
@@ -1899,8 +1934,23 @@ function validateCartLimits(cart) {
         }
     }
 
-    if (sodaTotal > PURCHASE_LIMITS.sodaMax) {
-        return `Solo se permiten ${PURCHASE_LIMITS.sodaMax} gaseosas personales por pedido.`;
+    const checked = new Set();
+    for (const item of cart) {
+        const normalizedName = normalizeProductName(item.name);
+        if (checked.has(normalizedName) || PURCHASE_LIMITS.exact[normalizedName]) continue;
+        checked.add(normalizedName);
+        if (normalizedName.includes('chicha')) {
+            if ((totals[normalizedName] || 0) > PURCHASE_LIMITS.chichaMax) {
+                return `Solo puedes pedir ${PURCHASE_LIMITS.chichaMax} unidades de "${item.name}" por persona.`;
+            }
+            continue;
+        }
+        const category = normalizeCategory(item.category || item.name);
+        const rule = PURCHASE_LIMITS.categoryMax[category];
+        if (!rule) continue;
+        if ((totals[normalizedName] || 0) > rule.max) {
+            return `Solo puedes pedir ${rule.max} ${rule.label} por persona de "${item.name}".`;
+        }
     }
 
     return null;
@@ -1993,7 +2043,7 @@ function showProduct(product) {
     showToast(`<div style="font-weight:900;">Elegiste: ${escapeHtml(product.name)}</div>`);
 }
 
-function addToCart(product) {
+async function addToCart(product) {
     if (!product || product.can_sell === false || product.is_sold_out) {
         showStoreAlert('Platillo agotado', `${product ? product.name : 'Este producto'} no esta disponible por el momento.`);
         return;
@@ -2005,6 +2055,7 @@ function addToCart(product) {
     const cart = getCart();
     const nextCart = cart.map(item => ({ ...item }));
     const existing = nextCart.find(item => item.id === product.id);
+    const previousQty = existing ? existing.qty : 0;
     if (existing) existing.qty += 1;
     else nextCart.push({
         id: product.id,
@@ -2018,6 +2069,8 @@ function addToCart(product) {
         showStoreAlert('No se pudo agregar', limitError);
         return;
     }
+    const nextItem = nextCart.find(item => item.id === product.id);
+    if (!(await checkLargeOrderLimit(nextItem, previousQty, nextItem.qty))) return;
     setCart(nextCart);
     renderFloatCart();
     setCartOpen(true);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../models/producto.dart';
+import '../services/cart_limits.dart';
 import '../services/productos_service.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
@@ -122,8 +123,13 @@ class _SearchPageState extends State<SearchPage> {
                           color: StoreTheme.orange,
                           size: 34,
                         ),
-                        onPressed: () {
-                          cart.add(p);
+                        onPressed: () async {
+                          final added = await addToCartWithLimits(
+                            context,
+                            cart,
+                            p,
+                          );
+                          if (!added || !context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('${p.name} agregado al carrito'),

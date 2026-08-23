@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/producto.dart';
+import '../services/cart_limits.dart';
 import '../services/productos_service.dart';
 import '../services/session_service.dart';
 import '../state/app_shell_controller.dart';
@@ -135,8 +136,8 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
     }
 
     final cart = CartScope.of(context);
-    cart.add(product);
-    if (!context.mounted) return;
+    final added = await addToCartWithLimits(context, cart, product);
+    if (!added || !context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${product.name} agregado al carrito')),
     );

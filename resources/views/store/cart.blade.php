@@ -337,11 +337,56 @@ const cartListEl=document.getElementById('cartList'),cartTotalEl=document.getEle
 let orderSubmitting=false,orderIdempotencyKey='';
 function newOrderIdempotencyKey(){return globalThis.crypto?.randomUUID?.()||`web-${Date.now()}-${Math.random().toString(16).slice(2)}`}
 function getToken(){return localStorage.getItem('ed_token')}function isLoggedIn(){return Boolean(getToken())}function getCart(){return JSON.parse(localStorage.getItem('ed_cart')||'[]')}function setCart(cart){localStorage.setItem('ed_cart',JSON.stringify(cart));window.dispatchEvent(new Event('storage'))}function money(n){return Number(n).toFixed(2)}function digits(v){return String(v||'').replace(/\D/g,'')}function optionalTrim(field){return field?field.value.trim()||null:null}function needsDigitalProof(method){return false}
-const PURCHASE_LIMITS={exact:{'pollo entero a la brasa':1,'mega combo familiar':1,'1/2 pollo a la brasa':2,'1/4 pollo a la brasa':4,'mostrito tradicional':4,'chicha morada 1l':2,'limonada frozen':2},sodaNames:['coca-cola personal 500ml','inca kola personal 500ml','sprite personal 500ml'],sodaMax:3};
+const PURCHASE_LIMITS={
+    exact:{'pollo entero a la brasa':4,'mega combo familiar':4,'1/2 pollo a la brasa':2,'1/4 pollo a la brasa':3,'mostrito tradicional':4},
+    largeOrderNames:['pollo entero a la brasa','mega combo familiar'],
+    categoryMax:{parrillas:{max:2,label:'porciones o productos'},bebidas:{max:3,label:'productos'}},
+    chichaMax:2,
+};
+function normalizeCategory(value){const normalized=normalizeProductName(value).replace(/\s+/g,' ');if(/\b(pollo|pollos)\b/.test(normalized))return'pollos';if(/\b(parrilla|parrillas|carne|anticucho)\b/.test(normalized))return'parrillas';if(/\b(bebida|bebidas|gaseosa|gaseosas|refresco)\b/.test(normalized))return'bebidas';return normalized}
+function largeOrderBand(qty){if(qty<=2)return'free';if(qty<=4)return'confirm';return'admin'}
+let _supportPhonePromise=null;
+function getSupportPhone(){if(!_supportPhonePromise)_supportPhonePromise=fetch('/api/v1/settings/public').then(r=>r.json()).then(d=>String(d.support_phone||'').replace(/\D/g,'')).catch(()=>'');return _supportPhonePromise}
+async function checkLargeOrderLimit(item,previousQty,nextQty){
+    const normalizedName=normalizeProductName(item.name);
+    if(!PURCHASE_LIMITS.largeOrderNames.includes(normalizedName))return true;
+    const prevBand=largeOrderBand(previousQty),nextBand=largeOrderBand(nextQty);
+    if(nextBand===prevBand)return true;
+    if(nextBand==='admin'){
+        const phone=await getSupportPhone();
+        const message=`Hola, quiero pedir ${nextQty} unidades de "${item.name}". ¿Me ayudan a coordinar este pedido?`;
+        const waUrl=phone?`https://wa.me/${phone}?text=${encodeURIComponent(message)}`:null;
+        const wantsContact=await showStoreConfirm('Pedido grande: contacta al administrador',`Para pedir ${nextQty} o mas unidades de "${item.name}" (por ejemplo para un evento), coordina directamente con el administrador. Si continuas, tu carrito se vaciara.`,waUrl?'Contactar por WhatsApp':'Entendido','Cancelar');
+        if(wantsContact){if(waUrl)window.open(waUrl,'_blank');setCart([]);if(typeof renderCart==='function')renderCart()}
+        return false;
+    }
+    return showStoreConfirm('¿Estas seguro?',`Estas pidiendo ${nextQty} unidades de "${item.name}". ¿Estas seguro de tu pedido?`,'Si, continuar','Mejor no');
+}
 function setProcessingState(visible,title='Espera, estamos procesando tu pedido',text='Validando productos, datos de entrega y forma de pago.'){processingOverlay.style.display=visible?'flex':'none';processingTitle.textContent=title;processingText.textContent=text}
 function hasChickenInCart(){return getCart().some(item=>String(item.category||'').toLowerCase()==='pollos')}
 function normalizeProductName(name){return String(name||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
-function validateCartLimits(cart){const totals={};let sodaTotal=0;cart.forEach(item=>{const normalizedName=normalizeProductName(item.name),quantity=Number(item.qty||0);totals[normalizedName]=(totals[normalizedName]||0)+quantity;if(PURCHASE_LIMITS.sodaNames.includes(normalizedName))sodaTotal+=quantity});for(const[name,max]of Object.entries(PURCHASE_LIMITS.exact)){if((totals[name]||0)>max){const label=cart.find(item=>normalizeProductName(item.name)===name)?.name||name;return`Solo se permiten ${max} unidades de ${label} por pedido.`}}if(sodaTotal>PURCHASE_LIMITS.sodaMax)return`Solo se permiten ${PURCHASE_LIMITS.sodaMax} gaseosas personales por pedido.`;return null}
+function validateCartLimits(cart){
+    const totals={};
+    cart.forEach(item=>{const normalizedName=normalizeProductName(item.name),quantity=Number(item.qty||0);totals[normalizedName]=(totals[normalizedName]||0)+quantity});
+    for(const[name,max]of Object.entries(PURCHASE_LIMITS.exact)){
+        if((totals[name]||0)>max){const label=cart.find(item=>normalizeProductName(item.name)===name)?.name||name;return`Solo se permiten ${max} unidades de ${label} por pedido.`}
+    }
+    const checked=new Set();
+    for(const item of cart){
+        const normalizedName=normalizeProductName(item.name);
+        if(checked.has(normalizedName)||PURCHASE_LIMITS.exact[normalizedName])continue;
+        checked.add(normalizedName);
+        if(normalizedName.includes('chicha')){
+            if((totals[normalizedName]||0)>PURCHASE_LIMITS.chichaMax)return`Solo puedes pedir ${PURCHASE_LIMITS.chichaMax} unidades de "${item.name}" por persona.`;
+            continue;
+        }
+        const category=normalizeCategory(item.category||item.name);
+        const rule=PURCHASE_LIMITS.categoryMax[category];
+        if(!rule)continue;
+        if((totals[normalizedName]||0)>rule.max)return`Solo puedes pedir ${rule.max} ${rule.label} por persona de "${item.name}".`;
+    }
+    return null;
+}
  function paymentMethod(){return orderForm.elements.payment_method?.value||''}
 function updateHeroStatus(cart){heroStatus.textContent=!cart.length?'Carrito vacio':'Listo para confirmar'}
 const DELIVERY_MIN_SUBTOTAL=10,DELIVERY_FEE_AMOUNT=1,MINIMUM_ORDER_SUBTOTAL=DELIVERY_MIN_SUBTOTAL;
@@ -353,7 +398,7 @@ function renderCart(){const cart=getCart();if(!cart.length){cartListEl.textConte
     cartTotalEl.textContent=money(total+deliveryFeeFor(total,deliveryType.value==='delivery'));saladWrap.style.display=hasChickenInCart()?'block':'none';updateHeroStatus(cart);cartListEl.querySelectorAll('[data-minus]').forEach(btn=>btn.addEventListener('click',()=>changeQty(Number(btn.getAttribute('data-minus')),-1)));cartListEl.querySelectorAll('[data-plus]').forEach(btn=>btn.addEventListener('click',()=>changeQty(Number(btn.getAttribute('data-plus')),1)))}
 function alertDeliveryBlocked(){showStoreAlert('Delivery no disponible','Los pedidos menores a S/10 no califican para delivery. Elige recojo en tienda o agrega mas productos.')}
 function alertDeliveryFee(){showStoreAlert('Costo de delivery','Se aplicara un costo de S/1.00 por delivery dentro de Huancayo.')}
-function changeQty(productId,delta){const cart=getCart(),item=cart.find(i=>i.id===productId);if(!item)return;const nextCart=cart.map(entry=>({...entry})),nextItem=nextCart.find(i=>i.id===productId);nextItem.qty+=delta;const limitError=validateCartLimits(nextCart.filter(i=>i.qty>0));if(limitError){orderMsg.textContent=limitError;return}item.qty+=delta;setCart(cart.filter(i=>i.qty>0));renderCart()}
+async function changeQty(productId,delta){const cart=getCart(),item=cart.find(i=>i.id===productId);if(!item)return;const previousQty=item.qty,nextCart=cart.map(entry=>({...entry})),nextItem=nextCart.find(i=>i.id===productId);nextItem.qty+=delta;const limitError=validateCartLimits(nextCart.filter(i=>i.qty>0));if(limitError){orderMsg.textContent=limitError;return}if(delta>0&&!(await checkLargeOrderLimit(item,previousQty,nextItem.qty)))return;item.qty+=delta;setCart(cart.filter(i=>i.qty>0));renderCart()}
 function currentReceiptType(){return billingReceiptType.value}function currentDocumentLength(){return currentReceiptType()==='factura'?11:8}function resetBillingFields(){billingDocumentNumber.value='';billingName.value='';billingEmail.value='';billingMetadata.value='';lastLookupValue=''}
 function updateBillingUi(){const receipt=currentReceiptType();if(!receipt){billingDocumentType.value='';billingDocumentWrap.style.display='none';billingFieldsWrap.style.display='none';billingEmailWrap.style.display='none';billingLookupBox.textContent='Activa boleta o factura para identificar al cliente antes de pagar.';resetBillingFields();return}const isFactura=receipt==='factura';billingDocumentWrap.style.display='grid';billingFieldsWrap.style.display='grid';billingDocumentType.value=isFactura?'ruc':'dni';billingDocumentLabel.textContent=isFactura?'RUC del cliente':'DNI del cliente';billingDocumentNumber.placeholder=isFactura?'Ej: 20131312955':'Ej: 12345678';billingNameLabel.textContent=isFactura?'Razon social':'Nombre del cliente';billingLookupBox.textContent=isFactura?'Ingresa solo el RUC y consultamos la razon social para emitir factura.':'Ingresa solo el DNI y consultamos automaticamente al cliente para emitir boleta.';resetBillingFields();updateReceiptDeliveryUi()}
 function isValidRuc(number){if(!/^\d{11}$/.test(number))return false;const weights=[5,4,3,2,7,6,5,4,3,2];let sum=0;for(let i=0;i<10;i++)sum+=Number(number[i])*weights[i];let digit=11-(sum%11);if(digit===10)digit=0;if(digit===11)digit=1;return digit===Number(number[10])}

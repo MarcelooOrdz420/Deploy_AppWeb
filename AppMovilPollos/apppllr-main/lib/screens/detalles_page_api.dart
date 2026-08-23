@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/producto.dart';
+import '../services/cart_limits.dart';
 import '../services/productos_service.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
@@ -65,8 +66,13 @@ class _DetallesPageApiState extends State<DetallesPageApi> {
                       foregroundColor: StoreTheme.ink,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    onPressed: () {
-                      CartScope.of(context).add(p);
+                    onPressed: () async {
+                      final added = await addToCartWithLimits(
+                        context,
+                        CartScope.of(context),
+                        p,
+                      );
+                      if (!added || !context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('${p.name} agregado al carrito')),
                       );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/cart_limits.dart';
 import '../services/location_lookup_service.dart';
 import '../services/profile_data_service.dart';
 import '../services/session_service.dart';
@@ -199,7 +200,10 @@ class _CartTabState extends State<CartTab> {
                         ),
                       ),
                     ),
-                    _qtyButton('+', () => cart.add(item.producto)),
+                    _qtyButton(
+                      '+',
+                      () => addToCartWithLimits(context, cart, item.producto),
+                    ),
                     const Spacer(),
                     TextButton(
                       onPressed: () => cart.delete(item.producto.id),

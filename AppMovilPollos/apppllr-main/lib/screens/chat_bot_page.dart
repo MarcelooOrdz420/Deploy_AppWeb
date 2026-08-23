@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import '../config/pusher_config.dart';
+import '../services/cart_limits.dart';
 import '../services/chatbot_api_service.dart';
 import '../services/location_lookup_service.dart';
 import '../services/pusher_service.dart';
@@ -865,18 +866,37 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
                         child: const Text('Cancelar'),
                       ),
                       FilledButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (!_formKey.currentState!.validate()) return;
                           if (_step < 4) {
                             setState(() => _step++);
                             return;
                           }
                           final cart = CartScope.of(context);
-                          for (var i = 0; i < _qty; i++) cart.add(_dish!);
-                          if (_side != null) cart.add(_side!);
-                          if (_drink != null)
-                            for (var i = 0; i < _drinkQty; i++)
-                              cart.add(_drink!);
+                          final dishAdded = await addToCartWithLimits(
+                            context,
+                            cart,
+                            _dish!,
+                            quantity: _qty,
+                          );
+                          if (!dishAdded || !context.mounted) return;
+                          if (_side != null) {
+                            final sideAdded = await addToCartWithLimits(
+                              context,
+                              cart,
+                              _side!,
+                            );
+                            if (!sideAdded || !context.mounted) return;
+                          }
+                          if (_drink != null) {
+                            final drinkAdded = await addToCartWithLimits(
+                              context,
+                              cart,
+                              _drink!,
+                              quantity: _drinkQty,
+                            );
+                            if (!drinkAdded || !context.mounted) return;
+                          }
                           cart.setDeliveryType(_delivery == 'delivery');
                           if (_delivery == 'delivery')
                             cart.setAddress(
