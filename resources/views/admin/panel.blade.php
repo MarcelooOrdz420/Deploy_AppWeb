@@ -1045,6 +1045,7 @@
             <button class="menu-tab" type="button" data-target="sec-jobs"><span class="tab-icon">&#9733;</span>Vacantes</button>
             <button class="menu-tab" type="button" data-target="sec-products"><span class="tab-icon">&#9638;</span>Productos</button>
             <button class="menu-tab" type="button" data-target="sec-orders"><span class="tab-icon">&#8811;</span>Pedidos</button>
+            <button class="menu-tab" type="button" data-target="sec-manual-sale"><span class="tab-icon">&#9878;</span>Venta manual</button>
             <button class="menu-tab" type="button" data-target="sec-cash-closure"><span class="tab-icon">&#164;</span>Caja</button>
             <button class="menu-tab" type="button" data-target="sec-users"><span class="tab-icon">&#9675;</span>Cuentas</button>
         </div>
@@ -1325,7 +1326,7 @@
             <div id="orderActionsMsg" class="msg"></div>
         </section>
 
-        <section id="sec-manual-sale" class="panel">
+        <section id="sec-manual-sale" class="panel" style="grid-column: 1 / -1;">
             <h2>Registrar venta manual</h2>
             <p class="section-subtitle">Para ventas cobradas en el mostrador (efectivo, tarjeta fisica o Yape). No pasa por Izipay y no pide datos personales de contacto del cliente.</p>
 
@@ -1594,6 +1595,7 @@ const adminSections = [
     document.getElementById('sec-jobs'),
     document.getElementById('sec-products'),
     document.getElementById('sec-orders'),
+    document.getElementById('sec-manual-sale'),
     document.getElementById('sec-cash-closure'),
     document.getElementById('sec-users'),
 ].filter(Boolean);
@@ -1630,6 +1632,11 @@ async function loadAdminTabData(targetId) {
 
         if (targetId === 'sec-orders') {
             await fetchOrders();
+            return;
+        }
+
+        if (targetId === 'sec-manual-sale') {
+            await fetchProducts();
             return;
         }
 
