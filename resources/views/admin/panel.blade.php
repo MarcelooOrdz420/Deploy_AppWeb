@@ -1346,6 +1346,11 @@
             <div id="manualSaleItemsList" class="list"></div>
             <div style="font-weight:900; margin:8px 0 14px;">Total: S/ <span id="manualSaleTotal">0.00</span></div>
 
+            <div>
+                <label>Nombre (para el comprobante, opcional)</label>
+                <input id="manualSaleCustomerName" maxlength="120" placeholder="Ej: Juan Perez">
+            </div>
+
             <div class="row">
                 <div>
                     <label>Metodo de pago</label>
@@ -3240,6 +3245,7 @@ const manualSaleQty = document.getElementById('manualSaleQty');
 const manualSaleAddItemBtn = document.getElementById('manualSaleAddItemBtn');
 const manualSaleItemsList = document.getElementById('manualSaleItemsList');
 const manualSaleTotal = document.getElementById('manualSaleTotal');
+const manualSaleCustomerName = document.getElementById('manualSaleCustomerName');
 const manualSalePaymentMethod = document.getElementById('manualSalePaymentMethod');
 const manualSaleReceiptType = document.getElementById('manualSaleReceiptType');
 const manualSaleDocumentWrap = document.getElementById('manualSaleDocumentWrap');
@@ -3381,6 +3387,7 @@ manualSaleSubmitBtn?.addEventListener('click', async () => {
 
     const payload = {
         payment_method: manualSalePaymentMethod.value,
+        customer_name: manualSaleCustomerName.value.trim() || null,
         note: manualSaleNote.value.trim() || null,
         items: manualSaleItems.map(item => ({ product_id: item.productId, quantity: item.quantity })),
         billing_receipt_type: receiptType,
@@ -3411,6 +3418,7 @@ manualSaleSubmitBtn?.addEventListener('click', async () => {
         manualSaleSendEinvoiceBtn.style.display = needsDocument ? 'inline-block' : 'none';
         manualSaleSendEmailBtn.style.display = (needsDocument && deliveryMode === 'correo') ? 'inline-block' : 'none';
         manualSaleItems = [];
+        manualSaleCustomerName.value = '';
         manualSaleNote.value = '';
         manualSaleDocumentNumber.value = '';
         manualSaleBillingName.value = '';

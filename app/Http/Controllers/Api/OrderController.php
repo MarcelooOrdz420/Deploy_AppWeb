@@ -522,6 +522,7 @@ class OrderController extends Controller
     {
         $data = $request->validate([
             'payment_method' => ['required', Rule::in(['tarjeta', 'efectivo', 'yape'])],
+            'customer_name' => ['nullable', 'string', 'max:120'],
             'note' => ['nullable', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
@@ -557,7 +558,9 @@ class OrderController extends Controller
             $order = Order::create([
                 'user_id' => null,
                 'tracking_code' => $trackingCode,
-                'customer_name' => 'Venta en tienda',
+                'customer_name' => trim((string) ($data['customer_name'] ?? '')) !== ''
+                    ? trim((string) $data['customer_name'])
+                    : 'Venta en tienda',
                 'customer_phone' => '000000000',
                 'delivery_type' => 'pickup',
                 'status' => Order::STATUS_DELIVERED,
