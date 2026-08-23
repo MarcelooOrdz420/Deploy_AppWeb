@@ -18,21 +18,32 @@
     .promo-detail-actions a,.promo-detail-actions button { min-height:48px; padding:12px 18px; border-radius:999px; border:1px solid #d95c13; background:#fff; color:#6b2a0b; font-weight:900; text-decoration:none; cursor:pointer; }
     .promo-detail-actions .primary { background:#ff7417; color:#fff; }
     #promoDetailMessage { color:#8d3509; font-weight:800; }
+    .promo-expired-badge { background:#6b2a0b; }
     @media(max-width:760px){.promo-detail{grid-template-columns:1fr}.promo-detail-media,.promo-detail-media img{min-height:280px;max-height:390px}.promo-detail-copy{padding:24px 18px}}
 </style>
 <section class="panel promo-detail">
-    <div class="promo-detail-media"><img src="{{ $promotionImageUrl }}" onerror="this.onerror=null;this.src='/images/products/default.svg'" alt="{{ $offer->title }}"></div>
+    <div class="promo-detail-media"><img src="{{ $promotionImageUrl }}" onerror="this.onerror=null;this.src='/images/products/default.svg'" alt="{{ $offer->title }}" style="{{ $expired ? 'filter:grayscale(.6);opacity:.7;' : '' }}"></div>
     <div class="promo-detail-copy">
-        <span class="promo-badge">-{{ number_format((float) $offer->discount_percent, 0) }}% PROMOCIÓN</span>
-        <h1>{{ $offer->title }}</h1>
-        <p><strong>{{ $offer->product->name }}</strong></p>
-        <p>{{ $offer->body ?: $offer->message }}</p>
-        <div class="promo-prices"><span class="promo-old">Antes S/ {{ number_format((float) $offer->original_price, 2) }}</span><span class="promo-new">S/ {{ number_format((float) $offer->promo_price, 2) }}</span></div>
-        <div class="promo-detail-actions">
-            <button id="promoBuyBtn" class="primary" type="button">Comprar con descuento</button>
-            <a href="{{ route('store.products') }}">Seguir viendo productos</a>
-        </div>
-        <div id="promoDetailMessage"></div>
+        @if($expired)
+            <span class="promo-badge promo-expired-badge">PROMOCIÓN FINALIZADA</span>
+            <h1>{{ $offer->title }}</h1>
+            <p><strong>{{ $offer->product->name }}</strong></p>
+            <p>Esta promoción ya terminó{{ $offer->ends_at ? ' (venció el '.$offer->ends_at->timezone('America/Lima')->translatedFormat('d/m/Y H:i').')' : '' }}. Pero en la tienda siempre hay platillos y ofertas nuevas esperándote.</p>
+            <div class="promo-detail-actions">
+                <a class="primary" href="{{ route('store.products') }}">Ver la tienda El Dorado</a>
+            </div>
+        @else
+            <span class="promo-badge">-{{ number_format((float) $offer->discount_percent, 0) }}% PROMOCIÓN</span>
+            <h1>{{ $offer->title }}</h1>
+            <p><strong>{{ $offer->product->name }}</strong></p>
+            <p>{{ $offer->body ?: $offer->message }}</p>
+            <div class="promo-prices"><span class="promo-old">Antes S/ {{ number_format((float) $offer->original_price, 2) }}</span><span class="promo-new">S/ {{ number_format((float) $offer->promo_price, 2) }}</span></div>
+            <div class="promo-detail-actions">
+                <button id="promoBuyBtn" class="primary" type="button">Comprar con descuento</button>
+                <a href="{{ route('store.products') }}">Seguir viendo productos</a>
+            </div>
+            <div id="promoDetailMessage"></div>
+        @endif
     </div>
 </section>
 @endsection
@@ -40,6 +51,8 @@
 @section('scripts')
 <script>
 (() => {
+    const expired = @json($expired);
+    if (expired) return;
     const offer = @json($offer);
     const product = @json($offer->product);
     document.getElementById('promoBuyBtn')?.addEventListener('click', () => {

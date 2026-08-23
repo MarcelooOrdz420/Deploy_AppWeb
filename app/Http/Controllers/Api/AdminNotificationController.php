@@ -37,6 +37,9 @@ class AdminNotificationController extends Controller
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'promo_price' => ['nullable', 'numeric', 'min:0.01'],
             'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after:starts_at'],
+            'duration_hours' => ['nullable', 'integer', 'min:1', 'max:720'],
         ]);
 
         if ($request->hasFile('image')) {
@@ -68,6 +71,10 @@ class AdminNotificationController extends Controller
             return response()->json(['message' => 'El precio promocional debe ser menor que el precio normal del platillo.'], 422);
         }
         $discountPercent = round((1 - ($promoPrice / $normalPrice)) * 100, 2);
+        $startsAt = isset($data['starts_at']) ? \Illuminate\Support\Carbon::parse($data['starts_at']) : now();
+        $endsAt = isset($data['ends_at'])
+            ? \Illuminate\Support\Carbon::parse($data['ends_at'])
+            : (isset($data['duration_hours']) ? $startsAt->copy()->addHours((int) $data['duration_hours']) : null);
         $offer = MarketingOffer::create([
             'product_id' => $product->id,
             'title' => $data['title'],
@@ -78,6 +85,8 @@ class AdminNotificationController extends Controller
             'promo_price' => $promoPrice,
             'discount_percent' => $discountPercent,
             'is_active' => true,
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
         ]);
 
         $broadcastPayload = [
@@ -165,6 +174,66 @@ class AdminNotificationController extends Controller
                 'send_email' => $sendEmail,
                 'email_subject' => $data['email_subject'] ?? null,
             ],
+        ]);
+    }
+
+    public function promotionsIndex(): JsonResponse
+    {
+        $offers = MarketingOffer::query()
+            ->with('product:id,name')
+            ->withCount('orderItems')
+            ->orderByDesc('id')
+            ->get()
+            ->map(function (MarketingOffer $offer) {
+                return [
+                    'id' => $offer->id,
+                    'title' => $offer->title,
+                    'product_id' => $offer->product_id,
+                    'product_name' => $offer->product?->name,
+                    'original_price' => (float) $offer->original_price,
+                    'promo_price' => (float) $offer->promo_price,
+                    'discount_percent' => (float) $offer->discount_percent,
+                    'is_active' => (bool) $offer->is_active,
+                    'starts_at' => $offer->starts_at?->toIso8601String(),
+                    'ends_at' => $offer->ends_at?->toIso8601String(),
+                    'status' => $offer->scheduleStatus(),
+                    'orders_count' => (int) $offer->order_items_count,
+                    'created_at' => $offer->created_at?->toIso8601String(),
+                ];
+            });
+
+        return response()->json(['data' => $offers]);
+    }
+
+    public function updatePromotion(Request $request, MarketingOffer $offer): JsonResponse
+    {
+        $data = $request->validate([
+            'is_active' => ['nullable', 'boolean'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date'],
+            'end_now' => ['nullable', 'boolean'],
+        ]);
+
+        if (! empty($data['end_now'])) {
+            $offer->ends_at = now();
+        }
+        if (array_key_exists('starts_at', $data)) {
+            $offer->starts_at = $data['starts_at'] ? \Illuminate\Support\Carbon::parse($data['starts_at']) : null;
+        }
+        if (array_key_exists('ends_at', $data) && empty($data['end_now'])) {
+            $offer->ends_at = $data['ends_at'] ? \Illuminate\Support\Carbon::parse($data['ends_at']) : null;
+        }
+        if (array_key_exists('is_active', $data)) {
+            $offer->is_active = (bool) $data['is_active'];
+        }
+        $offer->save();
+
+        return response()->json([
+            'id' => $offer->id,
+            'is_active' => (bool) $offer->is_active,
+            'starts_at' => $offer->starts_at?->toIso8601String(),
+            'ends_at' => $offer->ends_at?->toIso8601String(),
+            'status' => $offer->scheduleStatus(),
         ]);
     }
 

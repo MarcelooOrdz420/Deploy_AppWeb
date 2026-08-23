@@ -435,7 +435,7 @@ class OrderController extends Controller
                 $unitPrice = (float) $product->price;
                 if (! empty($item['promotion_id'])) {
                     $offer = MarketingOffer::query()->lockForUpdate()->find($item['promotion_id']);
-                    if (! $offer || ! $offer->is_active || (int) $offer->product_id !== (int) $product->id) {
+                    if (! $offer || ! $offer->isCurrentlyActive() || (int) $offer->product_id !== (int) $product->id) {
                         abort(response()->json(['message' => 'La promoción seleccionada ya no está disponible para este producto.'], 422));
                     }
                     $unitPrice = (float) $offer->promo_price;

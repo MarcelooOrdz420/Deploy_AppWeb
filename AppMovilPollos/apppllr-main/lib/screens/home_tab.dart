@@ -3,15 +3,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../config/api_config.dart';
 import '../models/producto.dart';
+import '../models/promotion_offer.dart';
 import '../services/cart_limits.dart';
 import '../services/productos_service.dart';
+import '../services/promotion_service.dart';
 import '../services/session_service.dart';
 import '../state/app_shell_controller.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
 import '../widgets/producto_image.dart';
 import '../widgets/store_async_state.dart';
+import 'promotion_page.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -35,13 +39,26 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   bool _hasSelection = false;
   bool _logged = false;
 
+  PromotionOffer? _activePromotion;
+  bool _promotionChecked = false;
+
   @override
   void initState() {
     super.initState();
     _future = ProductosService().listar();
     _loadSession();
+    _loadPromotion();
     WidgetsBinding.instance.addObserver(this);
     _startHeroTimer();
+  }
+
+  Future<void> _loadPromotion() async {
+    final offer = await PromotionService().fetchActive();
+    if (!mounted) return;
+    setState(() {
+      _activePromotion = offer;
+      _promotionChecked = true;
+    });
   }
 
   Future<void> _loadSession() async {
@@ -343,6 +360,8 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                 ],
               ),
               const SizedBox(height: 22),
+              if (_promotionChecked) _buildPromoBox(),
+              if (_promotionChecked) const SizedBox(height: 22),
               _buildHeroCarousel(
                 pollos: pollos,
                 bebidas: bebidas,
@@ -633,6 +652,106 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPromoBox() {
+    final offer = _activePromotion;
+    if (offer == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [StoreTheme.creamStrong, StoreTheme.goldSoft],
+          ),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: StoreTheme.border),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.local_offer_outlined, color: StoreTheme.orangeDark, size: 34),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Text(
+                'Pronto más descuentos en nuestros productos',
+                style: TextStyle(fontWeight: FontWeight.w800, color: StoreTheme.textPrimary),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => PromotionPage(offer: offer)),
+      ),
+      child: Container(
+        width: double.infinity,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [StoreTheme.orangeDark, StoreTheme.orange],
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: 110,
+              child: Image.network(
+                ApiConfig.resolveUrl(offer.imageUrl),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(color: Colors.white24),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '-${offer.discountPercent.round()}% de descuento',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                        letterSpacing: .4,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      offer.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 17,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'S/ ${offer.originalPrice.toStringAsFixed(2)}  →  S/ ${offer.promoPrice.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

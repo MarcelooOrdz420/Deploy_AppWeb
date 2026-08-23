@@ -11,11 +11,12 @@ Route::get('/media/promotions/{path}', PromotionImageController::class)
     ->name('promotions.image');
 Route::view('/productos', 'store.products')->name('store.products');
 Route::get('/promociones/{offer}', function (\App\Models\MarketingOffer $offer, \App\Services\PromotionImageService $imageService) {
-    abort_unless($offer->is_active, 404);
     $offer->load('product');
+    abort_unless($offer->product, 404);
 
     return view('store.promotion', [
         'offer' => $offer,
+        'expired' => ! $offer->isCurrentlyActive(),
         'promotionImageUrl' => $imageService->resolve($offer->image_url, $offer->product),
     ]);
 })->name('store.promotion');

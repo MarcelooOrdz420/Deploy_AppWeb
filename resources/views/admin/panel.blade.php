@@ -1158,6 +1158,24 @@
                 </div>
                 <div class="row">
                     <div>
+                        <label>Duracion de la promocion</label>
+                        <select id="offerDurationSelect" name="duration_hours">
+                            <option value="">Sin fecha de fin (hasta que la desactives)</option>
+                            <option value="24" selected>24 horas</option>
+                            <option value="48">48 horas</option>
+                            <option value="72">72 horas</option>
+                            <option value="168">7 dias</option>
+                            <option value="custom">Elegir fecha y hora de fin...</option>
+                        </select>
+                        <div class="helper-text">Hora Peru. Al vencer, el precio vuelve a la normal automaticamente en web, correo y app.</div>
+                    </div>
+                    <div id="offerEndsAtWrap" style="display:none;">
+                        <label>Termina el</label>
+                        <input id="offerEndsAtInput" type="datetime-local">
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
                         <label>Ti­tulo</label>
                         <input name="title" required maxlength="120" placeholder="Ej: Combo familiar al 20%">
                     </div>
@@ -1180,6 +1198,11 @@
                 </div>
                 <div id="offerMsg" class="msg"></div>
             </form>
+            <div class="upload-box" style="margin-top:18px;">
+                <strong>Promociones programadas / activas / vencidas</strong>
+                <div class="helper-text">Vencidas y desactivadas se ocultan solas de la caja del inicio (web y app). Puedes cortar una activa antes de tiempo.</div>
+                <div id="promotionsList" class="list" style="margin-top:10px;"></div>
+            </div>
             <div class="upload-box" style="margin-top:18px;">
                 <strong>Reactivacion automatica</strong>
                 <div class="helper-text">Lanza manualmente la campana para clientes inactivos y carritos abandonados. El cron diario queda en 5 dias de inactividad.</div>
@@ -1640,6 +1663,11 @@ async function loadAdminTabData(targetId) {
             return;
         }
 
+        if (targetId === 'sec-offers') {
+            await Promise.allSettled([fetchProducts(), fetchPromotions()]);
+            return;
+        }
+
         if (targetId === 'sec-cash-closure') {
             await Promise.allSettled([
                 fetchCashClosureSummary(),
@@ -1853,6 +1881,69 @@ async function sendOffer(formData, targetValue) {
         );
     }
     setUploadPreview(offerImagePreview, '');
+    const offerEndsAtWrapEl = document.getElementById('offerEndsAtWrap');
+    if (offerEndsAtWrapEl) offerEndsAtWrapEl.style.display = 'none';
+    fetchPromotions();
+}
+
+const promotionStatusLabels = {
+    programada: { label: 'Programada', color: '#946200' },
+    activa: { label: 'Activa', color: '#166534' },
+    vencida: { label: 'Vencida', color: '#6b7280' },
+    desactivada: { label: 'Desactivada', color: '#b42318' },
+};
+
+function formatPromoDate(iso) {
+    if (!iso) return 'Sin fecha';
+    return new Date(iso).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+async function fetchPromotions() {
+    const list = document.getElementById('promotionsList');
+    if (!list) return;
+    const token = getToken();
+    try {
+        const res = await fetch('/api/v1/admin/promotions', {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const data = await res.json().catch(() => ({}));
+        const offers = Array.isArray(data?.data) ? data.data : [];
+        if (!offers.length) {
+            list.innerHTML = '<div class="muted">Todavia no has creado ninguna promocion.</div>';
+            return;
+        }
+        list.innerHTML = offers.map(offer => {
+            const statusInfo = promotionStatusLabels[offer.status] || { label: offer.status, color: '#6b7280' };
+            const canCut = offer.status === 'activa' || offer.status === 'programada';
+            return `<div class="list-row" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #f0d5bd;padding:10px 0;">
+                <div>
+                    <strong>${escapeHtml(offer.title)}</strong> · ${escapeHtml(offer.product_name || 'Producto eliminado')}
+                    <div class="muted" style="font-size:12px;">S/ ${money(offer.original_price)} &rarr; S/ ${money(offer.promo_price)} (-${Number(offer.discount_percent).toFixed(0)}%) · ${offer.orders_count} pedidos</div>
+                    <div class="muted" style="font-size:12px;">Inicio: ${formatPromoDate(offer.starts_at)} · Fin: ${formatPromoDate(offer.ends_at)}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="tag" style="background:${statusInfo.color};color:#fff;">${statusInfo.label}</span>
+                    ${canCut ? `<button type="button" class="btn-secondary" onclick="cutPromotionShort(${offer.id})">Cortar ahora</button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    } catch (error) {
+        list.innerHTML = '<div class="muted">No se pudo cargar la lista de promociones.</div>';
+    }
+}
+
+async function cutPromotionShort(offerId) {
+    if (!confirm('¿Cortar esta promocion ahora? El precio volvera a la normal de inmediato en web, app y correo.')) return;
+    const token = getToken();
+    await fetch(`/api/v1/admin/promotions/${offerId}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ end_now: true }),
+    });
+    fetchPromotions();
 }
 
 async function runRecoveryCampaigns() {
@@ -3141,6 +3232,11 @@ if (offerForm) {
     });
     offerChannelInputs.forEach(input => input.addEventListener('change', syncOfferSendAll));
     syncOfferSendAll();
+    const offerDurationSelect = document.getElementById('offerDurationSelect');
+    const offerEndsAtWrap = document.getElementById('offerEndsAtWrap');
+    offerDurationSelect?.addEventListener('change', () => {
+        if (offerEndsAtWrap) offerEndsAtWrap.style.display = offerDurationSelect.value === 'custom' ? '' : 'none';
+    });
     offerForm.addEventListener('submit', (event) => {
         event.preventDefault();
         const formData = new FormData();
@@ -3157,6 +3253,12 @@ if (offerForm) {
         if (offerForm.promo_price.value) formData.append('promo_price', offerForm.promo_price.value);
         if (offerForm.discount_percent.value) formData.append('discount_percent', offerForm.discount_percent.value);
         if (offerImageInput?.files?.[0]) formData.append('image', offerImageInput.files[0]);
+        const durationValue = offerDurationSelect?.value || '';
+        if (durationValue === 'custom' && document.getElementById('offerEndsAtInput')?.value) {
+            formData.append('ends_at', document.getElementById('offerEndsAtInput').value);
+        } else if (durationValue && durationValue !== 'custom') {
+            formData.append('duration_hours', durationValue);
+        }
         sendOffer(formData, offerForm.target.value);
     });
 }

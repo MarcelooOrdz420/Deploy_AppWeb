@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\PusherAuthController;
 use App\Http\Controllers\Api\PeruLookupController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\ProfilePreferencesController;
 use App\Http\Controllers\Api\PublicSettingsController;
 use App\Http\Controllers\Api\OrderController;
@@ -36,6 +37,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
     Route::get('/settings/public', PublicSettingsController::class);
+    Route::get('/promotions/active', [PromotionController::class, 'active']);
     Route::get('/jobs', [JobOpeningController::class, 'index']);
     Route::get('/orders/track/{trackingCode}', [OrderController::class, 'track']);
 
@@ -76,6 +78,8 @@ Route::prefix('v1')->group(function (): void {
         Route::middleware('admin')->group(function (): void {
             Route::post('/admin/notifications/offers', [AdminNotificationController::class, 'sendOffer']);
             Route::post('/admin/notifications/recovery-campaigns', [AdminNotificationController::class, 'sendRecoveryCampaigns']);
+            Route::get('/admin/promotions', [AdminNotificationController::class, 'promotionsIndex']);
+            Route::patch('/admin/promotions/{offer}', [AdminNotificationController::class, 'updatePromotion']);
             Route::get('/admin/products', [ProductController::class, 'adminIndex']);
             Route::post('/products', [ProductController::class, 'store']);
             Route::put('/products/{product}', [ProductController::class, 'update']);

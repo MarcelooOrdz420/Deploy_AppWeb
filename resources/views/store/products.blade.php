@@ -4,6 +4,16 @@
 
 @section('content')
     <section class="catalog-shell">
+        <a id="promoBox" class="promo-box promo-box--empty" href="{{ route('store.products') }}" style="display:none;">
+            <div class="promo-box-media"><img id="promoBoxImage" src="" alt=""></div>
+            <div class="promo-box-copy">
+                <span id="promoBoxBadge" class="promo-box-badge"></span>
+                <strong id="promoBoxTitle" class="promo-box-title"></strong>
+                <span id="promoBoxSubtitle" class="promo-box-subtitle"></span>
+                <span id="promoBoxPrices" class="promo-box-prices"></span>
+                <span id="promoBoxTimer" class="promo-box-timer"></span>
+            </div>
+        </a>
         <section class="hero-showcase surface">
             <div class="catalog-hero">
                 <div class="hero-copy-stack" aria-hidden="true">
@@ -158,6 +168,58 @@
         .catalog-shell {
             display: grid;
             gap: 18px;
+        }
+
+        .promo-box {
+            display: flex;
+            align-items: stretch;
+            gap: 18px;
+            width: 100%;
+            min-height: 140px;
+            border-radius: 22px;
+            overflow: hidden;
+            text-decoration: none;
+            background: linear-gradient(120deg, #74120d 0%, #c94700 55%, #ff8a1f 100%);
+            box-shadow: 0 18px 34px rgba(116, 18, 13, .22);
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+        .promo-box:hover { transform: translateY(-2px); box-shadow: 0 22px 40px rgba(116, 18, 13, .3); }
+        .promo-box-media { flex: 0 0 clamp(110px, 22vw, 200px); background: rgba(255,255,255,.12); }
+        .promo-box-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .promo-box-copy {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+            padding: 14px 20px 14px 0;
+            min-width: 0;
+            color: #fff7ed;
+        }
+        .promo-box-badge {
+            align-self: flex-start;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.18);
+            border: 1px solid rgba(255,255,255,.3);
+        }
+        .promo-box-title { font-size: clamp(18px, 2.4vw, 26px); font-weight: 900; line-height: 1.1; }
+        .promo-box-subtitle { font-size: 13px; color: rgba(255,247,237,.85); }
+        .promo-box-prices { font-size: 14px; font-weight: 800; }
+        .promo-box-prices .promo-box-old { text-decoration: line-through; opacity: .75; font-weight: 600; margin-right: 8px; }
+        .promo-box-timer { font-size: 12px; font-weight: 700; color: #ffe1b8; }
+        .promo-box--empty { background: linear-gradient(120deg, #fff8e4 0%, #ffe3b0 100%); cursor: default; pointer-events: none; }
+        .promo-box--empty .promo-box-copy { color: #6b2a0b; }
+        .promo-box--empty .promo-box-badge { background: rgba(107,42,11,.1); border-color: rgba(107,42,11,.22); color: #6b2a0b; }
+        .promo-box--empty .promo-box-media { display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.4); font-size: 40px; }
+        @media (max-width: 560px) {
+            .promo-box { flex-direction: column; min-height: 0; }
+            .promo-box-media { flex-basis: 150px; }
+            .promo-box-copy { padding: 12px 16px 16px; }
         }
 
         .hero-showcase {
@@ -1722,6 +1784,60 @@ function setCart(cart) {
 }
 function money(n) { return Number(n).toFixed(2); }
 
+let promoBoxTimerHandle = null;
+
+function renderPromoTimer(endsAtIso) {
+    const el = document.getElementById('promoBoxTimer');
+    if (!el) return;
+    if (promoBoxTimerHandle) { clearInterval(promoBoxTimerHandle); promoBoxTimerHandle = null; }
+    if (!endsAtIso) { el.textContent = ''; return; }
+    const endsAt = new Date(endsAtIso).getTime();
+    const tick = () => {
+        const diffMs = endsAt - Date.now();
+        if (diffMs <= 0) { el.textContent = 'Promocion finalizada'; clearInterval(promoBoxTimerHandle); return; }
+        const totalMinutes = Math.floor(diffMs / 60000);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        el.textContent = `Termina en ${hours > 0 ? hours + 'h ' : ''}${minutes}min`;
+    };
+    tick();
+    promoBoxTimerHandle = setInterval(tick, 30000);
+}
+
+async function loadActivePromotion() {
+    const box = document.getElementById('promoBox');
+    if (!box) return;
+    try {
+        const res = await fetch('/api/v1/promotions/active');
+        const data = await res.json();
+        if (!data?.active || !data.offer) {
+            box.href = '#';
+            box.classList.add('promo-box--empty');
+            document.getElementById('promoBoxImage').src = '/images/products/default.svg';
+            document.getElementById('promoBoxBadge').textContent = 'Promociones';
+            document.getElementById('promoBoxTitle').textContent = 'Pronto mas descuentos en nuestros productos';
+            document.getElementById('promoBoxSubtitle').textContent = 'Estamos preparando nuevas ofertas. Vuelve pronto.';
+            document.getElementById('promoBoxPrices').textContent = '';
+            renderPromoTimer(null);
+            box.style.display = '';
+            return;
+        }
+        const offer = data.offer;
+        box.href = offer.url;
+        box.classList.remove('promo-box--empty');
+        document.getElementById('promoBoxImage').src = offer.image_url || '/images/products/default.svg';
+        document.getElementById('promoBoxBadge').textContent = `-${Math.round(offer.discount_percent)}% de descuento`;
+        document.getElementById('promoBoxTitle').textContent = offer.title;
+        document.getElementById('promoBoxSubtitle').textContent = offer.product?.name || '';
+        document.getElementById('promoBoxPrices').innerHTML =
+            `<span class="promo-box-old">S/ ${money(offer.original_price)}</span><span>S/ ${money(offer.promo_price)}</span>`;
+        renderPromoTimer(offer.ends_at);
+        box.style.display = '';
+    } catch {
+        box.style.display = 'none';
+    }
+}
+
 async function notifyPendingIzipayOrder() {
     const raw = localStorage.getItem('ed_pending_izipay_order');
     if (!raw || !isLoggedIn()) return;
@@ -2264,5 +2380,6 @@ try {
 
 loadProducts();
 notifyPendingIzipayOrder();
+loadActivePromotion();
 </script>
 @endsection
