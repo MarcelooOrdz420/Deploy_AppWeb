@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/order_api_service.dart';
 import '../services/pusher_service.dart';
 import '../services/session_service.dart';
+import '../state/cart_controller.dart';
 import '../state/orders_controller.dart';
 import '../theme/store_theme.dart';
 import '../widgets/store_async_state.dart';
@@ -434,6 +435,9 @@ class _OrdersTabState extends State<OrdersTab> {
       final token = await _sessionService.getToken();
       await _orderApiService.cancelUnpaidOrder(token: token, orderId: orderId);
       if (!mounted) return;
+      // Igual que al cancelar desde el dialogo de pago: el carrito se vacia
+      // para no dejar productos de un pedido ya cancelado a medio armar.
+      CartScope.of(context).clear();
       setState(() => _future = _loadOrders());
     } finally {
       if (mounted) {

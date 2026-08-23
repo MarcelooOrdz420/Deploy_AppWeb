@@ -823,6 +823,10 @@
             color: #b44c00;
         }
 
+        #modalName {
+            color: #25170f !important;
+        }
+
         @media (max-width: 1040px) {
             .catalog-hero {
                 grid-template-columns: 1fr;
@@ -1374,15 +1378,16 @@
 
         .products-grid .product-name {
             display: -webkit-box;
+            flex: 1 1 auto;
+            min-width: 0;
             min-height: 54px;
-            max-width: 150px;
             overflow: hidden;
             color: #25170f !important;
             font-size: 21px !important;
             line-height: 1.06 !important;
             font-weight: 950 !important;
             -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 3;
         }
 
         .products-grid .product-price {
@@ -1716,6 +1721,37 @@ function setCart(cart) {
     window.dispatchEvent(new Event('storage'));
 }
 function money(n) { return Number(n).toFixed(2); }
+
+async function notifyPendingIzipayOrder() {
+    const raw = localStorage.getItem('ed_pending_izipay_order');
+    if (!raw || !isLoggedIn()) return;
+    let pending;
+    try { pending = JSON.parse(raw); } catch { localStorage.removeItem('ed_pending_izipay_order'); return; }
+    if (!pending?.id) { localStorage.removeItem('ed_pending_izipay_order'); return; }
+    try {
+        const res = await fetch(`/api/v1/orders/${pending.id}`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (!res.ok) { localStorage.removeItem('ed_pending_izipay_order'); return; }
+        const order = await res.json();
+        const paymentStatus = String(order.payment_status || 'pending');
+        if (paymentStatus === 'verified' || String(order.status) !== 'pending' || !['pending', 'rejected'].includes(paymentStatus)) {
+            localStorage.removeItem('ed_pending_izipay_order');
+            return;
+        }
+    } catch {
+        return;
+    }
+    // Se avisa una sola vez por pestaña para no ser repetitivo: si el
+    // cliente vuelve a la tienda mas tarde en la misma sesion, ya lo vio.
+    if (sessionStorage.getItem('ed_pending_order_notice_shown') === pending.id + '') return;
+    sessionStorage.setItem('ed_pending_order_notice_shown', pending.id + '');
+    const goToOrders = await showStoreConfirm(
+        'Tienes un pedido sin completar',
+        `Tu pedido con pago pendiente (${pending.tracking}) quedo guardado en Mis pedidos. Ahi puedes cambiarlo, cancelarlo o continuar el pago.`,
+        'Ver Mis pedidos',
+        'Ahora no'
+    );
+    if (goToOrders) window.location.href = '/mis-pedidos';
+}
 
 let toastTimer = null;
 function showToast(message) {
@@ -2174,5 +2210,6 @@ try {
 } catch {}
 
 loadProducts();
+notifyPendingIzipayOrder();
 </script>
 @endsection

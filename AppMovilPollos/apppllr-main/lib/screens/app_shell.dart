@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../config/api_config.dart';
 import '../config/pusher_config.dart';
+import '../services/order_api_service.dart';
 import '../services/pusher_service.dart';
 import '../services/session_service.dart';
 import '../state/app_shell_controller.dart';
@@ -30,6 +31,10 @@ class _AppShellState extends State<AppShell> {
   StreamSubscription<PusherMessage>? _pusherSubscription;
   String _userRole = 'customer';
 
+  // Se avisa una sola vez por apertura de la app: si el cliente vuelve a
+  // navegar dentro de la misma sesion, ya lo vio.
+  static bool _pendingPaymentNoticeShown = false;
+
   final List<Widget> _pages = const [
     HomeTab(),
     SearchPage(),
@@ -46,6 +51,42 @@ class _AppShellState extends State<AppShell> {
     AppShellController.instance.tabIndex.addListener(_handleTabChange);
     _loadUserRole();
     _initNotifications();
+    _checkPendingPayment();
+  }
+
+  Future<void> _checkPendingPayment() async {
+    if (_pendingPaymentNoticeShown) return;
+    final logged = await SessionService().isLoggedIn();
+    if (!logged) return;
+    List<Map<String, dynamic>> orders;
+    try {
+      orders = await OrderApiService().myOrders();
+    } catch (_) {
+      return;
+    }
+    final pending = orders.where((order) {
+      final paymentMethod = (order['payment_method'] ?? '').toString();
+      final paymentStatus = (order['payment_status'] ?? '').toString();
+      final status = (order['status'] ?? '').toString();
+      return paymentMethod == 'izipay' &&
+          (paymentStatus == 'pending' || paymentStatus == 'rejected') &&
+          status != 'cancelled';
+    }).toList();
+    if (pending.isEmpty || !mounted) return;
+    _pendingPaymentNoticeShown = true;
+    final tracking = (pending.first['tracking_code'] ?? '').toString();
+    await showStoreAlertDialog(
+      context,
+      title: 'Tienes un pedido sin completar',
+      message:
+          'Tu pedido con pago pendiente${tracking.isNotEmpty ? ' ($tracking)' : ''} '
+          'quedo guardado en Mis pedidos. Ahi puedes cambiarlo, cancelarlo o '
+          'continuar el pago.',
+      icon: Icons.receipt_long_rounded,
+      buttonLabel: 'Ahora no',
+      secondaryLabel: 'Ver Mis pedidos',
+      onSecondary: () => AppShellController.instance.goTo(3),
+    );
   }
 
   void _handleTabChange() {

@@ -652,7 +652,21 @@ class OrderController extends Controller
     {
         $deletedTrackingCode = $order->tracking_code;
 
-        $order->delete();
+        DB::transaction(function () use ($order, $request): void {
+            // Repone el stock igual que una cancelacion antes de borrar, para
+            // que un pedido eliminado por el admin no deje el stock
+            // descontado para siempre (el descuento ocurre al crear el
+            // pedido, sin importar si el pago se llego a confirmar).
+            $fresh = Order::query()->lockForUpdate()->findOrFail($order->id);
+            $fresh->load('items');
+            $this->syncInventoryForStatusTransition(
+                order: $fresh,
+                previousStatus: (string) $fresh->status,
+                nextStatus: Order::STATUS_CANCELLED,
+                actor: $request->user(),
+            );
+            $fresh->delete();
+        });
 
         return response()->json([
             'message' => 'Pedido eliminado',

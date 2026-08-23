@@ -124,6 +124,8 @@
     </style>
     <h1 class="title">Mis pedidos y seguimiento</h1>
 
+    <section id="pendingOrderBox" class="panel" style="display:none;"></section>
+
     <section class="panel">
         <p style="margin-top:0; font-size:14px; color:#6a3a1a;">
             Aqui siempre veras tus pedidos y codigos de seguimiento, incluso si sales del carrito.
@@ -189,6 +191,85 @@ function saveLastStatuses(map) {
 }
 
 function getToken() { return localStorage.getItem('ed_token'); }
+function isLoggedIn() { return Boolean(getToken()); }
+const pendingOrderBox = document.getElementById('pendingOrderBox');
+
+async function openIzipayCheckout(orderId) {
+    const token = getToken();
+    const res = await fetch(`/api/v1/orders/${orderId}/payments/izipay-checkout`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'No se pudo iniciar Izipay.');
+    const checkoutUrl = data.payment_url;
+    if (!checkoutUrl) throw new Error('Izipay aun no esta configurado en el servidor.');
+    window.location.href = checkoutUrl;
+}
+
+async function checkPendingIzipayOrder() {
+    const raw = localStorage.getItem('ed_pending_izipay_order');
+    if (!raw || !isLoggedIn()) { pendingOrderBox.style.display = 'none'; return; }
+    let pending;
+    try { pending = JSON.parse(raw); } catch { localStorage.removeItem('ed_pending_izipay_order'); return; }
+    if (!pending?.id) { localStorage.removeItem('ed_pending_izipay_order'); return; }
+    try {
+        const res = await fetch(`/api/v1/orders/${pending.id}`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (!res.ok) {
+            localStorage.removeItem('ed_pending_izipay_order');
+            localStorage.setItem('ed_cart', '[]');
+            return;
+        }
+        const order = await res.json();
+        const paymentStatus = String(order.payment_status || 'pending');
+        if (paymentStatus === 'verified') {
+            localStorage.removeItem('ed_pending_izipay_order');
+            localStorage.setItem('ed_cart', '[]');
+            return;
+        }
+        if (String(order.status) !== 'pending' || !['pending', 'rejected'].includes(paymentStatus)) {
+            localStorage.removeItem('ed_pending_izipay_order');
+            localStorage.setItem('ed_cart', '[]');
+            return;
+        }
+        showPendingOrderBox(pending);
+    } catch {
+        // Fallo de red pasajero: se vuelve a revisar la proxima vez que cargue la pagina.
+    }
+}
+
+function showPendingOrderBox(pending) {
+    pendingOrderBox.style.display = 'block';
+    pendingOrderBox.innerHTML = `<strong>Tienes un pago pendiente: ${pending.tracking}</strong><p style="margin:6px 0 12px;">Empezaste un pago con tarjeta que no se completo. Puedes continuarlo o cancelarlo; si lo cancelas, tu carrito se vaciara.</p><div style="display:flex;gap:10px;"><button type="button" class="btn-main" id="pendingOrderContinueBtn" style="flex:1;">Continuar pago</button><button type="button" class="pill-btn" id="pendingOrderCancelBtn" style="flex:1;">Cancelar pedido</button></div>`;
+    document.getElementById('pendingOrderContinueBtn').addEventListener('click', async () => {
+        try {
+            localStorage.setItem('ed_pending_izipay_order', JSON.stringify(pending));
+            await openIzipayCheckout(pending.id);
+        } catch (error) {
+            showStoreAlert('No se pudo continuar', error.message || 'Intenta de nuevo en unos segundos.');
+        }
+    });
+    document.getElementById('pendingOrderCancelBtn').addEventListener('click', async () => {
+        const confirmed = await showStoreConfirm('Cancelar pedido', 'Si cancelas, este pedido no se guardara como compra y tu carrito se vaciara. ¿Deseas continuar?', 'Si, cancelar', 'Volver');
+        if (!confirmed) return;
+        try {
+            const res = await fetch(`/api/v1/orders/${pending.id}/cancel-unpaid`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                showStoreAlert('No se pudo cancelar', data.message || 'Puede que el pago ya se haya confirmado; revisa Mis pedidos.');
+                await checkPendingIzipayOrder();
+                return;
+            }
+        } catch {
+            showStoreAlert('No se pudo cancelar', 'Revisa tu conexion e intenta de nuevo.');
+            return;
+        }
+        localStorage.removeItem('ed_pending_izipay_order');
+        localStorage.setItem('ed_cart', '[]');
+        pendingOrderBox.style.display = 'none';
+        pendingOrderBox.innerHTML = '';
+        fetchMyOrders();
+    });
+}
 function statusEs(code) { return STATUS_ES[code] || code || 'n/a'; }
 function paymentStatusEs(code) { return PAYMENT_STATUS_ES[code] || code || 'n/a'; }
 function paymentMethodEs(code) { return String(code || '').toLowerCase() === 'izipay' ? 'Pago con tarjeta' : String(code || '').toLowerCase() === 'yape' ? 'Yape' : String(code || '').toLowerCase() === 'cod' ? 'Pago contraentrega' : code || 'n/a'; }
@@ -319,6 +400,8 @@ window.addEventListener('ed:order-status-updated', () => {
 });
 fetchMyOrders();
 loadPreferences();
+checkPendingIzipayOrder();
 setInterval(fetchMyOrders, 45000);
+setInterval(checkPendingIzipayOrder, 45000);
 </script>
 @endsection

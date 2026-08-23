@@ -749,6 +749,9 @@ class _PaymentPageState extends State<PaymentPage> {
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(9),
                   ],
+                  helperText:
+                      'Usa un numero real y activo: el repartidor te '
+                      'llamara para coordinar la entrega.',
                 ),
                 const SizedBox(height: 10),
                 _field(_customerEmailCtrl, 'Correo (opcional)'),
@@ -1055,10 +1058,11 @@ class _PaymentPageState extends State<PaymentPage> {
     String label, {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
+    String? helperText,
   }) {
     return TextField(
       controller: controller,
-      decoration: _decor(label),
+      decoration: _decor(label, helperText: helperText),
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
     );
@@ -1280,9 +1284,11 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  InputDecoration _decor(String label) {
+  InputDecoration _decor(String label, {String? helperText}) {
     return InputDecoration(
       labelText: label,
+      helperText: helperText,
+      helperMaxLines: 2,
       filled: true,
       fillColor: StoreTheme.surface,
     );
