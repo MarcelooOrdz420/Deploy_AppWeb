@@ -459,7 +459,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
     }
 
     final sections = _parseChatSections(msg.text);
-    if (sections.length == 1 && sections.first.title == null) {
+    if (sections.isEmpty) {
       return Text(msg.text, style: baseStyle);
     }
 
@@ -494,7 +494,13 @@ class _ChatBotPageState extends State<ChatBotPage> {
                 for (final line in section.lines)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 3),
-                    child: Text(line, style: baseStyle),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('•  ', style: baseStyle),
+                        Expanded(child: Text(line, style: baseStyle)),
+                      ],
+                    ),
                   ),
               ],
             ),
@@ -910,37 +916,55 @@ class _ChatSection {
   final List<String> lines;
 }
 
+const List<String> _chatBulletMarkers = ['- ', '• ', '* ', '· '];
+
+String? _stripBulletMarker(String line) {
+  final trimmed = line.trim();
+  for (final marker in _chatBulletMarkers) {
+    if (trimmed.startsWith(marker)) return trimmed.substring(marker.length).trim();
+  }
+  return null;
+}
+
+/// El modelo no siempre respeta al pie de la letra el formato "## "/"- " que
+/// le pedimos en el prompt, pero cuando arma una lista (productos, estado de
+/// pedido) casi siempre agrupa con una linea de titulo seguida de lineas con
+/// alguna vinieta ("-", "•", "*"). Detectamos ese patron en vez de depender
+/// de un marcador exacto, para que las cajas se vean sin importar el estilo
+/// exacto de la respuesta.
+/// Devuelve una lista vacia cuando el mensaje no parece una lista (charla
+/// normal): en ese caso el llamador debe mostrar el texto plano de siempre.
 List<_ChatSection> _parseChatSections(String text) {
-  final rawLines = text.split('\n');
+  final rawLines = text.split('\n').map((l) => l.trim()).toList();
+  final bulletCount = rawLines.where((l) => _stripBulletMarker(l) != null).length;
+  if (bulletCount < 2) {
+    return const [];
+  }
+
   final sections = <_ChatSection>[];
   String? currentTitle;
   var currentLines = <String>[];
 
   void flush() {
-    final cleaned = currentLines
-        .map((l) => l.trim())
-        .where((l) => l.isNotEmpty)
-        .toList();
-    if (currentTitle != null || cleaned.isNotEmpty) {
-      sections.add(_ChatSection(title: currentTitle, lines: cleaned));
+    if (currentTitle != null || currentLines.isNotEmpty) {
+      sections.add(_ChatSection(title: currentTitle, lines: currentLines));
     }
   }
 
-  for (final raw in rawLines) {
-    final line = raw.trimRight();
-    if (line.trimLeft().startsWith('## ')) {
-      flush();
-      currentTitle = line.trimLeft().substring(3).trim();
-      currentLines = [];
-    } else {
-      currentLines.add(line);
+  for (final line in rawLines) {
+    if (line.isEmpty) continue;
+    final bulletText = _stripBulletMarker(line);
+    if (bulletText != null) {
+      currentLines.add(bulletText);
+      continue;
     }
+    // Linea sin vinieta: es el titulo de una nueva seccion (p.ej. "## " o
+    // simplemente el nombre de la categoria en su propia linea).
+    flush();
+    currentTitle = line.startsWith('## ') ? line.substring(3).trim() : line;
+    currentLines = [];
   }
   flush();
-
-  if (sections.isEmpty) {
-    return [_ChatSection(title: null, lines: [text])];
-  }
   return sections;
 }
 
