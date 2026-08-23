@@ -803,6 +803,14 @@ class OrderController extends Controller
 
         if ($request->filled('payment_status')) {
             $query->where('payment_status', $request->string('payment_status')->toString());
+        } else {
+            // Un pedido con tarjeta sin confirmar todavia no es una venta real:
+            // se oculta de la lista por defecto hasta que el pago se verifique.
+            // Contraentrega siempre se muestra de inmediato.
+            $query->where(function ($q) {
+                $q->where('payment_method', '!=', 'izipay')
+                    ->orWhere('payment_status', 'verified');
+            });
         }
 
         if ($request->filled('payment_method')) {

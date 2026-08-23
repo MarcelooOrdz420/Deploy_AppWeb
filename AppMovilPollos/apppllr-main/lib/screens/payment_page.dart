@@ -618,19 +618,36 @@ class _PaymentPageState extends State<PaymentPage> {
     required String checkoutUrl,
     required String paymentMethod,
   }) async {
-    return await showDialog<String>(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => _PaymentStatusDialog(
-            orderApiService: _orderApiService,
-            token: token,
-            orderId: orderId,
-            trackingCode: trackingCode,
-            checkoutUrl: checkoutUrl,
-            paymentMethod: paymentMethod,
-          ),
-        ) ??
-        'abandoned';
+    final result = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _PaymentStatusDialog(
+        orderApiService: _orderApiService,
+        token: token,
+        orderId: orderId,
+        trackingCode: trackingCode,
+        checkoutUrl: checkoutUrl,
+        paymentMethod: paymentMethod,
+      ),
+    );
+    if (result != null) return result;
+
+    // El dialogo se cerro sin una respuesta explicita: por ejemplo, el
+    // enlace "Volver a la app" de la pagina de resultado de Izipay navega
+    // directo a Mis pedidos y eso saca este dialogo de la pila desde
+    // afuera. Antes de asumir que el cliente abandono el pago, confirmamos
+    // el estado real en el servidor para no cancelar un pedido ya pagado.
+    try {
+      final order = await _orderApiService.getOrder(
+        token: token,
+        orderId: orderId,
+      );
+      final status = (order['payment_status'] ?? 'pending').toString();
+      if (status == 'verified') return 'verified';
+    } catch (_) {
+      // Si la verificacion falla, seguimos y asumimos abandono como antes.
+    }
+    return 'abandoned';
   }
 
   Future<bool> _openIzipay(String checkoutUrl) {

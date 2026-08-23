@@ -2411,7 +2411,13 @@ async function fetchOrders() {
     ordersList.querySelectorAll('[data-fill]').forEach(btn => {
         btn.addEventListener('click', () => {
             const orderId = btn.getAttribute('data-fill');
+            const order = orders.find(item => item.id === Number(orderId));
             statusForm.order_id.value = orderId;
+            // Siempre se parte del estado real de ESTE pedido y una nota
+            // vacia, para no arrastrar la seleccion o nota que haya quedado
+            // de haber editado otro pedido antes y confundir al admin.
+            statusForm.status.value = order ? order.status : 'pending';
+            statusForm.note.value = '';
             statusMsg.textContent = `Pedido ID ${orderId} seleccionado`;
             orderActionPanelPreview.style.display = 'none';
             orderActionPanelStatus.style.display = '';
@@ -2918,6 +2924,7 @@ async function updateOrderStatus(e) {
         return;
     }
     statusMsg.textContent = `Estado actualizado a ${statusEs(data.status)}`;
+    statusForm.note.value = '';
     await fetchOrders();
 }
 

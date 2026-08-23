@@ -100,14 +100,15 @@ class ChatbotService
             'Responde en espanol, con tono amable, profesional y directo.',
             'Solo responde sobre productos, pedidos, pagos, delivery, horarios, ubicacion, contacto y uso de la app/web.',
             $orders
-                ? "El cliente esta logueado (correo: {$user?->email}) y estos son sus pedidos recientes:\n{$orders}\nUsa estos datos directamente para responder sobre el estado de su pedido. NO le pidas codigo de tracking ni correo: ya los tienes."
+                ? "El cliente esta logueado (correo: {$user?->email}) y estos son sus pedidos recientes:\n{$orders}\nUsa estos datos directamente para responder sobre el estado de su pedido. NO le pidas codigo de tracking ni correo: ya los tienes. Empieza esa parte de tu respuesta con una linea '## Pedido <codigo de tracking>' y debajo el estado, el pago y el total, cada dato en su propia linea empezando con '- '."
                 : 'Si falta informacion para revisar un pedido, pide 1 o 2 datos concretos, por ejemplo codigo de tracking o correo.',
             'Si hay un pedido temporal en contexto, no vuelvas a preguntar esos mismos productos o datos. Solo pide lo que falte.',
             'Si el usuario pide algo fuera del negocio, responde que no aplica y ofrece el contacto humano.',
             'No inventes precios, disponibilidad, horarios ni datos de pago: usa el contexto disponible.',
             'Nunca muestres cantidades de stock ni existencias exactas. Si un producto esta en el catalogo publico, solo puedes decir que esta disponible.',
             'No reveles ni solicites datos internos, administrativos, credenciales, tokens, claves, contrasenas, reportes internos, datos de clientes, direcciones privadas, DNI/RUC de clientes, correos privados ni configuracion del sistema.',
-            'Para consultas de productos usa solo el catalogo publico incluido en este contexto. Formatea la lista de productos agrupada por categoria, con guiones y saltos de linea claros entre categorias, para que sea facil de leer (no la pegues toda en un solo bloque).',
+            'Para consultas de productos usa solo el catalogo publico incluido en este contexto. Usa SIEMPRE este formato exacto: por cada categoria, una linea que empiece con "## " seguida del nombre de la categoria, y debajo cada producto en su propia linea empezando con "- ", con el nombre y el precio (ejemplo: "- Pollo entero - S/ 45.00"). No mezcles productos de categorias distintas en el mismo bloque.',
+            'No uses markdown de negrita ni asteriscos (nunca **texto**), ni emojis. Las unicas marcas que puedes usar son "## " para un titulo de seccion y "- " para un dato o producto en una lista, siempre al inicio de la linea.',
             "Horario: {$hours}.",
             "Soporte: {$supportPhone} / {$supportEmail}.",
             $payments ? "Medios de pago y datos utiles:\n{$payments}" : null,

@@ -388,20 +388,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
                           ? CrossAxisAlignment.end
                           : CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          msg.text,
-                          style: TextStyle(
-                            color: isUser
-                                ? Colors.white
-                                : (msg.isTyping
-                                      ? Colors.black45
-                                      : Colors.black87),
-                            height: 1.35,
-                            fontStyle: msg.isTyping
-                                ? FontStyle.italic
-                                : FontStyle.normal,
-                          ),
-                        ),
+                        _buildMessageBody(msg, isUser),
                         if (!isUser && msg.suggestions.isNotEmpty) ...[
                           const SizedBox(height: 10),
                           Wrap(
@@ -454,6 +441,65 @@ class _ChatBotPageState extends State<ChatBotPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMessageBody(_ChatMessage msg, bool isUser) {
+    final baseColor = isUser
+        ? Colors.white
+        : (msg.isTyping ? Colors.black45 : Colors.black87);
+    final baseStyle = TextStyle(
+      color: baseColor,
+      height: 1.35,
+      fontStyle: msg.isTyping ? FontStyle.italic : FontStyle.normal,
+    );
+
+    if (isUser || msg.isTyping) {
+      return Text(msg.text, style: baseStyle);
+    }
+
+    final sections = _parseChatSections(msg.text);
+    if (sections.length == 1 && sections.first.title == null) {
+      return Text(msg.text, style: baseStyle);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final section in sections)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: StoreTheme.creamStrong,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: StoreTheme.borderLight),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (section.title != null) ...[
+                  Text(
+                    section.title!,
+                    style: const TextStyle(
+                      color: StoreTheme.orangeDark,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12.5,
+                      letterSpacing: .2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                ],
+                for (final line in section.lines)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Text(line, style: baseStyle),
+                  ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
@@ -855,6 +901,47 @@ class _GuidedPurchaseSheetState extends State<_GuidedPurchaseSheet> {
       },
     ),
   );
+}
+
+class _ChatSection {
+  const _ChatSection({this.title, required this.lines});
+
+  final String? title;
+  final List<String> lines;
+}
+
+List<_ChatSection> _parseChatSections(String text) {
+  final rawLines = text.split('\n');
+  final sections = <_ChatSection>[];
+  String? currentTitle;
+  var currentLines = <String>[];
+
+  void flush() {
+    final cleaned = currentLines
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+    if (currentTitle != null || cleaned.isNotEmpty) {
+      sections.add(_ChatSection(title: currentTitle, lines: cleaned));
+    }
+  }
+
+  for (final raw in rawLines) {
+    final line = raw.trimRight();
+    if (line.trimLeft().startsWith('## ')) {
+      flush();
+      currentTitle = line.trimLeft().substring(3).trim();
+      currentLines = [];
+    } else {
+      currentLines.add(line);
+    }
+  }
+  flush();
+
+  if (sections.isEmpty) {
+    return [_ChatSection(title: null, lines: [text])];
+  }
+  return sections;
 }
 
 enum _ChatRole { user, bot }
