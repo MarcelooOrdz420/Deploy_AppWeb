@@ -421,15 +421,22 @@ async function showLastOrder(){
     let info;
     try{info=JSON.parse(raw)}catch{info={id:null,tracking:raw}}
     if(!info?.tracking)return;
-    if(info.id&&isLoggedIn()){
-        try{
-            const res=await fetch(`/api/v1/orders/${info.id}`,{headers:{'Authorization':`Bearer ${getToken()}`}});
-            if(!res.ok){localStorage.removeItem('ed_last_tracking');return}
-            const order=await res.json();
-            if(String(order.status)==='cancelled'){localStorage.removeItem('ed_last_tracking');return}
-        }catch{
-            // Fallo de red pasajero: se muestra el ultimo dato conocido igual.
+    // Siempre se verifica el estado real antes de mostrar el aviso: si el
+    // admin borro o cancelo el pedido, no debe seguir apareciendo aqui. Si
+    // no se puede verificar (red caida, sesion vencida, etc.) se prefiere
+    // ocultarlo antes que arriesgarse a mostrar un pedido ya inexistente.
+    try{
+        let res;
+        if(info.id&&isLoggedIn()){
+            res=await fetch(`/api/v1/orders/${info.id}`,{headers:{'Authorization':`Bearer ${getToken()}`}});
+        }else{
+            res=await fetch(`/api/v1/orders/track/${encodeURIComponent(info.tracking)}`);
         }
+        if(!res.ok){localStorage.removeItem('ed_last_tracking');return}
+        const order=await res.json();
+        if(String(order.status)==='cancelled'){localStorage.removeItem('ed_last_tracking');return}
+    }catch{
+        return;
     }
     lastOrderBox.style.display='block';
     lastOrderBox.innerHTML=`<strong>Ultimo pedido: ${info.tracking}</strong><p>Tu ultimo codigo queda guardado para que puedas volver a seguirlo sin buscarlo otra vez.</p><a href="/mis-pedidos">Ver seguimiento en Mis pedidos</a>`;
