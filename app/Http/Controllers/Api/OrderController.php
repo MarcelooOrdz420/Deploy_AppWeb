@@ -280,11 +280,15 @@ class OrderController extends Controller
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         if (Schema::hasColumn('orders', 'checkout_fingerprint')) {
+            // Ventana corta: solo debe atrapar un doble-toque o un reintento
+            // de red del mismo envio, no bloquear una segunda compra real
+            // con el mismo carrito que el cliente arma a proposito poco
+            // despues (por ejemplo, pedir lo mismo de nuevo para otra mesa).
             $recentDuplicate = Order::query()
                 ->with(['items', 'statusHistory'])
                 ->where('user_id', $request->user()->id)
                 ->where('checkout_fingerprint', $checkoutFingerprint)
-                ->where('created_at', '>=', now()->subSeconds(90))
+                ->where('created_at', '>=', now()->subSeconds(8))
                 ->latest('id')
                 ->first();
 

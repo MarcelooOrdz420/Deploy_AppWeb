@@ -58,6 +58,8 @@ class _PaymentPageState extends State<PaymentPage> {
       'Activa boleta o factura para identificar al cliente antes de pagar.';
   String _lastLookupValue = '';
   Map<String, dynamic>? _billingMetadata;
+  String _accountEmail = '';
+  String _receiptDelivery = 'registered_email';
   bool _submitting = false;
   late final String _idempotencyKey =
       'mobile-${DateTime.now().microsecondsSinceEpoch}-${identityHashCode(this)}';
@@ -142,6 +144,8 @@ class _PaymentPageState extends State<PaymentPage> {
       final email = await _sessionService.getUserEmail();
       if (email.trim().isNotEmpty) {
         _customerEmailCtrl.text = email;
+        _accountEmail = email.trim();
+        _syncBillingEmailForReceiptType();
       }
       if (mounted) setState(() {});
     });
@@ -278,7 +282,6 @@ class _PaymentPageState extends State<PaymentPage> {
         _billingDocumentType = '';
         _billingNumberCtrl.clear();
         _billingNameCtrl.clear();
-        _billingEmailCtrl.clear();
         _billingAddressCtrl.clear();
         _billingMetadata = null;
       } else {
@@ -289,6 +292,7 @@ class _PaymentPageState extends State<PaymentPage> {
         _billingNameCtrl.clear();
         _billingAddressCtrl.clear();
         _billingMetadata = null;
+        _receiptDelivery = 'registered_email';
         _lookupMessage = _receiptType == ReceiptType.factura
             ? 'Ingresa el RUC del cliente y consultamos la razon social.'
             : 'Ingresa el DNI del cliente y lo identificamos automaticamente.';
@@ -298,6 +302,34 @@ class _PaymentPageState extends State<PaymentPage> {
             'Activa boleta o factura para identificar al cliente antes de pagar.';
       }
       _lastLookupValue = '';
+      _syncBillingEmailForReceiptType();
+    });
+  }
+
+  // Mismo criterio que la web: en boleta el comprobante siempre va al correo
+  // de la cuenta (sin campo editable para evitar que quede vacio o mal
+  // escrito); en factura se puede elegir entre el correo de la cuenta u
+  // otro, y solo ahi se habilita el campo de texto libre.
+  void _syncBillingEmailForReceiptType() {
+    if (_receiptType == ReceiptType.none) {
+      _billingEmailCtrl.clear();
+      return;
+    }
+    if (_receiptType == ReceiptType.boleta) {
+      _billingEmailCtrl.text = _accountEmail;
+      return;
+    }
+    if (_receiptDelivery == 'registered_email') {
+      _billingEmailCtrl.text = _accountEmail;
+    } else if (_billingEmailCtrl.text == _accountEmail) {
+      _billingEmailCtrl.clear();
+    }
+  }
+
+  void _onReceiptDeliveryChanged(String value) {
+    setState(() {
+      _receiptDelivery = value;
+      _syncBillingEmailForReceiptType();
     });
   }
 
@@ -1274,11 +1306,43 @@ class _PaymentPageState extends State<PaymentPage> {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _billingEmailCtrl,
-            keyboardType: TextInputType.emailAddress,
-            decoration: _decor('Correo para enviar comprobante'),
+          Text(
+            'Entrega del comprobante',
+            style: Theme.of(context).textTheme.labelLarge,
           ),
+          const SizedBox(height: 6),
+          if (_receiptType != ReceiptType.factura)
+            Text(
+              _accountEmail.isEmpty
+                  ? 'Se enviara automaticamente a tu correo asociado.'
+                  : 'Se enviara automaticamente a tu correo asociado: $_accountEmail',
+              style: const TextStyle(fontSize: 13, color: Colors.black54),
+            )
+          else ...[
+            Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('A mi correo registrado'),
+                  selected: _receiptDelivery == 'registered_email',
+                  onSelected: (_) =>
+                      _onReceiptDeliveryChanged('registered_email'),
+                ),
+                ChoiceChip(
+                  label: const Text('A otro correo'),
+                  selected: _receiptDelivery == 'other_email',
+                  onSelected: (_) => _onReceiptDeliveryChanged('other_email'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _billingEmailCtrl,
+              readOnly: _receiptDelivery == 'registered_email',
+              keyboardType: TextInputType.emailAddress,
+              decoration: _decor('Correo destino'),
+            ),
+          ],
         ],
       ],
     );
