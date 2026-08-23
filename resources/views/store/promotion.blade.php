@@ -4,10 +4,10 @@
 
 @section('content')
 <style>
-    .promo-detail { display:grid; grid-template-columns:minmax(0,1fr) minmax(320px,.8fr); overflow:hidden; padding:0!important; background:#fff!important; color:#25170f!important; }
-    .promo-detail-media { min-height:480px; background:#ffe3cc; }
-    .promo-detail-media img { width:100%; height:100%; min-height:480px; object-fit:cover; display:block; }
-    .promo-detail-copy { display:grid; align-content:center; gap:16px; padding:clamp(24px,5vw,60px); }
+    .promo-detail { display:grid; grid-template-columns:minmax(0,1fr) minmax(320px,.8fr); overflow:hidden; padding:0!important; background:#fff!important; color:#25170f!important; max-height:460px; }
+    .promo-detail-media { position:relative; height:460px; max-height:460px; background:#ffe3cc; overflow:hidden; }
+    .promo-detail-media img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+    .promo-detail-copy { display:flex; flex-direction:column; justify-content:center; gap:16px; padding:clamp(24px,5vw,60px); max-height:460px; overflow-y:auto; }
     .promo-detail-copy h1 { margin:0; color:#25170f!important; font-size:clamp(34px,5vw,62px); line-height:.95; }
     .promo-detail-copy p { margin:0; color:#68432e!important; line-height:1.6; }
     .promo-prices { display:flex; align-items:end; gap:14px; flex-wrap:wrap; }
@@ -19,7 +19,7 @@
     .promo-detail-actions .primary { background:#ff7417; color:#fff; }
     #promoDetailMessage { color:#8d3509; font-weight:800; }
     .promo-expired-badge { background:#6b2a0b; }
-    @media(max-width:760px){.promo-detail{grid-template-columns:1fr}.promo-detail-media,.promo-detail-media img{min-height:280px;max-height:390px}.promo-detail-copy{padding:24px 18px}}
+    @media(max-width:760px){.promo-detail{grid-template-columns:1fr; max-height:none;}.promo-detail-media{height:260px; max-height:260px;}.promo-detail-copy{padding:24px 18px; max-height:none;}}
 </style>
 <section class="panel promo-detail">
     <div class="promo-detail-media"><img src="{{ $promotionImageUrl }}" onerror="this.onerror=null;this.src='/images/products/default.svg'" alt="{{ $offer->title }}" style="{{ $expired ? 'filter:grayscale(.6);opacity:.7;' : '' }}"></div>
