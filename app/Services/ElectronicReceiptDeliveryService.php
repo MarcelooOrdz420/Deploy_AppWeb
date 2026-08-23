@@ -154,7 +154,7 @@ class ElectronicReceiptDeliveryService
         return trim((string) ($order->billing_email ?: $order->customer_email ?: $order->user?->email));
     }
 
-    private function providerPdfUrl(Order $order): string
+    public function providerPdfUrl(Order $order): string
     {
         foreach (['enlace_del_pdf', 'pdf', 'pdf_url', 'links.pdf', 'linkPdf'] as $key) {
             $value = trim((string) data_get($order->billing_metadata, 'einvoice.response.'.$key, ''));
@@ -166,7 +166,7 @@ class ElectronicReceiptDeliveryService
         return '';
     }
 
-    private function downloadOfficialPdf(string $url): string
+    public function downloadOfficialPdf(string $url): string
     {
         try {
             $response = Http::timeout(20)->accept('application/pdf')->get($url);

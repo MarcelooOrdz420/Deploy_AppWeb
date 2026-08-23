@@ -101,6 +101,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/admin/orders/{order}/einvoice/preview', [EInvoiceController::class, 'preview']);
             Route::post('/admin/orders/{order}/einvoice/send', [EInvoiceController::class, 'send']);
             Route::post('/admin/orders/{order}/einvoice/send-customer-copy', [EInvoiceController::class, 'sendCustomerCopy']);
+            Route::get('/admin/orders/{order}/einvoice/official-pdf', [EInvoiceController::class, 'downloadOfficialPdf']);
             Route::patch('/admin/orders/{order}/status', [OrderController::class, 'updateStatus']);
             Route::delete('/admin/orders/{order}', [OrderController::class, 'destroy']);
 

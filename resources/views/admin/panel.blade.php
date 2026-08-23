@@ -1433,8 +1433,10 @@
                 <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
                     <button type="button" id="manualSaleDownloadBtn">Descargar comprobante simple</button>
                     <button type="button" id="manualSaleSendEinvoiceBtn" style="display:none;">Emitir comprobante SUNAT</button>
+                    <button type="button" id="manualSaleDownloadOfficialBtn" style="display:none;">Descargar comprobante oficial (SUNAT)</button>
                     <button type="button" id="manualSaleSendEmailBtn" style="display:none;">Enviar por correo</button>
                 </div>
+                <div id="manualSaleOfficialHint" class="helper-text" style="display:none; margin-top:6px;">Este es el documento real emitido con Nubefact. Descargalo para entregarlo en persona.</div>
             </div>
         </section>
 
@@ -2712,14 +2714,16 @@ async function sendEinvoice(orderId, button = null) {
         const data = await res.json();
         if (!res.ok) {
             orderActionsMsg.textContent = data.message || 'No se pudo emitir comprobante SUNAT.';
-            return;
+            return null;
         }
         orderActionsMsg.textContent = data.already_sent
             ? `El pedido ${orderId} ya tenia comprobante emitido.`
             : `Comprobante electronico enviado para pedido ${orderId}.`;
         await fetchOrders();
+        return data;
     } catch {
         orderActionsMsg.textContent = 'No se pudo conectar con el servicio de comprobantes.';
+        return null;
     } finally {
         if (button?.isConnected) {
             button.disabled = false;
@@ -3373,6 +3377,8 @@ const manualSaleResult = document.getElementById('manualSaleResult');
 const manualSaleResultInfo = document.getElementById('manualSaleResultInfo');
 const manualSaleDownloadBtn = document.getElementById('manualSaleDownloadBtn');
 const manualSaleSendEinvoiceBtn = document.getElementById('manualSaleSendEinvoiceBtn');
+const manualSaleDownloadOfficialBtn = document.getElementById('manualSaleDownloadOfficialBtn');
+const manualSaleOfficialHint = document.getElementById('manualSaleOfficialHint');
 const manualSaleSendEmailBtn = document.getElementById('manualSaleSendEmailBtn');
 
 let manualSaleItems = [];
@@ -3526,6 +3532,8 @@ manualSaleSubmitBtn?.addEventListener('click', async () => {
         manualSaleResult.style.display = 'block';
         manualSaleSendEinvoiceBtn.style.display = needsDocument ? 'inline-block' : 'none';
         manualSaleSendEmailBtn.style.display = (needsDocument && deliveryMode === 'correo') ? 'inline-block' : 'none';
+        manualSaleDownloadOfficialBtn.style.display = 'none';
+        manualSaleOfficialHint.style.display = 'none';
         manualSaleItems = [];
         manualSaleCustomerName.value = '';
         manualSaleNote.value = '';
@@ -3564,8 +3572,36 @@ manualSaleDownloadBtn?.addEventListener('click', async () => {
     URL.revokeObjectURL(url);
 });
 
-manualSaleSendEinvoiceBtn?.addEventListener('click', () => {
-    if (manualSaleLastOrderId) sendEinvoice(manualSaleLastOrderId, manualSaleSendEinvoiceBtn);
+manualSaleSendEinvoiceBtn?.addEventListener('click', async () => {
+    if (!manualSaleLastOrderId) return;
+    const result = await sendEinvoice(manualSaleLastOrderId, manualSaleSendEinvoiceBtn);
+    if (result) {
+        manualSaleDownloadOfficialBtn.style.display = 'inline-block';
+        manualSaleOfficialHint.style.display = 'block';
+    }
+});
+manualSaleDownloadOfficialBtn?.addEventListener('click', async () => {
+    if (!manualSaleLastOrderId) return;
+    const token = getToken();
+    manualSaleMsg.textContent = 'Descargando comprobante oficial...';
+    const res = await fetch(`/api/v1/admin/orders/${manualSaleLastOrderId}/einvoice/official-pdf`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        manualSaleMsg.textContent = data.message || 'No se pudo descargar el comprobante oficial.';
+        return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `comprobante-oficial-${manualSaleLastOrderId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    manualSaleMsg.textContent = 'Comprobante oficial descargado.';
 });
 manualSaleSendEmailBtn?.addEventListener('click', () => {
     if (manualSaleLastOrderId) sendEinvoiceEmail(manualSaleLastOrderId);

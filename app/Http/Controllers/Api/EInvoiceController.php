@@ -59,4 +59,38 @@ class EInvoiceController extends Controller
             return response()->json(['message' => $exception->getMessage()], 422);
         }
     }
+
+    /**
+     * Descarga el PDF oficial que devuelve Nubefact al emitir (el mismo
+     * documento que se adjunta cuando se envia por correo), para entregarlo
+     * en persona cuando la venta no tiene un correo de cliente registrado.
+     */
+    public function downloadOfficialPdf(
+        Request $request,
+        Order $order,
+        ElectronicReceiptDeliveryService $deliveryService
+    ) {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        $pdfUrl = $deliveryService->providerPdfUrl($order);
+        if ($pdfUrl === '') {
+            return response()->json(['message' => 'Este pedido todavia no tiene un comprobante emitido con Nubefact. Usa "Emitir comprobante SUNAT" primero.'], 422);
+        }
+
+        try {
+            $content = $deliveryService->downloadOfficialPdf($pdfUrl);
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
+        $type = $order->billing_receipt_type === 'factura' ? 'factura' : 'boleta';
+        $filename = $type.'-oficial-'.($order->tracking_code ?: $order->id).'.pdf';
+
+        return response($content, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
 }
