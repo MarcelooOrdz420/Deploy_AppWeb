@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\MarketingOffer;
 use App\Models\Product;
 use App\Services\InventoryMovementService;
+use App\Services\PromotionImageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(PromotionImageService $imageService): JsonResponse
     {
         $products = Product::query()
             ->where('is_available', true)
@@ -20,7 +22,11 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        return response()->json($products->map(fn (Product $product): array => $this->publicProductPayload($product))->values());
+        $offers = $this->activeOffersByProductId();
+
+        return response()->json($products->map(
+            fn (Product $product): array => $this->publicProductPayload($product, $offers->get($product->id), $imageService)
+        )->values());
     }
 
     public function adminIndex(): JsonResponse
@@ -33,9 +39,36 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
-    public function show(Product $product): JsonResponse
+    public function show(Product $product, PromotionImageService $imageService): JsonResponse
     {
-        return response()->json($this->publicProductPayload($product));
+        $offer = $this->activeOffersByProductId($product->id)->get($product->id);
+
+        return response()->json($this->publicProductPayload($product, $offer, $imageService));
+    }
+
+    /**
+     * Promociones vigentes ahora mismo (respeta is_active y la ventana de
+     * horario), indexadas por product_id, para que el catalogo/detalle
+     * publico siempre muestre el precio con descuento donde sea que el
+     * producto aparezca, sin depender de la caja destacada de promociones.
+     */
+    private function activeOffersByProductId(?int $onlyProductId = null): \Illuminate\Support\Collection
+    {
+        $query = MarketingOffer::query()
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+            })
+            ->orderByRaw('ends_at IS NULL, ends_at ASC');
+
+        if ($onlyProductId !== null) {
+            $query->where('product_id', $onlyProductId);
+        }
+
+        return $query->get()->unique('product_id')->keyBy('product_id');
     }
 
     public function store(Request $request): JsonResponse
@@ -129,7 +162,7 @@ class ProductController extends Controller
         return $fallback;
     }
 
-    private function publicProductPayload(Product $product): array
+    private function publicProductPayload(Product $product, ?MarketingOffer $offer = null, ?PromotionImageService $imageService = null): array
     {
         return [
             'id' => $product->id,
@@ -142,6 +175,11 @@ class ProductController extends Controller
             'is_sold_out' => $product->is_sold_out,
             'can_sell' => $product->can_sell,
             'availability_label' => $product->availability_label,
+            'promotion_id' => $offer?->id,
+            'promo_price' => $offer ? (float) $offer->promo_price : null,
+            'discount_percent' => $offer ? (float) $offer->discount_percent : null,
+            'promotion_ends_at' => $offer?->ends_at?->toIso8601String(),
+            'promotion_image_url' => $offer && $imageService ? $imageService->resolve($offer->image_url, $product) : null,
         ];
     }
 }

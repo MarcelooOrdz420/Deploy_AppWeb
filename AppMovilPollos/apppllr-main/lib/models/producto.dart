@@ -9,6 +9,9 @@ class Producto {
   final String categoria;
   final double rating;
   final int stock;
+  final int? promotionId;
+  final double? promoPrice;
+  final double? discountPercent;
 
   Producto({
     required this.id,
@@ -19,7 +22,12 @@ class Producto {
     required this.categoria,
     this.rating = 4.5,
     this.stock = 10,
+    this.promotionId,
+    this.promoPrice,
+    this.discountPercent,
   });
+
+  bool get hasActivePromo => promotionId != null && promoPrice != null;
 
   factory Producto.fromJson(Map<String, dynamic> json) {
     final rawPrice = json['price'];
@@ -36,6 +44,9 @@ class Producto {
     final parsedStock = rawStock is num
         ? rawStock.toInt()
         : (rawSoldOut == true || rawCanSell == false ? 0 : 10);
+    final rawPromotionId = json['promotion_id'];
+    final rawPromoPrice = json['promo_price'];
+    final rawDiscountPercent = json['discount_percent'];
 
     return Producto(
       id: (json['id'] as num).toInt(),
@@ -46,6 +57,9 @@ class Producto {
       categoria: (json['category'] ?? json['categoria'] ?? 'pollos').toString(),
       rating: parsedRating,
       stock: parsedStock,
+      promotionId: rawPromotionId is num ? rawPromotionId.toInt() : null,
+      promoPrice: rawPromoPrice is num ? rawPromoPrice.toDouble() : null,
+      discountPercent: rawDiscountPercent is num ? rawDiscountPercent.toDouble() : null,
     );
   }
 

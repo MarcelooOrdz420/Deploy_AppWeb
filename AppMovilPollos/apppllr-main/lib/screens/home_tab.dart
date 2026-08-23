@@ -217,8 +217,19 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                             children: [
                               _pill(product.categoria),
                               const Spacer(),
+                              if (product.hasActivePromo) ...[
+                                Text(
+                                  'S/ ${product.price.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    color: StoreTheme.textMuted,
+                                    fontSize: 14,
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
                               Text(
-                                'S/ ${product.price.toStringAsFixed(2)}',
+                                'S/ ${(product.promoPrice ?? product.price).toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   color: StoreTheme.orangeDeep,
                                   fontSize: 26,
@@ -1044,8 +1055,17 @@ class _ProductCard extends StatelessWidget {
           const SizedBox(height: 8),
           HomeTabStateHelpers.categoryPill(product.categoria),
           const SizedBox(height: 8),
+          if (product.hasActivePromo)
+            Text(
+              'S/ ${product.price.toStringAsFixed(2)}',
+              style: const TextStyle(
+                color: StoreTheme.textMuted,
+                fontSize: 13,
+                decoration: TextDecoration.lineThrough,
+              ),
+            ),
           Text(
-            'S/ ${product.price.toStringAsFixed(2)}',
+            'S/ ${(product.promoPrice ?? product.price).toStringAsFixed(2)}',
             style: const TextStyle(
               color: StoreTheme.orangeDeep,
               fontSize: 24,

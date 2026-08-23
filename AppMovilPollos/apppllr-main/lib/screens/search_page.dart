@@ -110,13 +110,36 @@ class _SearchPageState extends State<SearchPage> {
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      subtitle: Text(
-                        'S/ ${p.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: StoreTheme.orangeDeep,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                      subtitle: p.hasActivePromo
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'S/ ${p.price.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    color: StoreTheme.textMuted,
+                                    decoration: TextDecoration.lineThrough,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'S/ ${p.promoPrice!.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    color: StoreTheme.orangeDeep,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              'S/ ${p.price.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: StoreTheme.orangeDeep,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                       trailing: IconButton(
                         icon: const Icon(
                           Icons.add_circle,

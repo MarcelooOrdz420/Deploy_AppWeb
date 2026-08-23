@@ -52,8 +52,41 @@ class _DetallesPageApiState extends State<DetallesPageApi> {
                 Text(p.name,
                     style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text('S/ ${p.price.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 20, color: Colors.orange)),
+                if (p.hasActivePromo)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'S/ ${p.price.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black45,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'S/ ${p.promoPrice!.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '-${p.discountPercent!.round()}%',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF74120D),
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Text('S/ ${p.price.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 20, color: Colors.orange)),
                 const SizedBox(height: 16),
                 Text(p.description,
                     style: const TextStyle(fontSize: 16, color: Colors.black87)),

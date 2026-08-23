@@ -238,6 +238,12 @@
             color: #6b2a0b;
         }
         .promo-box--empty .promo-box-badge { align-self: center; background: rgba(107,42,11,.1); border-color: rgba(107,42,11,.22); color: #6b2a0b; }
+        .promo-box--empty .promo-box-title,
+        .promo-box--empty .promo-box-subtitle,
+        .promo-box--empty .promo-box-detail,
+        .promo-box--empty .promo-box-prices,
+        .promo-box--empty .promo-box-timer { color: #6b2a0b; }
+        .promo-box--empty .promo-box-subtitle { opacity: .82; font-weight: 600; }
         @media (max-width: 620px) {
             .promo-box { flex-direction: column; min-height: 0; }
             .promo-box-media { flex-basis: 190px; }
@@ -786,6 +792,33 @@
             font-size: 30px;
             font-weight: 900;
             white-space: nowrap;
+        }
+
+        .product-price-old {
+            display: block;
+            color: #a08672;
+            text-decoration: line-through;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .product-image-wrap {
+            position: relative;
+        }
+
+        .product-promo-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 2;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: #74120d;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: .03em;
+            box-shadow: 0 8px 18px rgba(116, 18, 13, .3);
         }
 
         .product-description {
@@ -2183,7 +2216,10 @@ function showProduct(product) {
     document.getElementById('modalImage').alt = product.name || 'Producto';
     document.getElementById('modalName').textContent = product.name;
     document.getElementById('modalDesc').textContent = product.description || 'Sin descripcion.';
-    document.getElementById('modalPrice').textContent = `Precio: S/ ${money(product.price)}`;
+    const hasPromo = Boolean(product.promotion_id) && product.promo_price != null;
+    document.getElementById('modalPrice').innerHTML = hasPromo
+        ? `<span style="text-decoration:line-through; opacity:.6; font-size:.7em; margin-right:8px;">S/ ${money(product.price)}</span>Precio: S/ ${money(product.promo_price)} <span style="color:#c94700; font-weight:900;">(-${Math.round(product.discount_percent)}%)</span>`
+        : `Precio: S/ ${money(product.price)}`;
     modal.style.display = 'flex';
     showToast(`<div style="font-weight:900;">Elegiste: ${escapeHtml(product.name)}</div>`);
 }
@@ -2201,14 +2237,24 @@ async function addToCart(product) {
     const nextCart = cart.map(item => ({ ...item }));
     const existing = nextCart.find(item => item.id === product.id);
     const previousQty = existing ? existing.qty : 0;
-    if (existing) existing.qty += 1;
-    else nextCart.push({
-        id: product.id,
-        name: product.name,
-        category: product.category || '',
-        price: Number(product.price),
-        qty: 1,
-    });
+    const hasPromo = Boolean(product.promotion_id) && product.promo_price != null;
+    const unitPrice = hasPromo ? Number(product.promo_price) : Number(product.price);
+    if (existing) {
+        existing.qty += 1;
+        existing.price = unitPrice;
+        existing.original_price = hasPromo ? Number(product.price) : undefined;
+        existing.promo_id = hasPromo ? product.promotion_id : undefined;
+    } else {
+        nextCart.push({
+            id: product.id,
+            name: product.name,
+            category: product.category || '',
+            price: unitPrice,
+            original_price: hasPromo ? Number(product.price) : undefined,
+            promo_id: hasPromo ? product.promotion_id : undefined,
+            qty: 1,
+        });
+    }
     const limitError = validateCartLimits(nextCart);
     if (limitError) {
         showStoreAlert('No se pudo agregar', limitError);
@@ -2278,9 +2324,12 @@ function renderProducts() {
         return;
     }
 
-    productsGrid.innerHTML = list.map(product => `
+    productsGrid.innerHTML = list.map(product => {
+        const hasPromo = Boolean(product.promotion_id) && product.promo_price != null;
+        return `
         <article class="product-card">
             <div class="product-image-wrap">
+                ${hasPromo ? `<span class="product-promo-badge">-${Math.round(product.discount_percent)}%</span>` : ''}
                 <img src="${safeProductImage(product)}" alt="${escapeHtml(product.name)}" class="product-image" loading="lazy" onerror="this.onerror=null;this.src='/images/products/default.svg';">
             </div>
             <div class="product-head">
@@ -2288,7 +2337,9 @@ function renderProducts() {
                     <h3 class="product-name">${escapeHtml(product.name)}</h3>
                     <span class="product-category">${escapeHtml(product.category || 'general')}</span>
                 </div>
-                <p class="product-price">S/ ${money(product.price)}</p>
+                ${hasPromo
+                    ? `<p class="product-price"><span class="product-price-old">S/ ${money(product.price)}</span>S/ ${money(product.promo_price)}</p>`
+                    : `<p class="product-price">S/ ${money(product.price)}</p>`}
             </div>
             <div class="product-footer">
                 <span class="status-chip ${product.is_sold_out ? 'sold-out' : ''}">
@@ -2302,7 +2353,8 @@ function renderProducts() {
                 </div>
             </div>
         </article>
-    `).join('');
+    `;
+    }).join('');
 
     productsGrid.querySelectorAll('[data-inspect]').forEach(btn => {
         const product = state.products.find(item => item.id === Number(btn.getAttribute('data-inspect')));

@@ -137,7 +137,16 @@ Future<bool> addToCartWithLimits(
   }
 
   for (var i = 0; i < quantity; i++) {
-    cart.add(product);
+    if (product.hasActivePromo) {
+      cart.addPromo(
+        product,
+        promoPrice: product.promoPrice!,
+        originalPrice: product.price,
+        promotionId: product.promotionId!,
+      );
+    } else {
+      cart.add(product);
+    }
   }
   return true;
 }
