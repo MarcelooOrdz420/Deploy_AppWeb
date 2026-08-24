@@ -1126,6 +1126,16 @@
                         <input type="checkbox" name="send_push" checked> Enviar a app cerrada (notificacion push)
                     </label>
                 </div>
+                <div class="row">
+                    <div>
+                        <label>Al tocar la notificacion en app cerrada, abre...</label>
+                        <select id="offerPushTargetSelect" name="push_target">
+                            <option value="product" selected>Solo ese producto/promocion (va directo a el)</option>
+                            <option value="home">El banner de la pantalla principal</option>
+                        </select>
+                        <div class="helper-text">"Solo ese producto" salta directo a la promocion. "Banner de inicio" abre la app en el inicio, donde ya se ve la caja de la promocion.</div>
+                    </div>
+                </div>
                 <div class="toggle-row">
                     <label class="toggle-main">
                         <input type="checkbox" name="send_email"> Enviar por correo
@@ -1141,7 +1151,7 @@
                         <select id="offerProductSelect" name="product_id" required>
                             <option value="">Catálogo general</option>
                         </select>
-                        <div class="helper-text">Incluye los platillos nuevos creados desde Productos.</div>
+                        <div class="helper-text">Un platillo con promocion activa o programada no aparece aqui hasta que la cortes o termine.</div>
                     </div>
                 </div>
                 <div class="row">
@@ -1791,6 +1801,7 @@ const dashboardUsersMetric = document.getElementById('dashboardUsersMetric');
 const ADMIN_TIMEOUT_MS = 30 * 60 * 1000;
 const BASE_CATEGORIES = ['pollos', 'parrillas', 'bebidas'];
 let productsCache = [];
+let promotionsCache = [];
 let refreshTimer = null;
 let productImageRemoved = false;
 let adminUnreadOrders = 0;
@@ -1910,6 +1921,8 @@ async function fetchPromotions() {
         });
         const data = await res.json().catch(() => ({}));
         const offers = Array.isArray(data?.data) ? data.data : [];
+        promotionsCache = offers;
+        renderOfferProductOptions();
         if (!offers.length) {
             list.innerHTML = '<div class="muted">Todavia no has creado ninguna promocion.</div>';
             return;
@@ -2417,17 +2430,28 @@ async function fetchOrderStats() {
     renderDashboard(data);
 }
 
+function renderOfferProductOptions() {
+    if (!offerProductSelect) return;
+    const blockedIds = new Set(
+        promotionsCache
+            .filter(offer => offer.status === 'activa' || offer.status === 'programada')
+            .map(offer => Number(offer.product_id))
+    );
+    const selected = offerProductSelect.value;
+    offerProductSelect.innerHTML = '<option value="">Catálogo general</option>' + productsCache
+        .filter(product => !blockedIds.has(Number(product.id)))
+        .map(product => `<option value="${Number(product.id)}">${escapeHtml(product.name || 'Producto')}</option>`)
+        .join('');
+    if ([...offerProductSelect.options].some(option => option.value === selected)) offerProductSelect.value = selected;
+}
+
 async function fetchProducts() {
     const res = await fetch('/api/v1/admin/products', {
         headers: { 'Authorization': `Bearer ${getToken()}` },
     });
     const data = await res.json();
     productsCache = Array.isArray(data) ? data : [];
-    if (offerProductSelect) {
-        const selected = offerProductSelect.value;
-        offerProductSelect.innerHTML = '<option value="">Catálogo general</option>' + productsCache.map(product => `<option value="${Number(product.id)}">${escapeHtml(product.name || 'Producto')}</option>`).join('');
-        if ([...offerProductSelect.options].some(option => option.value === selected)) offerProductSelect.value = selected;
-    }
+    renderOfferProductOptions();
     upsertCategoryOptions();
     syncDashboardMetrics();
     renderProducts();
@@ -3257,6 +3281,7 @@ if (offerForm) {
         formData.append('body', offerForm.body.value.trim() || '');
         formData.append('cta_label', offerForm.cta_label.value.trim() || '');
         formData.append('product_id', offerForm.product_id.value);
+        formData.append('push_target', offerForm.push_target?.value || 'product');
         if (offerForm.promo_price.value) formData.append('promo_price', offerForm.promo_price.value);
         if (offerForm.discount_percent.value) formData.append('discount_percent', offerForm.discount_percent.value);
         if (offerImageInput?.files?.[0]) formData.append('image', offerImageInput.files[0]);

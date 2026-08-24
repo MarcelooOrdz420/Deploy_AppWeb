@@ -40,6 +40,7 @@ class AdminNotificationController extends Controller
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
             'duration_hours' => ['nullable', 'integer', 'min:1', 'max:720'],
+            'push_target' => ['nullable', 'string', 'in:home,product'],
         ]);
 
         if ($request->hasFile('image')) {
@@ -50,6 +51,22 @@ class AdminNotificationController extends Controller
         }
 
         $product = Product::query()->findOrFail($data['product_id']);
+
+        // Un producto no puede tener dos promociones vigentes (activa o programada)
+        // al mismo tiempo: si el admin vuelve a elegirlo, se bloquea aqui.
+        $hasActiveOrScheduled = MarketingOffer::query()
+            ->where('product_id', $product->id)
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('ends_at')->orWhere('ends_at', '>', now());
+            })
+            ->exists();
+        if ($hasActiveOrScheduled) {
+            return response()->json([
+                'message' => 'Este platillo ya tiene una promocion activa o programada. Cortala desde la lista de abajo o espera a que termine antes de crear otra.',
+            ], 422);
+        }
+
         $data['image_url'] = $imageService->resolve($data['image_url'] ?? null, $product);
         $normalPrice = round((float) $product->price, 2);
         if ($normalPrice <= 0) {
@@ -121,6 +138,11 @@ class AdminNotificationController extends Controller
             try {
                 $target = (string) ($data['target'] ?? 'all');
                 $topic = $target === 'mobile' ? 'promo_mobile' : 'promo_all';
+                // 'home' abre la pantalla principal (donde ya vive la caja de
+                // promocion persistente); 'product' salta directo al producto
+                // o a la pagina de la promocion. Son los 2 tipos de envio que
+                // el admin puede elegir por separado en el panel.
+                $pushTarget = (string) ($data['push_target'] ?? 'product');
 
                 if ($target === 'web') {
                     $push = ['ok' => true, 'message' => 'Canal web emitido correctamente por Pusher.'];
@@ -134,7 +156,8 @@ class AdminNotificationController extends Controller
                             'image' => $publicImageUrl,
                         ],
                         data: [
-                            'route' => '/promo',
+                            'route' => $pushTarget === 'home' ? '/app' : '/promo',
+                            'push_target' => $pushTarget,
                             'target' => $target,
                             'title' => $data['title'],
                             'message' => $data['message'],

@@ -28,6 +28,13 @@ Future<void> main() async {
   await _orders.load();
   await PushNotificationsService.instance.initialize(
     onOpenPromo: (payload) {
+      // El admin elige, por separado, si la notificacion abre el banner de
+      // la pantalla principal o va directo al producto/promocion.
+      final route = (payload['route'] ?? '').toString();
+      if (route == '/app') {
+        _router.push('/app');
+        return;
+      }
       final productId = int.tryParse((payload['product_id'] ?? '').toString());
       if (productId != null && productId > 0) {
         _router.push('/detalles/$productId');

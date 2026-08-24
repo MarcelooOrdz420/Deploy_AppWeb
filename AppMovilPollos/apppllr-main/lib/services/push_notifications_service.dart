@@ -126,8 +126,9 @@ class PushNotificationsService {
 
     // Todos los valores de FCM data vienen como String.
     final route = (data['route'] ?? '').toString().trim();
-    if (route != '/promo') {
-      // Si quieres manejar otros deep links, lo ampliamos aquí.
+    // '/promo' = pagina de la promocion o del producto (segun product_id).
+    // '/app' = banner de la pantalla principal. Cualquier otra ruta se ignora.
+    if (route != '/promo' && route != '/app') {
       return <String, dynamic>{};
     }
 
@@ -140,6 +141,7 @@ class PushNotificationsService {
       'product_id': (data['product_id'] ?? '').toString(),
       'cta_url': (data['cta_url'] ?? '').toString(),
       'route': route,
+      'push_target': (data['push_target'] ?? '').toString(),
       'target': (data['target'] ?? '').toString(),
       'offer_id': (data['offer_id'] ?? '').toString(),
       'promo_price': (data['promo_price'] ?? '').toString(),
