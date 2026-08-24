@@ -2716,6 +2716,7 @@ async function sendEinvoice(orderId, button = null) {
         const data = await res.json();
         if (!res.ok) {
             orderActionsMsg.textContent = data.message || 'No se pudo emitir comprobante SUNAT.';
+            await fetchOrders();
             return null;
         }
         orderActionsMsg.textContent = data.already_sent

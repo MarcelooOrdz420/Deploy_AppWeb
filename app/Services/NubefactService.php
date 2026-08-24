@@ -76,14 +76,14 @@ class NubefactService
 
         if ($response->failed() || ! is_array($data)) {
             $bodySnippet = trim(substr($response->body(), 0, 200));
-            throw new RuntimeException(
-                'No se pudo emitir el comprobante con Nubefact (HTTP '.$response->status().'). '
-                .($bodySnippet !== '' ? $bodySnippet : 'Sin respuesta legible del servidor.')
-            );
+            $this->recordFailure($order, $payload, $message = 'No se pudo emitir el comprobante con Nubefact (HTTP '.$response->status().'). '
+                .($bodySnippet !== '' ? $bodySnippet : 'Sin respuesta legible del servidor.'));
+            throw new RuntimeException($message);
         }
 
         if (isset($data['errors'])) {
-            throw new RuntimeException('Nubefact rechazo el comprobante: '.(string) $data['errors']);
+            $this->recordFailure($order, $payload, $message = 'Nubefact rechazo el comprobante: '.(string) $data['errors']);
+            throw new RuntimeException($message);
         }
 
         $metadata = $order->billing_metadata ?? [];
@@ -214,6 +214,24 @@ class NubefactService
                 'anticipo_documento_numero' => '',
             ];
         })->all();
+    }
+
+    /**
+     * Guarda el motivo real de la falla aunque el intento haya sido manual
+     * (boton "Reintentar envio"), para que la tarjeta del pedido en el admin
+     * siempre refleje el ultimo intento real, no solo los automaticos.
+     */
+    private function recordFailure(Order $order, array $payload, string $message): void
+    {
+        $metadata = $order->billing_metadata ?? [];
+        $metadata['einvoice'] = array_merge($metadata['einvoice'] ?? [], [
+            'provider' => 'nubefact',
+            'payload' => $payload,
+            'last_attempt_at' => now()->toIso8601String(),
+            'status' => 'failed',
+            'error' => $message,
+        ]);
+        $order->update(['billing_metadata' => $metadata]);
     }
 
     private function route(): string
