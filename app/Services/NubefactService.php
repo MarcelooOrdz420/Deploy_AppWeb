@@ -126,9 +126,16 @@ class NubefactService
         $documentType = $receiptType === 'factura' ? 1 : 2;
         $clientDocumentType = $order->billing_document_type === 'ruc' ? 6 : 1;
         $currencyCode = (string) config('einvoice.currency', 'PEN') === 'USD' ? 2 : 1;
-        $total = round((float) $order->total_amount, 2);
-        $taxedBase = round($total / 1.18, 2);
-        $igv = round($total - $taxedBase, 2);
+
+        // Los totales de la cabecera se calculan a partir de las mismas
+        // lineas que se envian (incluyendo el delivery si aplica), nunca de
+        // forma independiente desde order.total_amount: Nubefact rechaza el
+        // comprobante si el IGV de la cabecera no coincide centavo a
+        // centavo con la suma del IGV de las lineas.
+        $items = $this->items($order);
+        $total = round((float) array_sum(array_column($items, 'total')), 2);
+        $taxedBase = round((float) array_sum(array_column($items, 'subtotal')), 2);
+        $igv = round((float) array_sum(array_column($items, 'igv')), 2);
 
         return [
             'operacion' => 'generar_comprobante',
@@ -184,13 +191,13 @@ class NubefactService
             'generado_por_contingencia' => '',
             'bienes_region_selva' => '',
             'servicios_region_selva' => '',
-            'items' => $this->items($order),
+            'items' => $items,
         ];
     }
 
     private function items(Order $order): array
     {
-        return $order->items->values()->map(function ($item, int $index): array {
+        $items = $order->items->values()->map(function ($item, int $index): array {
             $lineTotal = round((float) $item->line_total, 2);
             $lineBase = round($lineTotal / 1.18, 2);
             $lineIgv = round($lineTotal - $lineBase, 2);
@@ -214,6 +221,35 @@ class NubefactService
                 'anticipo_documento_numero' => '',
             ];
         })->all();
+
+        // El costo de delivery esta incluido en order.total_amount pero no
+        // es un OrderItem: si no se agrega como su propia linea, la suma de
+        // las lineas nunca cuadra con el total del pedido y Nubefact
+        // rechaza el comprobante.
+        $deliveryFee = round((float) $order->delivery_fee, 2);
+        if ($deliveryFee > 0) {
+            $deliveryBase = round($deliveryFee / 1.18, 2);
+            $deliveryIgv = round($deliveryFee - $deliveryBase, 2);
+            $items[] = [
+                'unidad_de_medida' => 'ZZ',
+                'codigo' => 'DELIVERY',
+                'codigo_producto_sunat' => (string) config('services.nubefact.default_sunat_product_code', '10000000'),
+                'descripcion' => 'Costo de envio',
+                'cantidad' => 1,
+                'valor_unitario' => $deliveryBase,
+                'precio_unitario' => $deliveryFee,
+                'descuento' => '',
+                'subtotal' => $deliveryBase,
+                'tipo_de_igv' => 1,
+                'igv' => $deliveryIgv,
+                'total' => $deliveryFee,
+                'anticipo_regularizacion' => false,
+                'anticipo_documento_serie' => '',
+                'anticipo_documento_numero' => '',
+            ];
+        }
+
+        return $items;
     }
 
     /**
