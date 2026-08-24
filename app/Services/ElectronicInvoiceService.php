@@ -70,7 +70,7 @@ class ElectronicInvoiceService
             $metadata['einvoice'] = array_merge($metadata['einvoice'] ?? [], [
                 'status' => 'failed',
                 'last_attempt_at' => now()->toIso8601String(),
-                'error' => 'No se pudo enviar el comprobante automaticamente.',
+                'error' => $exception->getMessage(),
                 'automatic' => true,
             ]);
             $order->update(['billing_metadata' => $metadata]);

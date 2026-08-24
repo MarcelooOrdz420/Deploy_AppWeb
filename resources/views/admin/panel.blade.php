@@ -2584,7 +2584,9 @@ async function fetchOrders() {
                 <div class="muted">Operacion: ${order.payment_reference || 'sin codigo'}</div>
                 <div class="muted">Tributario: ${order.billing_receipt_type ? `${order.billing_receipt_type} ${order.billing_document_number || ''}` : 'sin boleta/factura'}</div>
                 ${order.billing_receipt_type ? `<div class="muted">Envio: ${escapeHtml(order.billing_metadata?.einvoice?.status || 'pending')} · Ultimo intento: ${escapeHtml(order.billing_metadata?.einvoice?.last_attempt_at || 'sin intentos')}</div>` : ''}
+                ${order.billing_metadata?.einvoice?.status === 'failed' && order.billing_metadata?.einvoice?.error ? `<div class="muted" style="color:#b42318;">Motivo: ${escapeHtml(order.billing_metadata.einvoice.error)}</div>` : ''}
                 ${order.billing_metadata?.einvoice?.delivery ? `<div class="muted">Correo comprobante: ${order.billing_metadata.einvoice.delivery.status || 'sin estado'}${order.billing_metadata.einvoice.delivery.recipient ? ` (${order.billing_metadata.einvoice.delivery.recipient})` : ''}</div>` : ''}
+                ${order.billing_metadata?.einvoice?.delivery?.status === 'failed' && order.billing_metadata?.einvoice?.delivery?.last_error ? `<div class="muted" style="color:#b42318;">Motivo del correo: ${escapeHtml(order.billing_metadata.einvoice.delivery.last_error)}</div>` : ''}
                 <div style="margin-top:6px;">Total: <strong>S/ ${Number(order.total_amount).toFixed(2)}</strong></div>
                 <div style="display:flex; gap:8px; margin-top:8px;">
                     <button data-view-order="${order.id}">Ver pedido</button>
