@@ -58,7 +58,7 @@ class NubefactService
 
         $response = Http::timeout((int) config('services.nubefact.timeout', 30))
             ->withHeaders([
-                'Authorization' => $this->token(),
+                'Authorization' => 'Bearer '.$this->token(),
                 'Content-Type' => 'application/json',
             ])
             ->acceptJson()
@@ -75,7 +75,11 @@ class NubefactService
         ]);
 
         if ($response->failed() || ! is_array($data)) {
-            throw new RuntimeException('No se pudo emitir el comprobante con Nubefact.');
+            $bodySnippet = trim(substr($response->body(), 0, 200));
+            throw new RuntimeException(
+                'No se pudo emitir el comprobante con Nubefact (HTTP '.$response->status().'). '
+                .($bodySnippet !== '' ? $bodySnippet : 'Sin respuesta legible del servidor.')
+            );
         }
 
         if (isset($data['errors'])) {
