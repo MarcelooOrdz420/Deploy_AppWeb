@@ -121,22 +121,19 @@ class AuthController extends Controller
             LoginHistory::create($historyData);
 
             // No se bloquea la cuenta: tras varios fallos seguidos se le
-            // sugiere cambiar la contrasena en vez de seguir adivinando.
-            // Solo aplica si el correo es de una cuenta real, para que "es
-            // tu cuenta" sea cierto.
-            if ($user) {
-                $recentFailures = LoginHistory::query()
-                    ->where('email', $data['email'])
-                    ->where('successful', false)
-                    ->where('created_at', '>=', now()->subMinutes(15))
-                    ->count();
+            // sugiere revisar lo escrito o cambiar la contrasena en vez de
+            // seguir adivinando. No confirma si la cuenta existe o no.
+            $recentFailures = LoginHistory::query()
+                ->where('email', $data['email'])
+                ->where('successful', false)
+                ->where('created_at', '>=', now()->subMinutes(15))
+                ->count();
 
-                if ($recentFailures >= 3) {
-                    return response()->json([
-                        'message' => 'Es tu cuenta. Si no recuerdas la contraseña, puedes cambiarla.',
-                        'suggest_password_reset' => true,
-                    ], 422);
-                }
+            if ($recentFailures >= 3) {
+                return response()->json([
+                    'message' => 'Revisa bien si tu correo y contraseña estan correctamente escritos. Si no recuerdas tus credenciales, puedes cambiar tu contraseña; si no es la cuenta correcta, registrate nuevamente.',
+                    'suggest_password_reset' => true,
+                ], 422);
             }
 
             throw ValidationException::withMessages([
