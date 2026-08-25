@@ -106,6 +106,21 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        // Bloqueo por cuenta: si esta misma cuenta acumula intentos fallidos
+        // recientes, se corta aqui antes de revisar la contrasena. Se apoya
+        // en el mismo LoginHistory que ya se guardaba solo como auditoria.
+        $recentFailures = LoginHistory::query()
+            ->where('email', $data['email'])
+            ->where('successful', false)
+            ->where('created_at', '>=', now()->subMinutes(15))
+            ->count();
+
+        if ($recentFailures >= 5) {
+            throw ValidationException::withMessages([
+                'email' => ['Demasiados intentos fallidos para esta cuenta. Espera unos minutos antes de volver a intentar.'],
+            ]);
+        }
+
         $user = User::where('email', $data['email'])->first();
 
         // record attempt (successful flag will be updated below)
