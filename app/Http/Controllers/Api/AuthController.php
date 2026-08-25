@@ -106,21 +106,6 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        // Bloqueo por cuenta: si esta misma cuenta acumula intentos fallidos
-        // recientes, se corta aqui antes de revisar la contrasena. Se apoya
-        // en el mismo LoginHistory que ya se guardaba solo como auditoria.
-        $recentFailures = LoginHistory::query()
-            ->where('email', $data['email'])
-            ->where('successful', false)
-            ->where('created_at', '>=', now()->subMinutes(15))
-            ->count();
-
-        if ($recentFailures >= 5) {
-            throw ValidationException::withMessages([
-                'email' => ['Demasiados intentos fallidos para esta cuenta. Espera unos minutos antes de volver a intentar.'],
-            ]);
-        }
-
         $user = User::where('email', $data['email'])->first();
 
         // record attempt (successful flag will be updated below)
@@ -134,6 +119,26 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             // persist failure (no user_id when not found)
             LoginHistory::create($historyData);
+
+            // No se bloquea la cuenta: tras varios fallos seguidos se le
+            // sugiere cambiar la contrasena en vez de seguir adivinando.
+            // Solo aplica si el correo es de una cuenta real, para que "es
+            // tu cuenta" sea cierto.
+            if ($user) {
+                $recentFailures = LoginHistory::query()
+                    ->where('email', $data['email'])
+                    ->where('successful', false)
+                    ->where('created_at', '>=', now()->subMinutes(15))
+                    ->count();
+
+                if ($recentFailures >= 3) {
+                    return response()->json([
+                        'message' => 'Es tu cuenta. Si no recuerdas la contraseña, puedes cambiarla.',
+                        'suggest_password_reset' => true,
+                    ], 422);
+                }
+            }
+
             throw ValidationException::withMessages([
                 'email' => ['Credenciales incorrectas.'],
             ]);

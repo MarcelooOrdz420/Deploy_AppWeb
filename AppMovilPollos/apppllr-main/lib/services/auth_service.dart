@@ -7,6 +7,17 @@ import '../config/runtime_config.dart';
 import 'api_client.dart';
 import 'push_notifications_service.dart';
 
+/// La cuenta existe pero fallaron varias veces seguidas: en vez de
+/// bloquearla, se sugiere cambiar la contrasena en el mismo momento.
+class LoginSuggestPasswordResetException implements Exception {
+  LoginSuggestPasswordResetException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class RegisterResponse {
   RegisterResponse({
     required this.email,
@@ -76,6 +87,13 @@ class AuthService {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final msg = _messageFromDio(e, fallback: 'No se pudo iniciar sesion');
+      final responseData = e.response?.data;
+
+      if (status == 422 &&
+          responseData is Map &&
+          responseData['suggest_password_reset'] == true) {
+        throw LoginSuggestPasswordResetException(msg);
+      }
 
       if (status == 401) throw Exception(msg);
       if (status == 422) throw Exception(msg);

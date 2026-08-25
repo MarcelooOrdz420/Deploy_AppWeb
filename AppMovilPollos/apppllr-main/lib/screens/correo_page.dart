@@ -45,6 +45,18 @@ class _LoginCorreoPageState extends State<LoginCorreoPage> {
       await AuthService().login(email: email, password: password);
       if (!mounted) return;
       await _goAfterLogin();
+    } on LoginSuggestPasswordResetException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: 'Cambiar contraseña',
+            onPressed: _forgotPassword,
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

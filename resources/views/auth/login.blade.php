@@ -550,6 +550,11 @@ form.addEventListener('submit', async (e) => {
 
         if (!res.ok) {
             msg.textContent = data.message || 'Credenciales invalidas';
+            if (data.suggest_password_reset && !renderResetPending()) {
+                forgotForm.hidden = false;
+                forgotForm.forgot_email.value = form.email.value.trim();
+                forgotForm.forgot_email.focus();
+            }
             return;
         }
 
