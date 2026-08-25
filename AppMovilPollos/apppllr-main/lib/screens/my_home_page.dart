@@ -4,14 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/producto.dart';
-import '../models/promotion_offer.dart';
 import '../services/auth_service.dart';
 import '../services/productos_service.dart';
-import '../services/promotion_service.dart';
 import '../services/session_service.dart';
 import '../theme/store_theme.dart';
 import '../widgets/producto_image.dart';
-import '../widgets/promo_banner_card.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -24,20 +21,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   bool _showSplash = true;
   late Future<Producto?> _featuredFuture;
-  List<PromotionOffer> _activePromotions = const [];
 
   @override
   void initState() {
     super.initState();
     _featuredFuture = _loadFeaturedChicken();
     _boot();
-    _loadPromotion();
-  }
-
-  Future<void> _loadPromotion() async {
-    final offers = await PromotionService().fetchActiveList();
-    if (!mounted) return;
-    setState(() => _activePromotions = offers);
   }
 
   Future<void> _boot() async {
@@ -133,10 +122,6 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                             const SizedBox(height: 18),
                             _WelcomeCard(featured: featured),
-                            if (_activePromotions.isNotEmpty) ...[
-                              const SizedBox(height: 18),
-                              PromoBannerCard(offers: _activePromotions),
-                            ],
                             const SizedBox(height: 18),
                             StoreSurface(
                               padding: const EdgeInsets.all(18),
