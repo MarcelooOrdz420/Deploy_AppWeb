@@ -15,6 +15,7 @@
                 <span id="promoBoxDetail" class="promo-box-detail"></span>
                 <span id="promoBoxPrices" class="promo-box-prices"></span>
                 <span id="promoBoxTimer" class="promo-box-timer"></span>
+                <span id="promoBoxDots" class="promo-box-dots"></span>
             </div>
         </a>
         <section class="hero-showcase surface">
@@ -228,6 +229,10 @@
         .promo-box-prices { font-size: 19px; font-weight: 900; }
         .promo-box-prices .promo-box-old { text-decoration: line-through; opacity: .75; font-weight: 600; margin-right: 10px; font-size: 15px; }
         .promo-box-timer { font-size: 12px; font-weight: 700; color: #ffe1b8; }
+        .promo-box-dots { display: flex; gap: 6px; margin-top: 4px; }
+        .promo-box-dots:empty { display: none; }
+        .promo-box-dots span { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.35); transition: background .2s ease; }
+        .promo-box-dots span.active { background: #fff; }
         .promo-box--empty { background: linear-gradient(120deg, #fff8e4 0%, #ffe3b0 100%); cursor: default; pointer-events: none; }
         .promo-box--empty .promo-box-media { display: none; }
         .promo-box--empty .promo-box-copy {
@@ -1859,14 +1864,49 @@ function renderPromoTimer(endsAtIso) {
     promoBoxTimerHandle = setInterval(tick, 30000);
 }
 
+let promoOffers = [];
+let promoActiveIndex = 0;
+let promoRotateHandle = null;
+
+function renderPromoOfferAt(index) {
+    const box = document.getElementById('promoBox');
+    const imageEl = document.getElementById('promoBoxImage');
+    const offer = promoOffers[index];
+    if (!box || !offer) return;
+    promoActiveIndex = index;
+    box.href = offer.url;
+    box.classList.remove('promo-box--empty');
+    imageEl.src = offer.image_url || '/images/products/default.svg';
+    imageEl.style.display = '';
+    document.getElementById('promoBoxBadge').textContent = `-${Math.round(offer.discount_percent)}% de descuento`;
+    document.getElementById('promoBoxTitle').textContent = offer.title;
+    document.getElementById('promoBoxSubtitle').textContent = offer.product?.name || '';
+    document.getElementById('promoBoxDetail').textContent = offer.body || offer.message || '';
+    document.getElementById('promoBoxPrices').innerHTML =
+        `<span class="promo-box-old">S/ ${money(offer.original_price)}</span><span>S/ ${money(offer.promo_price)}</span>`;
+    renderPromoTimer(offer.ends_at);
+
+    const dots = document.getElementById('promoBoxDots');
+    if (dots) {
+        dots.innerHTML = promoOffers.length > 1
+            ? promoOffers.map((_, i) => `<span class="${i === index ? 'active' : ''}"></span>`).join('')
+            : '';
+    }
+}
+
 async function loadActivePromotion() {
     const box = document.getElementById('promoBox');
     const imageEl = document.getElementById('promoBoxImage');
     if (!box) return;
+    if (promoRotateHandle) { clearInterval(promoRotateHandle); promoRotateHandle = null; }
     try {
         const res = await fetch('/api/v1/promotions/active');
         const data = await res.json();
-        if (!data?.active || !data.offer) {
+        promoOffers = Array.isArray(data?.offers) && data.offers.length
+            ? data.offers
+            : (data?.active && data?.offer ? [data.offer] : []);
+
+        if (!promoOffers.length) {
             box.href = '#';
             box.classList.add('promo-box--empty');
             imageEl.style.display = 'none';
@@ -1876,23 +1916,20 @@ async function loadActivePromotion() {
             document.getElementById('promoBoxSubtitle').textContent = 'Estamos preparando nuevas ofertas. Vuelve pronto.';
             document.getElementById('promoBoxDetail').textContent = '';
             document.getElementById('promoBoxPrices').textContent = '';
+            document.getElementById('promoBoxDots').innerHTML = '';
             renderPromoTimer(null);
             box.style.display = '';
             return;
         }
-        const offer = data.offer;
-        box.href = offer.url;
-        box.classList.remove('promo-box--empty');
-        imageEl.src = offer.image_url || '/images/products/default.svg';
-        imageEl.style.display = '';
-        document.getElementById('promoBoxBadge').textContent = `-${Math.round(offer.discount_percent)}% de descuento`;
-        document.getElementById('promoBoxTitle').textContent = offer.title;
-        document.getElementById('promoBoxSubtitle').textContent = offer.product?.name || '';
-        document.getElementById('promoBoxDetail').textContent = offer.body || offer.message || '';
-        document.getElementById('promoBoxPrices').innerHTML =
-            `<span class="promo-box-old">S/ ${money(offer.original_price)}</span><span>S/ ${money(offer.promo_price)}</span>`;
-        renderPromoTimer(offer.ends_at);
+
+        renderPromoOfferAt(0);
         box.style.display = '';
+
+        if (promoOffers.length > 1) {
+            promoRotateHandle = setInterval(() => {
+                renderPromoOfferAt((promoActiveIndex + 1) % promoOffers.length);
+            }, 6000);
+        }
     } catch {
         box.style.display = 'none';
     }

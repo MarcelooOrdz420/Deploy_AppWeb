@@ -2,6 +2,7 @@
 
 namespace App\Services\Chatbot;
 
+use App\Models\MarketingOffer;
 use App\Models\Product;
 use Illuminate\Support\Str;
 
@@ -53,11 +54,73 @@ class LocalResponder
             return $this->comboSuggestion($normalized);
         }
 
+        if ($this->matchesAny($normalized, ['promocion', 'promociones', 'oferta', 'ofertas', 'descuento', 'descuentos', 'rebaja'])) {
+            return $this->activePromotions();
+        }
+
         if ($this->matchesAny($normalized, ['pollos', 'parrillas', 'bebidas', 'menu', 'carta', 'productos', 'venden', 'ofrecen'])) {
             return $this->categoryListing($normalized);
         }
 
+        if ($this->matchesAny($normalized, ['quienes son', 'sobre ustedes', 'sobre la empresa', 'acerca de', 'informacion de la empresa', 'que hacen', 'a que se dedican'])) {
+            return $this->aboutUs();
+        }
+
         return $this->generalHelp();
+    }
+
+    private function activePromotions(): string
+    {
+        try {
+            $offers = MarketingOffer::query()
+                ->where('is_active', true)
+                ->where(function ($q) {
+                    $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+                })
+                ->where(function ($q) {
+                    $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+                })
+                ->with('product:id,name')
+                ->orderByRaw('ends_at IS NULL, ends_at ASC')
+                ->limit(3)
+                ->get();
+        } catch (\Throwable) {
+            return 'Por ahora no puedo revisar las promociones. Puedes verlas en el inicio de la app o la web.';
+        }
+
+        if ($offers->isEmpty()) {
+            return 'Ahora mismo no hay promociones activas, pero pronto publicamos nuevas. Puedes revisar el inicio de la app o la web para verlas apenas salgan.';
+        }
+
+        $lines = $offers->map(function (MarketingOffer $offer): string {
+            $product = $offer->product?->name ?? 'un platillo';
+            $scope = $offer->online_only
+                ? ' Valido solo para compras por la web o la app, no en compras presenciales.'
+                : ' Valido tambien en compras presenciales en el local.';
+
+            return "- {$offer->title} ({$product}): antes S/ ".number_format((float) $offer->original_price, 2, '.', '')
+                .', ahora S/ '.number_format((float) $offer->promo_price, 2, '.', '')
+                ." (-{$offer->discount_percent}%).{$scope}";
+        })->implode("\n");
+
+        return "Promociones activas ahora mismo:\n{$lines}";
+    }
+
+    private function aboutUs(): string
+    {
+        $brand = (string) config('chatbot.brand_name');
+        $hours = (string) config('chatbot.hours');
+        $location = $this->knowledgeSection('Ubicacion');
+
+        $lines = [
+            "Somos {$brand}: pollos a la brasa, parrillas y bebidas para pedir por delivery, recojo en local o entrega en el momento.",
+            "Atendemos: {$hours}.",
+        ];
+        if ($location) {
+            $lines[] = $location;
+        }
+
+        return implode("\n", $lines);
     }
 
     private function contactLine(): string
@@ -258,7 +321,7 @@ class LocalResponder
     {
         $brand = (string) config('chatbot.brand_name');
 
-        return "Soy POLL-IA de {$brand}. Puedo ayudarte con productos, precios, pagos, delivery, horario, ubicacion y seguimiento de pedidos. Prueba preguntarme: \"que productos tienen\", \"cuales son sus pagos\" o \"donde estan ubicados\".";
+        return "Soy POLL-IA de {$brand}. Puedo ayudarte con productos, precios, promociones, pagos, delivery, horario, ubicacion y seguimiento de pedidos. Prueba preguntarme: \"que productos tienen\", \"hay promociones\" o \"donde estan ubicados\".";
     }
 
     private function productLine(Product $product): string

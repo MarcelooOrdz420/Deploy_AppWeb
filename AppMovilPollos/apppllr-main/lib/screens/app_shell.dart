@@ -325,14 +325,14 @@ class _AppShellState extends State<AppShell> {
         ),
         floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 70),
+          // Icono propio del chatbot POLL-IA, distinto del logo de la marca
+          // (assets/pollia.webp), para no confundirlos.
           child: FloatingActionButton(
-            backgroundColor: Colors.white,
-            foregroundColor: StoreTheme.ink,
+            backgroundColor: StoreTheme.orange,
+            foregroundColor: Colors.white,
             elevation: 10,
             onPressed: () => context.push('/chat'),
-            child: ClipOval(
-              child: Image.asset('assets/pollia.webp', fit: BoxFit.cover),
-            ),
+            child: const Icon(Icons.support_agent_rounded, size: 28),
           ),
         ),
       ),

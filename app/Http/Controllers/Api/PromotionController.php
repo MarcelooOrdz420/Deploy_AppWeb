@@ -10,13 +10,23 @@ use Illuminate\Http\JsonResponse;
 class PromotionController extends Controller
 {
     /**
-     * Promocion vigente ahora mismo (respeta is_active y la ventana de
-     * horario), para la caja destacada del inicio en web y movil. Si hay
-     * varias activas a la vez, se muestra la que termina mas pronto.
+     * Maximo de promociones que se muestran a la vez en la caja destacada
+     * del inicio (web y movil). Si hay mas activas que esto, las de mas
+     * (las mas nuevas) igual se pueden enviar por push/correo, solo no
+     * entran al carrusel del banner.
+     */
+    public const BANNER_LIMIT = 3;
+
+    /**
+     * Promociones vigentes ahora mismo (respetan is_active y la ventana de
+     * horario), para la caja destacada del inicio en web y movil. Se
+     * muestran hasta BANNER_LIMIT, ordenadas por la que termina mas pronto.
+     * 'offer' se mantiene por compatibilidad y siempre es la primera de
+     * 'offers'.
      */
     public function active(PromotionImageService $imageService): JsonResponse
     {
-        $offer = MarketingOffer::query()
+        $offers = MarketingOffer::query()
             ->where('is_active', true)
             ->where(function ($q) {
                 $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
@@ -26,17 +36,19 @@ class PromotionController extends Controller
             })
             ->with('product')
             ->orderByRaw('ends_at IS NULL, ends_at ASC')
-            ->first();
+            ->limit(self::BANNER_LIMIT)
+            ->get()
+            ->filter(fn (MarketingOffer $offer) => (bool) $offer->product)
+            ->values();
 
-        if (! $offer || ! $offer->product) {
+        if ($offers->isEmpty()) {
             return response()->json(['active' => false]);
         }
 
-        $product = $offer->product;
+        $payload = $offers->map(function (MarketingOffer $offer) use ($imageService): array {
+            $product = $offer->product;
 
-        return response()->json([
-            'active' => true,
-            'offer' => [
+            return [
                 'id' => $offer->id,
                 'title' => $offer->title,
                 'message' => $offer->message,
@@ -57,7 +69,13 @@ class PromotionController extends Controller
                     'image_url' => $product->image_url,
                     'stock' => (int) ($product->stock ?? 0),
                 ],
-            ],
+            ];
+        })->values();
+
+        return response()->json([
+            'active' => true,
+            'offer' => $payload->first(),
+            'offers' => $payload,
         ]);
     }
 }

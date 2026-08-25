@@ -1168,6 +1168,16 @@
                 </div>
                 <div class="row">
                     <div>
+                        <label>Este precio con descuento aplica para...</label>
+                        <select id="offerOnlineOnlySelect" name="online_only">
+                            <option value="1" selected>Solo compras por web o app</option>
+                            <option value="0">Tambien compras presenciales (en el local)</option>
+                        </select>
+                        <div class="helper-text">Si eliges "solo web o app", se lo avisamos al cliente en el correo y la notificacion de esta promo.</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
                         <label>Duracion de la promocion</label>
                         <select id="offerDurationSelect" name="duration_hours">
                             <option value="">Sin fecha de fin (hasta que la desactives)</option>
@@ -1265,7 +1275,11 @@
                     </div>
                     <div>
                         <label>Nueva categoria (opcional)</label>
-                        <input id="newCategoryInput" placeholder="Ej: postres">
+                        <div style="display:flex; gap:8px;">
+                            <input id="newCategoryInput" placeholder="Ej: postres" style="flex:1;">
+                            <button type="button" id="addCategoryBtn" class="btn-secondary">Agregar</button>
+                        </div>
+                        <div class="helper-text">Escribe el nombre y presiona "Agregar" para verla de una vez en la lista de arriba.</div>
                     </div>
                 </div>
                 <div class="row">
@@ -1884,7 +1898,8 @@ async function sendOffer(formData, targetValue) {
         ? ` App cerrada: OK`
         : (data?.push?.ok === false ? ` App cerrada: ${data.push.message || 'ERROR'}` : '');
     const emailStatus = data?.email ? ` Correos enviados: ${data.email.sent || 0}` : '';
-    offerMsg.textContent = `Promo enviada.${openAppStatus}${pushStatus}${emailStatus}`;
+    const bannerNote = data?.banner_note ? ` ${data.banner_note}` : '';
+    offerMsg.textContent = `Promo enviada.${openAppStatus}${pushStatus}${emailStatus}${bannerNote}`;
     offerMsg.classList.add('success');
     offerForm.reset();
     const offerSendAllEl = document.getElementById('offerSendAll');
@@ -1933,8 +1948,9 @@ async function fetchPromotions() {
             return `<div class="list-row" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #f0d5bd;padding:10px 0;">
                 <div>
                     <strong>${escapeHtml(offer.title)}</strong> · ${escapeHtml(offer.product_name || 'Producto eliminado')}
-                    <div class="muted" style="font-size:12px;">S/ ${money(offer.original_price)} &rarr; S/ ${money(offer.promo_price)} (-${Number(offer.discount_percent).toFixed(0)}%) · ${offer.orders_count} pedidos</div>
+                    <div class="muted" style="font-size:12px;">${money(offer.original_price)} &rarr; ${money(offer.promo_price)} (-${Number(offer.discount_percent).toFixed(0)}%) · ${offer.orders_count} pedidos</div>
                     <div class="muted" style="font-size:12px;">Inicio: ${formatPromoDate(offer.starts_at)} · Fin: ${formatPromoDate(offer.ends_at)}</div>
+                    <div class="muted" style="font-size:12px;">${offer.online_only ? 'Solo compras web/app' : 'Tambien compras presenciales'}</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;">
                     <span class="tag" style="background:${statusInfo.color};color:#fff;">${statusInfo.label}</span>
@@ -2287,7 +2303,8 @@ function buildBuckets(orders, mode) {
         }));
 }
 
-function renderChart(title, rows) {
+function renderChart(title, rows, hint) {
+    const hintHtml = hint ? `<div class="muted" style="font-size:12px;margin-top:2px;">${escapeHtml(hint)}</div>` : '';
     if (!rows.length) {
         return `
             <div class="chart-card">
@@ -2295,6 +2312,7 @@ function renderChart(title, rows) {
                     <strong>${title}</strong>
                     <span class="tag">0</span>
                 </div>
+                ${hintHtml}
                 <div class="muted">Sin pedidos para mostrar.</div>
             </div>`;
     }
@@ -2307,6 +2325,7 @@ function renderChart(title, rows) {
                 <strong>${title}</strong>
                 <span class="tag">${money(rows.reduce((sum, item) => sum + item.total, 0))}</span>
             </div>
+            ${hintHtml}
             <div class="bars">
                 ${rows.map(item => `
                     <div class="bar-col" title="${item.label}: ${money(item.total)} en ${item.count} pedidos">
@@ -2319,14 +2338,15 @@ function renderChart(title, rows) {
         </div>`;
 }
 
-function renderPieChart(title, rows, labelKey, valueKey) {
+function renderPieChart(title, rows, labelKey, valueKey, hint) {
+    const hintHtml = hint ? `<div class="muted" style="font-size:12px;margin-top:2px;">${escapeHtml(hint)}</div>` : '';
     const palette = ['#FF6F1F', '#F7B801', '#FF9D5A', '#C94700', '#EAB68A', '#17683A', '#205A84'];
     const cleanRows = (rows || [])
         .map(row => ({ label: String(row[labelKey] || 'Otros'), value: Number(row[valueKey] || 0) }))
         .filter(row => row.value > 0);
     const total = cleanRows.reduce((sum, row) => sum + row.value, 0);
     if (!total) {
-        return `<div class="chart-card"><div class="chart-head"><strong>${title}</strong><span class="tag">0</span></div><div class="muted">Sin datos para mostrar.</div></div>`;
+        return `<div class="chart-card"><div class="chart-head"><strong>${title}</strong><span class="tag">0</span></div>${hintHtml}<div class="muted">Sin datos para mostrar.</div></div>`;
     }
     let cursor = 0;
     const stops = cleanRows.map((row, index) => {
@@ -2336,6 +2356,7 @@ function renderPieChart(title, rows, labelKey, valueKey) {
     });
     return `<div class="chart-card">
         <div class="chart-head"><strong>${title}</strong><span class="tag">${total}</span></div>
+        ${hintHtml}
         <div class="pie-layout">
             <div class="pie-chart" role="img" aria-label="${escapeHtml(title)}" style="background:conic-gradient(${stops.join(',')})"></div>
             <div class="pie-legend">${cleanRows.map((row, index) => {
@@ -2363,48 +2384,37 @@ function renderDashboard(stats) {
             label: item.label,
             total: Number(item.total || 0),
             count: Number(item.count || 0),
-        }))),
+        })), 'Cuanto vendiste cada uno de los ultimos dias.'),
         renderChart('Ventas por mes', monthRows.slice(-6).map(item => ({
             label: item.label,
             total: Number(item.total || 0),
             count: Number(item.count || 0),
-        }))),
+        })), 'Cuanto vendiste cada uno de los ultimos meses.'),
         renderChart('Ventas por ano', yearRows.slice(-6).map(item => ({
             label: item.label,
             total: Number(item.total || 0),
             count: Number(item.count || 0),
-        }))),
+        })), 'Cuanto vendiste cada uno de los ultimos anos.'),
         `
         <div class="chart-card">
             <div class="chart-head">
                 <strong>Indicadores utiles</strong>
                 <span class="tag">${Number(summary.orders_count || 0)} pedidos</span>
             </div>
-            <div class="muted">Venta total: <strong>S/ ${money(summary.total_sales || 0)}</strong></div>
-            <div class="muted">Ticket promedio: <strong>S/ ${money(summary.average_ticket || 0)}</strong></div>
-            <div class="muted">Mejor dia: <strong>${bestDay ? `${bestDay.label} | S/ ${money(bestDay.total)}` : 'Sin datos'}</strong></div>
-            <div class="muted">Dia mas bajo: <strong>${worstDay ? `${worstDay.label} | S/ ${money(worstDay.total)}` : 'Sin datos'}</strong></div>
-        </div>`,
-        `
-        <div class="chart-card">
-            <div class="chart-head">
-                <strong>Pagos digitales</strong>
-                <span class="tag">${payments.length}</span>
-            </div>
-            ${payments.length ? payments.map(payment => `
-                <div class="muted" style="margin-bottom:6px;">
-                    <strong>${payment.method}</strong>: S/ ${money(payment.total || 0)} | ${payment.count} pedidos
-                    <br>Verificados: ${payment.verified_count} | Reportados: ${payment.reported_count} | Pendientes: ${payment.pending_count}
-                </div>
-            `).join('') : '<div class="muted">Sin datos de pago.</div>'}
+            <div class="muted" style="font-size:12px;margin-top:2px;">Un resumen simple de como te esta yendo en ventas.</div>
+            <div class="muted">Venta total: <strong>${money(summary.total_sales || 0)}</strong></div>
+            <div class="muted">Ticket promedio (lo que gasta cada cliente en promedio): <strong>${money(summary.average_ticket || 0)}</strong></div>
+            <div class="muted">Tu mejor dia de ventas: <strong>${bestDay ? `${bestDay.label} | ${money(bestDay.total)}` : 'Sin datos'}</strong></div>
+            <div class="muted">Tu dia mas bajo de ventas: <strong>${worstDay ? `${worstDay.label} | ${money(worstDay.total)}` : 'Sin datos'}</strong></div>
         </div>`,
         `<div class="dashboard-pies">
-            ${renderPieChart('Pedidos por estado', statuses.map(item => ({ ...item, status: statusEs(item.status) })), 'status', 'count')}
-            ${renderPieChart('Ventas por metodo de pago', payments, 'method', 'count')}
+            ${renderPieChart('Pedidos por estado', statuses.map(item => ({ ...item, status: statusEs(item.status) })), 'status', 'count', 'En que parte del proceso estan tus pedidos ahora mismo.')}
+            ${renderPieChart('Ventas por metodo de pago', payments, 'method', 'count', 'Con que forma de pago compran mas tus clientes.')}
         </div>`,
         `<div class="chart-card" style="grid-column:1/-1">
             <div class="chart-head"><strong>Compras realizadas por promociones</strong><span class="tag">${promotions.reduce((sum,row)=>sum+Number(row.orders_count||0),0)} pedidos</span></div>
-            ${promotions.length ? promotions.map(row => `<div class="muted" style="padding:9px 0;border-bottom:1px solid #f0d5bd"><strong>${escapeHtml(row.title)}</strong> · ${row.orders_count} pedidos · ${row.units} unidades · Ventas S/ ${money(row.sales)} · Descuentos S/ ${money(row.discount_total)}</div>`).join('') : '<div class="muted">Todavía no hay compras originadas por promociones.</div>'}
+            <div class="muted" style="font-size:12px;margin-top:2px;">Cuanto vendio cada promocion que has publicado.</div>
+            ${promotions.length ? promotions.map(row => `<div class="muted" style="padding:9px 0;border-bottom:1px solid #f0d5bd"><strong>${escapeHtml(row.title)}</strong> · ${row.orders_count} pedidos · ${row.units} unidades · Ventas ${money(row.sales)} · Descuentos ${money(row.discount_total)}</div>`).join('') : '<div class="muted">Todavía no hay compras originadas por promociones.</div>'}
         </div>`,
     ].join('');
 }
@@ -3234,6 +3244,16 @@ async function boot() {
 
 cancelEditBtn.addEventListener('click', clearProductForm);
 productForm.is_available.addEventListener('change', syncProductAvailabilityLabel);
+document.getElementById('addCategoryBtn')?.addEventListener('click', () => {
+    const value = newCategoryInput.value.trim().toLowerCase();
+    if (!value) return;
+    const exists = [...categorySelect.options].some(option => option.value === value);
+    if (!exists) {
+        categorySelect.innerHTML += `<option value="${value}">${value}</option>`;
+    }
+    categorySelect.value = value;
+    newCategoryInput.value = '';
+});
 productForm.addEventListener('submit', saveProduct);
 if (offerForm) {
     const chargePrice = (raw) => Math.max(0.99, Math.round(raw) - 0.01);
@@ -3282,6 +3302,7 @@ if (offerForm) {
         formData.append('cta_label', offerForm.cta_label.value.trim() || '');
         formData.append('product_id', offerForm.product_id.value);
         formData.append('push_target', offerForm.push_target?.value || 'product');
+        formData.append('online_only', offerForm.online_only?.value === '0' ? '0' : '1');
         if (offerForm.promo_price.value) formData.append('promo_price', offerForm.promo_price.value);
         if (offerForm.discount_percent.value) formData.append('discount_percent', offerForm.discount_percent.value);
         if (offerImageInput?.files?.[0]) formData.append('image', offerImageInput.files[0]);
@@ -3347,7 +3368,9 @@ adminLogoutBtn.addEventListener('click', async () => {
         } catch {}
     }
     clearAuth();
-    window.location.replace('/admin/login');
+    // Al cerrar sesion normalmente no mandamos a /admin/login: cualquiera que
+    // use ese navegador despues no debe ver a donde entra el administrador.
+    window.location.replace('/');
 });
 adminMenuTabs.forEach(tab => {
     tab.addEventListener('click', () => {

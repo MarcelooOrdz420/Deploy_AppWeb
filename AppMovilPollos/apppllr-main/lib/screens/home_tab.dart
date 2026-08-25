@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../config/api_config.dart';
 import '../models/producto.dart';
 import '../models/promotion_offer.dart';
 import '../services/cart_limits.dart';
@@ -14,8 +13,8 @@ import '../state/app_shell_controller.dart';
 import '../state/cart_controller.dart';
 import '../theme/store_theme.dart';
 import '../widgets/producto_image.dart';
+import '../widgets/promo_banner_card.dart';
 import '../widgets/store_async_state.dart';
-import 'promotion_page.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -39,7 +38,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   bool _hasSelection = false;
   bool _logged = false;
 
-  PromotionOffer? _activePromotion;
+  List<PromotionOffer> _activePromotions = const [];
   bool _promotionChecked = false;
 
   @override
@@ -54,10 +53,10 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   }
 
   Future<void> _loadPromotion() async {
-    final offer = await PromotionService().fetchActive();
+    final offers = await PromotionService().fetchActiveList();
     if (!mounted) return;
     setState(() {
-      _activePromotion = offer;
+      _activePromotions = offers;
       _promotionChecked = true;
     });
   }
@@ -671,138 +670,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   }
 
   Widget _buildPromoBox() {
-    final offer = _activePromotion;
-    if (offer == null) {
-      return Container(
-        width: double.infinity,
-        height: 240,
-        alignment: Alignment.center,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [StoreTheme.creamStrong, StoreTheme.goldSoft],
-          ),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: StoreTheme.border),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.local_offer_outlined, color: StoreTheme.orangeDark, size: 40),
-            SizedBox(height: 10),
-            Text(
-              'Pronto más descuentos en nuestros productos',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w800, color: StoreTheme.textPrimary, fontSize: 15),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => PromotionPage(offer: offer)),
-      ),
-      child: Container(
-        width: double.infinity,
-        height: 240,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [StoreTheme.orangeDark, StoreTheme.orange],
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              width: 150,
-              child: Image.network(
-                ApiConfig.resolveUrl(offer.imageUrl),
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-                errorBuilder: (_, __, ___) => Container(color: Colors.white.withOpacity(.12)),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(.2),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: Colors.white.withOpacity(.32)),
-                      ),
-                      child: Text(
-                        '-${offer.discountPercent.round()}% de descuento',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 11,
-                          letterSpacing: .4,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      offer.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 21,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      offer.product.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
-                    if ((offer.body ?? offer.message).isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        offer.body?.isNotEmpty == true ? offer.body! : offer.message,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(.85),
-                          fontSize: 12.5,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    Text(
-                      'S/ ${offer.originalPrice.toStringAsFixed(2)}   →   S/ ${offer.promoPrice.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 17,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return PromoBannerCard(offers: _activePromotions);
   }
 
   Widget _buildHeroCarousel({

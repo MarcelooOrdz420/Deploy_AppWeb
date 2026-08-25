@@ -2,6 +2,7 @@
 
 namespace App\Services\Chatbot;
 
+use App\Models\MarketingOffer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -93,12 +94,13 @@ class ChatbotService
         $knowledge = $this->readKnowledge();
         $payments = $this->paymentContext();
         $products = $this->productsContext();
+        $promotions = $this->promotionsContext();
         $orders = $this->ordersContext($user);
 
         return trim(implode("\n", array_filter([
             "Eres POLL-IA, el asistente oficial de {$brand}.",
             'Responde en espanol, con tono amable, profesional y directo.',
-            'Solo responde sobre productos, pedidos, pagos, delivery, horarios, ubicacion, contacto y uso de la app/web.',
+            'Solo respondes sobre temas publicos del negocio: productos, precios, promociones y descuentos vigentes, pedidos, pagos, delivery, horarios, ubicacion, contacto, y como usar la app/web. Tambien puedes responder preguntas generales sobre a que se dedica el negocio (que vende, como funciona) usando solo la informacion publica de este contexto.',
             $orders
                 ? "El cliente esta logueado (correo: {$user?->email}) y estos son sus pedidos recientes:\n{$orders}\nUsa estos datos directamente para responder sobre el estado de su pedido. NO le pidas codigo de tracking ni correo: ya los tienes. Empieza esa parte de tu respuesta con una linea '## Pedido <codigo de tracking>' y debajo el estado, el pago y el total, cada dato en su propia linea empezando con '- '."
                 : 'Si falta informacion para revisar un pedido, pide 1 o 2 datos concretos, por ejemplo codigo de tracking o correo.',
@@ -113,6 +115,7 @@ class ChatbotService
             "Soporte: {$supportPhone} / {$supportEmail}.",
             $payments ? "Medios de pago y datos utiles:\n{$payments}" : null,
             $products ? "Productos disponibles de referencia:\n{$products}" : null,
+            $promotions ? "Promociones activas ahora mismo (cada una ya indica si aplica solo a compras web/app o tambien presenciales, respeta ese dato al responder):\n{$promotions}" : 'No hay promociones activas ahora mismo. Si te preguntan, dilo con naturalidad y anima a revisar el inicio de la app o la web.',
             $draftContext ? "Pedido temporal ya indicado por el cliente:\n{$draftContext}" : null,
             $knowledge ? "Base de conocimiento:\n{$knowledge}" : null,
         ])));
@@ -230,6 +233,39 @@ class ChatbotService
         })->implode("\n");
     }
 
+    private function promotionsContext(): ?string
+    {
+        try {
+            $offers = MarketingOffer::query()
+                ->where('is_active', true)
+                ->where(function ($q) {
+                    $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+                })
+                ->where(function ($q) {
+                    $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+                })
+                ->with('product:id,name')
+                ->orderByRaw('ends_at IS NULL, ends_at ASC')
+                ->limit(3)
+                ->get();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($offers->isEmpty()) {
+            return null;
+        }
+
+        return $offers->map(function (MarketingOffer $offer): string {
+            $product = $offer->product?->name ?? 'un platillo';
+            $scope = $offer->online_only ? 'solo compras web/app' : 'tambien compras presenciales';
+
+            return "- {$offer->title} ({$product}): antes S/ ".number_format((float) $offer->original_price, 2, '.', '')
+                .', ahora S/ '.number_format((float) $offer->promo_price, 2, '.', '')
+                ." (-{$offer->discount_percent}%, {$scope})";
+        })->implode("\n");
+    }
+
     private function shouldPreferLocal(string $message, string $provider): bool
     {
         if ($provider === 'local') {
@@ -238,7 +274,7 @@ class ChatbotService
 
         $normalized = str((string) $message)->lower()->ascii()->toString();
 
-        foreach (['producto', 'productos', 'menu', 'carta', 'pollos', 'parrillas', 'bebidas', 'precio', 'precios', 'stock', 'disponible', 'disponibles', 'barato', 'economico', 'combo', 'combinar', 'recomienda'] as $needle) {
+        foreach (['producto', 'productos', 'menu', 'carta', 'pollos', 'parrillas', 'bebidas', 'precio', 'precios', 'stock', 'disponible', 'disponibles', 'barato', 'economico', 'combo', 'combinar', 'recomienda', 'promocion', 'promociones', 'oferta', 'ofertas', 'descuento', 'descuentos'] as $needle) {
             if (str_contains($normalized, $needle)) {
                 return true;
             }

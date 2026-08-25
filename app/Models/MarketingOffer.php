@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MarketingOffer extends Model
 {
-    protected $fillable = ['product_id', 'title', 'message', 'body', 'image_url', 'original_price', 'promo_price', 'discount_percent', 'is_active', 'starts_at', 'ends_at'];
+    protected $fillable = ['product_id', 'title', 'message', 'body', 'image_url', 'original_price', 'promo_price', 'discount_percent', 'online_only', 'is_active', 'starts_at', 'ends_at'];
 
     protected function casts(): array
     {
@@ -14,6 +14,7 @@ class MarketingOffer extends Model
             'original_price' => 'decimal:2',
             'promo_price' => 'decimal:2',
             'discount_percent' => 'decimal:2',
+            'online_only' => 'boolean',
             'is_active' => 'boolean',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',

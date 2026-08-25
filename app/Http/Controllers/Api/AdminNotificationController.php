@@ -41,6 +41,7 @@ class AdminNotificationController extends Controller
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
             'duration_hours' => ['nullable', 'integer', 'min:1', 'max:720'],
             'push_target' => ['nullable', 'string', 'in:home,product'],
+            'online_only' => ['nullable', 'boolean'],
         ]);
 
         if ($request->hasFile('image')) {
@@ -92,6 +93,10 @@ class AdminNotificationController extends Controller
         $endsAt = isset($data['ends_at'])
             ? \Illuminate\Support\Carbon::parse($data['ends_at'])
             : (isset($data['duration_hours']) ? $startsAt->copy()->addHours((int) $data['duration_hours']) : null);
+        // El admin decide, por cada promocion, si el precio rebajado aplica
+        // solo a compras por web/app o tambien a compras presenciales. Por
+        // defecto es solo web/app, que es como se venia comunicando antes.
+        $onlineOnly = array_key_exists('online_only', $data) ? (bool) $data['online_only'] : true;
         $offer = MarketingOffer::create([
             'product_id' => $product->id,
             'title' => $data['title'],
@@ -101,10 +106,31 @@ class AdminNotificationController extends Controller
             'original_price' => $normalPrice,
             'promo_price' => $promoPrice,
             'discount_percent' => $discountPercent,
+            'online_only' => $onlineOnly,
             'is_active' => true,
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
         ]);
+
+        if ($onlineOnly) {
+            $disclaimer = 'Valido solo para compras por la web o la app. No aplica en compras presenciales.';
+            $data['body'] = trim(($data['body'] ?? $data['message']).' '.$disclaimer);
+        }
+
+        // El banner del inicio solo tiene espacio para las primeras
+        // PromotionController::BANNER_LIMIT promociones vigentes (ordenadas
+        // por la que termina mas pronto). Si esta ya no entra, se avisa al
+        // admin: igual se puede enviar por push/correo, solo no se vera en
+        // el banner mientras las demas sigan activas.
+        $activeOrScheduledCount = MarketingOffer::query()
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('ends_at')->orWhere('ends_at', '>', now());
+            })
+            ->count();
+        $bannerNote = $activeOrScheduledCount > PromotionController::BANNER_LIMIT
+            ? 'Ya hay '.PromotionController::BANNER_LIMIT.' promociones ocupando el banner del inicio, asi que esta no se vera ahi hasta que alguna termine o la cortes manualmente. Los envios por app cerrada y correo si le llegan a todos igual.'
+            : null;
 
         $broadcastPayload = [
             'target' => (string) ($data['target'] ?? 'all'),
@@ -191,6 +217,7 @@ class AdminNotificationController extends Controller
             'broadcast' => $broadcast,
             'push' => $push,
             'email' => $email,
+            'banner_note' => $bannerNote,
             'payload' => $broadcastPayload + [
                 'send_push' => $sendPush,
                 'send_realtime' => $sendRealtime,
@@ -216,6 +243,7 @@ class AdminNotificationController extends Controller
                     'original_price' => (float) $offer->original_price,
                     'promo_price' => (float) $offer->promo_price,
                     'discount_percent' => (float) $offer->discount_percent,
+                    'online_only' => (bool) $offer->online_only,
                     'is_active' => (bool) $offer->is_active,
                     'starts_at' => $offer->starts_at?->toIso8601String(),
                     'ends_at' => $offer->ends_at?->toIso8601String(),

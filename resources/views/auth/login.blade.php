@@ -478,9 +478,27 @@ function clearResetPending() {
     RESET_CHANNEL?.postMessage({ type: 'cleared' });
 }
 
+function currentTypedEmail() {
+    const value = (forgotForm && !forgotForm.hidden ? forgotForm.forgot_email.value : form.email.value) || '';
+    return value.trim().toLowerCase();
+}
+
+// El bloqueo es por correo, no por navegador: si el cliente ahora quiere
+// recuperar OTRA cuenta distinta a la que dejo pendiente antes en este
+// mismo dispositivo, no debe quedar atrapado por el aviso de la cuenta
+// anterior.
 function renderResetPending() {
     const pending = loadResetPending();
     if (!pending) {
+        resetLockBox.style.display = 'none';
+        resetLockBox.textContent = '';
+        toggleForgotBtn.disabled = false;
+        return false;
+    }
+
+    const typedEmail = currentTypedEmail();
+    const pendingEmail = (pending.email || '').trim().toLowerCase();
+    if (typedEmail && pendingEmail && typedEmail !== pendingEmail) {
         resetLockBox.style.display = 'none';
         resetLockBox.textContent = '';
         toggleForgotBtn.disabled = false;
@@ -571,6 +589,9 @@ forgotForm?.addEventListener('submit', async (event) => {
         forgotMsg.textContent = 'No se pudo conectar con el servidor.';
     }
 });
+
+forgotForm?.forgot_email.addEventListener('input', renderResetPending);
+form?.email.addEventListener('input', renderResetPending);
 
 window.addEventListener('storage', (event) => {
     if (event.key === RESET_PENDING_KEY) {
