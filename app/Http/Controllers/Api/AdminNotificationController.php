@@ -245,6 +245,9 @@ class AdminNotificationController extends Controller
                     'discount_percent' => (float) $offer->discount_percent,
                     'online_only' => (bool) $offer->online_only,
                     'is_active' => (bool) $offer->is_active,
+                    'title' => $offer->title,
+                    'message' => $offer->message,
+                    'body' => $offer->body,
                     'starts_at' => $offer->starts_at?->toIso8601String(),
                     'ends_at' => $offer->ends_at?->toIso8601String(),
                     'status' => $offer->scheduleStatus(),
@@ -263,29 +266,99 @@ class AdminNotificationController extends Controller
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date'],
             'end_now' => ['nullable', 'boolean'],
+            'duration_hours' => ['nullable', 'integer', 'min:1', 'max:720'],
+            'title' => ['nullable', 'string', 'max:120'],
+            'message' => ['nullable', 'string', 'max:255'],
+            'body' => ['nullable', 'string', 'max:255'],
+            'promo_price' => ['nullable', 'numeric', 'min:0.01'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
+            'online_only' => ['nullable', 'boolean'],
         ]);
+
+        $offer->loadMissing('product');
+        $normalPrice = round((float) $offer->original_price, 2);
+
+        if (isset($data['promo_price']) || isset($data['discount_percent'])) {
+            $promoPrice = isset($data['promo_price'])
+                ? round((float) $data['promo_price'], 2)
+                : round($normalPrice * (1 - ((float) ($data['discount_percent'] ?? 0) / 100)), 2);
+            if ($promoPrice >= $normalPrice) {
+                return response()->json(['message' => 'El precio promocional debe ser menor que el precio normal del platillo.'], 422);
+            }
+            $offer->promo_price = $promoPrice;
+            $offer->discount_percent = round((1 - ($promoPrice / $normalPrice)) * 100, 2);
+        }
+
+        if (array_key_exists('title', $data)) {
+            $offer->title = $data['title'];
+        }
+        if (array_key_exists('message', $data)) {
+            $offer->message = $data['message'];
+        }
+        if (array_key_exists('body', $data)) {
+            $offer->body = $data['body'];
+        }
+        if (array_key_exists('online_only', $data)) {
+            $offer->online_only = (bool) $data['online_only'];
+        }
 
         if (! empty($data['end_now'])) {
             $offer->ends_at = now();
+        } elseif (isset($data['duration_hours'])) {
+            $offer->ends_at = now()->addHours((int) $data['duration_hours']);
+        } elseif (array_key_exists('ends_at', $data)) {
+            $offer->ends_at = $data['ends_at'] ? \Illuminate\Support\Carbon::parse($data['ends_at']) : null;
         }
         if (array_key_exists('starts_at', $data)) {
             $offer->starts_at = $data['starts_at'] ? \Illuminate\Support\Carbon::parse($data['starts_at']) : null;
         }
-        if (array_key_exists('ends_at', $data) && empty($data['end_now'])) {
-            $offer->ends_at = $data['ends_at'] ? \Illuminate\Support\Carbon::parse($data['ends_at']) : null;
-        }
+
+        $reactivating = array_key_exists('is_active', $data) && (bool) $data['is_active'] && ! $offer->is_active;
         if (array_key_exists('is_active', $data)) {
             $offer->is_active = (bool) $data['is_active'];
         }
+
+        // Si se esta reactivando (o extendiendo la fecha de una vencida), no
+        // debe quedar duplicada con otra promocion ya vigente del mismo
+        // platillo: la misma regla que aplica al crear una promocion nueva.
+        if (($reactivating || isset($data['duration_hours']) || array_key_exists('ends_at', $data)) && $offer->is_active) {
+            $conflict = MarketingOffer::query()
+                ->where('id', '!=', $offer->id)
+                ->where('product_id', $offer->product_id)
+                ->where('is_active', true)
+                ->where(function ($query) {
+                    $query->whereNull('ends_at')->orWhere('ends_at', '>', now());
+                })
+                ->exists();
+            if ($conflict) {
+                return response()->json([
+                    'message' => 'Este platillo ya tiene otra promocion activa o programada. Cortala antes de reactivar o extender esta.',
+                ], 422);
+            }
+        }
+
         $offer->save();
 
         return response()->json([
             'id' => $offer->id,
+            'title' => $offer->title,
+            'message' => $offer->message,
+            'body' => $offer->body,
+            'promo_price' => (float) $offer->promo_price,
+            'discount_percent' => (float) $offer->discount_percent,
+            'online_only' => (bool) $offer->online_only,
             'is_active' => (bool) $offer->is_active,
             'starts_at' => $offer->starts_at?->toIso8601String(),
             'ends_at' => $offer->ends_at?->toIso8601String(),
             'status' => $offer->scheduleStatus(),
         ]);
+    }
+
+    public function destroyPromotion(MarketingOffer $offer): JsonResponse
+    {
+        $offer->delete();
+
+        return response()->json(['message' => 'Promocion eliminada.']);
     }
 
     public function sendRecoveryCampaigns(Request $request, CustomerRecoveryCampaignService $campaignService): JsonResponse

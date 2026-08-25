@@ -61,6 +61,32 @@ class _PromoBannerCardState extends State<PromoBannerCard> {
     super.dispose();
   }
 
+  void _goTo(int step) {
+    if (widget.offers.length < 2 || !_controller.hasClients) return;
+    final next = (_index + step + widget.offers.length) % widget.offers.length;
+    _controller.animateToPage(
+      next,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
+    _restartTimer();
+  }
+
+  Widget _navButton({required IconData icon, required VoidCallback onTap}) {
+    return Material(
+      color: Colors.black.withOpacity(.28),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, color: Colors.white, size: 18),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.offers.isEmpty) {
@@ -77,7 +103,19 @@ class _PromoBannerCardState extends State<PromoBannerCard> {
             onPageChanged: (index) => setState(() => _index = index),
             itemBuilder: (context, index) => _PromoOfferCard(offer: widget.offers[index]),
           ),
-          if (widget.offers.length > 1)
+          if (widget.offers.length > 1) ...[
+            Positioned(
+              left: 10,
+              top: 0,
+              bottom: 0,
+              child: Center(child: _navButton(icon: Icons.chevron_left_rounded, onTap: () => _goTo(-1))),
+            ),
+            Positioned(
+              right: 10,
+              top: 0,
+              bottom: 0,
+              child: Center(child: _navButton(icon: Icons.chevron_right_rounded, onTap: () => _goTo(1))),
+            ),
             Positioned(
               bottom: 14,
               left: 0,
@@ -99,6 +137,7 @@ class _PromoBannerCardState extends State<PromoBannerCard> {
                 }),
               ),
             ),
+          ],
         ],
       ),
     );

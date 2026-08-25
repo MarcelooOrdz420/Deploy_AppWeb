@@ -5,6 +5,8 @@
 @section('content')
     <section class="catalog-shell">
         <a id="promoBox" class="promo-box promo-box--empty" href="{{ route('store.products') }}" style="display:none;">
+            <button type="button" id="promoBoxPrevBtn" class="promo-box-nav promo-box-nav--prev" aria-label="Promocion anterior" style="display:none;">&#10094;</button>
+            <button type="button" id="promoBoxNextBtn" class="promo-box-nav promo-box-nav--next" aria-label="Siguiente promocion" style="display:none;">&#10095;</button>
             <div class="promo-box-media">
                 <img id="promoBoxImage" class="promo-box-image" src="" alt="" style="display:none;">
             </div>
@@ -175,6 +177,7 @@
         }
 
         .promo-box {
+            position: relative;
             display: flex;
             align-items: stretch;
             width: 100%;
@@ -233,6 +236,19 @@
         .promo-box-dots:empty { display: none; }
         .promo-box-dots span { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.35); transition: background .2s ease; }
         .promo-box-dots span.active { background: #fff; }
+        .promo-box-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 38px; height: 38px; border-radius: 50%; z-index: 2;
+            border: 1px solid rgba(255,255,255,.4); background: rgba(0,0,0,.28); color: #fff;
+            font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background .15s ease;
+        }
+        .promo-box-nav:hover { background: rgba(0,0,0,.48); }
+        .promo-box-nav--prev { left: 12px; }
+        .promo-box-nav--next { right: 12px; }
+        @media (max-width: 720px) {
+            .promo-box-nav { width: 32px; height: 32px; font-size: 13px; }
+        }
         .promo-box--empty { background: linear-gradient(120deg, #fff8e4 0%, #ffe3b0 100%); cursor: default; pointer-events: none; }
         .promo-box--empty .promo-box-media { display: none; }
         .promo-box--empty .promo-box-copy {
@@ -1868,6 +1884,22 @@ let promoOffers = [];
 let promoActiveIndex = 0;
 let promoRotateHandle = null;
 
+function startPromoRotation() {
+    if (promoRotateHandle) { clearInterval(promoRotateHandle); promoRotateHandle = null; }
+    if (promoOffers.length > 1) {
+        promoRotateHandle = setInterval(() => {
+            renderPromoOfferAt((promoActiveIndex + 1) % promoOffers.length);
+        }, 6000);
+    }
+}
+
+function goToPromoOffer(step) {
+    if (promoOffers.length < 2) return;
+    const next = (promoActiveIndex + step + promoOffers.length) % promoOffers.length;
+    renderPromoOfferAt(next);
+    startPromoRotation();
+}
+
 function renderPromoOfferAt(index) {
     const box = document.getElementById('promoBox');
     const imageEl = document.getElementById('promoBoxImage');
@@ -1892,7 +1924,22 @@ function renderPromoOfferAt(index) {
             ? promoOffers.map((_, i) => `<span class="${i === index ? 'active' : ''}"></span>`).join('')
             : '';
     }
+    const prevBtn = document.getElementById('promoBoxPrevBtn');
+    const nextBtn = document.getElementById('promoBoxNextBtn');
+    if (prevBtn) prevBtn.style.display = promoOffers.length > 1 ? 'flex' : 'none';
+    if (nextBtn) nextBtn.style.display = promoOffers.length > 1 ? 'flex' : 'none';
 }
+
+document.getElementById('promoBoxPrevBtn')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    goToPromoOffer(-1);
+});
+document.getElementById('promoBoxNextBtn')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    goToPromoOffer(1);
+});
 
 async function loadActivePromotion() {
     const box = document.getElementById('promoBox');
@@ -1917,6 +1964,8 @@ async function loadActivePromotion() {
             document.getElementById('promoBoxDetail').textContent = '';
             document.getElementById('promoBoxPrices').textContent = '';
             document.getElementById('promoBoxDots').innerHTML = '';
+            document.getElementById('promoBoxPrevBtn').style.display = 'none';
+            document.getElementById('promoBoxNextBtn').style.display = 'none';
             renderPromoTimer(null);
             box.style.display = '';
             return;
@@ -1924,12 +1973,7 @@ async function loadActivePromotion() {
 
         renderPromoOfferAt(0);
         box.style.display = '';
-
-        if (promoOffers.length > 1) {
-            promoRotateHandle = setInterval(() => {
-                renderPromoOfferAt((promoActiveIndex + 1) % promoOffers.length);
-            }, 6000);
-        }
+        startPromoRotation();
     } catch {
         box.style.display = 'none';
     }
@@ -2414,11 +2458,35 @@ function queueRenderProducts() {
     }, 220);
 }
 
+function syncCategoryOptions() {
+    if (!categoryInput) return;
+    const categories = new Map([
+        ['pollos', 'Pollos'],
+        ['parrillas', 'Parrillas'],
+        ['bebidas', 'Bebidas'],
+    ]);
+    state.products.forEach(product => {
+        const raw = (product.category || '').toString().trim();
+        if (!raw) return;
+        const key = normalizeCategory(raw);
+        if (key && !categories.has(key)) {
+            categories.set(key, raw.charAt(0).toUpperCase() + raw.slice(1));
+        }
+    });
+    const selected = categoryInput.value;
+    categoryInput.innerHTML = '<option value="">Todas</option>'
+        + [...categories.entries()].map(([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`).join('');
+    if (selected && [...categoryInput.options].some(option => option.value === selected)) {
+        categoryInput.value = selected;
+    }
+}
+
 async function loadProducts() {
     setSearchState(true, 'Espera, estamos cargando...', 'Preparando el catalogo para que explores el menu sin perderte.');
     const res = await fetch('/api/v1/products');
     const data = await res.json();
     state.products = Array.isArray(data) ? data : [];
+    syncCategoryOptions();
     try {
         const productId = Number(new URLSearchParams(window.location.search).get('product'));
         const requestedProduct = productId > 0 ? state.products.find(product => Number(product.id) === productId) : null;

@@ -80,6 +80,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/admin/notifications/recovery-campaigns', [AdminNotificationController::class, 'sendRecoveryCampaigns']);
             Route::get('/admin/promotions', [AdminNotificationController::class, 'promotionsIndex']);
             Route::patch('/admin/promotions/{offer}', [AdminNotificationController::class, 'updatePromotion']);
+            Route::delete('/admin/promotions/{offer}', [AdminNotificationController::class, 'destroyPromotion']);
             Route::get('/admin/products', [ProductController::class, 'adminIndex']);
             Route::post('/products', [ProductController::class, 'store']);
             Route::put('/products/{product}', [ProductController::class, 'update']);

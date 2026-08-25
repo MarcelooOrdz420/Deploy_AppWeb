@@ -1566,6 +1566,56 @@
     </div>
 </div>
 
+<div id="promoEditModal" style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; padding:18px; background:rgba(24,15,8,.55);">
+    <div style="width:min(94vw,480px); max-height:86vh; overflow-y:auto; background:#FFFDF9; border:1.5px solid #FFB37A; border-radius:26px; box-shadow:0 30px 60px rgba(255,111,31,.28); padding:26px 24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px;">
+            <strong id="promoEditModalTitle" style="font-size:18px; color:#25170f; line-height:1.3;">Editar promocion</strong>
+            <button id="promoEditModalCloseBtn" type="button" class="pill-btn" style="flex-shrink:0; padding:8px 14px; background:#FFF1E3; color:#7b3d11; border-color:#FFD9B0;">Cerrar</button>
+        </div>
+        <form id="promoEditForm">
+            <input type="hidden" name="offer_id">
+            <label>Titulo</label>
+            <input name="title" required maxlength="120">
+            <label>Mensaje corto</label>
+            <input name="message" required maxlength="255">
+            <label>Contenido (opcional)</label>
+            <textarea name="body" rows="3" maxlength="255"></textarea>
+            <div class="row">
+                <div>
+                    <label>Descuento porcentual</label>
+                    <input id="promoEditDiscountPercent" name="discount_percent" type="number" min="0.01" max="99.99" step="0.01" placeholder="Ej: 20">
+                </div>
+                <div>
+                    <label>Precio final de promocion</label>
+                    <input id="promoEditPromoPrice" name="promo_price" type="number" min="0.01" step="0.01" placeholder="Ej: 39.90">
+                </div>
+            </div>
+            <div id="promoEditPriceHelp" class="helper-text"></div>
+            <label>Este precio con descuento aplica para...</label>
+            <select name="online_only">
+                <option value="1">Solo compras por web o app</option>
+                <option value="0">Tambien compras presenciales (en el local)</option>
+            </select>
+            <label>Extender / reactivar por</label>
+            <select id="promoEditDurationSelect" name="duration_hours">
+                <option value="">No cambiar la fecha de fin</option>
+                <option value="24">24 horas desde ahora</option>
+                <option value="48">48 horas desde ahora</option>
+                <option value="72">72 horas desde ahora</option>
+                <option value="168">7 dias desde ahora</option>
+            </select>
+            <div class="helper-text">Usa esto para reactivar una promocion vencida o cortada: elige cuanto tiempo mas durara desde ahora.</div>
+            <label class="toggle-main" style="margin-top:10px;">
+                <input type="checkbox" name="is_active"> Promocion activa
+            </label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;">
+                <button type="submit" class="btn-main">Guardar cambios</button>
+            </div>
+            <div id="promoEditMsg" class="msg"></div>
+        </form>
+    </div>
+</div>
+
 <div id="adminOrderToast" style="display:none; position:fixed; right:18px; bottom:18px; z-index:9998; width:min(400px, calc(100vw - 36px));">
     <div style="background:#FFFDF9; border:1.5px solid #FFB37A; border-radius:22px; box-shadow: 0 26px 60px rgba(255,111,31,.24); overflow:hidden;">
         <div style="padding:12px 14px; background:#FFF1E3; border-bottom:1px solid #FFE4D2; display:flex; align-items:center; justify-content:space-between; gap:10px;">
@@ -1779,6 +1829,48 @@ document.getElementById('orderDetailModalCloseBtn').addEventListener('click', ()
     orderDetailModal.style.display = 'none';
 });
 
+const promoEditModal = document.getElementById('promoEditModal');
+promoEditModal.addEventListener('click', (event) => {
+    if (event.target === promoEditModal) promoEditModal.style.display = 'none';
+});
+document.getElementById('promoEditModalCloseBtn').addEventListener('click', () => {
+    promoEditModal.style.display = 'none';
+});
+document.getElementById('promoEditForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.target;
+    const msg = document.getElementById('promoEditMsg');
+    const offerId = form.offer_id.value;
+    const payload = {
+        title: form.title.value.trim(),
+        message: form.message.value.trim(),
+        body: form.body.value.trim() || null,
+        online_only: form.online_only.value === '1',
+        is_active: form.is_active.checked,
+    };
+    if (form.promo_price.value) payload.promo_price = Number(form.promo_price.value);
+    if (form.discount_percent.value) payload.discount_percent = Number(form.discount_percent.value);
+    if (form.duration_hours.value) payload.duration_hours = Number(form.duration_hours.value);
+
+    msg.textContent = 'Guardando...';
+    const token = getToken();
+    const res = await fetch(`/api/v1/admin/promotions/${offerId}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        msg.textContent = data?.message || 'No se pudo guardar los cambios.';
+        return;
+    }
+    promoEditModal.style.display = 'none';
+    fetchPromotions();
+});
+
 function openOrderActionPanel(title) {
     orderActionPanelTitle.textContent = title;
     orderActionPanel.classList.add('open');
@@ -1952,15 +2044,46 @@ async function fetchPromotions() {
                     <div class="muted" style="font-size:12px;">Inicio: ${formatPromoDate(offer.starts_at)} · Fin: ${formatPromoDate(offer.ends_at)}</div>
                     <div class="muted" style="font-size:12px;">${offer.online_only ? 'Solo compras web/app' : 'Tambien compras presenciales'}</div>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                     <span class="tag" style="background:${statusInfo.color};color:#fff;">${statusInfo.label}</span>
+                    <button type="button" class="btn-secondary" onclick="openPromoEditModal(${offer.id})">${canCut ? 'Editar' : 'Editar / Reactivar'}</button>
                     ${canCut ? `<button type="button" class="btn-secondary" onclick="cutPromotionShort(${offer.id})">Cortar ahora</button>` : ''}
+                    <button type="button" class="btn-secondary" onclick="deletePromotion(${offer.id})">Eliminar</button>
                 </div>
             </div>`;
         }).join('');
     } catch (error) {
         list.innerHTML = '<div class="muted">No se pudo cargar la lista de promociones.</div>';
     }
+}
+
+async function deletePromotion(offerId) {
+    if (!(await showAdminConfirm('¿Eliminar esta promocion por completo? Ya no existira en la lista ni se podra reactivar.', 'Eliminar promocion'))) return;
+    const token = getToken();
+    await fetch(`/api/v1/admin/promotions/${offerId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    fetchPromotions();
+}
+
+function openPromoEditModal(offerId) {
+    const offer = promotionsCache.find(item => Number(item.id) === Number(offerId));
+    if (!offer) return;
+    const form = document.getElementById('promoEditForm');
+    form.offer_id.value = offer.id;
+    form.title.value = offer.title || '';
+    form.message.value = offer.message || '';
+    form.body.value = offer.body || '';
+    form.discount_percent.value = '';
+    form.promo_price.value = Number(offer.promo_price).toFixed(2);
+    form.online_only.value = offer.online_only ? '1' : '0';
+    form.duration_hours.value = '';
+    form.is_active.checked = Boolean(offer.is_active);
+    document.getElementById('promoEditPriceHelp').textContent =
+        `Precio normal: S/ ${money(offer.original_price)}. Deja el descuento/precio como esta si no quieres cambiarlo.`;
+    document.getElementById('promoEditMsg').textContent = '';
+    document.getElementById('promoEditModal').style.display = 'flex';
 }
 
 async function cutPromotionShort(offerId) {
