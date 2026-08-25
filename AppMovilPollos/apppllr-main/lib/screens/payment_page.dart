@@ -66,6 +66,7 @@ class _PaymentPageState extends State<PaymentPage> {
   bool _lookingUpDocument = false;
   List<SavedAddress> _savedAddresses = const [];
   String? _selectedAddressValue;
+  bool _otherPersonPickup = false;
 
   @override
   void initState() {
@@ -395,10 +396,16 @@ class _PaymentPageState extends State<PaymentPage> {
       (item) => item.producto.categoria.toLowerCase() == 'pollos',
     );
 
-    if (customerName.isEmpty || customerPhone.length != 9) {
+    if ((_otherPersonPickup && customerName.isEmpty) || customerPhone.length != 9) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completa nombre y telefono.')),
+        SnackBar(
+          content: Text(
+            _otherPersonPickup
+                ? 'Completa el nombre de quien recogera y el telefono.'
+                : 'Completa el telefono.',
+          ),
+        ),
       );
       return;
     }
@@ -475,7 +482,7 @@ class _PaymentPageState extends State<PaymentPage> {
         token: token,
         payload: {
           'idempotency_key': _idempotencyKey,
-          'customer_name': customerName,
+          'customer_name': customerName.isEmpty ? null : customerName,
           'customer_phone': customerPhone,
           'customer_email': _customerEmailCtrl.text.trim().isEmpty
               ? null
@@ -771,8 +778,24 @@ class _PaymentPageState extends State<PaymentPage> {
             title: 'Datos del cliente',
             child: Column(
               children: [
-                _field(_nameCtrl, 'Nombre'),
-                const SizedBox(height: 10),
+                CheckboxListTile(
+                  value: _otherPersonPickup,
+                  onChanged: (value) => setState(() {
+                    _otherPersonPickup = value ?? false;
+                    if (!_otherPersonPickup) _nameCtrl.clear();
+                  }),
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  activeColor: StoreTheme.orange,
+                  title: const Text(
+                    'Otra persona recogera o recibira este pedido',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  ),
+                ),
+                if (_otherPersonPickup) ...[
+                  _field(_nameCtrl, 'Nombre de quien recogera o recibira'),
+                  const SizedBox(height: 10),
+                ],
                 _field(
                   _phoneCtrl,
                   'Telefono',

@@ -3561,7 +3561,13 @@ let manualSaleLastOrderId = null;
 function renderManualSaleProductOptions() {
     if (!manualSaleProductSelect) return;
     const selected = manualSaleProductSelect.value;
-    manualSaleProductSelect.innerHTML = productsCache.map(p => `<option value="${Number(p.id)}">${escapeHtml(p.name || 'Producto')} - S/ ${Number(p.price).toFixed(2)}</option>`).join('');
+    manualSaleProductSelect.innerHTML = productsCache.map(p => {
+        const hasInStorePromo = p.promotion_id && p.promotion_online_only === false;
+        const priceLabel = hasInStorePromo
+            ? `S/ ${Number(p.promo_price).toFixed(2)} (antes S/ ${Number(p.price).toFixed(2)}, promo)`
+            : `S/ ${Number(p.price).toFixed(2)}`;
+        return `<option value="${Number(p.id)}">${escapeHtml(p.name || 'Producto')} - ${priceLabel}</option>`;
+    }).join('');
     if ([...manualSaleProductSelect.options].some(option => option.value === selected)) manualSaleProductSelect.value = selected;
 }
 
@@ -3577,7 +3583,7 @@ function renderManualSaleItems() {
         const lineTotal = item.price * item.quantity;
         total += lineTotal;
         return `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-            <span>${escapeHtml(item.name)} x${item.quantity}</span>
+            <span>${escapeHtml(item.name)} x${item.quantity}${item.promotionId ? ' <span class="tag" style="background:#166534;color:#fff;">promo</span>' : ''}</span>
             <span>S/ ${lineTotal.toFixed(2)} <button type="button" data-remove-manual-item="${index}" style="margin-left:8px;">Quitar</button></span>
         </div>`;
     }).join('');
@@ -3595,9 +3601,14 @@ manualSaleAddItemBtn?.addEventListener('click', () => {
     const product = productsCache.find(p => Number(p.id) === productId);
     const qty = Math.max(1, Number(manualSaleQty.value) || 1);
     if (!product) return;
-    const existing = manualSaleItems.find(item => item.productId === productId);
+    // El descuento solo se respeta en venta manual (presencial) si la
+    // promocion esta marcada como valida tambien en compras presenciales.
+    const hasInStorePromo = product.promotion_id && product.promotion_online_only === false;
+    const price = hasInStorePromo ? Number(product.promo_price) : Number(product.price);
+    const promotionId = hasInStorePromo ? Number(product.promotion_id) : null;
+    const existing = manualSaleItems.find(item => item.productId === productId && item.promotionId === promotionId);
     if (existing) existing.quantity += qty;
-    else manualSaleItems.push({ productId, name: product.name, price: Number(product.price), quantity: qty });
+    else manualSaleItems.push({ productId, name: product.name, price, promotionId, quantity: qty });
     manualSaleQty.value = 1;
     renderManualSaleItems();
 });
@@ -3678,7 +3689,7 @@ manualSaleSubmitBtn?.addEventListener('click', async () => {
         payment_method: manualSalePaymentMethod.value,
         customer_name: manualSaleCustomerName.value.trim() || null,
         note: manualSaleNote.value.trim() || null,
-        items: manualSaleItems.map(item => ({ product_id: item.productId, quantity: item.quantity })),
+        items: manualSaleItems.map(item => ({ product_id: item.productId, quantity: item.quantity, promotion_id: item.promotionId || null })),
         billing_receipt_type: receiptType,
         billing_document_type: needsDocument ? (isFactura ? 'ruc' : 'dni') : null,
         billing_document_number: needsDocument ? manualSaleDocumentNumber.value.trim() : null,

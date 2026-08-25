@@ -843,12 +843,10 @@
                     <section class="footer-column">
                         <h2>Atención al cliente</h2>
                         <nav class="footer-links">
-                            <a href="{{ route('store.products') }}">Ayuda para comprar</a>
                             <a href="{{ route('store.orders') }}">Mis pedidos automáticos</a>
                             <a href="{{ route('store.tracking') }}">Seguimiento por código</a>
-                            <a href="{{ route('store.cart') }}">Delivery y formas de pago</a>
                             <a href="{{ route('store.faq') }}">Preguntas frecuentes</a>
-                            <a href="{{ route('store.complaints') }}">Libro de reclamaciones</a>
+                            <a href="{{ route('store.complaints') }}">Quejas y reclamos</a>
                         </nav>
                     </section>
                     <section class="footer-column">

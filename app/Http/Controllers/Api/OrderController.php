@@ -220,7 +220,7 @@ class OrderController extends Controller
     {
         $data = $request->validate([
             'idempotency_key' => ['nullable', 'string', 'max:80'],
-            'customer_name' => ['required', 'string', 'max:120'],
+            'customer_name' => ['nullable', 'string', 'max:120'],
             'customer_phone' => ['required', 'digits:9'],
             'customer_email' => ['nullable', 'email', 'max:120'],
             'delivery_type' => ['required', Rule::in(['pickup', 'delivery'])],
@@ -365,7 +365,12 @@ class OrderController extends Controller
             $orderData = [
                 'user_id' => $request->user()->id,
                 'tracking_code' => $trackingCode,
-                'customer_name' => $data['customer_name'],
+                // El nombre solo se pide si otra persona recogera/recibira
+                // el pedido; si el cliente no lo llena, se usa el nombre de
+                // su propia cuenta (el es quien recibe).
+                'customer_name' => trim((string) ($data['customer_name'] ?? '')) !== ''
+                    ? trim((string) $data['customer_name'])
+                    : $request->user()->name,
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,
                 'delivery_type' => $data['delivery_type'],
@@ -531,6 +536,7 @@ class OrderController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.promotion_id' => ['nullable', 'integer', 'exists:marketing_offers,id'],
             'billing_receipt_type' => ['nullable', Rule::in(['boleta', 'factura'])],
             'billing_document_type' => ['nullable', Rule::in(['dni', 'ruc'])],
             'billing_document_number' => ['nullable', 'string', 'max:20'],
@@ -591,15 +597,31 @@ class OrderController extends Controller
                     ], 422));
                 }
 
-                $lineTotal = (float) $product->price * (int) $item['quantity'];
+                // Una venta manual es presencial: el precio con descuento solo
+                // se respeta aqui si esa promocion esta marcada como valida
+                // tambien en compras presenciales (online_only = false).
+                $offer = null;
+                $unitPrice = (float) $product->price;
+                if (! empty($item['promotion_id'])) {
+                    $offer = MarketingOffer::query()->lockForUpdate()->find($item['promotion_id']);
+                    if (! $offer || ! $offer->isCurrentlyActive() || (int) $offer->product_id !== (int) $product->id) {
+                        abort(response()->json(['message' => 'La promoción seleccionada ya no está disponible para este producto.'], 422));
+                    }
+                    if ($offer->online_only) {
+                        abort(response()->json(['message' => 'Esa promoción es solo para compras web/app, no aplica en venta presencial.'], 422));
+                    }
+                    $unitPrice = (float) $offer->promo_price;
+                }
+                $lineTotal = $unitPrice * (int) $item['quantity'];
 
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
                     'product_name' => $product->name,
-                    'unit_price' => $product->price,
+                    'marketing_offer_id' => $offer?->id,
+                    'unit_price' => $unitPrice,
                     'original_unit_price' => $product->price,
-                    'discount_amount' => 0,
+                    'discount_amount' => max(0, ((float) $product->price - $unitPrice) * (int) $item['quantity']),
                     'quantity' => $item['quantity'],
                     'line_total' => $lineTotal,
                 ]);

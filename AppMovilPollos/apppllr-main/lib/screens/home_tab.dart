@@ -321,6 +321,16 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
         final parrillas = products
             .where((item) => _normalizeCategory(item.categoria) == 'parrillas')
             .toList();
+        // Categorias nuevas que el admin cree (fuera de pollos/parrillas/
+        // bebidas) tambien deben poder elegirse aqui, no solo en la web.
+        final extraCategories = <String, String>{};
+        for (final product in products) {
+          final normalized = _normalizeCategory(product.categoria);
+          if (normalized == 'pollos' || normalized == 'parrillas' || normalized == 'bebidas') continue;
+          final raw = product.categoria.trim();
+          if (raw.isEmpty || extraCategories.containsKey(normalized)) continue;
+          extraCategories[normalized] = raw[0].toUpperCase() + raw.substring(1);
+        }
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -344,32 +354,52 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                 ),
               ),
               const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _categoryShortcut(
-                      'Pollos',
-                      Icons.local_fire_department_rounded,
-                      'pollos',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _categoryShortcut(
-                      'Parrillas',
-                      Icons.outdoor_grill_rounded,
-                      'parrillas',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _categoryShortcut(
-                      'Bebidas',
-                      Icons.local_drink_rounded,
-                      'bebidas',
-                    ),
-                  ),
-                ],
+              SizedBox(
+                height: 116,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 3 + extraCategories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) {
+                    final items = <Widget>[
+                      SizedBox(
+                        width: 104,
+                        child: _categoryShortcut(
+                          'Pollos',
+                          Icons.local_fire_department_rounded,
+                          'pollos',
+                        ),
+                      ),
+                      SizedBox(
+                        width: 104,
+                        child: _categoryShortcut(
+                          'Parrillas',
+                          Icons.outdoor_grill_rounded,
+                          'parrillas',
+                        ),
+                      ),
+                      SizedBox(
+                        width: 104,
+                        child: _categoryShortcut(
+                          'Bebidas',
+                          Icons.local_drink_rounded,
+                          'bebidas',
+                        ),
+                      ),
+                      ...extraCategories.entries.map(
+                        (entry) => SizedBox(
+                          width: 104,
+                          child: _categoryShortcut(
+                            entry.value,
+                            Icons.restaurant_rounded,
+                            entry.key,
+                          ),
+                        ),
+                      ),
+                    ];
+                    return items[index];
+                  },
+                ),
               ),
               const SizedBox(height: 22),
               if (_promotionChecked) _buildPromoBox(),

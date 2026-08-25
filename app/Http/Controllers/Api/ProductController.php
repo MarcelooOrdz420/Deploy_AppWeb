@@ -29,14 +29,25 @@ class ProductController extends Controller
         )->values());
     }
 
-    public function adminIndex(): JsonResponse
+    public function adminIndex(PromotionImageService $imageService): JsonResponse
     {
         $products = Product::query()
             ->orderBy('category')
             ->orderBy('name')
             ->get();
 
-        return response()->json($products);
+        $offers = $this->activeOffersByProductId();
+
+        return response()->json($products->map(function (Product $product) use ($offers): array {
+            $offer = $offers->get($product->id);
+            $data = $product->toArray();
+            $data['promotion_id'] = $offer?->id;
+            $data['promo_price'] = $offer ? (float) $offer->promo_price : null;
+            $data['discount_percent'] = $offer ? (float) $offer->discount_percent : null;
+            $data['promotion_online_only'] = $offer ? (bool) $offer->online_only : null;
+
+            return $data;
+        })->values());
     }
 
     public function show(Product $product, PromotionImageService $imageService): JsonResponse
@@ -178,6 +189,7 @@ class ProductController extends Controller
             'promotion_id' => $offer?->id,
             'promo_price' => $offer ? (float) $offer->promo_price : null,
             'discount_percent' => $offer ? (float) $offer->discount_percent : null,
+            'promotion_online_only' => $offer ? (bool) $offer->online_only : null,
             'promotion_ends_at' => $offer?->ends_at?->toIso8601String(),
             'promotion_image_url' => $offer && $imageService ? $imageService->resolve($offer->image_url, $product) : null,
         ];
