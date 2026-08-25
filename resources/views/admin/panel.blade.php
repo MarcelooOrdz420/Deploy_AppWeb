@@ -3697,6 +3697,15 @@ manualSaleSubmitBtn?.addEventListener('click', async () => {
         billing_email: needsDocument && deliveryMode === 'correo' ? manualSaleEmail.value.trim() : null,
     };
 
+    // Paso de confirmacion explicito: esto es lo unico que registra la
+    // venta de verdad. Si el admin cancela aqui, no se guarda nada.
+    const total = manualSaleItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const confirmed = await showAdminConfirm(
+        `¿Registrar esta venta por S/ ${total.toFixed(2)}? Se marcara como pagada y entregada de inmediato.`,
+        'Confirmar venta manual'
+    );
+    if (!confirmed) return;
+
     manualSaleSubmitBtn.disabled = true;
     manualSaleMsg.textContent = 'Registrando venta...';
     try {
