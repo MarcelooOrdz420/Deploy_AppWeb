@@ -8,14 +8,6 @@ Proyecto de titulación de la carrera de **Desarrollo de Sistemas de Informació
 
 ---
 
-## 📸 Capturas
-
-| Tienda web | App móvil | Panel de administración |
-|---|---|---|
-| ![Tienda web](docs/capturas/tienda.png) | ![App móvil](docs/capturas/app.png) | ![Panel admin](docs/capturas/admin.png) |
-
----
-
 ## ✨ Funcionalidades principales
 
 **Clientes**
